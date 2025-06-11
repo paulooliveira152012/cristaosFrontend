@@ -26,7 +26,7 @@ const Salas = () => {
     const fetchRooms = async () => {
       const api =
         process.env.NODE_ENV === "production"
-          ? "https://cristaosweb-e5a94083e783.herokuapp.com/api/rooms"
+          ? "https://cristaosbackend.onrender.com/api/rooms"
           : "http://localhost:5001/api/rooms"; // Use local API in development
 
       try {
@@ -91,7 +91,7 @@ const Salas = () => {
       // Send POST request to create a new room
       const apiUrl =
         process.env.NODE_ENV === "production"
-          ? `https://cristaosweb-e5a94083e783.herokuapp.com/api/rooms/create`
+          ? `https://cristaosbackend.onrender.com/api/rooms/create`
           : `http://localhost:5001/api/rooms/create`; // Local development URL
 
       const response = await fetch(apiUrl, {

@@ -46,7 +46,7 @@ const Signup = () => {
   const navigate = useNavigate();
 
   // State to manage input fields
-  const [email, setEmail] = useState("")
+  const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -69,73 +69,69 @@ const Signup = () => {
     input.click();
   };
 
+  // Handle form submission for signup
+  const handleSignup = async (e) => {
+    e.preventDefault();
 
-// Handle form submission for signup
-const handleSignup = async (e) => {
-  e.preventDefault();
-
-  // Validate that required fields are provided
-  if (!username || !email || !password) {
-    setError("All fields are required.");
-    return;
-  }
-
-  if (password.length < 6) {
-    setError("The password must be at least 6 characters long.");
-    return;
-  }
-
-  try {
-    let imageUrl = null;
-    if (file) {
-      // Upload image to S3 and get the URL, if a file is selected
-      imageUrl = await uploadImageToS3(file);
+    // Validate that required fields are provided
+    if (!username || !email || !password) {
+      setError("All fields are required.");
+      return;
     }
 
-    const apiUrl = process.env.NODE_ENV === 'production'
-      ? "https://cristaosweb-e5a94083e783.herokuapp.com/api/users/signup"
-      : "http://localhost:5001/api/users/signup"; // Dynamic API based on environment
-
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        username,
-        email,
-        password,
-        profileImage: imageUrl // Include S3 URL in the request, if applicable
-      }),
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      console.log("Signup successful!", data);
-      // Navigate to the email verification page after successful signup
-      navigate('/verifyAccount', { state: { email } });
-    } else {
-      setError(data.message || "Signup failed"); // Set error message from the response
+    if (password.length < 6) {
+      setError("The password must be at least 6 characters long.");
+      return;
     }
-  } catch (err) {
-    console.error("Error during signup:", err);
-    setError("Something went wrong. Please try again.");
-  }
-};
 
+    try {
+      let imageUrl = null;
+      if (file) {
+        // Upload image to S3 and get the URL, if a file is selected
+        imageUrl = await uploadImageToS3(file);
+      }
 
+      const apiUrl =
+        process.env.NODE_ENV === "production"
+          ? "https://cristaosbackend.onrender.com/api/users/signup"
+          : "http://localhost:5001/api/users/signup"; // Dynamic API based on environment
+
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+          profileImage: imageUrl, // Include S3 URL in the request, if applicable
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("Signup successful!", data);
+        // Navigate to the email verification page after successful signup
+        navigate("/verifyAccount", { state: { email } });
+      } else {
+        setError(data.message || "Signup failed"); // Set error message from the response
+      }
+    } catch (err) {
+      console.error("Error during signup:", err);
+      setError("Something went wrong. Please try again.");
+    }
+  };
 
   return (
     <div>
-      <Header 
-        showProfileImage={false}
-        navigate={navigate}
-      />
+      <Header showProfileImage={false} navigate={navigate} />
       <div style={styles.signupContainer}>
-        <h2 style={{ color: "gray", marginBottom: 20, fontStyle: "italic" }}>Signup</h2>
+        <h2 style={{ color: "gray", marginBottom: 20, fontStyle: "italic" }}>
+          Signup
+        </h2>
         <form onSubmit={handleSignup} style={styles.form}>
-
           {/* Image selection */}
           <div style={styles.formGroup}>
             <div
@@ -151,7 +147,9 @@ const handleSignup = async (e) => {
 
           {/* Username input */}
           <div style={styles.formGroup}>
-            <label htmlFor="username" style={styles.label}>Username:</label>
+            <label htmlFor="username" style={styles.label}>
+              Username:
+            </label>
             <input
               type="text"
               id="username"
@@ -162,9 +160,11 @@ const handleSignup = async (e) => {
             />
           </div>
 
-             {/* Email input */}
-             <div style={styles.formGroup}>
-            <label htmlFor="email" style={styles.label}>Email:</label>
+          {/* Email input */}
+          <div style={styles.formGroup}>
+            <label htmlFor="email" style={styles.label}>
+              Email:
+            </label>
             <input
               type="text"
               id="email"
@@ -177,7 +177,9 @@ const handleSignup = async (e) => {
 
           {/* Password input */}
           <div style={styles.formGroup}>
-            <label htmlFor="password" style={styles.label}>Password:</label>
+            <label htmlFor="password" style={styles.label}>
+              Password:
+            </label>
             <input
               type="password"
               id="password"
@@ -189,7 +191,9 @@ const handleSignup = async (e) => {
           </div>
 
           {/* Submit button */}
-          <button type="submit" style={styles.button}>Signup</button>
+          <button type="submit" style={styles.button}>
+            Signup
+          </button>
         </form>
 
         {/* Display error message */}
@@ -202,59 +206,59 @@ const handleSignup = async (e) => {
 // Basic styles
 const styles = {
   signupContainer: {
-    maxWidth: '400px',
-    margin: '50px auto',
-    padding: '20px',
-    backgroundColor: '#f9f9f9',
-    borderRadius: '8px',
-    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-    textAlign: 'center',
+    maxWidth: "400px",
+    margin: "50px auto",
+    padding: "20px",
+    backgroundColor: "#f9f9f9",
+    borderRadius: "8px",
+    boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
+    textAlign: "center",
   },
   form: {
-    display: 'flex',
-    flexDirection: 'column',
+    display: "flex",
+    flexDirection: "column",
   },
   formGroup: {
-    marginBottom: '15px',
+    marginBottom: "15px",
   },
   label: {
-    display: 'block',
-    marginBottom: '5px',
-    fontSize: '16px',
-    color: '#333',
+    display: "block",
+    marginBottom: "5px",
+    fontSize: "16px",
+    color: "#333",
   },
   input: {
-    padding: '10px',
-    fontSize: '16px',
-    borderRadius: '4px',
-    border: '1px solid #ccc',
-    width: '100%',
-    boxSizing: 'border-box',
+    padding: "10px",
+    fontSize: "16px",
+    borderRadius: "4px",
+    border: "1px solid #ccc",
+    width: "100%",
+    boxSizing: "border-box",
   },
   button: {
-    padding: '10px',
-    fontSize: '16px',
-    backgroundColor: '#28a745',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    marginTop: '10px',
+    padding: "10px",
+    fontSize: "16px",
+    backgroundColor: "#28a745",
+    color: "#fff",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    marginTop: "10px",
   },
   error: {
-    color: 'red',
-    marginTop: '15px',
+    color: "red",
+    marginTop: "15px",
   },
   imageContainer: {
     width: "150px",
     height: "150px",
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundColor: '#ddd',
-    borderRadius: '50%',
-    cursor: 'pointer',
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundColor: "#ddd",
+    borderRadius: "50%",
+    cursor: "pointer",
     margin: "0 auto",
-  }
+  },
 };
 
 export default Signup;

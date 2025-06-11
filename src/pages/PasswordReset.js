@@ -18,48 +18,48 @@ const PasswordReset = () => {
     }
   }, [token]);
 
-// Function to handle password update
-const updatePassword = async (e) => {
-  e.preventDefault();
-  console.log("Submitting password update request");
+  // Function to handle password update
+  const updatePassword = async (e) => {
+    e.preventDefault();
+    console.log("Submitting password update request");
 
-  // Define API route based on environment
-  const apiUri = process.env.NODE_ENV === 'production'
-    ? `https://cristaosweb-e5a94083e783.herokuapp.com/api/users/resetPassword`
-    : `http://localhost:5001/api/users/resetPassword`;
+    // Define API route based on environment
+    const apiUri =
+      process.env.NODE_ENV === "production"
+        ? `https://cristaosbackend.onrender.com/api/users/resetPassword`
+        : `http://localhost:5001/api/users/resetPassword`;
 
-  try {
-    const response = await fetch(apiUri, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        token, // Pass the reset token along with the request
-        email,
-        newPassword,
-        confirmNewPassword,
-      }),
-    });
+    try {
+      const response = await fetch(apiUri, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token, // Pass the reset token along with the request
+          email,
+          newPassword,
+          confirmNewPassword,
+        }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (response.ok) {
-      console.log("Password updated successfully", data);
-      navigate("/login"); // Redirect to login after successful reset
-    } else {
-      setError(data.message || "Failed to update password.");
+      if (response.ok) {
+        console.log("Password updated successfully", data);
+        navigate("/login"); // Redirect to login after successful reset
+      } else {
+        setError(data.message || "Failed to update password.");
+      }
+    } catch (err) {
+      console.error("Error updating password:", err);
+      setError("Update failed. Please try again.");
     }
-  } catch (err) {
-    console.error("Error updating password:", err);
-    setError("Update failed. Please try again.");
-  }
-};
-
+  };
 
   return (
     <div>
-      <Header navigate={navigate}/>
+      <Header navigate={navigate} />
       <div style={styles.formContainer}>
         <form style={styles.form} onSubmit={updatePassword}>
           <label style={styles.label}>Email</label>

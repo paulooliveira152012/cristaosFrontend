@@ -31,7 +31,7 @@ const ListingPage = () => {
       try {
         const api =
           process.env.NODE_ENV === "production"
-            ? `https://cristaosweb-e5a94083e783.herokuapp.com/api/listings/listings/${listingId}`
+            ? `https://cristaosbackend.onrender.com/api/listings/listings/${listingId}`
             : `http://localhost:5001/api/listings/listings/${listingId}`;
 
         const response = await fetch(api);
@@ -70,22 +70,24 @@ const ListingPage = () => {
         commentText,
         currentUser
       );
-  
+
       if (newComment) {
         setNewCommentId(newComment._id);
-  
+
         // Fetch the updated listing from the backend
         const api =
           process.env.NODE_ENV === "production"
-            ? `https://cristaosweb-e5a94083e783.herokuapp.com/api/listings/listings/${listingId}`
+            ? `https://cristaosbackend.onrender.com/api/listings/listings/${listingId}`
             : `http://localhost:5001/api/listings/listings/${listingId}`;
-  
+
         const response = await fetch(api);
-  
+
         if (!response.ok) {
-          throw new Error(`Failed to fetch updated listing: ${response.statusText}`);
+          throw new Error(
+            `Failed to fetch updated listing: ${response.statusText}`
+          );
         }
-  
+
         const data = await response.json();
         setItems([data.listing]); // Update the items array with the latest backend state
       }
@@ -94,7 +96,6 @@ const ListingPage = () => {
       alert("Failed to submit comment. Please try again.");
     }
   };
-  
 
   const submitReplyForComment = (listingId, parentCommentId, replyText) => {
     if (!currentUser) {
@@ -102,7 +103,13 @@ const ListingPage = () => {
       return;
     }
 
-    handleReplySubmit(listingId, parentCommentId, replyText, currentUser, setItems);
+    handleReplySubmit(
+      listingId,
+      parentCommentId,
+      replyText,
+      currentUser,
+      setItems
+    );
   };
 
   const deleteCommentForListing = (listingId, commentId, parentCommentId) => {

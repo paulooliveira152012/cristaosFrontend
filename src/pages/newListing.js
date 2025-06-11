@@ -42,102 +42,99 @@ const NewListing = () => {
     setPollOptions(newOptions);
   };
 
-// Handle form submission
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  // Validation based on the selected listing type
-  if (listingType === "blog" && !blogContent.trim()) {
-    setError("Please provide blog content.");
-    return;
-  }
-
-  if (listingType === "image" && !image) {
-    setError("Please select an image.");
-    return;
-  }
-
-  if (listingType === "link" && !link.trim()) {
-    setError("Please provide a valid link.");
-    return;
-  }
-
-  if (
-    listingType === "poll" &&
-    (!pollQuestion.trim() || pollOptions.every((option) => !option.trim()))
-  ) {
-    setError("Please provide a poll question and at least one option.");
-    return;
-  }
-
-  setError(null); // Clear any previous errors if validation passes
-
-  try {
-    let imageUrl = null;
-    if (image) {
-      // Upload image to S3 and get the URL
-      imageUrl = await uploadImageToS3(image);
+    // Validation based on the selected listing type
+    if (listingType === "blog" && !blogContent.trim()) {
+      setError("Please provide blog content.");
+      return;
     }
 
-    const apiUrl = process.env.NODE_ENV === 'production'
-      ? `https://cristaosweb-e5a94083e783.herokuapp.com/api/listings/create`
-      : `http://localhost:5001/api/listings/create`; // Local development URL
-
-    const listingData = {
-      userId: currentUser._id,
-      type: listingType,
-      blogTitle,
-      blogContent,
-      imageUrl,
-      link,
-      poll: {
-        question: pollQuestion,
-        options: pollOptions.filter((option) => option.trim()), // Filter out empty options
-      },
-      tags: tags.split(",").map((tag) => tag.trim()), // Split tags by commas
-    };
-
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(listingData),
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      console.log("Listing created successfully!", data);
-      // Clear form after submission or navigate to another page
-      resetForm();
-      navigate("/");
-    } else {
-      setError(data.message || "Failed to create listing");
+    if (listingType === "image" && !image) {
+      setError("Please select an image.");
+      return;
     }
-  } catch (err) {
-    console.error("Error creating listing:", err);
-    setError("Something went wrong. Please try again.");
-  }
-};
 
-// Reset form fields after successful submission
-const resetForm = () => {
-  setBlogContent("");
-  setImage(null);
-  setLink("");
-  setPollQuestion("");
-  setPollOptions(["", ""]);
-  setTags("");
-};
+    if (listingType === "link" && !link.trim()) {
+      setError("Please provide a valid link.");
+      return;
+    }
 
+    if (
+      listingType === "poll" &&
+      (!pollQuestion.trim() || pollOptions.every((option) => !option.trim()))
+    ) {
+      setError("Please provide a poll question and at least one option.");
+      return;
+    }
+
+    setError(null); // Clear any previous errors if validation passes
+
+    try {
+      let imageUrl = null;
+      if (image) {
+        // Upload image to S3 and get the URL
+        imageUrl = await uploadImageToS3(image);
+      }
+
+      const apiUrl =
+        process.env.NODE_ENV === "production"
+          ? `https://cristaosbackend.onrender.com/api/listings/create`
+          : `http://localhost:5001/api/listings/create`; // Local development URL
+
+      const listingData = {
+        userId: currentUser._id,
+        type: listingType,
+        blogTitle,
+        blogContent,
+        imageUrl,
+        link,
+        poll: {
+          question: pollQuestion,
+          options: pollOptions.filter((option) => option.trim()), // Filter out empty options
+        },
+        tags: tags.split(",").map((tag) => tag.trim()), // Split tags by commas
+      };
+
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(listingData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("Listing created successfully!", data);
+        // Clear form after submission or navigate to another page
+        resetForm();
+        navigate("/");
+      } else {
+        setError(data.message || "Failed to create listing");
+      }
+    } catch (err) {
+      console.error("Error creating listing:", err);
+      setError("Something went wrong. Please try again.");
+    }
+  };
+
+  // Reset form fields after successful submission
+  const resetForm = () => {
+    setBlogContent("");
+    setImage(null);
+    setLink("");
+    setPollQuestion("");
+    setPollOptions(["", ""]);
+    setTags("");
+  };
 
   return (
     <div>
-      <Header 
-        showProfileImage={false} 
-        navigate={navigate}
-      />
+      <Header showProfileImage={false} navigate={navigate} />
       <div className="container">
         <div className="secondatyContainer">
           <div className="newListingContentContainer">
@@ -269,6 +266,6 @@ const resetForm = () => {
 
 export default NewListing;
 
-//"https://cristaosweb-e5a94083e783.herokuapp.com/api/create"
+//"https://cristaosbackend.onrender.com/api/create"
 
 // const apiUrl = "http://localhost:5001/api/listings/create";

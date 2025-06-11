@@ -2,7 +2,7 @@
 export const handleFetchComments = async (listingId, setItems) => {
   const api =
     process.env.NODE_ENV === "production"
-      ? `https://cristaosweb-e5a94083e783.herokuapp.com/api/comments/listings/${listingId}/comments`
+      ? `https://cristaosbackend.onrender.com/api/comments/listings/${listingId}/comments`
       : `http://localhost:5001/api/comments/listings/${listingId}/comments`; // Use local API in development
 
   try {
@@ -49,7 +49,7 @@ export const handleCommentSubmit = async (
   try {
     const api =
       process.env.NODE_ENV === "production"
-        ? `https://cristaosweb-e5a94083e783.herokuapp.com/api/comments/listings/${listingId}/comment`
+        ? `https://cristaosbackend.onrender.com/api/comments/listings/${listingId}/comment`
         : `http://localhost:5001/api/comments/listings/${listingId}/comment`;
 
     const requestBody = {
@@ -115,7 +115,7 @@ export const handleReplySubmit = async (
 
   const api =
     process.env.NODE_ENV === "production"
-      ? `https://cristaosweb-e5a94083e783.herokuapp.com/api/comments/listings/${parentCommentId}/reply`
+      ? `https://cristaosbackend.onrender.com/api/comments/listings/${parentCommentId}/reply`
       : `http://localhost:5001/api/comments/listings/${parentCommentId}/reply`;
 
   try {
@@ -180,8 +180,8 @@ export const handleDeleteComment = async (
   const apiUrl =
     process.env.NODE_ENV === "production"
       ? parentCommentId
-        ? `https://cristaosweb-e5a94083e783.herokuapp.com/api/comments/${commentId}/${parentCommentId}`
-        : `https://cristaosweb-e5a94083e783.herokuapp.com/api/comments/${commentId}`
+        ? `https://cristaosbackend.onrender.com/api/comments/${commentId}/${parentCommentId}`
+        : `https://cristaosbackend.onrender.com/api/comments/${commentId}`
       : parentCommentId
       ? `http://localhost:5001/api/comments/${commentId}/${parentCommentId}`
       : `http://localhost:5001/api/comments/${commentId}`;
@@ -253,7 +253,7 @@ export const handleLike = async (listingId, currentUser, items = [], setItems) =
 
   const api =
     process.env.NODE_ENV === "production"
-      ? `https://cristaosweb-e5a94083e783.herokuapp.com/api/listings/listingLike/${listingId}`
+      ? `https://cristaosbackend.onrender.com/api/listings/listingLike/${listingId}`
       : `http://localhost:5001/api/listings/listingLike/${listingId}`; // Local development URL
 
   try {
@@ -300,7 +300,7 @@ export const handleShare = async (listingId, currentUser) => {
 
   const api =
     process.env.NODE_ENV === "production"
-      ? `https://cristaosweb-e5a94083e783.herokuapp.com/api/listings/share/${listingId}`
+      ? `https://cristaosbackend.onrender.com/api/listings/share/${listingId}`
       : `http://localhost:5001/api/listings/share/${listingId}`; // Local development URL
 
   try {
@@ -353,8 +353,8 @@ export const handleCommentLike = async (
   const api =
     process.env.NODE_ENV === "production"
       ? isReply
-        ? `https://cristaosweb-e5a94083e783.herokuapp.com/api/comments/comment/like/${parentCommentId}/${commentId}`
-        : `https://cristaosweb-e5a94083e783.herokuapp.com/api/comments/comment/like/${commentId}`
+        ? `https://cristaosbackend.onrender.com/api/comments/comment/like/${parentCommentId}/${commentId}`
+        : `https://cristaosbackend.onrender.com/api/comments/comment/like/${commentId}`
       : isReply
       ? `http://localhost:5001/api/comments/comment/like/${parentCommentId}/${commentId}`
       : `http://localhost:5001/api/comments/comment/like/${commentId}`;

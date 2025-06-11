@@ -15,17 +15,19 @@ import image from "../assets/images/terraplanismo.png";
 import ListingInteractionBox from "./ListingInteractionBox";
 import { useUser } from "../context/UserContext";
 
+const baseURL = process.env.REACT_APP_API_BASE_URL;
+
 const Listings = () => {
   const { currentUser } = useUser(); // Access the current user
   const [items, setItems] = useState([]); // Store the listings
   const [loading, setLoading] = useState(true); // Track loading state
   const [comment, setComments] = useState([]);
   // listingId when creating new comment to be available when liking new comments
-  const [newCommentId, setNewCommentId] = useState("")
+  const [newCommentId, setNewCommentId] = useState("");
 
-   // Logging whenever newCommentId changes
-   useEffect(() => {
-    console.log("trying to fetch the newCommentId")
+  // Logging whenever newCommentId changes
+  useEffect(() => {
+    console.log("trying to fetch the newCommentId");
 
     if (newCommentId) {
       console.log("New Comment ID set in state:", newCommentId);
@@ -35,10 +37,12 @@ const Listings = () => {
   // Fetch all listed items from the backend
   useEffect(() => {
     const fetchListings = async () => {
-      const api =
-        process.env.NODE_ENV === "production"
-          ? "https://cristaosweb-e5a94083e783.herokuapp.com/api/listings/alllistings"
-          : "http://localhost:5001/api/listings/alllistings"; // Use local API in development
+      // const api =
+      //   process.env.NODE_ENV === "production"
+      //     ? "https://cristaosbackend.onrender.com/api/listings/alllistings"
+      //     : "http://localhost:5001/api/listings/alllistings"; // Use local API in development
+
+      const api = `${baseURL}/api/listings/alllistings`;
 
       try {
         setLoading(true); // Start loading before fetch
@@ -62,7 +66,7 @@ const Listings = () => {
           (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         );
 
-        setItems(sortedListings);        
+        setItems(sortedListings);
       } catch (error) {
         console.error("Error fetching items:", error);
       } finally {
@@ -80,25 +84,30 @@ const Listings = () => {
 
   // Use `handleCommentSubmit`, passing required parameters
   const submitCommentForListing = async (listingId, commentText) => {
-    console.log("submiting new comment")
+    console.log("submiting new comment");
 
     try {
       /* 
         create new variable storing value from function call handleCommentSubmit
         handleCommentSubmit is defined on interactionFunctions.js
       */
-      const newComment = await handleCommentSubmit(listingId, commentText, currentUser, setItems);
+      const newComment = await handleCommentSubmit(
+        listingId,
+        commentText,
+        currentUser,
+        setItems
+      );
 
-      console.log("newComment:", newComment)
+      console.log("newComment:", newComment);
       // console.log("New Comment id is:", newComment._id)
-  
+
       if (newComment && newComment._id) {
         console.log("Setting New Comment ID:", newComment._id);
         // Set the latest comment's ID for liking
         setNewCommentId(newComment._id);
-        console.log("newCommentId:", newCommentId)
+        console.log("newCommentId:", newCommentId);
 
-        console.log(listingId)
+        console.log(listingId);
 
         // Optimistically update the comments array
         setItems((prevItems) =>
@@ -107,7 +116,7 @@ const Listings = () => {
               const alreadyExists = item.comments.some(
                 (comment) => comment._id === newComment._id
               );
-  
+
               return alreadyExists
                 ? item
                 : { ...item, comments: [...item.comments, newComment] };
@@ -116,16 +125,14 @@ const Listings = () => {
           })
         );
       } else {
-        console.log("no newCommentId")
+        console.log("no newCommentId");
       }
 
-      console.log("New comment Id:", listingId)
-
+      console.log("New comment Id:", listingId);
     } catch (error) {
       console.error("Error submitting comment:", error);
     }
   };
-  
 
   // Wrapper function to call `handleReplySubmit` with required parameters
   const submitReplyForComment = (listingId, parentCommentId, replyText) => {
@@ -133,12 +140,15 @@ const Listings = () => {
       alert("You must be logged in to reply.");
       return;
     }
-  
-    handleReplySubmit(listingId, parentCommentId, replyText, currentUser, setItems);
+
+    handleReplySubmit(
+      listingId,
+      parentCommentId,
+      replyText,
+      currentUser,
+      setItems
+    );
   };
-  
-  
-  
 
   // use deleteComment
   const deleteCommentForListing = (listingId, commentId, parentCommentId) => {
@@ -153,27 +163,37 @@ const Listings = () => {
     handleShare(listingId, currentUser);
   };
 
-  const likeCommentOrReply = async (commentId, isReply = false, parentCommentId = null) => {
+  const likeCommentOrReply = async (
+    commentId,
+    isReply = false,
+    parentCommentId = null
+  ) => {
     console.log("Attempting to like a comment...");
 
-    console.log("comment Id to like:",  newCommentId)
+    console.log("comment Id to like:", newCommentId);
 
     const targetCommentId = commentId || newCommentId;
-    console.log(targetCommentId)
+    console.log(targetCommentId);
 
     if (!targetCommentId) {
       console.error("Comment ID is undefined, cannot like the comment.");
       return;
     }
-  
+
     try {
-      await handleCommentLike(targetCommentId, isReply, parentCommentId, currentUser, setItems);
+      await handleCommentLike(
+        targetCommentId,
+        isReply,
+        parentCommentId,
+        currentUser,
+        setItems
+      );
       console.log("Successfully liked comment:", targetCommentId);
     } catch (error) {
       console.error("Error in liking comment or reply:", error);
     }
   };
-  
+
   // console.log("currentUser in Listings:", currentUser); // Ensure it shows correct data
 
   return (
@@ -332,7 +352,7 @@ const Listings = () => {
 
 export default Listings;
 
-// `https://cristaosweb-e5a94083e783.herokuapp.com/api/alllistings`
-// `https://cristaosweb-e5a94083e783.herokuapp.com/api/listingLike/${listingId}`
-// `https://cristaosweb-e5a94083e783.herokuapp.com/api/listings/${listingId}/comment`
-// `https://cristaosweb-e5a94083e783.herokuapp.com/api/listings/${listingId}/comments/${commentId}`
+// `https://cristaosbackend.onrender.com/api/alllistings`
+// `https://cristaosbackend.onrender.com/api/listingLike/${listingId}`
+// `https://cristaosbackend.onrender.com/api/listings/${listingId}/comment`
+// `https://cristaosbackend.onrender.com/api/listings/${listingId}/comments/${commentId}`

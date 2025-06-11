@@ -40,11 +40,10 @@ const LiveRoom = () => {
 
   const isRejoiningRef = useRef(false);
 
-
   const { leaveChannel } = useContext(AudioContext);
 
   useEffect(() => {
-    console.log("isRejoining?", isRejoining)
+    console.log("isRejoining?", isRejoining);
 
     const fetchRoomData = async () => {
       if (!roomId || !currentUser) return; // Ensure roomId and currentUser exist
@@ -53,7 +52,7 @@ const LiveRoom = () => {
 
       const apiUrl =
         process.env.NODE_ENV === "production"
-          ? `https://cristaosweb-e5a94083e783.herokuapp.com/api/rooms/fetchRoomData/${roomId}`
+          ? `https://cristaosbackend.onrender.com/api/rooms/fetchRoomData/${roomId}`
           : `http://localhost:5001/api/rooms/fetchRoomData/${roomId}`; // Local development URL
 
       try {
@@ -78,140 +77,137 @@ const LiveRoom = () => {
     fetchRoomData(); // Call the async function
   }, [roomId, currentUser]); // Run when roomId or currentUser changes
 
-  
-
   // Set the socket connection and join room
- // Set the socket connection and join room
-useEffect(() => {
-  if (!currentUser || !roomId || !sala) return;
+  // Set the socket connection and join room
+  useEffect(() => {
+    if (!currentUser || !roomId || !sala) return;
 
-  if (!socket) {
-    const socketUrl =
-      process.env.NODE_ENV === "production"
-        ? "https://cristaosweb-e5a94083e783.herokuapp.com" // Production backend
-        : "http://localhost:5001"; // Development backend
+    if (!socket) {
+      const socketUrl =
+        process.env.NODE_ENV === "production"
+          ? "https://cristaosbackend.onrender.com" // Production backend
+          : "http://localhost:5001"; // Development backend
 
-    socket = io(socketUrl); // Initialize the socket only once
-    console.log("Socket URL:", socketUrl);
+      socket = io(socketUrl); // Initialize the socket only once
+      console.log("Socket URL:", socketUrl);
 
-    socket.currentRoomId = sala?._id || roomId;
-  }
-
-  // Set the microphone state correctly on first join or rejoin
-  if (isRejoiningRef.current) {
-    console.log("Rejoining room, keeping microphone state:", microphoneOn);
-    isRejoiningRef.current = false; // Reset the rejoining flag
-  } else {
-    console.log("First-time join, setting microphone to off.");
-    setMicrophoneOn(false); // First-time join: microphone off
-  }
-
-  socket.emit("joinRoom", {
-    roomId,
-    user: {
-      _id: currentUser._id,
-      username: currentUser.username,
-      profileImage: currentUser.profileImage,
-    },
-  });
-
-  console.log(
-    "Emitting joinRoom event for room:",
-    roomId,
-    "with user:",
-    currentUser.username
-  );
-
-  // Listen for minimized state (restore microphone state if returning)
-  socket.on("userMinimized", ({ userId, minimized, microphoneOn }) => {
-    if (userId === currentUser._id && minimized) {
-      setMicrophoneOn(microphoneOn); // Restore the previous microphone state
-      isRejoiningRef.current = true; // Set flag to indicate rejoining
-      console.log(`Restoring microphone state: ${microphoneOn}`);
+      socket.currentRoomId = sala?._id || roomId;
     }
-  });
 
-  // Listen for room updates
-  socket.on("roomData", ({ roomMembers }) => {
-    console.log("roomData received from server:", roomMembers);
-    setRoomMembers(roomMembers);
-  });
+    // Set the microphone state correctly on first join or rejoin
+    if (isRejoiningRef.current) {
+      console.log("Rejoining room, keeping microphone state:", microphoneOn);
+      isRejoiningRef.current = false; // Reset the rejoining flag
+    } else {
+      console.log("First-time join, setting microphone to off.");
+      setMicrophoneOn(false); // First-time join: microphone off
+    }
 
-  // listen for a user leaving the room
-  socket.on("userLeft", ({ userId }) => {
-    console.log("User left:", userId);
-    setRoomMembers((prevMembers) =>
-      prevMembers.filter((member) => member._id !== userId)
+    socket.emit("joinRoom", {
+      roomId,
+      user: {
+        _id: currentUser._id,
+        username: currentUser.username,
+        profileImage: currentUser.profileImage,
+      },
+    });
+
+    console.log(
+      "Emitting joinRoom event for room:",
+      roomId,
+      "with user:",
+      currentUser.username
     );
-  });
 
-  // Handle connection and disconnection
-  socket.on("connect", () => {
-    console.log(`Socket connected with ID: ${socket.id}`);
-  });
+    // Listen for minimized state (restore microphone state if returning)
+    socket.on("userMinimized", ({ userId, minimized, microphoneOn }) => {
+      if (userId === currentUser._id && minimized) {
+        setMicrophoneOn(microphoneOn); // Restore the previous microphone state
+        isRejoiningRef.current = true; // Set flag to indicate rejoining
+        console.log(`Restoring microphone state: ${microphoneOn}`);
+      }
+    });
 
-// Listen for disconnect event to remove the user from roomMembers
-socket.on("disconnect", () => {
-  console.log("Socket disconnected");
-  
-  // Remove the current user from the room members list
-  setRoomMembers((prevMembers) =>
-    prevMembers.filter((member) => member._id !== currentUser._id)
-  );
-});
+    // Listen for room updates
+    socket.on("roomData", ({ roomMembers }) => {
+      console.log("roomData received from server:", roomMembers);
+      setRoomMembers(roomMembers);
+    });
 
-  socket.on("connect_error", (err) => {
-    console.error("Socket connection error:", err);
-  });
+    // listen for a user leaving the room
+    socket.on("userLeft", ({ userId }) => {
+      console.log("User left:", userId);
+      setRoomMembers((prevMembers) =>
+        prevMembers.filter((member) => member._id !== userId)
+      );
+    });
 
-  socket.on("connect_timeout", () => {
-    console.error("Socket connection timeout");
-  });
+    // Handle connection and disconnection
+    socket.on("connect", () => {
+      console.log(`Socket connected with ID: ${socket.id}`);
+    });
 
-  // Clean up when the component unmounts
-  return () => {
-    if (socket) {
-      socket.off("roomData");
-      socket.off("userMinimized");
-      socket.off("userLeft");
-      socket.off("connect");
-      socket.off("disconnect");
-    }
-  };
-}, [currentUser, roomId, sala, microphoneOn]); // Updated dependency array
+    // Listen for disconnect event to remove the user from roomMembers
+    socket.on("disconnect", () => {
+      console.log("Socket disconnected");
 
+      // Remove the current user from the room members list
+      setRoomMembers((prevMembers) =>
+        prevMembers.filter((member) => member._id !== currentUser._id)
+      );
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("Socket connection error:", err);
+    });
+
+    socket.on("connect_timeout", () => {
+      console.error("Socket connection timeout");
+    });
+
+    // Clean up when the component unmounts
+    return () => {
+      if (socket) {
+        socket.off("roomData");
+        socket.off("userMinimized");
+        socket.off("userLeft");
+        socket.off("connect");
+        socket.off("disconnect");
+      }
+    };
+  }, [currentUser, roomId, sala, microphoneOn]); // Updated dependency array
 
   // Function to toggle microphone
   const toggleMicrophone = () => {
     setMicrophoneOn(!microphoneOn);
   };
 
-// Function to minimize room and navigate back to main screen
-const handleGoBack = () => {
-  console.log("Minimizing room and navigating to the main screen");
+  // Function to minimize room and navigate back to main screen
+  const handleGoBack = () => {
+    console.log("Minimizing room and navigating to the main screen");
 
-  minimizeRoom(sala); // Pass the room data to minimizeRoom
-  console.log("Room minimized using RoomContext");
+    minimizeRoom(sala); // Pass the room data to minimizeRoom
+    console.log("Room minimized using RoomContext");
 
-  if (socket && socket.connected && roomId && currentUser?._id) {
-    socket.emit("minimizeRoom", {
-      roomId: sala?._id || roomId,
-      userId: currentUser._id,
-      microphoneOn: microphoneOn, // Send the microphone state
-    });
-    console.log(`Emitted minimizeRoom event for room ${roomId}`);
-  }
+    if (socket && socket.connected && roomId && currentUser?._id) {
+      socket.emit("minimizeRoom", {
+        roomId: sala?._id || roomId,
+        userId: currentUser._id,
+        microphoneOn: microphoneOn, // Send the microphone state
+      });
+      console.log(`Emitted minimizeRoom event for room ${roomId}`);
+    }
 
-  setIsRejoining(true) // Mark the user as rejoining after minimizing
-  console.log("Minimizando a sala, isRejoining:", isRejoining)
-  navigate("/");
-};
+    setIsRejoining(true); // Mark the user as rejoining after minimizing
+    console.log("Minimizando a sala, isRejoining:", isRejoining);
+    navigate("/");
+  };
 
-const { leaveRoom } = useRoom();
+  const { leaveRoom } = useRoom();
 
   // Function to leave the room completely
   const handleLeaveRoom = async () => {
-    console.log("saindo da sala")
+    console.log("saindo da sala");
     setIsLeaving(true);
 
     // Emit an event to leave the room
@@ -220,11 +216,11 @@ const { leaveRoom } = useRoom();
       userId: currentUser._id,
     });
 
-    leaveRoom()
+    leaveRoom();
 
     // Remover a sala minimizada quando o usuário sair da sala
     minimizeRoom(null); // Isso limpa a sala minimizada do contexto
-    console.log("Sala minimizada removida do contexto")
+    console.log("Sala minimizada removida do contexto");
 
     // Update roomMembers state to remove the current user locally
     setRoomMembers((prevMembers) =>
@@ -272,7 +268,7 @@ const { leaveRoom } = useRoom();
             currentUser?._id,
             minimizeRoom,
             sala,
-            isRejoiningRef,  // Pass the ref here
+            isRejoiningRef, // Pass the ref here
             microphoneOn // Pass the microphone state here
           )
         }
@@ -301,37 +297,36 @@ const { leaveRoom } = useRoom();
           overflow: "hidden",
         }}
       >
-  <div className="liveInRoomMembersContainer">
-  {roomMembers && roomMembers.length > 0 ? (
-    roomMembers.map((member, index) => (
-      <div key={index} className="liveMemberParentContainer">
-        <div className="liveMemberContainer">
-          <div className="liveMemberContent">
-            <Link to={`/profile/${member._id}`}>
-              <div
-                className="liveMemberProfileImage"
-                style={{
-                  backgroundImage: `url(${member.profileImage || ""})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                  backgroundColor: "#ddd",
-                  borderRadius: "40%",
-                  cursor: "pointer",
-                }}
-              />
-            </Link>
-            <p className="liveRoomUsername">
-              {member.username || "Anonymous"}
-            </p>
-          </div>
+        <div className="liveInRoomMembersContainer">
+          {roomMembers && roomMembers.length > 0 ? (
+            roomMembers.map((member, index) => (
+              <div key={index} className="liveMemberParentContainer">
+                <div className="liveMemberContainer">
+                  <div className="liveMemberContent">
+                    <Link to={`/profile/${member._id}`}>
+                      <div
+                        className="liveMemberProfileImage"
+                        style={{
+                          backgroundImage: `url(${member.profileImage || ""})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                          backgroundColor: "#ddd",
+                          borderRadius: "40%",
+                          cursor: "pointer",
+                        }}
+                      />
+                    </Link>
+                    <p className="liveRoomUsername">
+                      {member.username || "Anonymous"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p>Nenhum membro na sala.</p>
+          )}
         </div>
-      </div>
-    ))
-  ) : (
-    <p>Nenhum membro na sala.</p>
-  )}
-</div>
-
 
         <VoiceComponent
           microphoneOn={microphoneOn}
@@ -370,11 +365,11 @@ const { leaveRoom } = useRoom();
 export default LiveRoom;
 
 // socket = io("http://localhost:5001/");
-// socket = io("https://cristaosweb-e5a94083e783.herokuapp.com/");
+// socket = io("https://cristaosbackend.onrender.com/");
 // socket.currentRoomId = sala?._id || roomId;
 
 // const response = await fetch(
-//   // `https://cristaosweb-e5a94083e783.herokuapp.com/api/rooms/${roomId}`
+//   // `https://cristaosbackend.onrender.com/api/rooms/${roomId}`
 //   `http://localhost:5001/api/rooms/${roomId}`
 // );
 

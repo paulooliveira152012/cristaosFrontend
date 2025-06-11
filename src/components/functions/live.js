@@ -19,7 +19,7 @@ export const updateRoomTitle = async (roomId, newTitle, setRoomTitle) => {
     // Define API URL based on the environment
     const apiUrl =
       process.env.NODE_ENV === "production"
-        ? `https://cristaosweb-e5a94083e783.herokuapp.com/api/rooms/update/${roomId}`
+        ? `https://cristaosbackend.onrender.com/api/rooms/update/${roomId}`
         : `http://localhost:5001/api/rooms/update/${roomId}`; // Local development URL
 
     const response = await fetch(apiUrl, {
