@@ -1,0 +1,81 @@
+.sideMenu {
+    width: 60%;
+    height: 100%;
+    background-color: white;
+    position:fixed;
+    margin: 0;
+    padding: 0;
+    z-index: 10;
+    display: block;
+    z-index: 10;
+}
+
+
+
+.top {
+    /* background-color: green; */
+    display: flex;
+    justify-content: center;
+    /* flex-direction: column; */
+    height: 10vh;
+    justify-content: space-between;
+    /* dois valores = topo e fundo depois laterais */
+    padding:  20px;
+
+}
+
+/* 1 */
+.profileImageContainer {
+    /* background-color: purple; */
+    /* height: auto; */
+    display: flex;
+    /* flex-direction: column; */
+    width: auto;
+    justify-content: center;
+    align-items: center;
+    /* float: left; */
+}
+
+/* 2 */
+.closeBtn {
+    float: inline-end;
+    /* background-color: red; */
+    width: auto;
+    display: flex;
+    align-items: center;
+    /* margin: 20px; */
+}
+
+.bottom {
+    /* background-color: green; */
+    height: 90vh;
+}
+
+.menuOptions {
+    justify-content:center;
+    /* background-color: white; */
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    /* z-index: 100000; */
+}
+
+.menuOptions li {
+    cursor: pointer;
+    background-color: #002D9F;
+    color: white;
+    padding: 5%;
+    list-style-type: none;
+    margin: 10px;
+    border-radius: 10px;
+}
+
+
+
+.username {
+    /* background-color: yellow; */
+    display: flex;
+    margin: auto 10px;
+}

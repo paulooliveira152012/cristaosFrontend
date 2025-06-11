@@ -1,0 +1,147 @@
+/* General Styles */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.newListingContentContainer {
+    /* background-color: green; */
+    width: 100%;
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Listing Type Selection */
+.listing-type-selection {
+    margin-bottom: 20px;
+}
+
+.BlogTitle {
+    width: 100%;
+}
+
+/* Blog Input Styles */
+.blog-input textarea {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    resize: none;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Image Upload Styles */
+.image-upload {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.image-upload input {
+    margin-bottom: 10px;
+}
+
+.image-preview {
+    width: 300px;
+    height: auto;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Link Input Styles */
+.link-input input {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Poll Input Styles */
+.poll-input input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.poll-input button {
+    margin-top: 10px;
+    padding: 8px 16px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.poll-input button:hover {
+    background-color: #0056b3;
+}
+
+/* Tags Section */
+.tags-section input {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Button Styles */
+button {
+    margin-top: 20px;
+    padding: 12px 20px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.3s ease;
+}
+
+
+/* Poll Container Styles */
+.pollContainer {
+    margin-bottom: 20px;
+}
+
+/* Poll Bar Styles */
+.poll-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #ddd;
+    border-radius: 5px;
+    overflow: hidden;
+    margin: 5px 0;
+}
+
+.poll-bar-fill {
+    height: 100%;
+    background-color: #007bff;
+    border-radius: 5px;
+}
+
+/* Listing Page Specific */
+.landingListing {
+    width: 100%;
+    background-color: #1E1E1E;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 2px solid #333;
+}

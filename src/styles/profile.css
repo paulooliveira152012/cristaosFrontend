@@ -1,0 +1,81 @@
+.profile-listing-link {
+    text-decoration: none; /* Remove default link styling */
+    color: inherit; /* Inherit text color */
+}
+
+/* Profile page container */
+.profile-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ProfileProfileImage {
+    /* height: 10%;
+    aspect-ratio: 1; */
+    width: 30%;
+    aspect-ratio: 1;
+    margin: auto;
+    background-size: cover;
+    border-radius: 40%;
+}
+
+/* Profile header */
+.profile-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.profile-username {
+    font-size: 2em;
+    font-weight: bold;
+    color: black;
+    font-style: italic;
+}
+
+/* Loading and error styles */
+.profile-loading,
+.profile-error {
+    text-align: center;
+    font-size: 1.2em;
+    color: #ff0000;
+}
+
+/* Listings container */
+.profile-listings {
+    display: grid;
+    grid-template-columns: repeat(auto-fit);
+    gap: 20px;
+}
+
+/* Individual listing item */
+.profile-listing-item {
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+/* Listing title */
+.profile-listing-title {
+    font-size: 1.2em;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+/* Listing image */
+.profile-listing-image {
+    max-width: 100%;
+    border-radius: 8px;
+}
+
+/* No listings message */
+.profile-no-listings {
+    text-align: center;
+    font-size: 1.2em;
+    color: #777;
+}

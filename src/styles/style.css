@@ -1,0 +1,304 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box; /* Garante que padding seja incluído no cálculo da largura e altura */
+}
+
+body {
+    overflow-x: hidden;
+    height: 100vh; /* Define a altura total da tela */
+    background-color: #1E1E1E; /* Fundo principal da página */
+    color: black; /* Cor do texto principal */
+    font-family: Arial, sans-serif; /* Fonte padrão */
+}
+
+
+
+.container {
+    /* background-color: red; */
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.secondatyContainer {
+    width: 80%;
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    /* margin: auto; */
+    /* justify-content: center; */
+    align-items: center;
+    /* background-color: blue; */
+}
+
+
+.landingContainer {
+    width: 100%;
+    min-height: 100vh; /* Garante que o container ocupe pelo menos a altura total da tela */
+    background-color: white;
+    /* color: white; */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Distribui o espaço de forma balanceada */
+    margin-bottom: 10%;
+}
+
+
+.blogContent {
+    white-space: pre-wrap; /* Preserves whitespace and line breaks */
+    word-wrap: break-word; /* Ensures long words break correctly */
+    text-align: justify;
+  }  
+
+
+.landingLiveImage {
+    width: 100%;
+    aspect-ratio: 1;
+    background-size: cover;
+    background-position: center;
+    border-bottom: 2px solid #333333; /* Borda inferior para separar imagem do título */
+    border-radius: 10px;
+}
+
+.landingLiveTitle {
+    /* background-color: #333333; */
+    flex-grow: 1; /* Garante que o título ocupe o espaço disponível */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold; /* Destaca o título */
+}
+
+.landingOnlineMembersContainer {
+    height: auto; /* Define a altura fixa */
+    width: 100%;
+    /* background-color: #333333;  Cor de fundo combinando com o tema */
+    /* background-color: orange; */
+    display: flex;
+    overflow-x: auto; /* Adiciona rolagem horizontal */
+    white-space: nowrap; /* Impede que os itens quebrem para a próxima linha */
+    gap: 15px; /* Define um espaço razoável entre os itens */
+    padding: 10px 0;
+    border-bottom: 1px  solid lightgray;;
+    border-top: 1px  solid lightgray;;
+    /* background-color: red; */
+}
+
+.landingOnlineUserContainer {
+    /* background-color: rgb(160, 47, 47); */
+    /* height: 70px; */
+    text-align: center;
+    padding-left: 20px;
+    position: relative;
+}
+
+
+.landingOnlineUserImage {
+    height: 50px;
+    aspect-ratio: 1;
+    background-size: cover;
+    border-radius: 40%; /* Imagens dos usuários em formato circular */
+    cursor: pointer;
+    background-position: center;
+    flex-shrink: 0; /* Evita que os itens encolham */
+    box-shadow: 0px 2px 5px 0px #1E1E1E;
+}
+
+.OnlineUserUsernameDisplay {
+    margin-top: 5px;
+    font-weight: 600;
+    
+}
+
+
+
+/* .landingListingContainer {
+    flex-grow: 1; 
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 50px;
+}
+
+.landingListing {
+    width: 100%;
+    aspect-ratio: 3;
+    color: white;
+    background-color: #1E1E1E;
+    margin: 10px 0;
+    border: 2px solid #333333;
+    border-radius: 8px;
+    padding: 20px;
+} */
+
+.parentContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: pink;
+    margin-bottom: 20px;
+}
+
+
+.liveInRoomMembersContainer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    padding: 0px 0px 0px;
+    gap: 20px; /* Espaço entre os membros */
+    background-color: #FBFBFB;
+    margin: 5px;
+    border-radius: 10px;
+    /* height: 40vh; */
+    height: auto;
+    min-height: 150px;
+    max-height: 35vh;
+    overflow-y: auto;
+    border: solid lightgray .5px;
+    /* background-color: blue; */
+}
+
+
+.blogTitle {
+    /* color: red; */
+    margin-bottom: 15px;
+}
+
+.liveMemberParentContainer {
+    /* background-color: #002D9F; */
+    display: flex;
+    justify-content: center;
+    margin: auto;
+    width: 20%;
+    max-width: 100px;
+    /* background-color: red; */
+}
+
+.liveMemberContainer {
+    /* width: fit-content; */
+    width: 100%;
+    /* height: 100px; */
+    /* background-color: green; */
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex-shrink: 0;  /* Evita que os itens encolham */
+    position: relative;
+}
+
+.onlineStatus {
+    width: 15px;
+    height: 15px;
+    background-color: green; /* Green color for online status */
+    border-radius: 50%; /* Make the green ball round */
+    position: absolute;
+    top: 30px; /* Adjust the position to the top-right */
+    right: -6px;
+    border: 2px solid white; /* Add a white border to separate it from the image */
+  }
+
+  .liveRoomUsername {
+    /* background-color: green; */
+    font-weight: bold;
+  }
+
+
+.liveMemberProfileImage {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 0%;
+    /* background-color: purple; */
+    margin: auto;
+    /* margin-bottom: 10px; */
+}
+
+.newListingContainer {
+    height: 100px;
+    background-color: lightblue;
+    display: flex;
+}
+
+.newListingImage {
+    width: 100px;
+    height: 100px;
+    background-size: cover;
+}
+
+.newListingMainContainer {
+    /* background-color: pink; */
+    height: 100%;
+    width: 100%;
+}
+
+/* openListingpage */
+.contentBlob {
+    height: 100%;
+    min-height: 85vh;
+    padding: 50px;
+}
+
+
+.footerContainer {
+    width: 100%;
+    height: 60px; /* Altura fixa */
+    background-color: white; 
+    color: white; /* Texto em branco */
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    font-weight: bold;
+    border-top: 1px solid #002D9F; /* Borda superior para separar o footer */
+    position: fixed;
+    bottom: 0;
+    max-width: 800px;
+    margin: auto;
+}
+
+
+
+/* Make all items in the footer have a cursor pointer */
+.footerContainer > * {
+    cursor: pointer;
+}
+
+.footerProfileImage {
+    height: 90%;
+    aspect-ratio: 1;
+    background-size: cover;
+    border-radius: 50%;
+}
+
+
+.minimizedRoomLink {
+    position: fixed;
+    bottom: 100px; /* Adjust the position based on where you want the icon */
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+  }
+  
+  .minimizedRoomIcon {
+    display: flex;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .minimizedRoomIcon img {
+    margin-right: 10px;
+  }
+  
+  .minimizedRoomIcon p {
+    margin: 0;
+    color: #333;
+    font-size: 14px;
+  }
+  

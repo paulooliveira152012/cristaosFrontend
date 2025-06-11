@@ -1,0 +1,134 @@
+.interactionBoxContainer {
+    margin-bottom: 20px;
+    /* background-color: red; */
+}
+
+.commentContainer {
+    /* background-color: green; */
+    /* border-bottom: 1px solid lightgray ;    */
+    width: 100%;
+}
+
+.commentsInteractionContainer {
+    display: flex;
+    justify-content:flex-start;
+}
+
+.commentsInteractionContainer div {
+    /* background-color: pink; */
+    display: flex;
+    
+    text-align: center;
+    
+}
+
+.commentBox {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.commentInput {
+    width: 100%;
+    padding: 10px;
+}
+
+.interactionIcons {
+    display: flex;
+    justify-content: space-around;
+}
+
+.interactionIcons * {
+    cursor: pointer;
+}
+
+.commentSectionContainer {
+    /* background-color: purple; */
+    /* display: flex; */
+    justify-content: center;
+    border-bottom: 1px solid lightgray ;
+    text-align: justify;
+}
+
+.commentSection {
+    display: flex;
+    align-items: center;
+    /* background-color: lightblue; */
+    justify-content: space-between;
+    margin-bottom: 20px;
+    /* border */
+    padding-bottom: 5px;
+}
+
+.iconsContainer {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.left {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.right {
+    /* background-color: blue; */
+    display: flex;
+    align-items: center;
+}
+
+.commentProfileImage {
+    height: 50px;
+    aspect-ratio: 1;
+    background-size: cover;
+    border-radius: 50%;
+    margin-right: 20px;
+}
+
+.toggleCommentsButton {
+    margin-top: 0;
+}
+
+.submitCommentBtn {
+    background-color: #002D9F;
+    /* width: 50%; */
+    margin: 20%;
+    margin: auto;
+    /* margin-bottom: 50px; */
+}
+
+.delete-comment-button {
+    width: auto;
+    align-self: flex-end;
+}
+
+
+.replySectionContainer {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    /* background-color: red; */
+}
+
+.repliesSection {
+    /* background-color: lightgray; */
+    /* border: 2px solid lightgray; */
+    /* display: none; */
+    width: 80%;
+    justify-self: flex-end;
+    
+}
+
+.replyInteractionContainer {
+    /* background-color: red; */
+    display: flex;
+    justify-content: space-between;
+}
+
+.replyContent {
+    /* background-color: aliceblue; */
+    /* border-bottom: 1px solid lightgray; */
+}
