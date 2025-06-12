@@ -44,6 +44,7 @@ const Listings = () => {
 
       const api = `${baseURL}/api/listings/alllistings`;
 
+
       try {
         setLoading(true); // Start loading before fetch
         const response = await fetch(api, {

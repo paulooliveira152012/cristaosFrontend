@@ -16,29 +16,28 @@ const s3 = new S3Client({
 
 // Function to upload image to S3
 const uploadImageToS3 = async (file) => {
-  const fileName = `${uuidv4()}.jpg`; // Generate unique file name
-  const BucketName = "cristaos"; // name of my S3 bucket
-  const region = "us-east-2"; // set the AWS region directly
+  const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
-  const params = {
-    Bucket: "cristaos",
-    Key: fileName,
-    Body: file, // Upload the actual file, not a URL
-    ContentType: "image/jpeg", // Correct content type of the file
-  };
+  // Step 1: Get presigned URL from backend
+  const res = await fetch(`${baseUrl}/api/upload-url`);
+  const { uploadURL, key } = await res.json();
 
-  try {
-    console.log("Uploading image to S3 with params:", params);
-    const data = await s3.send(new PutObjectCommand(params));
+  // Step 2: Upload directly to S3 using the URL
+  const upload = await fetch(uploadURL, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "image/jpeg",
+    },
+    body: file,
+  });
 
-    // Construct the S3 URL using the fixed bucket name and region
-    const s3Url = `https://${BucketName}.s3.${region}.amazonaws.com/${fileName}`;
-    console.log("File uploaded successfully:", s3Url);
-    return s3Url; // Return the S3 URL
-  } catch (error) {
-    console.error("Error uploading file to S3:", error);
-    throw error;
+  if (!upload.ok) {
+    throw new Error("Failed to upload to S3");
   }
+
+  const region = "us-east-2";
+  const BucketName = "cristaos";
+  return `https://${BucketName}.s3.${region}.amazonaws.com/${key}`;
 };
 
 const Signup = () => {
