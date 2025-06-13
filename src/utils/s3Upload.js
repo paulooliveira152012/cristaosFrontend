@@ -1,40 +1,33 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"; // AWS SDK
+import { fromEnv } from "@aws-sdk/credential-provider-env";
+
 import { v4 as uuidv4 } from "uuid"; // For generating unique file names
 
 // Configure AWS S3 Client
 const s3 = new S3Client({
-  region: "us-east-2", // Your region
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
+  region: "us-east-2",
+  credentials: fromEnv(), // Isso vai usar automaticamente as variáveis do ambiente
 });
 
 // Function to upload image to S3
 const uploadImageToS3 = async (file) => {
-  const fileName = `${uuidv4()}.jpg`; // Generate unique file name
-  const BucketName = "cristaos"; // Name of your S3 bucket
-  const region = "us-east-2"; // Set the AWS region
+  // 1. Pede a URL do backend
+  const res = await fetch("http://localhost:5001/api/upload-url");
+  const { uploadURL, key } = await res.json();
 
-  const params = {
-    Bucket: BucketName,
-    Key: fileName,
-    Body: file, // Upload the actual file, not a URL
-    ContentType: file.type || "image/jpeg", // Correct content type of the file
-  };
+  // 2. Faz o upload direto pra S3
+  const upload = await fetch(uploadURL, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "image/jpeg",
+    },
+    body: file,
+  });
 
-  try {
-    console.log("Uploading image to S3 with params:", params);
-    const data = await s3.send(new PutObjectCommand(params));
+  if (!upload.ok) throw new Error("Erro no upload");
 
-    // Construct the S3 URL using the fixed bucket name and region
-    const s3Url = `https://${BucketName}.s3.${region}.amazonaws.com/${fileName}`;
-    console.log("File uploaded successfully:", s3Url);
-    return s3Url; // Return the S3 URL
-  } catch (error) {
-    console.error("Error uploading file to S3:", error);
-    throw error;
-  }
+  return `https://cristaos.s3.us-east-2.amazonaws.com/${key}`;
 };
+
 
 export { uploadImageToS3 };
