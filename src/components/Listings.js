@@ -37,13 +37,7 @@ const Listings = () => {
   // Fetch all listed items from the backend
   useEffect(() => {
     const fetchListings = async () => {
-      // const api =
-      //   process.env.NODE_ENV === "production"
-      //     ? "https://cristaosbackend.onrender.com/api/listings/alllistings"
-      //     : "http://localhost:5001/api/listings/alllistings"; // Use local API in development
-
       const api = `${baseURL}/api/listings/alllistings`;
-
 
       try {
         setLoading(true); // Start loading before fetch
@@ -246,6 +240,8 @@ const Listings = () => {
                   </p>
                   {/*  */}
 
+                  {listing.imageUrl && (
+
                   <img
                     src={listing.imageUrl}
                     alt={`Listing image ${listing._id}`}
@@ -257,6 +253,7 @@ const Listings = () => {
                       backgroundColor: "red",
                     }}
                   />
+                  )}
                 </div>
               </Link>
             )}
@@ -269,12 +266,12 @@ const Listings = () => {
                   justifyContent: "center",
                 }}
               >
-                <Link to={`openListing/${listing._id}`}>
+                <Link to={`openListing/${listing._id}`} style={{ display: "flex", justifyContent: "center"}}>
                   <img
                     src={listing.imageUrl}
                     alt={`Listing image ${listing._id}`}
                     className="listingImage"
-                    style={{ maxWidth: "100%", height: "auto" }}
+                    style={{ maxWidth: "100%", height: "60vh", margin: "auto" }}
                   />
                 </Link>
               </div>
