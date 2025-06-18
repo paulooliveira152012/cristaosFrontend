@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import { useSearchParams, useNavigate } from "react-router-dom";
 
+const baseUrl = process.env.REACT_APP_API_BASE_URL
+
 const PasswordReset = () => {
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -23,14 +25,8 @@ const PasswordReset = () => {
     e.preventDefault();
     console.log("Submitting password update request");
 
-    // Define API route based on environment
-    const apiUri =
-      process.env.NODE_ENV === "production"
-        ? `https://cristaosbackend.onrender.com/api/users/resetPassword`
-        : `http://localhost:5001/api/users/resetPassword`;
-
     try {
-      const response = await fetch(apiUri, {
+      const response = await fetch(`${baseUrl}/api/users/resetPassword`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

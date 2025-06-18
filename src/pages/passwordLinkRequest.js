@@ -2,6 +2,8 @@ import { useState } from "react";
 import Header from "../components/Header";
 import { useNavigate } from "react-router-dom";
 
+const baseUrl = process.env.REACT_APP_API_BASE_URL
+
 const PasswordResetLink = () => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
@@ -14,14 +16,8 @@ const PasswordResetLink = () => {
     e.preventDefault();
     console.log("Requesting password reset link for:", email);
 
-    // Define API route based on environment
-    const apiUri =
-      process.env.NODE_ENV === "production"
-        ? `https://cristaosbackend.onrender.com/api/users/forgotPassword`
-        : `http://localhost:5001/api/users/forgotPassword`; // Local development URL
-
     try {
-      const response = await fetch(apiUri, {
+      const response = await fetch(`${baseUrl}/api/users/forgotPassword`, {
         method: "POST", // Use POST for sending the email request
         headers: {
           "Content-Type": "application/json",

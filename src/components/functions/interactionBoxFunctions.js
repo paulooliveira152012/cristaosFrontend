@@ -1,13 +1,10 @@
+const baseUrl = process.env.REACT_APP_API_BASE_URL
+
 export const fetchComments = async (listingId) => {
   console.log("function to fetch comments for listing page reached");
   console.log("listingId is:", listingId);
   try {
-    const api =
-      process.env.NODE_ENV === "production"
-        ? `https://cristaosbackend.onrender.com/api/comments/listings/${listingId}/comments`
-        : `http://localhost:5001/api/comments/listings/${listingId}/comments`; // Adjust the endpoint based on your setup
-
-    const response = await fetch(api);
+    const response = await fetch(`${baseUrl}/api/comments/listings/${listingId}/comments`);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch comments for listing: ${listingId}`);

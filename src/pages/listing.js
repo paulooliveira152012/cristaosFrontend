@@ -16,6 +16,8 @@ import {
   handleCommentLike,
 } from "../components/functions/interactionFunctions";
 
+const baseUrl = process.env.REACT_APP_API_BASE_URL
+
 const ListingPage = () => {
   const navigate = useNavigate();
   const { currentUser } = useUser();
@@ -29,12 +31,7 @@ const ListingPage = () => {
   useEffect(() => {
     const fetchListingData = async () => {
       try {
-        const api =
-          process.env.NODE_ENV === "production"
-            ? `https://cristaosbackend.onrender.com/api/listings/listings/${listingId}`
-            : `http://localhost:5001/api/listings/listings/${listingId}`;
-
-        const response = await fetch(api);
+        const response = await fetch(`${baseUrl}/api/listings/listings/${listingId}`);
         if (!response.ok) {
           const errorText = await response.text(); // Capture error details
           console.error("API Error Details:", errorText); // Log for more insight
@@ -75,12 +72,7 @@ const ListingPage = () => {
         setNewCommentId(newComment._id);
 
         // Fetch the updated listing from the backend
-        const api =
-          process.env.NODE_ENV === "production"
-            ? `https://cristaosbackend.onrender.com/api/listings/listings/${listingId}`
-            : `http://localhost:5001/api/listings/listings/${listingId}`;
-
-        const response = await fetch(api);
+        const response = await fetch(`${baseUrl}/api/listings/listings/${listingId}`);
 
         if (!response.ok) {
           throw new Error(

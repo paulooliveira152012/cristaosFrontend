@@ -1,3 +1,5 @@
+const baseUrl = process.env.REACT_APP_API_BASE_URL
+
 // Function to open the settings modal
 export const openLiveSettings = (setShowModal) => {
   setShowModal(true); // Show the modal when the settings icon is clicked
@@ -16,13 +18,7 @@ export const updateRoomTitle = async (roomId, newTitle, setRoomTitle) => {
   console.log("setNewTitle", setRoomTitle);
 
   try {
-    // Define API URL based on the environment
-    const apiUrl =
-      process.env.NODE_ENV === "production"
-        ? `https://cristaosbackend.onrender.com/api/rooms/update/${roomId}`
-        : `http://localhost:5001/api/rooms/update/${roomId}`; // Local development URL
-
-    const response = await fetch(apiUrl, {
+    const response = await fetch(`${baseUrl}/api/rooms/update/${roomId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

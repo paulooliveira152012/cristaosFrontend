@@ -5,6 +5,8 @@ import { uploadImageToS3 } from "../utils/s3Upload"; // Assuming you have a func
 import { useUser } from "../context/UserContext";
 import { useNavigate } from "react-router-dom";
 
+const baseUrl = process.env.REACT_APP_API_BASE_URL
+
 const NewListing = () => {
   const navigate = useNavigate();
   const { currentUser } = useUser();
@@ -79,11 +81,6 @@ const NewListing = () => {
         imageUrl = await uploadImageToS3(image);
       }
 
-      const apiUrl =
-        process.env.NODE_ENV === "production"
-          ? `https://cristaosbackend.onrender.com/api/listings/create`
-          : `http://localhost:5001/api/listings/create`; // Local development URL
-
       const listingData = {
         userId: currentUser._id,
         type: listingType,
@@ -98,7 +95,7 @@ const NewListing = () => {
         tags: tags.split(",").map((tag) => tag.trim()), // Split tags by commas
       };
 
-      const response = await fetch(apiUrl, {
+      const response = await fetch(`${baseUrl}/api/listings/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

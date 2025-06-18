@@ -4,6 +4,8 @@ import { useUser } from "../context/UserContext";
 import { useNavigate, Link } from "react-router-dom";
 import socket from "../socket";
 
+const baseUrl = process.env.REACT_APP_API_BASE_URL
+
 const Login = () => {
   const { login } = useUser();
   const navigate = useNavigate();
@@ -20,16 +22,10 @@ const Login = () => {
 
   // Handle form submission
   const handleLogin = async (e) => {
-    e.preventDefault(); // Prevent form from refreshing the page
-
-    // Set the API URL based on the environment
-    const apiUrl =
-      process.env.NODE_ENV === "production"
-        ? "https://cristaosbackend.onrender.com/api/users/login"
-        : "http://localhost:5001/api/users/login"; // Use local API in development
+    e.preventDefault(); // Prevent form from refreshing the page    
 
     try {
-      const response = await fetch(apiUrl, {
+      const response = await fetch(`${baseUrl}/api/users/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

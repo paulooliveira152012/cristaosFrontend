@@ -5,6 +5,8 @@ import { useUser } from "../context/UserContext";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid"; // For generating unique file names
 
+const baseUrl = process.env.REACT_APP_API_BASE_URL
+
 // Configure AWS S3 Client
 const s3 = new S3Client({
   region: "us-east-2",
@@ -16,8 +18,6 @@ const s3 = new S3Client({
 
 // Function to upload image to S3
 const uploadImageToS3 = async (file) => {
-  const baseUrl = process.env.REACT_APP_API_BASE_URL;
-
   // Step 1: Get presigned URL from backend
   const res = await fetch(`${baseUrl}/api/upload-url`);
   const { uploadURL, key } = await res.json();
@@ -90,12 +90,8 @@ const Signup = () => {
         imageUrl = await uploadImageToS3(file);
       }
 
-      const apiUrl =
-        process.env.NODE_ENV === "production"
-          ? "https://cristaosbackend.onrender.com/api/users/signup"
-          : "http://localhost:5001/api/users/signup"; // Dynamic API based on environment
 
-      const response = await fetch(apiUrl, {
+      const response = await fetch(`http://localhost:5001/api/users/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

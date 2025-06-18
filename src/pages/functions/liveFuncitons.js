@@ -1,15 +1,13 @@
+
+const baseUrl = process.env.REACT_APP_API_BASE_URL
+
 // Function to update room title using fetch
 export const updateRoomTitle = async (roomId, newTitle, setRoomTitle) => {
   console.log("roomId:", roomId);
   console.log("newTitle:", newTitle);
 
-  const apiUrl =
-    process.env.NODE_ENV === "production"
-      ? `https://cristaosbackend.onrender.com/api/rooms/update/${roomId}`
-      : `http://localhost:5001/api/rooms/update/${roomId}`; // Local development URL
-
   try {
-    const response = await fetch(apiUrl, {
+    const response = await fetch(`${baseUrl}/api/rooms/update/${roomId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -34,13 +32,8 @@ export const updateRoomTitle = async (roomId, newTitle, setRoomTitle) => {
 // Function to delete a room using fetch
 // Function to delete a room using fetch
 export const deleteRoom = async (roomId, navigate) => {
-  const apiUrl =
-    process.env.NODE_ENV === "production"
-      ? `https://cristaosbackend.onrender.com/api/rooms/delete/${roomId}`
-      : `http://localhost:5001/api/rooms/delete/${roomId}`; // Local development URL
-
   try {
-    const response = await fetch(apiUrl, {
+    const response = await fetch(`${baseUrl}/api/rooms/delete/${roomId}`, {
       method: "DELETE",
     });
 

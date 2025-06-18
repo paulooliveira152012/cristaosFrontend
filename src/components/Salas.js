@@ -10,6 +10,8 @@ import luaFoto from "../assets/images/preta.png";
 import terraplanismoFoto from "../assets/images/terraplanismo.png";
 import NewChat from "../assets/icons/newchatIcon";
 
+const baseUrl = process.env.REACT_APP_API_BASE_URL
+
 const lua = luaFoto;
 const terraplanismo = terraplanismoFoto;
 
@@ -24,13 +26,8 @@ const Salas = () => {
   // Fetch rooms from backend on component mount
   useEffect(() => {
     const fetchRooms = async () => {
-      const api =
-        process.env.NODE_ENV === "production"
-          ? "https://cristaosbackend.onrender.com/api/rooms"
-          : "http://localhost:5001/api/rooms"; // Use local API in development
-
       try {
-        const response = await fetch(api, {
+        const response = await fetch(`${baseUrl}/api/rooms`, {
           method: "GET",
           credentials: "include", // Include credentials (if applicable)
           headers: {
@@ -89,12 +86,7 @@ const Salas = () => {
       };
 
       // Send POST request to create a new room
-      const apiUrl =
-        process.env.NODE_ENV === "production"
-          ? `https://cristaosbackend.onrender.com/api/rooms/create`
-          : `http://localhost:5001/api/rooms/create`; // Local development URL
-
-      const response = await fetch(apiUrl, {
+      const response = await fetch(`${baseUrl}/api/rooms/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -12,6 +12,8 @@ import { handleBack } from "../components/functions/headerFunctions.js";
 import { useContext } from "react";
 import AudioContext from "../context/AudioContext.js";
 
+const baseUrl = process.env.REACT_APP_API_BASE_URL
+
 let socket;
 
 const LiveRoom = () => {
@@ -50,13 +52,8 @@ const LiveRoom = () => {
 
       console.log("Fetching room data with roomId:", roomId);
 
-      const apiUrl =
-        process.env.NODE_ENV === "production"
-          ? `https://cristaosbackend.onrender.com/api/rooms/fetchRoomData/${roomId}`
-          : `http://localhost:5001/api/rooms/fetchRoomData/${roomId}`; // Local development URL
-
       try {
-        const response = await fetch(apiUrl);
+        const response = await fetch(`${baseUrl}/api/rooms/fetchRoomData/${roomId}`);
         const data = await response.json();
 
         if (response.ok) {
@@ -83,13 +80,10 @@ const LiveRoom = () => {
     if (!currentUser || !roomId || !sala) return;
 
     if (!socket) {
-      const socketUrl =
-        process.env.NODE_ENV === "production"
-          ? "https://cristaosbackend.onrender.com" // Production backend
-          : "http://localhost:5001"; // Development backend
+  
 
-      socket = io(socketUrl); // Initialize the socket only once
-      console.log("Socket URL:", socketUrl);
+      socket = io(baseUrl); // Initialize the socket only once
+      console.log("Socket URL:", baseUrl);
 
       socket.currentRoomId = sala?._id || roomId;
     }

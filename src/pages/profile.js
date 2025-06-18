@@ -6,6 +6,8 @@ import ListingInteractionBox from "../components/ListingInteractionBox";
 import "../styles/profile.css";
 const imagePlaceholder = require("../assets/images/profileplaceholder.png");
 
+const baseUrl = process.env.REACT_APP_API_BASE_URL
+
 const Profile = () => {
   const { currentUser } = useUser();
   const { userId } = useParams();
@@ -26,12 +28,7 @@ const Profile = () => {
     const fetchUserData = async () => {
       setLoading(true);
       try {
-        const apiUrl =
-          process.env.NODE_ENV === "production"
-            ? `https://cristaosbackend.onrender.com/api/listings/users/${userId}`
-            : `http://localhost:5001/api/listings/users/${userId}`;
-
-        const response = await fetch(apiUrl, {
+        const response = await fetch(`${baseUrl}/api/listings/users/${userId}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -68,13 +65,8 @@ const Profile = () => {
   // Fetch listing comments
   // Fetch listing comments
   const handleFetchComments = async (listingId) => {
-    const api =
-      process.env.NODE_ENV === "production"
-        ? `https://cristaosbackend.onrender.com/api/comments/listings/${listingId}/comments`
-        : `http://localhost:5001/api/comments/listings/${listingId}/comments`; // Use local API in development
-
     try {
-      const response = await fetch(api, {
+      const response = await fetch(`${baseUrl}/api/comments/listings/${listingId}/comments`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -108,13 +100,8 @@ const Profile = () => {
       return;
     }
 
-    const apiUrl =
-      process.env.NODE_ENV === "production"
-        ? `https://cristaosbackend.onrender.com/api/listings/delete/${listingId}`
-        : `http://localhost:5001/api/listings/delete/${listingId}`;
-
     try {
-      const response = await fetch(apiUrl, {
+      const response = await fetch(`${baseUrl}/api/listings/delete/${listingId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json", // Ensure proper content type
@@ -142,18 +129,13 @@ const Profile = () => {
       return;
     }
 
-    const api =
-      process.env.NODE_ENV === "production"
-        ? `https://cristaosbackend.onrender.com/api/comments/listings/${listingId}/comment`
-        : `http://localhost:5001/api/comments/listings/${listingId}/comment`;
-
     const requestBody = {
       userId: currentUser._id,
       commentText,
     };
 
     try {
-      const response = await fetch(api, {
+      const response = await fetch(`${baseUrl}/api/comments/listings/${listingId}/comment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
@@ -204,13 +186,8 @@ const Profile = () => {
       })
     );
 
-    const api =
-      process.env.NODE_ENV === "production"
-        ? `https://cristaosbackend.onrender.com/api/listings/listingLike/${listingId}`
-        : `http://localhost:5001/api/listings/listingLike/${listingId}`; // Development URL
-
     try {
-      const response = await fetch(api, {
+      const response = await fetch(`${baseUrl}/api/listings/listingLike/${listingId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId }),
@@ -257,11 +234,11 @@ const Profile = () => {
     const apiUrl =
       process.env.NODE_ENV === "production"
         ? parentCommentId
-          ? `https://cristaosbackend.onrender.com/api/comments/${commentId}/${parentCommentId}` // Delete reply
-          : `https://cristaosbackend.onrender.com/api/comments/${commentId}` // Delete parent comment
+          ? `${baseUrl}/api/comments/${commentId}/${parentCommentId}` // Delete reply
+          : `${baseUrl}/api/comments/${commentId}` // Delete parent comment
         : parentCommentId
-        ? `http://localhost:5001/api/comments/${commentId}/${parentCommentId}` // Delete reply (local dev)
-        : `http://localhost:5001/api/comments/${commentId}`; // Delete parent comment (local dev)
+        ? `${baseUrl}/comments/${commentId}/${parentCommentId}` // Delete reply (local dev)
+        : `${baseUrl}/api/comments/${commentId}`; // Delete parent comment (local dev)
 
     try {
       const response = await fetch(apiUrl, {
@@ -330,18 +307,13 @@ const Profile = () => {
 
     console.log("trying to submit a reply");
 
-    const api =
-      process.env.NODE_ENV === "production"
-        ? `https://cristaosbackend.onrender.com/api/comments/listings/${parentCommentId}/reply`
-        : `http://localhost:5001/api/comments/listings/${parentCommentId}/reply`; // Local development URL
-
     const requestBody = {
       userId: currentUser._id,
       replyText,
     };
 
     try {
-      const response = await fetch(api, {
+      const response = await fetch(`${baseUrl}/api/comments/listings/${parentCommentId}/reply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
@@ -393,11 +365,11 @@ const Profile = () => {
     const api =
       process.env.NODE_ENV === "production"
         ? isReply
-          ? `https://cristaosbackend.onrender.com/api/comments/comment/like/${parentCommentId}/${commentId}`
-          : `https://cristaosbackend.onrender.com/api/comments/comment/like/${commentId}`
+          ? `${baseUrl}/api/comments/comment/like/${parentCommentId}/${commentId}`
+          : `${baseUrl}/api/comments/comment/like/${commentId}`
         : isReply
-        ? `http://localhost:5001/api/comments/comment/like/${parentCommentId}/${commentId}`
-        : `http://localhost:5001/api/comments/comment/like/${commentId}`; // Local development URL
+        ? `${baseUrl}/api/comments/comment/like/${parentCommentId}/${commentId}`
+        : `${baseUrl}/api/comments/comment/like/${commentId}`; // Local development URL
 
     try {
       const response = await fetch(api, {
@@ -451,13 +423,8 @@ const Profile = () => {
     console.log("Listing ID:", listingId);
     console.log("Current User ID:", userId);
 
-    const api =
-      process.env.NODE_ENV === "production"
-        ? `https://cristaosbackend.onrender.com/api/listings/share/${listingId}`
-        : `http://localhost:5001/api/listings/share/${listingId}`; // Local development URL
-
     try {
-      const response = await fetch(api, {
+      const response = await fetch(`${baseUrl}/api/listings/share/${listingId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

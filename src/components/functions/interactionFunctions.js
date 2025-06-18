@@ -1,12 +1,9 @@
+const baseUrl = process.env.REACT_APP_API_BASE_URL
+
 // Fetch listing comments
 export const handleFetchComments = async (listingId, setItems) => {
-  const api =
-    process.env.NODE_ENV === "production"
-      ? `https://cristaosbackend.onrender.com/api/comments/listings/${listingId}/comments`
-      : `http://localhost:5001/api/comments/listings/${listingId}/comments`; // Use local API in development
-
   try {
-    const response = await fetch(api, {
+    const response = await fetch(`${baseUrl}/api/comments/listings/${listingId}/comments`, {
       method: "GET",
       credentials: "include", // Include credentials if needed
       headers: {
@@ -47,17 +44,12 @@ export const handleCommentSubmit = async (
   }
 
   try {
-    const api =
-      process.env.NODE_ENV === "production"
-        ? `https://cristaosbackend.onrender.com/api/comments/listings/${listingId}/comment`
-        : `http://localhost:5001/api/comments/listings/${listingId}/comment`;
-
     const requestBody = {
       userId: currentUser._id,
       commentText,
     };
 
-    const response = await fetch(api, {
+    const response = await fetch(`${baseUrl}/api/comments/listings/${listingId}/comment`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestBody),
@@ -113,13 +105,8 @@ export const handleReplySubmit = async (
     return;
   }
 
-  const api =
-    process.env.NODE_ENV === "production"
-      ? `https://cristaosbackend.onrender.com/api/comments/listings/${parentCommentId}/reply`
-      : `http://localhost:5001/api/comments/listings/${parentCommentId}/reply`;
-
   try {
-    const response = await fetch(api, {
+    const response = await fetch(`${baseUrl}/api/comments/listings/${parentCommentId}/reply`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: currentUser._id, listingId, replyText }),
@@ -180,11 +167,11 @@ export const handleDeleteComment = async (
   const apiUrl =
     process.env.NODE_ENV === "production"
       ? parentCommentId
-        ? `https://cristaosbackend.onrender.com/api/comments/${commentId}/${parentCommentId}`
-        : `https://cristaosbackend.onrender.com/api/comments/${commentId}`
+        ? `${baseUrl}/api/comments/${commentId}/${parentCommentId}`
+        : `${baseUrl}/api/comments/${commentId}`
       : parentCommentId
-      ? `http://localhost:5001/api/comments/${commentId}/${parentCommentId}`
-      : `http://localhost:5001/api/comments/${commentId}`;
+      ? `${baseUrl}/api/comments/${commentId}/${parentCommentId}`
+      : `${baseUrl}/api/comments/${commentId}`;
 
   try {
     const response = await fetch(apiUrl, {
@@ -251,13 +238,8 @@ export const handleLike = async (listingId, currentUser, items = [], setItems) =
     return;
   }
 
-  const api =
-    process.env.NODE_ENV === "production"
-      ? `https://cristaosbackend.onrender.com/api/listings/listingLike/${listingId}`
-      : `http://localhost:5001/api/listings/listingLike/${listingId}`; // Local development URL
-
   try {
-    const response = await fetch(api, {
+    const response = await fetch(`${baseUrl}/api/listings/listingLike/${listingId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: currentUser._id }),
@@ -298,13 +280,8 @@ export const handleShare = async (listingId, currentUser) => {
   console.log("Listing ID:", listingId);
   console.log("Current User ID:", userId);
 
-  const api =
-    process.env.NODE_ENV === "production"
-      ? `https://cristaosbackend.onrender.com/api/listings/share/${listingId}`
-      : `http://localhost:5001/api/listings/share/${listingId}`; // Local development URL
-
   try {
-    const response = await fetch(api, {
+    const response = await fetch(`${baseUrl}/api/listings/share/${listingId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -353,11 +330,11 @@ export const handleCommentLike = async (
   const api =
     process.env.NODE_ENV === "production"
       ? isReply
-        ? `https://cristaosbackend.onrender.com/api/comments/comment/like/${parentCommentId}/${commentId}`
-        : `https://cristaosbackend.onrender.com/api/comments/comment/like/${commentId}`
+        ? `${baseUrl}/api/comments/comment/like/${parentCommentId}/${commentId}`
+        : `${baseUrl}/api/comments/comment/like/${commentId}`
       : isReply
-      ? `http://localhost:5001/api/comments/comment/like/${parentCommentId}/${commentId}`
-      : `http://localhost:5001/api/comments/comment/like/${commentId}`;
+      ? `${baseUrl}/api/comments/comment/like/${parentCommentId}/${commentId}`
+      : `${baseUrl}/api/comments/comment/like/${commentId}`;
 
   console.log("Constructed API endpoint:", api);
 

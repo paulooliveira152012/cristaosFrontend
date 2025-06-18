@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
+const baseUrl = process.env.REACT_APP_API_BASE_URL
+
 const VerifyAccount = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -17,14 +19,14 @@ const VerifyAccount = () => {
 
   useEffect(() => {
     // Call the API to verify the token
+    console.log("baseUrl for confirming email:", baseUrl)
+    
     const verifyToken = async () => {
-      try {
-        const api =
-          process.env.NODE_ENV === "production"
-            ? `https://cristaosbackend.onrender.com/api/users/verifyAccount?token=${token}`
-            : `http://localhost:5001/api/users/verifyAccount?token=${token}`; // Local development URL
 
-        const response = await fetch(api, {
+      console.log("token needed for verifycation:", token)
+
+      try {
+        const response = await fetch(`${baseUrl}/api/users/verifyAccount/${token}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
