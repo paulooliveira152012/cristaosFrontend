@@ -263,6 +263,3 @@ const NewListing = () => {
 
 export default NewListing;
 
-//"https://cristaosbackend.onrender.com/api/create"
-
-// const apiUrl = "http://localhost:5001/api/listings/create";

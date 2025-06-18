@@ -70,6 +70,3 @@ verification token is stored in db
 but when clicking the link in email it says it is 
 invalid or expired when checking 
 */
-
-// const response = await fetch(`http://localhost:5001/api/users/verify-email/${email}`, {
-// const response = await fetch(`https://cristaosbackend.onrender.com/api/users/verify-email/${email}`, {

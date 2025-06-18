@@ -358,15 +358,6 @@ const LiveRoom = () => {
 
 export default LiveRoom;
 
-// socket = io("http://localhost:5001/");
-// socket = io("https://cristaosbackend.onrender.com/");
-// socket.currentRoomId = sala?._id || roomId;
-
-// const response = await fetch(
-//   // `https://cristaosbackend.onrender.com/api/rooms/${roomId}`
-//   `http://localhost:5001/api/rooms/${roomId}`
-// );
-
 /*
 
 ajustar o border radius dos perfis

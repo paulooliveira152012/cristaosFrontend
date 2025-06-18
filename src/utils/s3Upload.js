@@ -3,6 +3,8 @@ import { fromEnv } from "@aws-sdk/credential-provider-env";
 
 import { v4 as uuidv4 } from "uuid"; // For generating unique file names
 
+const baseUrl = process.env.REACT_APP_API_BASE_URL
+
 // Configure AWS S3 Client
 const s3 = new S3Client({
   region: "us-east-2",
@@ -12,7 +14,7 @@ const s3 = new S3Client({
 // Function to upload image to S3
 const uploadImageToS3 = async (file) => {
   // 1. Pede a URL do backend
-  const res = await fetch("http://localhost:5001/api/upload-url");
+  const res = await fetch(`${baseUrl}/api/upload-url`);
   const { uploadURL, key } = await res.json();
 
   // 2. Faz o upload direto pra S3
