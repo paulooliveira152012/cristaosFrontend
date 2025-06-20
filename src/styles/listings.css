@@ -19,6 +19,7 @@
     border-bottom: 1px  solid lightgray;;
     
     padding: 20px;
+    position: relative;
 }
 
 @media screen and (max-width: 500px) {
@@ -55,4 +56,23 @@
     color: black;
     text-decoration: none;
     padding-bottom: 0;
+}
+
+.adminListingMenu {
+    /* background-color: green; */
+    position: absolute;
+    right: 0;
+    width: 50%;
+    height: 20%;
+    margin-right: 5px;
+}
+
+.adminListingMenu ul li {
+    list-style: none;
+    font-size: large;
+    /* padding: 10px; */
+}
+
+.adminListingMenu ul li button {
+
 }

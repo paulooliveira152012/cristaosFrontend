@@ -24,6 +24,7 @@ const Listings = () => {
   const [comment, setComments] = useState([]);
   // listingId when creating new comment to be available when liking new comments
   const [newCommentId, setNewCommentId] = useState("");
+  const [openLeaderMenuId, setOpenLeaderMenuId] = useState(null);
 
   // Logging whenever newCommentId changes
   useEffect(() => {
@@ -189,7 +190,44 @@ const Listings = () => {
     }
   };
 
+  const toggleLeaderMenu = (listingId) => {
+    setOpenLeaderMenuId((prevId) => (prevId === listingId ? null : listingId));
+  };
+
   // console.log("currentUser in Listings:", currentUser); // Ensure it shows correct data
+
+  const handleDeleteListing = async (listingId) => {
+  const confirmDelete = window.confirm("Tem certeza que deseja deletar esta postagem?");
+  if (!confirmDelete) return;
+
+  try {
+    const api = `${baseURL}/api/adm/admDeleteListing/${listingId}`;
+    console.log("calling api:", api, "with listingId of:", listingId)
+
+    const response = await fetch(api, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      credentials: "include", // se o backend exigir autenticação por cookie
+    });
+
+    if (!response.ok) {
+      console.log("Erro ao tentar deletar listagem ")
+      throw new Error(`Erro ao deletar postagem: ${response.statusText}`);
+    }
+
+    // Atualizar o estado removendo o item da lista
+    setItems((prevItems) => prevItems.filter((item) => item._id !== listingId));
+
+    alert("Postagem deletada com sucesso!");
+
+  } catch (error) {
+    console.error("Erro ao deletar a postagem:", error);
+    alert("Erro ao deletar a postagem.");
+  }
+};
+
 
   return (
     <div className="landingListingsContainer">
@@ -198,28 +236,56 @@ const Listings = () => {
       ) : items.length > 0 ? (
         items.map((listing) => (
           <div key={listing._id} className="landingListingContainer">
-            <div className="userInfo">
-              {listing.userId && (
-                <>
-                  <Link to={`/profile/${listing.userId._id}`}>
-                    <div
-                      style={{
-                        height: "50px",
-                        width: "50px",
-                        borderRadius: "40%",
-                        backgroundImage: `url(${
-                          listing.userId.profileImage || image
-                        })`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                        backgroundRepeat: "no-repeat",
-                      }}
-                    ></div>
-                  </Link>
-                  <p className="userName">{listing.userId.username}</p>
-                </>
+            {/* container para userInfo e adm */}
+            <div className="listing header">
+              {/* 1 / 2 */}
+              <div className="userInfo">
+                {listing.userId && (
+                  <>
+                    <Link to={`/profile/${listing.userId._id}`}>
+                      <div
+                        style={{
+                          height: "50px",
+                          width: "50px",
+                          borderRadius: "40%",
+                          backgroundImage: `url(${
+                            listing.userId.profileImage || image
+                          })`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                          backgroundRepeat: "no-repeat",
+                        }}
+                      ></div>
+                    </Link>
+                    <p className="userName">{listing.userId.username}</p>
+                  </>
+                )}
+              </div>
+
+              {/* 2/2 */}
+
+              {currentUser?.leader == true && (
+                <div>
+                  <button
+                    style={{ backgroundColor: "red" }}
+                    onClick={(index) => toggleLeaderMenu(listing._id)}
+                  >
+                    {" "}
+                    <p>...</p>
+                  </button>
+                </div>
               )}
             </div>
+
+            {openLeaderMenuId === listing._id && (
+                <div className="adminListingMenu">
+                  <ul>
+                    <li>
+                      <button onClick={() => handleDeleteListing(listing._id)}>delete</button>
+                    </li>
+                  </ul>
+                </div>
+              )}
 
             {listing.type === "blog" && (
               <Link
@@ -241,18 +307,17 @@ const Listings = () => {
                   {/*  */}
 
                   {listing.imageUrl && (
-
-                  <img
-                    src={listing.imageUrl}
-                    alt={`Listing image ${listing._id}`}
-                    className="listingImage"
-                    style={{
-                      width: "100%",
-                      maxWidth: "100%",
-                      height: "auto",
-                      backgroundColor: "red",
-                    }}
-                  />
+                    <img
+                      src={listing.imageUrl}
+                      alt={`Listing image ${listing._id}`}
+                      className="listingImage"
+                      style={{
+                        width: "100%",
+                        maxWidth: "100%",
+                        height: "auto",
+                        backgroundColor: "red",
+                      }}
+                    />
                   )}
                 </div>
               </Link>
@@ -266,7 +331,10 @@ const Listings = () => {
                   justifyContent: "center",
                 }}
               >
-                <Link to={`openListing/${listing._id}`} style={{ display: "flex", justifyContent: "center"}}>
+                <Link
+                  to={`openListing/${listing._id}`}
+                  style={{ display: "flex", justifyContent: "center" }}
+                >
                   <img
                     src={listing.imageUrl}
                     alt={`Listing image ${listing._id}`}
