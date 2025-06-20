@@ -12,17 +12,16 @@
 
 
 
+/* 10px top  20px side*/
 .top {
-    /* background-color: red; */
+    background-color: orange;    
     display: flex;
-    justify-content: center;
-    /* flex-direction: column; */
-    height: 10vh;
+    padding: 10px;
     justify-content: space-between;
-    /* dois valores = topo e fundo depois laterais */
-    padding:  20px;
-
 }
+
+
+
 
 /* 1 */
 .profileImageContainer {
