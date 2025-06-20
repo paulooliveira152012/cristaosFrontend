@@ -35,7 +35,7 @@ const SideMenu = ({ closeMenu }) => {
               onClick={() => navigate(`profile/${currentUser._id}`)}
             ></div>
             {/* display current user's name */}
-            <p className="username">{currentUser?.username}</p>
+            {/* <p className="username">{currentUser?.username}</p> */}
           </div>
 
           <div onClick={closeMenu} className="closeBtn">

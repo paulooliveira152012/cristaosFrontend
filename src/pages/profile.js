@@ -503,6 +503,8 @@ const Profile = () => {
                       </p>
                       {/*  */}
 
+                      {listing.image && (
+
                       <img
                         src={listing.imageUrl}
                         alt={`Listing image ${listing._id}`}
@@ -514,6 +516,7 @@ const Profile = () => {
                           backgroundColor: "red",
                         }}
                       />
+                      )}
                     </div>
                   </Link>
                 )}

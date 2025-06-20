@@ -14,7 +14,7 @@
 
 /* 10px top  20px side*/
 .top {
-    background-color: orange;    
+    /* background-color: orange;     */
     display: flex;
     padding: 10px;
     justify-content: space-between;

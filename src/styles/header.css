@@ -3,7 +3,7 @@
     display: flex;
     justify-content: space-between;
     padding: 0px 0px;
-    background-color: red; 
+    /* background-color: red;  */
     color: black;
     /* box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); */
     /* height: 60px; */
@@ -135,7 +135,7 @@
   @media screen and (max-width: 500px) {
     .header {
         /* background-color: green; */
-        padding: 5px;
+        /* padding: 5px; */
     }
 
     .right-section {
