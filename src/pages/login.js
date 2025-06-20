@@ -24,6 +24,8 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault(); // Prevent form from refreshing the page    
 
+    console.log("tentando alcancar backend")
+
     try {
       const response = await fetch(`${baseUrl}/api/users/login`, {
         method: "POST",
@@ -33,6 +35,7 @@ const Login = () => {
         body: JSON.stringify({ email, password }), // Sending email and password to backend
         credentials: "include", // Include credentials if applicable (cookies, auth headers, etc.)
       });
+
 
       const data = await response.json();
 

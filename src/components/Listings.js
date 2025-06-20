@@ -37,9 +37,11 @@ const Listings = () => {
 
   // Fetch all listed items from the backend
   useEffect(() => {
+    console.log("✅ BUSCANDO ITENS")
     const fetchListings = async () => {
       const api = `${baseURL}/api/listings/alllistings`;
 
+      console.log("✅✅ api usada:", api)
       try {
         setLoading(true); // Start loading before fetch
         const response = await fetch(api, {
@@ -50,7 +52,10 @@ const Listings = () => {
           },
         });
 
+        console.log("✅")
+
         if (!response.ok) {
+          console.log("✅ erro aqui => :", response.statusText)
           throw new Error(`Error fetching listings: ${response.statusText}`);
         }
 
