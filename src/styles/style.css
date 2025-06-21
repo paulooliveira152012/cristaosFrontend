@@ -15,7 +15,11 @@ body {
 .mainParentContainer {
     /* background-color: orange; */
     display: flex;
-    justify-content: space-evenly;
+    flex-direction: row;
+    width: 100vw;
+    height: 100vh;
+    justify-content: space-evenly;  
+     overflow: hidden;  
 }
 
 
@@ -25,6 +29,7 @@ body {
     /* position: absolute; */
     z-index: 20;
     background-color: purple;
+    
 }
 
 @media screen and (max-width: 800px) {

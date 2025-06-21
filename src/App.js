@@ -80,20 +80,35 @@ const App = () => {
         <AudioProvider>
           <UserProvider>
             <div className="mainParentContainer">
-
               {/* flex 1 */}
               <div className="sideMenuContainerWideScreen">
                 {/* COLOCAR O MENU AQUI */}
-                <SideMenuFullScreen/>
-              </div>
+                
 
+                <SideMenuFullScreen />
+                
+                
+              </div>
               {/* flex 2 */}
-              <div style={{ backgroundColor: "red", flex: 2, display: "flex", flexDirection: "column", position: "relative", minHeight: "100vh" }}>
+              <div
+                style={{
+                  backgroundColor: "red",
+                  flex: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  position: "relative",
+                  minHeight: "100vh",
+                  overflowY: "auto"
+                }}
+              >
                 {/* Wrap your entire app in a div with global styling */}
                 <div
                   style={{
                     // maxWidth: "800px",
-                    flex: 1, margin: "0 auto", width: "100%", maxWidth: 800
+                    flex: 1,
+                    margin: "0 auto",
+                    width: "100%",
+                    maxWidth: 800,
                     // position: "relative",
                   }}
                 >
@@ -139,15 +154,13 @@ const App = () => {
                   <MinimizedStatus />
                 </div>
 
-                   {/* Footer posicionado dentro do flex:2 */}
-  <div style={{ position: "sticky", bottom: 0 }}>
-    <Footer />
-  </div>
-              </div>  {/* final da div flex 2 */}
-              
-
+                {/* Footer posicionado dentro do flex:2 */}
+                <div style={{ position: "sticky", bottom: 0 }}>
+                  <Footer />
+                </div>
+              </div>{" "}
+              {/* final da div flex 2 */}
               <div className="sideMenuContainerWideScreen"></div>
-
             </div>
           </UserProvider>
         </AudioProvider>
