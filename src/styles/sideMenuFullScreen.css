@@ -1,8 +1,8 @@
-.sideMenu {
-    width: 60%;
+.sideMenuFullScreen {
+    /* width: 60%; */
     height: 100%;
     background-color: white;
-    position:fixed;
+    /* position:fixed; */
     margin: 0;
     padding: 0;
     z-index: 10;
@@ -78,15 +78,6 @@
     /* background-color: yellow; */
     display: flex;
     margin: auto 10px;
-}
-
-.sideMenuProfileImage {
-    height: 50px;
-    width: 50px;
-    background-size: cover;
-    /* border-radius: 50%; */
-    border-radius: 40%;
-    
 }
 
 

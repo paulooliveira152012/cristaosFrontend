@@ -92,7 +92,10 @@
     background-size: cover;
     /* border-radius: 50%; */
     border-radius: 40%;
+    /* display: none; */
 }
+
+
 
 .settingsIcon {
   cursor: pointer;
@@ -142,4 +145,10 @@
         display: flex;
         align-items: center;
       }
+  }
+
+  @media screen and (min-width: 800px) {
+    .headerProfileImage {
+      display: none;
+    }
   }
