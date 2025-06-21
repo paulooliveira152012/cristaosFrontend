@@ -83,6 +83,7 @@ export const AudioProvider = ({ children }) => {
       if (micOn && !localAudioTrack) {
         // Create and publish the microphone track if it doesn't exist
         const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+        console.log("conectou...")
         setLocalAudioTrack(audioTrack);
         await agoraClient.publish([audioTrack]);
         console.log("Microphone is now on");

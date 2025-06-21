@@ -50,12 +50,6 @@ export const UserProvider = ({ children }) => {
   });
 
 
-   // Handle disconnect (e.g., page refresh)
-   socket.on('disconnect', () => {
-    if (currentUser) {
-      handleLogout(currentUser); // Ensure user is logged out properly
-    }
-  });
 
   return () => {
     socket.off('onlineUsers'); // Clean up the event listener on unmount
@@ -72,29 +66,24 @@ export const UserProvider = ({ children }) => {
     handleLogin(user); // Emit userLoggedIn after connection
   };
 
-  const logout = () => {
-    // Ensure the user is logged out from the server before disconnecting
-    if (currentUser) {
-      // socket.emit('userLoggedOut', { _id: currentUser._id }); // Emit userLoggedOut event
-      // Call handleLogout to emit the userLoggedOut event
-      handleLogout(currentUser);  
-    }
-  
-    // Clear user from state and localStorage
-    setCurrentUser(null);
-    localStorage.removeItem('user');
-  
-    // Delay disconnect to ensure the server processes the logout event
-    setTimeout(() => {
-      socket.disconnect(); // Disconnect the socket after logging out
-    }, 500);
-  
-    // Navigate to the landing page
-    navigate('/');
-  
-    // No need for page reload if everything works fine
-    // window.location.reload(); // Optional, but not recommended
-  };
+const logout = () => {
+  if (currentUser) {
+    socket.emit('userLoggedOut', {
+      _id: currentUser._id,
+      username: currentUser.username,
+    });
+  }
+
+  setCurrentUser(null);
+  localStorage.removeItem('user');
+
+  setTimeout(() => {
+    socket.disconnect();
+  }, 500);
+
+  navigate('/');
+};
+
   
 
   return (

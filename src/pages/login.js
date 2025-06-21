@@ -7,6 +7,7 @@ import socket from "../socket";
 const baseUrl = process.env.REACT_APP_API_BASE_URL
 
 const Login = () => {
+  // referenciar a logica de login do useUser
   const { login } = useUser();
   const navigate = useNavigate();
 
