@@ -44,14 +44,13 @@ const Header = ({
   // Function to toggle the SideMenu visibility
   const toggleSideMenu = () => {
     setShowSideMenu((prev) => !prev); // Toggle the state
-    console.log("toggling menu")
   };
 
-useEffect(() => {
+  useEffect(() => {
   if (showSideMenu) {
-    document.body.classList.add("no-scroll");
+    document.getElementById("scrollableContainer").classList.add("no-scroll");
   } else {
-    document.body.classList.remove("no-scroll");
+    document.getElementById("scrollableContainer").classList.remove("no-scroll");
   }
 
   return () => {

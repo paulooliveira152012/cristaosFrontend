@@ -326,3 +326,8 @@ body {
     font-size: 14px;
   }
   
+  /* Adicione isso ao seu CSS global */
+.no-scroll {
+  overflow-y: hidden !important;
+  height: 100vh !important;
+}
