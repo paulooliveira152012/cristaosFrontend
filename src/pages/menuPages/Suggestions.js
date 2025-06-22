@@ -10,7 +10,6 @@ const Suggestions = () => {
       <Header showProfileImage={false} navigate={navigate}/>
       <h1>Sugestões</h1>
       <p>Envie suas sugestões para melhorar a plataforma.</p>
-      <Footer />
     </div>
   );
 };

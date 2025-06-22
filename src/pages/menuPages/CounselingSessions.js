@@ -10,7 +10,6 @@ const CounselingSessions = () => {
       <Header showProfileImage={false} navigate={navigate}/>
       <h1>Sessões de Aconselhamento</h1>
       <p>Agende uma sessão de aconselhamento para apoio espiritual e pessoal.</p>
-      <Footer />
     </div>
   );
 };

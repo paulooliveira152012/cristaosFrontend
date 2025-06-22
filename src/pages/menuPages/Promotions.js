@@ -10,7 +10,6 @@ const Promotions = () => {
       <Header showProfileImage={false} navigate={navigate}/>
       <h1>Promova seu trabalho</h1>
       <p>Promova seu trabalho.</p>
-      <Footer />
     </div>
   );
 };

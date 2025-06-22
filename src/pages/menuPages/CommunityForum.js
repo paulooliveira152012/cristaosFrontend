@@ -10,7 +10,6 @@ const CommunityForum = () => {
       <Header showProfileImage={false} navigate={navigate}/>
       <h1>Fórum da Comunidade</h1>
       <p>Participe de discussões e interações com outros cristãos no fórum da comunidade.</p>
-      <Footer />
     </div>
   );
 };

@@ -10,7 +10,6 @@ const FindGathering = () => {
       <Header showProfileImage={false} navigate={navigate}/>
       <h1>Encontrar reuniao próxima a voce</h1>
       <p>Utilize nossa ferramenta para encontrar uma reuniao perto de você.</p>
-      <Footer />
     </div>
   );
 };

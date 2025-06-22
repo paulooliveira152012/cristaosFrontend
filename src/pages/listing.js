@@ -220,7 +220,6 @@ const ListingPage = () => {
           />
         </div>
       </div>
-      <Footer />
     </div>
   );
 };

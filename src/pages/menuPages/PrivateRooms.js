@@ -10,7 +10,6 @@ const PrivateRooms = () => {
       <Header showProfileImage={false} navigate={navigate}/>
       <h1>Salas de Reuniões Privadas</h1>
       <p>Entre em uma sala de reunião privada para conversar com seu grupo.</p>
-      <Footer />
     </div>
   );
 };

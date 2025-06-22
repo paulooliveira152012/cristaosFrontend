@@ -14,6 +14,8 @@ import AudioContext from "../context/AudioContext.js";
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL
 
+// ao sair da sala, quem ficou, se reiniciar a pagina, volta a mostrar a pessoa que saiu mesmo ela nao estando.
+
 let socket;
 
 const LiveRoom = () => {
@@ -77,26 +79,25 @@ const LiveRoom = () => {
   // Set the socket connection and join room
   // Set the socket connection and join room
   useEffect(() => {
-    if (!currentUser || !roomId || !sala) return;
+  if (!currentUser || !roomId || !sala) return;
 
+  const joinRoomAndSyncToDB = async () => {
     if (!socket) {
-  
-
-      socket = io(baseUrl); // Initialize the socket only once
+      socket = io(baseUrl);
       console.log("Socket URL:", baseUrl);
-
       socket.currentRoomId = sala?._id || roomId;
     }
 
-    // Set the microphone state correctly on first join or rejoin
+    // Set microphone state (rejoin logic)
     if (isRejoiningRef.current) {
       console.log("Rejoining room, keeping microphone state:", microphoneOn);
-      isRejoiningRef.current = false; // Reset the rejoining flag
+      isRejoiningRef.current = false;
     } else {
       console.log("First-time join, setting microphone to off.");
-      setMicrophoneOn(false); // First-time join: microphone off
+      setMicrophoneOn(false);
     }
 
+    // Emit joinRoom via socket
     socket.emit("joinRoom", {
       roomId,
       user: {
@@ -106,70 +107,81 @@ const LiveRoom = () => {
       },
     });
 
-    console.log(
-      "Emitting joinRoom event for room:",
-      roomId,
-      "with user:",
-      currentUser.username
-    );
+    console.log("Emitting joinRoom event for room:", roomId, "with user:", currentUser.username);
 
-    // Listen for minimized state (restore microphone state if returning)
+    // ✅ Add user to DB if not already there
+    try {
+      const res = await fetch(`${baseUrl}/api/rooms/addMember`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roomId,
+          user: {
+            _id: currentUser._id,
+            username: currentUser.username,
+            profileImage: currentUser.profileImage,
+          },
+        }),
+      });
+
+      const data = await res.json();
+      console.log("Banco de dados atualizado:", data);
+    } catch (error) {
+      console.error("Erro ao adicionar usuário ao banco de dados:", error);
+    }
+
+    // Socket listeners
     socket.on("userMinimized", ({ userId, minimized, microphoneOn }) => {
       if (userId === currentUser._id && minimized) {
-        setMicrophoneOn(microphoneOn); // Restore the previous microphone state
-        isRejoiningRef.current = true; // Set flag to indicate rejoining
-        console.log(`Restoring microphone state: ${microphoneOn}`);
+        setMicrophoneOn(microphoneOn);
+        isRejoiningRef.current = true;
+        console.log(`Restaurando microfone: ${microphoneOn}`);
       }
     });
 
-    // Listen for room updates
     socket.on("roomData", ({ roomMembers }) => {
-      console.log("roomData received from server:", roomMembers);
+      console.log("roomData recebido:", roomMembers);
       setRoomMembers(roomMembers);
     });
 
-    // listen for a user leaving the room
     socket.on("userLeft", ({ userId }) => {
       console.log("User left:", userId);
-      setRoomMembers((prevMembers) =>
-        prevMembers.filter((member) => member._id !== userId)
-      );
+      setRoomMembers((prev) => prev.filter((m) => m._id !== userId));
     });
 
-    // Handle connection and disconnection
     socket.on("connect", () => {
-      console.log(`Socket connected with ID: ${socket.id}`);
+      console.log(`Socket conectado com ID: ${socket.id}`);
     });
 
-    // Listen for disconnect event to remove the user from roomMembers
     socket.on("disconnect", () => {
-      console.log("Socket disconnected");
-
-      // Remove the current user from the room members list
-      setRoomMembers((prevMembers) =>
-        prevMembers.filter((member) => member._id !== currentUser._id)
+      console.log("Socket desconectado");
+      setRoomMembers((prev) =>
+        prev.filter((m) => m._id !== currentUser._id)
       );
     });
 
     socket.on("connect_error", (err) => {
-      console.error("Socket connection error:", err);
+      console.error("Erro de conexão:", err);
     });
 
     socket.on("connect_timeout", () => {
-      console.error("Socket connection timeout");
+      console.error("Timeout de conexão");
     });
+  };
 
-    // Clean up when the component unmounts
-    return () => {
-      if (socket) {
-        socket.off("roomData");
-        socket.off("userMinimized");
-        socket.off("userLeft");
-        socket.off("connect");
-        socket.off("disconnect");
-      }
-    };
-  }, [currentUser, roomId, sala, microphoneOn]); // Updated dependency array
+  joinRoomAndSyncToDB(); // Chama a função async interna
+
+  return () => {
+    if (socket) {
+      socket.off("roomData");
+      socket.off("userMinimized");
+      socket.off("userLeft");
+      socket.off("connect");
+      socket.off("disconnect");
+    }
+  };
+}, [currentUser, roomId, sala, microphoneOn]);
+
 
   // Function to toggle microphone
   const toggleMicrophone = () => {
@@ -209,6 +221,23 @@ const LiveRoom = () => {
       roomId: sala?._id || roomId,
       userId: currentUser._id,
     });
+
+    // ✅ Remover o membro do MongoDB
+try {
+  await fetch(`${baseUrl}/api/rooms/removeMember`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      roomId: sala?._id || roomId,
+      userId: currentUser._id,
+    }),
+  });
+  console.log("Usuário removido do banco de dados");
+} catch (error) {
+  console.error("Erro ao remover usuário do banco:", error);
+}
 
     leaveRoom();
 

@@ -10,7 +10,6 @@ const BibleStudiesByBook = () => {
         <Header showProfileImage={false} navigate={navigate}/>
       <h1>Estudos por Livro Bíblico</h1>
       <p>Explore estudos detalhados organizados por livros da Bíblia.</p>
-      <Footer />
     </div>
   );
 };

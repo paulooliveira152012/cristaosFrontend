@@ -10,7 +10,6 @@ const BibleStudiesByTheme = () => {
       <Header showProfileImage={false} navigate={navigate}/>
       <h1>Estudos por Temas</h1>
       <p>Explore estudos bíblicos organizados por temas.</p>
-      <Footer />
     </div>
   );
 };

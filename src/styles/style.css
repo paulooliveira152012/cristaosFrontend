@@ -270,7 +270,7 @@ body {
 .footerContainer {
   width: 100%;
   height: 60px;
-  background-color: red;
+  /* background-color: red; */
   color: white;
   display: flex;
   justify-content: space-evenly;

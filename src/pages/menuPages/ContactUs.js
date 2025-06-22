@@ -10,7 +10,6 @@ const ContactUs = () => {
       <Header showProfileImage={false} navigate={navigate}/>
       <h1>Fale Conosco</h1>
       <p>Entre em contato conosco para mais informações ou suporte.</p>
-      <Footer />
     </div>
   );
 };

@@ -92,7 +92,7 @@ const App = () => {
               {/* flex 2 */}
               <div
                 style={{
-                  backgroundColor: "red",
+                  // backgroundColor: "red",
                   flex: 2,
                   display: "flex",
                   flexDirection: "column",
