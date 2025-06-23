@@ -12,7 +12,7 @@ import { handleBack } from "../components/functions/headerFunctions.js";
 import { useContext } from "react";
 import AudioContext from "../context/AudioContext.js";
 
-const baseUrl = process.env.REACT_APP_API_BASE_URL
+const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 // ao sair da sala, quem ficou, se reiniciar a pagina, volta a mostrar a pessoa que saiu mesmo ela nao estando.
 
@@ -55,7 +55,9 @@ const LiveRoom = () => {
       console.log("Fetching room data with roomId:", roomId);
 
       try {
-        const response = await fetch(`${baseUrl}/api/rooms/fetchRoomData/${roomId}`);
+        const response = await fetch(
+          `${baseUrl}/api/rooms/fetchRoomData/${roomId}`
+        );
         const data = await response.json();
 
         if (response.ok) {
@@ -76,117 +78,151 @@ const LiveRoom = () => {
     fetchRoomData(); // Call the async function
   }, [roomId, currentUser]); // Run when roomId or currentUser changes
 
+
+  useEffect(() => {
+  if (!socket) return;
+
+  const handleMicStatusChanged = ({ userId, micOpen }) => {
+    console.log(`Usuário ${userId} mudou mic para:`, micOpen);
+    setRoomMembers((prev) =>
+      prev.map((member) =>
+        member._id === userId ? { ...member, micOpen } : member
+      )
+    );
+  };
+
+  socket.on("micStatusChanged", handleMicStatusChanged);
+
+  return () => {
+     if (socket) {
+      socket.off("micStatusChanged", handleMicStatusChanged);
+    }
+  };
+}, []);
+
+
   // Set the socket connection and join room
   // Set the socket connection and join room
   useEffect(() => {
-  if (!currentUser || !roomId || !sala) return;
+    if (!currentUser || !roomId || !sala) return;
 
-  const joinRoomAndSyncToDB = async () => {
-    if (!socket) {
-      socket = io(baseUrl);
-      console.log("Socket URL:", baseUrl);
-      socket.currentRoomId = sala?._id || roomId;
-    }
+    const joinRoomAndSyncToDB = async () => {
+      if (!socket) {
+        socket = io(baseUrl);
+        console.log("Socket URL:", baseUrl);
+        socket.currentRoomId = sala?._id || roomId;
+      }
 
-    // Set microphone state (rejoin logic)
-    if (isRejoiningRef.current) {
-      console.log("Rejoining room, keeping microphone state:", microphoneOn);
-      isRejoiningRef.current = false;
-    } else {
-      console.log("First-time join, setting microphone to off.");
-      setMicrophoneOn(false);
-    }
+      // Set microphone state (rejoin logic)
+      if (isRejoiningRef.current) {
+        console.log("Rejoining room, keeping microphone state:", microphoneOn);
+        isRejoiningRef.current = false;
+      } else {
+        console.log("First-time join, setting microphone to off.");
+        setMicrophoneOn(false);
+      }
 
-    // Emit joinRoom via socket
-    socket.emit("joinRoom", {
-      roomId,
-      user: {
-        _id: currentUser._id,
-        username: currentUser.username,
-        profileImage: currentUser.profileImage,
-      },
-    });
-
-    console.log("Emitting joinRoom event for room:", roomId, "with user:", currentUser.username);
-
-    // ✅ Add user to DB if not already there
-    try {
-      const res = await fetch(`${baseUrl}/api/rooms/addMember`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roomId,
-          user: {
-            _id: currentUser._id,
-            username: currentUser.username,
-            profileImage: currentUser.profileImage,
-          },
-        }),
+      // Emit joinRoom via socket
+      socket.emit("joinRoom", {
+        roomId,
+        user: {
+          _id: currentUser._id,
+          username: currentUser.username,
+          profileImage: currentUser.profileImage,
+        },
       });
 
-      const data = await res.json();
-      console.log("Banco de dados atualizado:", data);
-    } catch (error) {
-      console.error("Erro ao adicionar usuário ao banco de dados:", error);
-    }
-
-    // Socket listeners
-    socket.on("userMinimized", ({ userId, minimized, microphoneOn }) => {
-      if (userId === currentUser._id && minimized) {
-        setMicrophoneOn(microphoneOn);
-        isRejoiningRef.current = true;
-        console.log(`Restaurando microfone: ${microphoneOn}`);
-      }
-    });
-
-    socket.on("roomData", ({ roomMembers }) => {
-      console.log("roomData recebido:", roomMembers);
-      setRoomMembers(roomMembers);
-    });
-
-    socket.on("userLeft", ({ userId }) => {
-      console.log("User left:", userId);
-      setRoomMembers((prev) => prev.filter((m) => m._id !== userId));
-    });
-
-    socket.on("connect", () => {
-      console.log(`Socket conectado com ID: ${socket.id}`);
-    });
-
-    socket.on("disconnect", () => {
-      console.log("Socket desconectado");
-      setRoomMembers((prev) =>
-        prev.filter((m) => m._id !== currentUser._id)
+      console.log(
+        "Emitting joinRoom event for room:",
+        roomId,
+        "with user:",
+        currentUser.username
       );
-    });
 
-    socket.on("connect_error", (err) => {
-      console.error("Erro de conexão:", err);
-    });
+      // ✅ Add user to DB if not already there
+      try {
+        const res = await fetch(`${baseUrl}/api/rooms/addMember`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            roomId,
+            user: {
+              _id: currentUser._id,
+              username: currentUser.username,
+              profileImage: currentUser.profileImage,
+            },
+          }),
+        });
 
-    socket.on("connect_timeout", () => {
-      console.error("Timeout de conexão");
-    });
-  };
+        const data = await res.json();
+        console.log("Banco de dados atualizado:", data);
+      } catch (error) {
+        console.error("Erro ao adicionar usuário ao banco de dados:", error);
+      }
 
-  joinRoomAndSyncToDB(); // Chama a função async interna
+      // Socket listeners
+      socket.on("userMinimized", ({ userId, minimized, microphoneOn }) => {
+        if (userId === currentUser._id && minimized) {
+          setMicrophoneOn(microphoneOn);
+          isRejoiningRef.current = true;
+          console.log(`Restaurando microfone: ${microphoneOn}`);
+        }
+      });
 
-  return () => {
-    if (socket) {
-      socket.off("roomData");
-      socket.off("userMinimized");
-      socket.off("userLeft");
-      socket.off("connect");
-      socket.off("disconnect");
-    }
-  };
-}, [currentUser, roomId, sala, microphoneOn]);
+      socket.on("roomData", ({ roomMembers }) => {
+        console.log("roomData recebido:", roomMembers);
+        setRoomMembers(roomMembers);
+      });
 
+      socket.on("userLeft", ({ userId }) => {
+        console.log("User left:", userId);
+        setRoomMembers((prev) => prev.filter((m) => m._id !== userId));
+      });
+
+      socket.on("connect", () => {
+        console.log(`Socket conectado com ID: ${socket.id}`);
+      });
+
+      socket.on("disconnect", () => {
+        console.log("Socket desconectado");
+        setRoomMembers((prev) => prev.filter((m) => m._id !== currentUser._id));
+      });
+
+      socket.on("connect_error", (err) => {
+        console.error("Erro de conexão:", err);
+      });
+
+      socket.on("connect_timeout", () => {
+        console.error("Timeout de conexão");
+      });
+    };
+
+    joinRoomAndSyncToDB(); // Chama a função async interna
+
+    return () => {
+      if (socket) {
+        socket.off("roomData");
+        socket.off("userMinimized");
+        socket.off("userLeft");
+        socket.off("connect");
+        socket.off("disconnect");
+      }
+    };
+  }, [currentUser, roomId, sala, microphoneOn]);
 
   // Function to toggle microphone
   const toggleMicrophone = () => {
-    setMicrophoneOn(!microphoneOn);
-  };
+  const newMicState = !microphoneOn;
+  setMicrophoneOn(newMicState);
+
+  // Emitir evento para o backend
+  socket.emit("toggleMicrophone", {
+    roomId: sala?._id || roomId,
+    socketId: socket.id,
+    microphoneOn: newMicState,
+  });
+};
+
 
   // Function to minimize room and navigate back to main screen
   const handleGoBack = () => {
@@ -223,21 +259,21 @@ const LiveRoom = () => {
     });
 
     // ✅ Remover o membro do MongoDB
-try {
-  await fetch(`${baseUrl}/api/rooms/removeMember`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      roomId: sala?._id || roomId,
-      userId: currentUser._id,
-    }),
-  });
-  console.log("Usuário removido do banco de dados");
-} catch (error) {
-  console.error("Erro ao remover usuário do banco:", error);
-}
+    try {
+      await fetch(`${baseUrl}/api/rooms/removeMember`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          roomId: sala?._id || roomId,
+          userId: currentUser._id,
+        }),
+      });
+      console.log("Usuário removido do banco de dados");
+    } catch (error) {
+      console.error("Erro ao remover usuário do banco:", error);
+    }
 
     leaveRoom();
 
@@ -320,11 +356,48 @@ try {
           overflow: "hidden",
         }}
       >
-        <div className="liveInRoomMembersContainer">
+        {/* display users here only when they open their mics */}
+     {/* Apenas usuários com o microfone aberto */}
+<div className="liveInRoomMembersContainer">
+  {roomMembers?.filter((member) => member.micOpen)?.length > 0 ? (
+    roomMembers
+      .filter((member) => member.micOpen)
+      .map((member, index) => (
+        <div key={index} className="liveMemberParentContainer">
+          <div className="liveMemberContainer">
+            <div className="liveMemberContent">
+              <Link to={`/profile/${member._id}`}>
+                <div
+                  className="liveMemberProfileImage"
+                  style={{
+                    backgroundImage: `url(${member.profileImage || ""})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    backgroundColor: "#ddd",
+                    borderRadius: "40%",
+                    cursor: "pointer",
+                  }}
+                />
+              </Link>
+              <p className="liveRoomUsername">
+                {member.username || "Anonymous"}
+              </p>
+            </div>
+          </div>
+        </div>
+      ))
+  ) : (
+    <p>Nenhum membro com microfone aberto.</p>
+  )}
+</div>
+
+
+        {/* usuarios na sala: sem que estejam na live */}
+        <div className="inRoomUsers">
           {roomMembers && roomMembers.length > 0 ? (
             roomMembers.map((member, index) => (
-              <div key={index} className="liveMemberParentContainer">
-                <div className="liveMemberContainer">
+              <div key={index} className="inRoomMembersParentContainer">
+                <div className="inRoomLiveMemberContainer">
                   <div className="liveMemberContent">
                     <Link to={`/profile/${member._id}`}>
                       <div
@@ -339,9 +412,9 @@ try {
                         }}
                       />
                     </Link>
-                    <p className="liveRoomUsername">
+                    {/* <p className="liveRoomUsername">
                       {member.username || "Anonymous"}
-                    </p>
+                    </p> */}
                   </div>
                 </div>
               </div>

@@ -149,13 +149,23 @@ const ChatComponent = ({ roomId }) => {
   }, [messages, isAtBottom]);
 
     // Toggle the microphone when the button is clicked
-    const handleToggleMicrophone = async () => {
-      try {
-        await toggleMicrophone(!micState); // Toggle the microphone in the AudioContext
-      } catch (error) {
-        console.error("Error toggling microphone:", error);
-      }
-    };
+ const handleToggleMicrophone = async () => {
+  try {
+    const newMicState = !micState; // Vai ligar ou desligar
+
+    await toggleMicrophone(newMicState); // Atualiza no AudioContext
+
+    // Enviar o estado via socket para os outros
+    socket.emit("micStatusChanged", {
+      roomId,
+      userId: currentUser._id,
+      micOpen: newMicState,
+    });
+  } catch (error) {
+    console.error("Error toggling microphone:", error);
+  }
+};
+
 
   return (
     <div className="pageContainer">

@@ -192,6 +192,41 @@ body {
     margin-bottom: 15px;
 }
 
+/* In Room */
+
+.inRoomUsers {
+    /* background-color: green; */
+    display: flex;
+    /* justify-content: left; */
+    /* justify-content: baseline; */
+    /* justify-content: space-between; */
+    width: 100%;
+}
+
+.inRoomMembersParentContainer  {
+    /* background-color: #002D9F; */
+    display: flex;
+    justify-content: center;
+    /* margin: auto; */
+    width: 20%;
+    max-width: 100px;
+    /* background-color: red; */
+}
+
+.inRoomLiveMemberContainer {
+    /* width: fit-content; */
+    width: 50%;
+    /* height: 100px; */
+    /* background-color: green; */
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex-shrink: 0;  /* Evita que os itens encolham */
+    position: relative;
+}
+
+
 .liveMemberParentContainer {
     /* background-color: #002D9F; */
     display: flex;
