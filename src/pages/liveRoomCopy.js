@@ -18,7 +18,7 @@ const baseUrl = process.env.REACT_APP_API_BASE_URL
 
 let socket;
 
-const LiveRoom = () => {
+const LiveRoomCopy = () => {
   const { currentUser } = useUser();
   const { minimizeRoom } = useRoom();
   const location = useLocation();
@@ -385,4 +385,4 @@ try {
   );
 };
 
-export default LiveRoom;
+export default LiveRoomCopy;
