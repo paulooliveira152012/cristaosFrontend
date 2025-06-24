@@ -25,7 +25,7 @@ const VoiceComponent = ({ microphoneOn, isMinimized }) => {
 
     const joinVoiceChannel = async () => {
       try {
-        console.log("Joining voice channel for room:", roomId);
+        console.log("✅ Joining voice channel for room:", roomId);
         await joinChannel(roomId, currentUser._id); // Join the voice channel
         setLocalError(""); // Clear any errors on success
       } catch (err) {
@@ -50,7 +50,7 @@ const VoiceComponent = ({ microphoneOn, isMinimized }) => {
 
       try {
         // Only toggle if microphone state in context changes (explicitly by user)
-        await toggleMicrophone(micState);
+        await toggleMicrophone(micState, currentUser._id, roomId);
       } catch (err) {
         console.error("Error toggling microphone:", err);
         setLocalError("Error with microphone. Please try again.");

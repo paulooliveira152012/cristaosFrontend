@@ -1,5 +1,8 @@
 import React, { createContext, useState, useEffect } from "react";
 import AgoraRTC from "agora-rtc-sdk-ng";
+import io from "socket.io-client"
+
+const socket = io(process.env.REACT_APP_API_BASE_URL);
 
 const AudioContext = createContext();
 
@@ -43,10 +46,11 @@ export const AudioProvider = ({ children }) => {
   }, []);
 
   const joinChannel = async (channel, userId) => {
-    if (!agoraClient || isInCall) {
-      console.warn("Client is already in call or not initialized.");
-      return;
-    }
+    if (!agoraClient || isInCall || agoraClient.connectionState !== "DISCONNECTED") {
+  console.warn("Client is not ready to join (either already connected or not initialized).");
+  return;
+}
+
     try {
       console.log("Joining Agora channel...");
       await agoraClient.join(APP_ID, channel, TOKEN, userId);
@@ -73,34 +77,41 @@ export const AudioProvider = ({ children }) => {
     }
   };
 
-  const toggleMicrophone = async (micOn) => {
-    if (!agoraClient || agoraClient.connectionState !== "CONNECTED") {
-      console.warn("Agora client is not connected. Cannot toggle microphone.");
-      return;
+const toggleMicrophone = async (micOn, userId, roomId) => {
+  if (!agoraClient || agoraClient.connectionState !== "CONNECTED") {
+    console.warn("Agora client is not connected. Cannot toggle microphone.");
+    return;
+  }
+
+  try {
+    if (micOn && !localAudioTrack) {
+      const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+      console.log("Microfone criado e conectado.");
+      setLocalAudioTrack(audioTrack);
+      await agoraClient.publish([audioTrack]);
+    } else if (micOn && localAudioTrack) {
+      await localAudioTrack.setEnabled(true);
+      console.log("Microfone ativado.");
+    } else if (!micOn && localAudioTrack) {
+      await localAudioTrack.setEnabled(false);
+      console.log("Microfone desativado.");
     }
 
-    try {
-      if (micOn && !localAudioTrack) {
-        // Create and publish the microphone track if it doesn't exist
-        const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-        console.log("conectou...")
-        setLocalAudioTrack(audioTrack);
-        await agoraClient.publish([audioTrack]);
-        console.log("Microphone is now on");
-      } else if (micOn && localAudioTrack) {
-        // If already created, just enable it
-        await localAudioTrack.setEnabled(true);
-        console.log("Microphone is unmuted");
-      } else if (!micOn && localAudioTrack) {
-        // If the microphone is off, disable the track
-        await localAudioTrack.setEnabled(false);
-        console.log("Microphone is muted");
-      }
-      setMicState(micOn); // Update microphone state in context
-    } catch (error) {
-      console.error("Error toggling microphone:", error);
+    setMicState(micOn);
+
+    // 🔥 Emitir status do microfone para os demais via socket
+    if (userId && roomId) {
+      socket.emit("micStatusChanged", {
+        userId,
+        micOpen: micOn,
+        roomId, // opcional, se quiser controlar isso no back por sala
+      });
     }
-  };
+  } catch (error) {
+    console.error("Erro ao alternar microfone:", error);
+  }
+};
+
 
   return (
     <AudioContext.Provider

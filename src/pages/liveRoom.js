@@ -83,12 +83,14 @@ const LiveRoom = () => {
   if (!socket) return;
 
   const handleMicStatusChanged = ({ userId, micOpen }) => {
+    console.log("	✅  Checking users with mic open")
     console.log(`Usuário ${userId} mudou mic para:`, micOpen);
     setRoomMembers((prev) =>
       prev.map((member) =>
         member._id === userId ? { ...member, micOpen } : member
       )
     );
+    console.log("	✅ room members:", roomMembers)
   };
 
   socket.on("micStatusChanged", handleMicStatusChanged);
