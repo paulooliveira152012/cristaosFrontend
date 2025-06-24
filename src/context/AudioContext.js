@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect } from "react";
 import AgoraRTC from "agora-rtc-sdk-ng";
-import io from "socket.io-client"
+import io from "socket.io-client";
 
 const socket = io(process.env.REACT_APP_API_BASE_URL);
 
@@ -46,10 +46,16 @@ export const AudioProvider = ({ children }) => {
   }, []);
 
   const joinChannel = async (channel, userId) => {
-    if (!agoraClient || isInCall || agoraClient.connectionState !== "DISCONNECTED") {
-  console.warn("Client is not ready to join (either already connected or not initialized).");
-  return;
-}
+    if (
+      !agoraClient ||
+      isInCall ||
+      agoraClient.connectionState !== "DISCONNECTED"
+    ) {
+      console.warn(
+        "Client is not ready to join (either already connected or not initialized)."
+      );
+      return;
+    }
 
     try {
       console.log("Joining Agora channel...");
@@ -60,6 +66,33 @@ export const AudioProvider = ({ children }) => {
       console.error("Error joining Agora channel:", error);
     }
   };
+
+  // function to join as a participant
+const joinAsSpeaker = async (channel, userId, roomId) => {
+  if (!agoraClient || isInCall || agoraClient.connectionState !== "DISCONNECTED") {
+    console.warn("Client is not ready to join as speaker.");
+    return;
+  }
+
+  try {
+    console.log("🔊 Joining as speaker...");
+    await agoraClient.join(APP_ID, channel, TOKEN, userId);
+    setIsInCall(true);
+    setMicState(false); // Começa com microfone desligado
+
+    // Emitir evento para o backend dizendo que virou participante
+    socket.emit("joinAsSpeaker", {
+      userId,
+      roomId,
+    });
+
+    console.log("✅ Speaker joined and notified server.");
+  } catch (error) {
+    console.error("Error joining as speaker:", error);
+  }
+};
+
+
 
   const leaveChannel = async () => {
     if (!agoraClient || !isInCall) return;
@@ -77,47 +110,47 @@ export const AudioProvider = ({ children }) => {
     }
   };
 
-const toggleMicrophone = async (micOn, userId, roomId) => {
-  if (!agoraClient || agoraClient.connectionState !== "CONNECTED") {
-    console.warn("Agora client is not connected. Cannot toggle microphone.");
-    return;
-  }
-
-  try {
-    if (micOn && !localAudioTrack) {
-      const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-      console.log("Microfone criado e conectado.");
-      setLocalAudioTrack(audioTrack);
-      await agoraClient.publish([audioTrack]);
-    } else if (micOn && localAudioTrack) {
-      await localAudioTrack.setEnabled(true);
-      console.log("Microfone ativado.");
-    } else if (!micOn && localAudioTrack) {
-      await localAudioTrack.setEnabled(false);
-      console.log("Microfone desativado.");
+  const toggleMicrophone = async (micOn, userId, roomId) => {
+    if (!agoraClient || agoraClient.connectionState !== "CONNECTED") {
+      console.warn("Agora client is not connected. Cannot toggle microphone.");
+      return;
     }
 
-    setMicState(micOn);
+    try {
+      if (micOn && !localAudioTrack) {
+        const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+        console.log("Microfone criado e conectado.");
+        setLocalAudioTrack(audioTrack);
+        await agoraClient.publish([audioTrack]);
+      } else if (micOn && localAudioTrack) {
+        await localAudioTrack.setEnabled(true);
+        console.log("Microfone ativado.");
+      } else if (!micOn && localAudioTrack) {
+        await localAudioTrack.setEnabled(false);
+        console.log("Microfone desativado.");
+      }
 
-    // 🔥 Emitir status do microfone para os demais via socket
-    if (userId && roomId) {
-      socket.emit("micStatusChanged", {
-        userId,
-        micOpen: micOn,
-        roomId, // opcional, se quiser controlar isso no back por sala
-      });
+      setMicState(micOn);
+
+      // 🔥 Emitir status do microfone para os demais via socket
+      if (userId && roomId) {
+        socket.emit("micStatusChanged", {
+          userId,
+          micOpen: micOn,
+          roomId, // opcional, se quiser controlar isso no back por sala
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao alternar microfone:", error);
     }
-  } catch (error) {
-    console.error("Erro ao alternar microfone:", error);
-  }
-};
-
+  };
 
   return (
     <AudioContext.Provider
       value={{
         joinChannel,
         leaveChannel,
+        joinAsSpeaker,
         toggleMicrophone,
         remoteUsers,
         isInCall,
@@ -132,8 +165,3 @@ const toggleMicrophone = async (micOn, userId, roomId) => {
 };
 
 export default AudioContext;
-
-
-
-
-

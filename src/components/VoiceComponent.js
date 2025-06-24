@@ -3,8 +3,11 @@ import { useParams } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import AudioContext from "../context/AudioContext";
 import { useRoom } from "../context/RoomContext";
+import io from "socket.io-client";
 
-const VoiceComponent = ({ microphoneOn, isMinimized }) => {
+const socket = io(process.env.REACT_APP_API_BASE_URL);
+
+const VoiceComponent = ({ isMinimized }) => {
   const { roomId } = useParams();
   const { currentUser } = useUser();
   const { minimizedRoom } = useRoom();
@@ -15,19 +18,21 @@ const VoiceComponent = ({ microphoneOn, isMinimized }) => {
     remoteUsers,
     isInCall,
     agoraClient,
-    micState, // Get microphone state from AudioContext
+    micState,
   } = useContext(AudioContext);
-  const [localError, setLocalError] = useState("");
 
-  // Automatically join the voice channel when the user enters the room
+  const [localError, setLocalError] = useState("");
+  const [isSpeaker, setIsSpeaker] = useState(false);
+
+  // Join voice channel on mount
   useEffect(() => {
     if (!currentUser || !roomId || isInCall) return;
 
     const joinVoiceChannel = async () => {
       try {
         console.log("✅ Joining voice channel for room:", roomId);
-        await joinChannel(roomId, currentUser._id); // Join the voice channel
-        setLocalError(""); // Clear any errors on success
+        await joinChannel(roomId, currentUser._id);
+        setLocalError("");
       } catch (err) {
         console.error("Error joining Agora channel:", err);
         setLocalError("Error joining voice chat. Please try again.");
@@ -35,21 +40,16 @@ const VoiceComponent = ({ microphoneOn, isMinimized }) => {
     };
 
     if (!isMinimized && !isInCall) {
-      // If room is not minimized and not already in a call, join the voice channel
       joinVoiceChannel();
     }
   }, [isMinimized, roomId, currentUser, isInCall, joinChannel]);
 
-  // Toggle the microphone based on the context state
+  // Toggle mic only if user is speaker
   useEffect(() => {
     const toggleMic = async () => {
-      if (!agoraClient || agoraClient.connectionState !== "CONNECTED") {
-        console.warn("Agora client is not connected. Skipping microphone toggle.");
-        return;
-      }
+      if (!isSpeaker || !agoraClient || agoraClient.connectionState !== "CONNECTED") return;
 
       try {
-        // Only toggle if microphone state in context changes (explicitly by user)
         await toggleMicrophone(micState, currentUser._id, roomId);
       } catch (err) {
         console.error("Error toggling microphone:", err);
@@ -57,27 +57,34 @@ const VoiceComponent = ({ microphoneOn, isMinimized }) => {
       }
     };
 
-    // Toggle microphone based on micState when changed
     toggleMic();
-  }, [micState, agoraClient, toggleMicrophone]);
+  }, [micState, agoraClient, toggleMicrophone, isSpeaker]);
 
   return (
     <div id="container">
-      {/* Display errors if any */}
       {localError && <div>{localError}</div>}
 
-      {/* Show remote users in the room */}
-      {remoteUsers.length > 0 && (
-        <div>
-          <h4>Remote Users in the Room:</h4>
-          {remoteUsers.map((user) => (
-            <div key={user.uid}>User {user.uid} is speaking</div>
-          ))}
-        </div>
+      {!isSpeaker ? (
+        <button
+          onClick={() => {
+            socket.emit("joinAsSpeaker", {
+              roomId,
+              userId: currentUser._id,
+            });
+            setIsSpeaker(true);
+          }}
+        >
+          Subir ao palco
+        </button>
+      ) : (
+        <button
+          onClick={() =>
+            toggleMicrophone(!micState, currentUser._id, roomId)
+          }
+        >
+          {micState ? "Desligar microfone" : "Ligar microfone"}
+        </button>
       )}
-
-      {/* Indicate if the user is not in a call */}
-      {!isInCall && <p>Not in a call</p>}
     </div>
   );
 };
