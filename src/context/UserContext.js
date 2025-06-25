@@ -1,90 +1,92 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import socket from '../socket'; // Assuming you have a socket instance set up
-import { useNavigate } from 'react-router-dom'; // Import navigate
+import socket from '../socket';
+import { useNavigate } from 'react-router-dom';
 
 const UserContext = createContext();
-const UsersContext = createContext(); // Create a new context for online users
+const UsersContext = createContext();
 
 export const useUser = () => useContext(UserContext);
-export const useUsers = () => useContext(UsersContext); // Hook to access online users
+export const useUsers = () => useContext(UsersContext);
 
 export const UserProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
-  const [onlineUsers, setOnlineUsers] = useState([]); // State to manage online users
-  const navigate = useNavigate(); // Use navigate
+  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [pendingLoginUser, setPendingLoginUser] = useState(null); // 🆕
+  const navigate = useNavigate();
 
-  // Function to handle user login and socket emission
-  const handleLogin = (user) => {
+  const emitLogin = (user) => {
+    if (!user) return;
     socket.emit('userLoggedIn', {
       _id: user._id,
       username: user.username,
       profileImage: user.profileImage || 'https://via.placeholder.com/50',
     });
+    console.log("📡 Emitindo login para socket:", user.username);
   };
 
-  // Function to handle user logout and socket emission
-  const handleLogout = (user) => {
-    socket.emit('userLoggedOut', {
-      _id: user._id,
-      username: user.username,
-    });
-  };
-
-  // Check localStorage for user data when the app loads
   useEffect(() => {
+    // Tenta restaurar usuário ao carregar
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       const user = JSON.parse(storedUser);
-      setCurrentUser(user); // Restore user from localStorage
+      setCurrentUser(user);
 
-      // Ensure the socket is connected, then emit the login event
-      socket.on('connect', () => {
-        handleLogin(user); // Emit userLoggedIn only after socket is connected
-      });
+      if (socket.connected) {
+        emitLogin(user);
+      } else {
+        setPendingLoginUser(user); // salva pra emitir quando conectar
+        socket.connect();
+      }
     }
 
-  
-  // Set up Socket.IO listeners for online users
-  socket.on('onlineUsers', (users) => {
-    setOnlineUsers(users); // Update the online users state when received from the server
-  });
+    // Quando socket conectar, se tiver login pendente, emite
+    socket.on('connect', () => {
+      if (pendingLoginUser) {
+        emitLogin(pendingLoginUser);
+        setPendingLoginUser(null); // limpa
+      }
+    });
 
+    const handleOnlineUsers = (users) => {
+      setOnlineUsers(users);
+    };
 
+    socket.on('onlineUsers', handleOnlineUsers);
 
-  return () => {
-    socket.off('onlineUsers'); // Clean up the event listener on unmount
-    socket.off('disconnect'); // Clean up disconnect listener
-  };
-}, []);
+    return () => {
+      socket.off('onlineUsers', handleOnlineUsers);
+      socket.off('connect');
+    };
+  }, [pendingLoginUser]);
 
   const login = (user) => {
-    setCurrentUser(user); // Set user in state
-    localStorage.setItem('user', JSON.stringify(user)); // Save user to localStorage
-
-    // Emit the login event to the server when the user logs in
-    socket.connect(); // Ensure socket is connected
-    handleLogin(user); // Emit userLoggedIn after connection
+    setCurrentUser(user);
+    localStorage.setItem('user', JSON.stringify(user));
+    if (socket.connected) {
+      emitLogin(user);
+    } else {
+      setPendingLoginUser(user);
+      socket.connect();
+    }
   };
 
-const logout = () => {
-  if (currentUser) {
-    socket.emit('userLoggedOut', {
-      _id: currentUser._id,
-      username: currentUser.username,
-    });
-  }
+  const logout = () => {
+    if (currentUser) {
+      socket.emit('userLoggedOut', {
+        _id: currentUser._id,
+        username: currentUser.username,
+      }, () => {
+        socket.disconnect();
+        navigate('/');
+      });
+    } else {
+      socket.disconnect();
+      navigate('/');
+    }
 
-  setCurrentUser(null);
-  localStorage.removeItem('user');
-
-  setTimeout(() => {
-    socket.disconnect();
-  }, 500);
-
-  navigate('/');
-};
-
-  
+    setCurrentUser(null);
+    localStorage.removeItem('user');
+  };
 
   return (
     <UserContext.Provider value={{ currentUser, login, logout }}>
