@@ -11,7 +11,7 @@ export const useUsers = () => useContext(UsersContext);
 export const UserProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
-  const [pendingLoginUser, setPendingLoginUser] = useState(null); // 🆕
+  const [pendingLoginUser, setPendingLoginUser] = useState(null);
   const navigate = useNavigate();
 
   const emitLogin = (user) => {
@@ -25,7 +25,7 @@ export const UserProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    // Tenta restaurar usuário ao carregar
+    // Restaurar usuário ao carregar
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       const user = JSON.parse(storedUser);
@@ -34,20 +34,22 @@ export const UserProvider = ({ children }) => {
       if (socket.connected) {
         emitLogin(user);
       } else {
-        setPendingLoginUser(user); // salva pra emitir quando conectar
+        setPendingLoginUser(user);
         socket.connect();
       }
     }
 
-    // Quando socket conectar, se tiver login pendente, emite
+    // Emitir login pendente após reconexão
     socket.on('connect', () => {
       if (pendingLoginUser) {
         emitLogin(pendingLoginUser);
-        setPendingLoginUser(null); // limpa
+        setPendingLoginUser(null);
       }
     });
 
+    // Atualiza lista de usuários online
     const handleOnlineUsers = (users) => {
+      console.log("📶 Lista de online atualizada:", users);
       setOnlineUsers(users);
     };
 
@@ -70,23 +72,48 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    if (currentUser) {
-      socket.emit('userLoggedOut', {
-        _id: currentUser._id,
-        username: currentUser.username,
-      }, () => {
-        socket.disconnect();
-        navigate('/');
-      });
-    } else {
-      socket.disconnect();
-      navigate('/');
-    }
+const logout = () => {
+  if (currentUser) {
+    const userId = currentUser._id;
 
+    // 1. Emite logout para backend
+    socket.emit('userLoggedOut', {
+      _id: userId,
+      username: currentUser.username,
+    });
+
+    // 2. Remove currentUser imediatamente
     setCurrentUser(null);
     localStorage.removeItem('user');
-  };
+
+    // 3. Escuta uma única atualização de onlineUsers antes de desconectar
+    const handleUpdatedOnlineUsers = (users) => {
+      console.log("✅ Lista de online recebida após logout:", users);
+      setOnlineUsers(users.filter(u => u._id !== userId));
+
+
+      console.log("✅✅✅ onlineUsers after logout:", onlineUsers)
+
+      socket.off('onlineUsers', handleUpdatedOnlineUsers); // limpa listener
+
+      // 4. Agora pode desconectar e navegar
+      socket.disconnect();
+      navigate('/');
+    };
+
+    socket.once('onlineUsers', handleUpdatedOnlineUsers);
+
+    // ⏱ Segurança: se em 1s não receber, segue com o fluxo
+    setTimeout(() => {
+      socket.off('onlineUsers', handleUpdatedOnlineUsers);
+      navigate('/');
+    }, 1000);
+  } else {
+    socket.disconnect();
+    navigate('/');
+  }
+};
+
 
   return (
     <UserContext.Provider value={{ currentUser, login, logout }}>
