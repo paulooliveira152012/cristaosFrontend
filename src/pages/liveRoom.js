@@ -14,8 +14,6 @@ import AudioContext from "../context/AudioContext.js";
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
-// ao sair da sala, quem ficou, se reiniciar a pagina, volta a mostrar a pessoa que saiu mesmo ela nao estando.
-
 let socket;
 
 const LiveRoom = () => {
@@ -36,20 +34,8 @@ const LiveRoom = () => {
   );
   const [isCreator, setIsCreator] = useState(false);
   const isRejoiningRef = useRef(false);
-  
-  // separar speakers e listeners
-  const speakers = roomMembers.filter((m) => m.isSpeaker)
-  const listeners = roomMembers.filter((m) => !m.isSpeaker)
-  
-  
-                            // aparentemente desnecessarios
-                            const [isLeaving, setIsLeaving] = useState(false);
-                            const [isMinimized, setIsMinimized] = useState(false); // Define isMinimized state
-                            const [micOpen, setMicOpen] = useState(false); // State to track microphone state
-                            const [hasJoinedBefore, setHasJoinedBefore] = useState(false); // Track if user is rejoining
-                            const [isRejoining, setIsRejoining] = useState(false); // or useRef if needed
-  
 
+  const [isRejoining, setIsRejoining] = useState(false); // or useRef if needed
 
   useEffect(() => {
     console.log("isRejoining?", isRejoining);
@@ -108,8 +94,6 @@ const LiveRoom = () => {
     };
   }, []);
 
-  // Set the socket connection and join room
-  // Set the socket connection and join room
   useEffect(() => {
     if (!currentUser || !roomId || !sala) return;
 
@@ -138,6 +122,24 @@ const LiveRoom = () => {
           profileImage: currentUser.profileImage,
         },
       });
+
+      // Fallback: tenta buscar membros manualmente se roomMembers ainda não carregou após 800ms
+      setTimeout(async () => {
+        if (roomMembers.length === 0) {
+          try {
+            const res = await fetch(
+              `${baseUrl}/api/rooms/getRoomMembers/${roomId}`
+            );
+            const data = await res.json();
+            if (res.ok) {
+              console.log("⏱️ Fallback: membros buscados manualmente:", data);
+              setRoomMembers(data);
+            }
+          } catch (err) {
+            console.error("Erro no fallback de roomMembers:", err);
+          }
+        }
+      }, 500);
 
       console.log(
         "Emitting joinRoom event for room:",
@@ -230,33 +232,12 @@ const LiveRoom = () => {
     });
   };
 
-  // Function to minimize room and navigate back to main screen
-  const handleGoBack = () => {
-    console.log("Minimizing room and navigating to the main screen");
-
-    minimizeRoom(sala); // Pass the room data to minimizeRoom
-    console.log("Room minimized using RoomContext");
-
-    if (socket && socket.connected && roomId && currentUser?._id) {
-      socket.emit("minimizeRoom", {
-        roomId: sala?._id || roomId,
-        userId: currentUser._id,
-        microphoneOn: microphoneOn, // Send the microphone state
-      });
-      console.log(`Emitted minimizeRoom event for room ${roomId}`);
-    }
-
-    setIsRejoining(true); // Mark the user as rejoining after minimizing
-    console.log("Minimizando a sala, isRejoining:", isRejoining);
-    navigate("/");
-  };
-
   const { leaveRoom } = useRoom();
 
   // Function to leave the room completely
   const handleLeaveRoom = async () => {
     console.log("saindo da sala");
-    setIsLeaving(true);
+    // setIsLeaving(true);
 
     // Emit an event to leave the room
     socket.emit("leaveRoom", {
@@ -429,9 +410,9 @@ const LiveRoom = () => {
                         }}
                       />
                     </Link>
-                    {/* <p className="liveRoomUsername">
+                    <p className="liveRoomUsername">
                       {member.username || "Anonymous"}
-                    </p> */}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -443,7 +424,6 @@ const LiveRoom = () => {
 
         <VoiceComponent
           microphoneOn={microphoneOn}
-          isMinimized={isMinimized}
           roomId={roomId}
           keepAlive={true}
         />
