@@ -66,8 +66,8 @@ const ChatComponent = ({ roomId }) => {
   // Join the room and listen for messages
   useEffect(() => {
     if (roomId) {
-      // Join the room-specific chat
-      socket.emit("joinRoom", { roomId, user: currentUser });
+      // Join the room-specific chat 1
+      socket.emit("joinRoomChat", { roomId, user: currentUser });
       console.log("Client joined room:", roomId); // Should log room join
 
       // Request chat history for this specific room

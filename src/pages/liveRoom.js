@@ -21,30 +21,35 @@ let socket;
 const LiveRoom = () => {
   const { currentUser } = useUser();
   const { minimizeRoom } = useRoom();
+  const { leaveChannel } = useContext(AudioContext);
   const location = useLocation();
   const navigate = useNavigate();
   const { roomId } = useParams();
 
   const [sala, setSala] = useState(location.state?.sala || null);
   const [roomMembers, setRoomMembers] = useState([]);
-
+  const [microphoneOn, setMicrophoneOn] = useState(false); // Microphone state
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [newRoomTitle, setNewRoomTitle] = useState("");
   const [roomTheme, setRoomTheme] = useState(
     `bem vindo a sala ${sala?.roomTitle}`
   );
   const [isCreator, setIsCreator] = useState(false);
-  const [isLeaving, setIsLeaving] = useState(false);
-  const [microphoneOn, setMicrophoneOn] = useState(false); // Microphone state
-  const [isMinimized, setIsMinimized] = useState(false); // Define isMinimized state
-  const [isRejoining, setIsRejoining] = useState(false); // or useRef if needed
-
-  const [micOpen, setMicOpen] = useState(false); // State to track microphone state
-  const [hasJoinedBefore, setHasJoinedBefore] = useState(false); // Track if user is rejoining
-
   const isRejoiningRef = useRef(false);
+  
+  // separar speakers e listeners
+  const speakers = roomMembers.filter((m) => m.isSpeaker)
+  const listeners = roomMembers.filter((m) => !m.isSpeaker)
+  
+  
+                            // aparentemente desnecessarios
+                            const [isLeaving, setIsLeaving] = useState(false);
+                            const [isMinimized, setIsMinimized] = useState(false); // Define isMinimized state
+                            const [micOpen, setMicOpen] = useState(false); // State to track microphone state
+                            const [hasJoinedBefore, setHasJoinedBefore] = useState(false); // Track if user is rejoining
+                            const [isRejoining, setIsRejoining] = useState(false); // or useRef if needed
+  
 
-  const { leaveChannel } = useContext(AudioContext);
 
   useEffect(() => {
     console.log("isRejoining?", isRejoining);
@@ -78,30 +83,30 @@ const LiveRoom = () => {
     fetchRoomData(); // Call the async function
   }, [roomId, currentUser]); // Run when roomId or currentUser changes
 
-
   useEffect(() => {
-  if (!socket) return;
+    if (!socket) return;
 
-  const handleMicStatusChanged = ({ userId, micOpen }) => {
-    console.log("	✅  Checking users with mic open")
-    console.log(`Usuário ${userId} mudou mic para:`, micOpen);
-    setRoomMembers((prev) =>
-      prev.map((member) =>
-        member._id === userId ? { ...member, micOpen } : member
-      )
-    );
-    console.log("	✅ room members:", roomMembers)
-  };
+    const handleMicStatusChanged = ({ userId, micOpen }) => {
+      console.log("	✅  Checking users with mic open");
+      console.log(`Usuário ${userId} mudou mic para:`, micOpen);
+      setRoomMembers((prev) =>
+        prev.map((member) =>
+          member._id === userId
+            ? { ...member, micOpen, isSpeaker: member.isSpeaker }
+            : member
+        )
+      );
+      console.log("	✅ room members:", roomMembers);
+    };
 
-  socket.on("micStatusChanged", handleMicStatusChanged);
+    socket.on("micStatusChanged", handleMicStatusChanged);
 
-  return () => {
-     if (socket) {
-      socket.off("micStatusChanged", handleMicStatusChanged);
-    }
-  };
-}, []);
-
+    return () => {
+      if (socket) {
+        socket.off("micStatusChanged", handleMicStatusChanged);
+      }
+    };
+  }, []);
 
   // Set the socket connection and join room
   // Set the socket connection and join room
@@ -172,7 +177,7 @@ const LiveRoom = () => {
       });
 
       socket.on("roomData", ({ roomMembers }) => {
-        console.log("roomData recebido:", roomMembers);
+        console.log("✅ ✅ ✅  roomData recebido:", roomMembers);
         setRoomMembers(roomMembers);
       });
 
@@ -214,17 +219,16 @@ const LiveRoom = () => {
 
   // Function to toggle microphone
   const toggleMicrophone = () => {
-  const newMicState = !microphoneOn;
-  setMicrophoneOn(newMicState);
+    const newMicState = !microphoneOn;
+    setMicrophoneOn(newMicState);
 
-  // Emitir evento para o backend
-  socket.emit("toggleMicrophone", {
-    roomId: sala?._id || roomId,
-    socketId: socket.id,
-    microphoneOn: newMicState,
-  });
-};
-
+    // Emitir evento para o backend
+    socket.emit("toggleMicrophone", {
+      roomId: sala?._id || roomId,
+      socketId: socket.id,
+      microphoneOn: newMicState,
+    });
+  };
 
   // Function to minimize room and navigate back to main screen
   const handleGoBack = () => {
@@ -358,41 +362,52 @@ const LiveRoom = () => {
           overflow: "hidden",
         }}
       >
-        {/* display users here only when they open their mics */}
-     {/* Apenas usuários com o microfone aberto */}
-<div className="liveInRoomMembersContainer">
-  {roomMembers?.filter((member) => member.micOpen)?.length > 0 ? (
-    roomMembers
-      .filter((member) => member.micOpen)
-      .map((member, index) => (
-        <div key={index} className="liveMemberParentContainer">
-          <div className="liveMemberContainer">
-            <div className="liveMemberContent">
-              <Link to={`/profile/${member._id}`}>
-                <div
-                  className="liveMemberProfileImage"
-                  style={{
-                    backgroundImage: `url(${member.profileImage || ""})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                    backgroundColor: "#ddd",
-                    borderRadius: "40%",
-                    cursor: "pointer",
-                  }}
-                />
-              </Link>
-              <p className="liveRoomUsername">
-                {member.username || "Anonymous"}
-              </p>
-            </div>
-          </div>
-        </div>
-      ))
-  ) : (
-    <p>Nenhum membro com microfone aberto.</p>
-  )}
-</div>
+        {/* Apenas usuários com na live */}
+        <div className="liveInRoomMembersContainer">
+          {roomMembers?.filter((member) => member.isSpeaker)?.length > 0 ? (
+            roomMembers
+              .filter((member) => member.isSpeaker)
 
+              .map((member, index) => (
+                <div key={index} className="liveMemberParentContainer">
+                  <div className="liveMemberContainer">
+                    <div className="liveMemberContent">
+                      <Link to={`/profile/${member._id}`}>
+                        <div
+                          className="liveMemberProfileImage"
+                          style={{
+                            backgroundImage: `url(${
+                              member.profileImage || ""
+                            })`,
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                            backgroundColor: "#ddd",
+                            borderRadius: "40%",
+                            cursor: "pointer",
+                          }}
+                        />
+                      </Link>
+                      <p className="liveRoomUsername">
+                        {member.username || "Anonymous"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {member.micOpen ? (
+                    <span role="img" aria-label="Mic On">
+                      🎤
+                    </span>
+                  ) : (
+                    <span role="img" aria-label="Mic Off">
+                      🔇
+                    </span>
+                  )}
+                </div>
+              ))
+          ) : (
+            <p>Nenhum membro no palco.</p>
+          )}
+        </div>
 
         {/* usuarios na sala: sem que estejam na live */}
         <div className="inRoomUsers">
