@@ -34,6 +34,9 @@ import "./styles/style.css";
 import SideMenuFullScreen from "./components/SideMenuFullScreen.js";
 import Footer from "./components/Footer.js";
 
+// import context
+import { SocketProvider } from "./context/SocketContext.js";
+
 // Componente para exibir o ícone da sala minimizada globalmente
 const MinimizedStatus = () => {
   const location = useLocation();
@@ -73,101 +76,105 @@ const MinimizedStatus = () => {
 // Criar o componente App
 const App = () => {
   return (
-    <RoomProvider>
-      {" "}
-      {/* Make sure RoomProvider is wrapping the entire app */}
-      <Router>
-        <AudioProvider>
-          <UserProvider>
-            <div className="mainParentContainer">
-              {/* flex 1 */}
-              <div className="sideMenuContainerWideScreen">
-                {/* COLOCAR O MENU AQUI */}
-                
+    <SocketProvider>
+          <Router>
+      <UserProvider>
+        <RoomProvider>
+          {" "}
+          {/* Make sure RoomProvider is wrapping the entire app */}
+            <AudioProvider>
+              <div className="mainParentContainer">
+                {/* flex 1 */}
+                <div className="sideMenuContainerWideScreen">
+                  {/* COLOCAR O MENU AQUI */}
 
-                <SideMenuFullScreen />
-                
-                
-              </div>
-              {/* flex 2 */}
-              <div
-                style={{
-                  // backgroundColor: "red",
-                  flex: 2,
-                  display: "flex",
-                  flexDirection: "column",
-                  position: "relative",
-                  minHeight: "100vh",
-                  overflowY: "auto"
-                }}
-
-                id="scrollableContainer"
-              >
-                {/* Wrap your entire app in a div with global styling */}
+                  <SideMenuFullScreen />
+                </div>
+                {/* flex 2 */}
                 <div
                   style={{
-                    // maxWidth: "800px",
-                    flex: 1,
-                    margin: "0 auto",
-                    width: "100%",
-                    maxWidth: 800,
-                    // position: "relative",
+                    // backgroundColor: "red",
+                    flex: 2,
+                    display: "flex",
+                    flexDirection: "column",
+                    position: "relative",
+                    minHeight: "100vh",
+                    overflowY: "auto",
                   }}
+                  id="scrollableContainer"
                 >
-                  <Routes>
-                    {/* Implementar rotas */}
-                    <Route path="/" element={<Landing />} />
-                    <Route path="openListing/:id" element={<OpenListing />} />
-                    <Route path="liveRoom/:roomId" element={<LiveRoom />} />
-                    <Route path="chat" element={<Chat />} />
-                    <Route path="login" element={<Login />} />
-                    <Route path="signup" element={<Signup />} />
-                    <Route path="verifyAccount" element={<VerifyAccount />} />
-                    <Route path="newlisting" element={<NewListing />} />
-                    <Route path="profile/:userId" element={<Profile />} />
-                    <Route path="donate" element={<Donate />} />
-                    <Route
-                      path="passwordResetLink"
-                      element={<PasswordResetLink />}
-                    />
-                    <Route path="passwordReset" element={<PasswordReset />} />
-                    <Route path="guidelines" element={<PlatformGuidelines />} />
-                    <Route
-                      path="bibleStudies"
-                      element={<BibleStudiesByBook />}
-                    />
-                    <Route
-                      path="bibleStudies"
-                      element={<BibleStudiesByTheme />}
-                    />
-                    <Route path="privateRooms" element={<PrivateRooms />} />
-                    <Route path="suggestions" element={<Suggestions />} />
-                    <Route path="contactUs" element={<ContactUs />} />
-                    <Route path="findGathering" element={<FindGathering />} />
-                    <Route
-                      path="counselingSessions"
-                      element={<CounselingSessions />}
-                    />
-                    <Route path="churchSupport" element={<ChurchSupport />} />
-                    <Route path="promotions" element={<Promotions />} />
-                    <Route path="communityForum" element={<CommunityForum />} />
-                  </Routes>
-                  {/* Display the minimized room globally */}
-                  <MinimizedStatus />
-                </div>
+                  {/* Wrap your entire app in a div with global styling */}
+                  <div
+                    style={{
+                      // maxWidth: "800px",
+                      flex: 1,
+                      margin: "0 auto",
+                      width: "100%",
+                      maxWidth: 800,
+                      // position: "relative",
+                    }}
+                  >
+                    <Routes>
+                      {/* Implementar rotas */}
+                      <Route path="/" element={<Landing />} />
+                      <Route path="openListing/:id" element={<OpenListing />} />
+                      <Route path="liveRoom/:roomId" element={<LiveRoom />} />
+                      <Route path="chat" element={<Chat />} />
+                      <Route path="login" element={<Login />} />
+                      <Route path="signup" element={<Signup />} />
+                      <Route path="verifyAccount" element={<VerifyAccount />} />
+                      <Route path="newlisting" element={<NewListing />} />
+                      <Route path="profile/:userId" element={<Profile />} />
+                      <Route path="donate" element={<Donate />} />
+                      <Route
+                        path="passwordResetLink"
+                        element={<PasswordResetLink />}
+                      />
+                      <Route path="passwordReset" element={<PasswordReset />} />
+                      <Route
+                        path="guidelines"
+                        element={<PlatformGuidelines />}
+                      />
+                      <Route
+                        path="bibleStudies"
+                        element={<BibleStudiesByBook />}
+                      />
+                      <Route
+                        path="bibleStudies"
+                        element={<BibleStudiesByTheme />}
+                      />
+                      <Route path="privateRooms" element={<PrivateRooms />} />
+                      <Route path="suggestions" element={<Suggestions />} />
+                      <Route path="contactUs" element={<ContactUs />} />
+                      <Route path="findGathering" element={<FindGathering />} />
+                      <Route
+                        path="counselingSessions"
+                        element={<CounselingSessions />}
+                      />
+                      <Route path="churchSupport" element={<ChurchSupport />} />
+                      <Route path="promotions" element={<Promotions />} />
+                      <Route
+                        path="communityForum"
+                        element={<CommunityForum />}
+                      />
+                    </Routes>
+                    {/* Display the minimized room globally */}
+                    <MinimizedStatus />
+                  </div>
 
-                {/* Footer posicionado dentro do flex:2 */}
-                <div style={{ position: "sticky", bottom: 0 }}>
-                  <Footer />
-                </div>
-              </div>{" "}
-              {/* final da div flex 2 */}
-              <div className="sideMenuContainerWideScreen"></div>
-            </div>
-          </UserProvider>
-        </AudioProvider>
-      </Router>
-    </RoomProvider>
+                  {/* Footer posicionado dentro do flex:2 */}
+                  <div style={{ position: "sticky", bottom: 0 }}>
+                    <Footer />
+                  </div>
+                </div>{" "}
+                {/* final da div flex 2 */}
+                <div className="sideMenuContainerWideScreen"></div>
+              </div>
+            </AudioProvider>
+        </RoomProvider>
+      </UserProvider>
+          </Router>
+    </SocketProvider>
   );
 };
 

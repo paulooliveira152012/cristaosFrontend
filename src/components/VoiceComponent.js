@@ -4,10 +4,14 @@ import { useUser } from "../context/UserContext";
 import AudioContext from "../context/AudioContext";
 import { useRoom } from "../context/RoomContext";
 import io from "socket.io-client";
+import Profile from "../pages/profile";
 
-const socket = io(process.env.REACT_APP_API_BASE_URL);
-
-const VoiceComponent = ({ isMinimized }) => {
+const VoiceComponent = ({
+  isMinimized,
+  socket,
+  // currentUsersSpeaking,
+  setCurrentUsersSpeaking,
+}) => {
   const { roomId } = useParams();
   const { currentUser } = useUser();
   const { minimizedRoom } = useRoom();
@@ -47,7 +51,12 @@ const VoiceComponent = ({ isMinimized }) => {
   // Toggle mic only if user is speaker
   useEffect(() => {
     const toggleMic = async () => {
-      if (!isSpeaker || !agoraClient || agoraClient.connectionState !== "CONNECTED") return;
+      if (
+        !isSpeaker ||
+        !agoraClient ||
+        agoraClient.connectionState !== "CONNECTED"
+      )
+        return;
 
       try {
         await toggleMicrophone(micState, currentUser._id, roomId);
@@ -60,6 +69,44 @@ const VoiceComponent = ({ isMinimized }) => {
     toggleMic();
   }, [micState, agoraClient, toggleMicrophone, isSpeaker]);
 
+  const joiningChat = () => {
+    console.log("🔥 Subindo ao palco via socket:", socket?.id);
+
+    const newSpeaker = {
+      _id: currentUser._id,
+      username: currentUser.username,
+      profileImage: currentUser.profileImage,
+      micOpen: micState, // ou false, dependendo da lógica
+    };
+
+    socket.emit("joinAsSpeaker", {
+      roomId,
+      user: newSpeaker,
+    });
+
+    // Atualiza visualmente no front-end imediatamente
+    // Feedback imediato: adiciona localmente enquanto espera confirmação do backend
+setCurrentUsersSpeaking((prev) => {
+  const alreadyExists = prev.some((u) => u._id === currentUser._id);
+  return alreadyExists
+    ? prev
+    : [
+        ...prev,
+        {
+          _id: currentUser._id,
+          username: currentUser.username,
+          profileImage: currentUser.profileImage,
+          isSpeaker: true,
+          micOpen: false,
+        },
+      ];
+});
+
+    setIsSpeaker(true);
+    // this function needs to make it so that the participant is displayed in the currentUsersSpeaking in the liveRoom
+    // console.log("currentUsersSpeaking:", currentUsersSpeaking);
+  };
+
   return (
     <div id="container">
       {localError && <div>{localError}</div>}
@@ -67,20 +114,14 @@ const VoiceComponent = ({ isMinimized }) => {
       {!isSpeaker ? (
         <button
           onClick={() => {
-            socket.emit("joinAsSpeaker", {
-              roomId,
-              userId: currentUser._id,
-            });
-            setIsSpeaker(true);
+            joiningChat();
           }}
         >
           Subir ao palco
         </button>
       ) : (
         <button
-          onClick={() =>
-            toggleMicrophone(!micState, currentUser._id, roomId)
-          }
+          onClick={() => toggleMicrophone(!micState, currentUser._id, roomId)}
         >
           {micState ? "Desligar microfone" : "Ligar microfone"}
         </button>

@@ -12,19 +12,31 @@ import { handleBack } from "../components/functions/headerFunctions.js";
 import { useContext } from "react";
 import AudioContext from "../context/AudioContext.js";
 
+import {
+  addCurrentUserInRoom,
+  removeCurrentUserInRoom,
+  fetchCurrentRoomUsers,
+} from "./functions/liveRoomFunctions.js";
+
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 let socket;
 
 const LiveRoom = () => {
   const { currentUser } = useUser();
-  const { minimizeRoom } = useRoom();
+  const { minimizeRoom, joinRoomListeners, emitLeaveRoom, currentUsers } =
+    useRoom();
+
   const { leaveChannel } = useContext(AudioContext);
   const location = useLocation();
   const navigate = useNavigate();
   const { roomId } = useParams();
 
   const [sala, setSala] = useState(location.state?.sala || null);
+  // em uso para mosntrar usuarios na sala
+  const [currentUsersInRoom, setCurrentUsersInRoom] = useState([]);
+  // para usuarios que estao no palco
+  const [currentUsersSpeaking, setCurrentUsersSpeaking] = useState([]);
   const [roomMembers, setRoomMembers] = useState([]);
   const [microphoneOn, setMicrophoneOn] = useState(false); // Microphone state
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -36,6 +48,41 @@ const LiveRoom = () => {
   const isRejoiningRef = useRef(false);
 
   const [isRejoining, setIsRejoining] = useState(false); // or useRef if needed
+
+  // 1 useEffect: colocar usuario que entrou no groupo currentUsersInRoom
+  useEffect(() => {
+    if (!roomId || !currentUser) return;
+
+    console.log("👥 Adicionando usuário à currentUsersInRoom");
+    addCurrentUserInRoom(roomId, currentUser, baseUrl);
+  }, [roomId, currentUser]);
+
+  // 2 useEffect: buscando os usuarios na live sempre que alguem entra ou sai
+  useEffect(() => {
+    if (!roomId) return;
+
+    const updateCurrentUsers = async () => {
+      const users = await fetchCurrentRoomUsers(roomId, baseUrl);
+      setCurrentUsersInRoom(users); // aqui vai só o array
+      console.log("📡 Usuários atualizados:", users); // usa o retorno diretamente
+    };
+
+    updateCurrentUsers(); // chamada inicial
+
+    // listeners
+    socket?.on("userJoinsRoom", updateCurrentUsers);
+    socket?.on("userLeavesRoom", updateCurrentUsers);
+
+    return () => {
+      socket?.off("userJoinsRoom", updateCurrentUsers);
+      socket?.off("userLeavesRoom", updateCurrentUsers);
+    };
+  }, [roomId]);
+
+  // logando atualizacao de usuarios
+  useEffect(() => {
+    console.log("👁 currentUsersInRoom atualizado:", currentUsersInRoom);
+  }, [currentUsersInRoom]);
 
   useEffect(() => {
     console.log("isRejoining?", isRejoining);
@@ -72,27 +119,28 @@ const LiveRoom = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleMicStatusChanged = ({ userId, micOpen }) => {
-      console.log("	✅  Checking users with mic open");
-      console.log(`Usuário ${userId} mudou mic para:`, micOpen);
-      setRoomMembers((prev) =>
-        prev.map((member) =>
-          member._id === userId
-            ? { ...member, micOpen, isSpeaker: member.isSpeaker }
-            : member
-        )
-      );
-      console.log("	✅ room members:", roomMembers);
+    const handleJoinAsSpeaker = ({ user }) => {
+      console.log("🚀 Evento userJoinsStage recebido:", user);
+
+      setCurrentUsersSpeaking((prev) => {
+        const alreadyExists = prev.some((u) => u._id === user._id);
+        return alreadyExists ? prev : [...prev, user];
+      });
     };
 
-    socket.on("micStatusChanged", handleMicStatusChanged);
+    socket.on("userJoinsStage", handleJoinAsSpeaker);
+
+    // if (window.socket) {
+    //   window.socket.on("userJoinsStage", handleJoinAsSpeaker);
+    // }
 
     return () => {
-      if (socket) {
-        socket.off("micStatusChanged", handleMicStatusChanged);
-      }
+      // if (window.socket) {
+      //   window.socket.off("userJoinsStage", handleJoinAsSpeaker);
+      // }
+      socket.off("userJoinsStage", handleJoinAsSpeaker);
     };
-  }, []);
+  }, [socket]);
 
   useEffect(() => {
     if (!currentUser || !roomId || !sala) return;
@@ -100,6 +148,7 @@ const LiveRoom = () => {
     const joinRoomAndSyncToDB = async () => {
       if (!socket) {
         socket = io(baseUrl);
+        window.socket = socket; // <- 🔧 ISSO É O QUE FALTAVA!
         console.log("Socket URL:", baseUrl);
         socket.currentRoomId = sala?._id || roomId;
       }
@@ -114,18 +163,13 @@ const LiveRoom = () => {
       }
 
       // Emit joinRoom via socket
-      socket.emit("joinRoom", {
-        roomId,
-        user: {
-          _id: currentUser._id,
-          username: currentUser.username,
-          profileImage: currentUser.profileImage,
-        },
-      });
+      joinRoomListeners(roomId);
+
 
       // Fallback: tenta buscar membros manualmente se roomMembers ainda não carregou após 800ms
       setTimeout(async () => {
         if (roomMembers.length === 0) {
+          console.log("✅ fetching room members manually");
           try {
             const res = await fetch(
               `${baseUrl}/api/rooms/getRoomMembers/${roomId}`
@@ -179,8 +223,19 @@ const LiveRoom = () => {
       });
 
       socket.on("roomData", ({ roomMembers }) => {
-        console.log("✅ ✅ ✅  roomData recebido:", roomMembers);
-        setRoomMembers(roomMembers);
+        console.log(
+          "🏓 roomData recebido:",
+          roomMembers.map((u) => ({
+            username: u.username,
+            isSpeaker: u.isSpeaker,
+          }))
+        );
+
+        setRoomMembers(roomMembers); // já fazia
+
+        // 🔥 Atualiza os que estão no palco
+        const speakers = roomMembers.filter((u) => u.isSpeaker);
+        setCurrentUsersSpeaking(speakers);
       });
 
       socket.on("userLeft", ({ userId }) => {
@@ -240,10 +295,7 @@ const LiveRoom = () => {
     // setIsLeaving(true);
 
     // Emit an event to leave the room
-    socket.emit("leaveRoom", {
-      roomId: sala?._id || roomId,
-      userId: currentUser._id,
-    });
+    emitLeaveRoom(roomId, currentUser._id);
 
     // ✅ Remover o membro do MongoDB
     try {
@@ -262,6 +314,7 @@ const LiveRoom = () => {
       console.error("Erro ao remover usuário do banco:", error);
     }
 
+    await removeCurrentUserInRoom(roomId, currentUser._id, baseUrl);
     leaveRoom();
 
     // Remover a sala minimizada quando o usuário sair da sala
@@ -297,6 +350,8 @@ const LiveRoom = () => {
   const handleUpdateRoomTitle = () =>
     updateRoomTitle(roomId, newRoomTitle, setSala);
   const handleDeleteRoom = () => deleteRoom(roomId, navigate);
+
+  console.log("🎯🎯🎯", currentUsersSpeaking);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
@@ -345,55 +400,51 @@ const LiveRoom = () => {
       >
         {/* Apenas usuários com na live */}
         <div className="liveInRoomMembersContainer">
-          {roomMembers?.filter((member) => member.isSpeaker)?.length > 0 ? (
-            roomMembers
-              .filter((member) => member.isSpeaker)
-
-              .map((member, index) => (
-                <div key={index} className="liveMemberParentContainer">
-                  <div className="liveMemberContainer">
-                    <div className="liveMemberContent">
-                      <Link to={`/profile/${member._id}`}>
-                        <div
-                          className="liveMemberProfileImage"
-                          style={{
-                            backgroundImage: `url(${
-                              member.profileImage || ""
-                            })`,
-                            backgroundSize: "cover",
-                            backgroundPosition: "center",
-                            backgroundColor: "#ddd",
-                            borderRadius: "40%",
-                            cursor: "pointer",
-                          }}
-                        />
-                      </Link>
-                      <p className="liveRoomUsername">
-                        {member.username || "Anonymous"}
-                      </p>
-                    </div>
+          {currentUsersSpeaking.length > 0 ? (
+            currentUsersSpeaking.map((member, index) => (
+              <div key={index} className="liveMemberParentContainer">
+                <div className="liveMemberContainer">
+                  <div className="liveMemberContent">
+                    <Link to={`/profile/${member._id}`}>
+                      <div
+                        className="liveMemberProfileImage"
+                        style={{
+                          backgroundImage: `url(${member.profileImage || ""})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                          backgroundColor: "#ddd",
+                          borderRadius: "40%",
+                          cursor: "pointer",
+                        }}
+                      />
+                    </Link>
+                    <p className="liveRoomUsername">
+                      {member.username || "Anonymous"}
+                    </p>
                   </div>
-
-                  {member.micOpen ? (
-                    <span role="img" aria-label="Mic On">
-                      🎤
-                    </span>
-                  ) : (
-                    <span role="img" aria-label="Mic Off">
-                      🔇
-                    </span>
-                  )}
                 </div>
-              ))
+
+                {member.micOpen ? (
+                  <span role="img" aria-label="Mic On">
+                    🎤
+                  </span>
+                ) : (
+                  <span role="img" aria-label="Mic Off">
+                    🔇
+                  </span>
+                )}
+              </div>
+            ))
           ) : (
             <p>Nenhum membro no palco.</p>
           )}
         </div>
 
         {/* usuarios na sala: sem que estejam na live */}
+        {/* usuários na sala: sem estar no palco */}
         <div className="inRoomUsers">
-          {roomMembers && roomMembers.length > 0 ? (
-            roomMembers.map((member, index) => (
+          {currentUsersInRoom && currentUsersInRoom.length > 0 ? (
+            currentUsersInRoom.map((member, index) => (
               <div key={index} className="inRoomMembersParentContainer">
                 <div className="inRoomLiveMemberContainer">
                   <div className="liveMemberContent">
@@ -426,6 +477,9 @@ const LiveRoom = () => {
           microphoneOn={microphoneOn}
           roomId={roomId}
           keepAlive={true}
+          socket={socket}
+          // currentUsersSpeaking={currentUsersSpeaking}
+          setCurrentUsersSpeaking={setCurrentUsersSpeaking}
         />
         <ChatComponent roomId={roomId} />
       </div>

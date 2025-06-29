@@ -1,87 +1,150 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from "react";
+import { useSocket } from "./SocketContext";
+import { useUser } from "./UserContext";
 
-// Create the context
 const RoomContext = createContext();
 
-// Custom hook to use the RoomContext
 export const useRoom = () => useContext(RoomContext);
 
-// RoomProvider component to wrap around the app
 export const RoomProvider = ({ children }) => {
+  const socket = useSocket();
+  const { user } = useUser();
+
   const [minimizedRoom, setMinimizedRoom] = useState(null);
-  const [hasJoinedBefore, setHasJoinedBefore] = useState(false); // Track if user has joined before
-  const [micOpen, setMicOpen] = useState(false); // Track the microphone state
+  const [hasJoinedBefore, setHasJoinedBefore] = useState(false);
+  const [micOpen, setMicOpen] = useState(false);
 
-  // Function to minimize a room
-  const minimizeRoom = (room, microphoneOn) => {
-    if (!room) {
-      console.warn("Cannot minimize a room. Room data is missing.");
+  const [currentRoomId, setCurrentRoomId] = useState(null);
+  const [currentUsers, setCurrentUsers] = useState([]);
+
+  // entrando na sala
+  const joinRoomListeners = (roomId) => {
+    console.log("🧪 Tentando emitir userJoinsRoom...");
+    console.log("socket connected:", socket?.connected);
+    console.log("user:", user);
+    console.log("roomId:", roomId);
+
+    if (!roomId || !user) {
+      console.log("⚠️ Dados ausentes: roomId ou user nulo.");
       return;
     }
 
-    // Check if the room is a valid object before trying to spread it
-    if (typeof room === 'object') {
-      setMinimizedRoom({ ...room, microphoneOn }); // Store room and mic state
-      setMicOpen(microphoneOn); // Store the mic state in context
-      console.log(`Room "${room.roomTitle}" has been minimized with microphone state: ${microphoneOn}`);
+    const userPayload = {
+      _id: user._id,
+      username: user.username,
+      profileImage: user.profileImage,
+    };
+
+    setCurrentRoomId(roomId);
+
+    const emitJoinEvents = () => {
+      console.log("🔌 Emitindo userJoinsRoom com socket ID:", socket?.id);
+      console.log("🎯 Dados:", roomId, user?.username);
+
+      socket.emit("joinRoom", {
+        roomId,
+        user: userPayload,
+      });
+
+      socket.emit("userJoinsRoom", {
+        roomId,
+        user: userPayload,
+      });
+
+      socket.on("currentUsersInRoom", (users) => {
+        setCurrentUsers(users);
+      });
+    };
+
+    if (socket?.connected) {
+      emitJoinEvents();
     } else {
+      console.warn("⏳ Aguardando conexão do socket...");
+      socket.once("connect", () => {
+        console.log("🟢 Socket conectado! Agora sim, emitindo eventos.");
+        emitJoinEvents();
+      });
+    }
+  };
+
+  // ❌ Sair da sala (ou fechar aba)
+  const emitLeaveRoom = (roomId) => {
+    if (!roomId || !user) return;
+
+    socket.emit("userLeavesRoom", {
+      roomId,
+      userId: user._id,
+    });
+
+    setCurrentRoomId(null);
+    setCurrentUsers([]);
+  };
+
+  // ⬇️ Minimizar
+  const minimizeRoom = (room, microphoneOn) => {
+    if (!room || typeof room !== "object") {
       console.error("Room data is not a valid object:", room);
+      return;
     }
+
+    setMinimizedRoom({ ...room, microphoneOn });
+    setMicOpen(microphoneOn);
+    console.log(`Room "${room.roomTitle}" minimized with mic: ${microphoneOn}`);
   };
 
-  // Function to clear the minimized room
   const clearMinimizedRoom = () => {
-    if (!minimizedRoom) {
-      console.warn("No minimized room to clear.");
-      return;
-    }
-
-    console.log(`Minimized room "${minimizedRoom.roomTitle}" has been cleared.`);
-    setMinimizedRoom(null); // Clear the minimized room
-    setMicOpen(false); // Reset mic state
+    if (!minimizedRoom) return;
+    console.log(`Cleared minimized room "${minimizedRoom.roomTitle}"`);
+    setMinimizedRoom(null);
+    setMicOpen(false);
   };
 
-  // Function to leave a room and clear minimized state
   const leaveRoom = () => {
-    if (!minimizedRoom) {
-      console.warn("No minimized room to leave.");
-      return;
-    }
+    if (!minimizedRoom || !user) return;
 
-    clearMinimizedRoom(); // Call clearMinimizedRoom to reset the state
-    console.log("Left the room and cleared minimized state.");
-    setHasJoinedBefore(false); // Reset the joined state when the room is left
+    emitLeaveRoom(minimizedRoom._id);
+    clearMinimizedRoom();
+    setHasJoinedBefore(false);
+    console.log("Left the room and reset states.");
   };
 
-  // Function to handle rejoining a room
   const joinRoom = (room) => {
-    if (!room) {
-      console.warn("Cannot join a room. Room data is missing.");
-      return;
-    }
+    if (!room) return;
 
     if (!hasJoinedBefore) {
-      console.log("First time joining the room, microphone will be off.");
-      setMicOpen(false); // Turn off mic for the first-time join
-      setHasJoinedBefore(true); // Mark as joined for future reentries
-    } else {
-      console.log("Rejoining the room, preserving microphone state:", micOpen);
+      setMicOpen(false);
+      setHasJoinedBefore(true);
     }
 
-    // Store the room data for rejoining
     setMinimizedRoom(room);
   };
 
+  useEffect(() => {
+  return () => {
+    if (socket) {
+      socket.off("currentUsersInRoom");
+    }
+  };
+}, [socket]);
+
+
   return (
-    <RoomContext.Provider value={{ 
-      minimizedRoom, 
-      micOpen, 
-      hasJoinedBefore, 
-      minimizeRoom, 
-      clearMinimizedRoom, 
-      leaveRoom, 
-      joinRoom 
-    }}>
+    <RoomContext.Provider
+      value={{
+        minimizedRoom,
+        micOpen,
+        hasJoinedBefore,
+        currentRoomId,
+        currentUsers,
+        minimizeRoom,
+        clearMinimizedRoom,
+        leaveRoom,
+        joinRoom,
+        joinRoomListeners,
+        emitLeaveRoom,
+        setCurrentUsers,
+      }}
+    >
       {children}
     </RoomContext.Provider>
   );
