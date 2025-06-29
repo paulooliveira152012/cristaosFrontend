@@ -15,17 +15,17 @@ export const RoomProvider = ({ children }) => {
   const [micOpen, setMicOpen] = useState(false);
 
   const [currentRoomId, setCurrentRoomId] = useState(null);
-  const [currentUsers, setCurrentUsers] = useState([]);
+  const [currentUsers, setCurrentUsers] = useState([]); // ouvintes
+  const [currentUsersSpeaking, setCurrentUsersSpeaking] = useState([]); // no palco
 
-  // entrando na sala
-  const joinRoomListeners = (roomId) => {
-    console.log("🧪 Tentando emitir userJoinsRoom...");
-    console.log("socket connected:", socket?.connected);
-    console.log("user:", user);
-    console.log("roomId:", roomId);
+  // ▶️ Entrar na sala
+  const joinRoomListeners = (roomId, user) => {
+    console.log("roomId:", roomId)
+    console.log("user:", user)
 
+    console.log("joinRoomListener socket call")
     if (!roomId || !user) {
-      console.log("⚠️ Dados ausentes: roomId ou user nulo.");
+      console.warn("▶️ joinRoomListeners: Dados ausentes");
       return;
     }
 
@@ -37,64 +37,67 @@ export const RoomProvider = ({ children }) => {
 
     setCurrentRoomId(roomId);
 
-    const emitJoinEvents = () => {
-      console.log("🔌 Emitindo userJoinsRoom com socket ID:", socket?.id);
-      console.log("🎯 Dados:", roomId, user?.username);
+    const emitEvents = () => {
+      console.log("🎤 Emitindo eventos de entrada:", userPayload);
 
-      socket.emit("joinRoom", {
-        roomId,
-        user: userPayload,
+      socket.emit("joinRoom", { roomId, user: userPayload });
+      socket.emit("userJoinsRoom", { roomId, user: userPayload });
+
+      socket.off("liveRoomUsers");
+      socket.on("liveRoomUsers", (users) => {
+        console.log("📡 Recebido liveRoomUsers do servidor:", users);
+        setCurrentUsers(users || []);
       });
 
-      socket.emit("userJoinsRoom", {
-        roomId,
-        user: userPayload,
+      socket.on("userJoinsStage", ({ user }) => {
+        if (!user) return;
+
+        setCurrentUsersSpeaking((prev) => {
+          const alreadyIn = prev.some((u) => u._id === user._id);
+          return alreadyIn ? prev : [...prev, user];
+        });
       });
 
-      socket.on("currentUsersInRoom", (users) => {
-        setCurrentUsers(users);
+      socket.on("userLeavesStage", ({ userId }) => {
+        setCurrentUsersSpeaking((prev) =>
+          prev.filter((u) => u._id !== userId)
+        );
       });
     };
 
     if (socket?.connected) {
-      emitJoinEvents();
+      emitEvents();
     } else {
-      console.warn("⏳ Aguardando conexão do socket...");
       socket.once("connect", () => {
-        console.log("🟢 Socket conectado! Agora sim, emitindo eventos.");
-        emitJoinEvents();
+        console.log("🔌 Socket reconectado");
+        emitEvents();
       });
     }
   };
 
-  // ❌ Sair da sala (ou fechar aba)
-  const emitLeaveRoom = (roomId) => {
-    if (!roomId || !user) return;
+  // ❌ Sair da sala
+  const emitLeaveRoom = (roomId, userId) => {
+    if (!roomId || !userId) return;
 
     socket.emit("userLeavesRoom", {
       roomId,
-      userId: user._id,
+      userId,
     });
 
     setCurrentRoomId(null);
     setCurrentUsers([]);
+    setCurrentUsersSpeaking([]);
   };
 
-  // ⬇️ Minimizar
+  // ⬇️ Minimizar sala
   const minimizeRoom = (room, microphoneOn) => {
-    if (!room || typeof room !== "object") {
-      console.error("Room data is not a valid object:", room);
-      return;
-    }
+    if (!room || typeof room !== "object") return;
 
     setMinimizedRoom({ ...room, microphoneOn });
     setMicOpen(microphoneOn);
-    console.log(`Room "${room.roomTitle}" minimized with mic: ${microphoneOn}`);
   };
 
   const clearMinimizedRoom = () => {
-    if (!minimizedRoom) return;
-    console.log(`Cleared minimized room "${minimizedRoom.roomTitle}"`);
     setMinimizedRoom(null);
     setMicOpen(false);
   };
@@ -102,10 +105,9 @@ export const RoomProvider = ({ children }) => {
   const leaveRoom = () => {
     if (!minimizedRoom || !user) return;
 
-    emitLeaveRoom(minimizedRoom._id);
+    emitLeaveRoom(minimizedRoom._id, user._id);
     clearMinimizedRoom();
     setHasJoinedBefore(false);
-    console.log("Left the room and reset states.");
   };
 
   const joinRoom = (room) => {
@@ -120,13 +122,14 @@ export const RoomProvider = ({ children }) => {
   };
 
   useEffect(() => {
-  return () => {
-    if (socket) {
-      socket.off("currentUsersInRoom");
-    }
-  };
-}, [socket]);
-
+    return () => {
+      if (socket) {
+        socket.off("currentUsersInRoom");
+        socket.off("userJoinsStage");
+        socket.off("userLeavesStage");
+      }
+    };
+  }, [socket]);
 
   return (
     <RoomContext.Provider
@@ -136,6 +139,8 @@ export const RoomProvider = ({ children }) => {
         hasJoinedBefore,
         currentRoomId,
         currentUsers,
+        currentUsersSpeaking,
+        setCurrentUsersSpeaking,
         minimizeRoom,
         clearMinimizedRoom,
         leaveRoom,
