@@ -20,10 +20,10 @@ export const RoomProvider = ({ children }) => {
 
   // ▶️ Entrar na sala
   const joinRoomListeners = (roomId, user) => {
-    console.log("roomId:", roomId)
-    console.log("user:", user)
+    console.log("roomId:", roomId);
+    console.log("user:", user);
 
-    console.log("joinRoomListener socket call")
+    console.log("joinRoomListener socket call");
     if (!roomId || !user) {
       console.warn("▶️ joinRoomListeners: Dados ausentes");
       return;
@@ -41,7 +41,6 @@ export const RoomProvider = ({ children }) => {
       console.log("🎤 Emitindo eventos de entrada:", userPayload);
 
       socket.emit("joinRoom", { roomId, user: userPayload });
-      socket.emit("userJoinsRoom", { roomId, user: userPayload });
 
       socket.off("liveRoomUsers");
       socket.on("liveRoomUsers", (users) => {
@@ -49,19 +48,13 @@ export const RoomProvider = ({ children }) => {
         setCurrentUsers(users || []);
       });
 
-      socket.on("userJoinsStage", ({ user }) => {
-        if (!user) return;
-
-        setCurrentUsersSpeaking((prev) => {
-          const alreadyIn = prev.some((u) => u._id === user._id);
-          return alreadyIn ? prev : [...prev, user];
-        });
+      socket.on("updateSpeakers", (speakers) => {
+        console.log("📣 Recebido updateSpeakers:", speakers);
+        setCurrentUsersSpeaking(speakers || []);
       });
 
       socket.on("userLeavesStage", ({ userId }) => {
-        setCurrentUsersSpeaking((prev) =>
-          prev.filter((u) => u._id !== userId)
-        );
+        setCurrentUsersSpeaking((prev) => prev.filter((u) => u._id !== userId));
       });
     };
 
@@ -72,6 +65,38 @@ export const RoomProvider = ({ children }) => {
         console.log("🔌 Socket reconectado");
         emitEvents();
       });
+    }
+  };
+
+  // entrando na sala
+  const emitJoinAsSpeaker = (roomId, user, micState) => {
+    console.log("2️⃣")
+    console.log("RoomContext emitJoinAsSpeaker chamado");
+    console.log("userId:", roomId);
+    console.log("user:", user);
+
+    if (!socket || !roomId || !user) return;
+
+    const payload = {
+      _id: user._id,
+      username: user.username,
+      profileImage: user.profileImage,
+      micOpen: micState,
+      isSpeaker: true,
+    };
+
+    if (!socket?.connected) {
+      console.warn("⚠️ Socket ainda não conectado. Aguardando...");
+      socket.once("connect", () => {
+        console.log("🔁 Socket conectado. Emitindo joinAsSpeaker...");
+        socket.emit("joinAsSpeaker", { roomId, user: payload });
+      });
+    } else {
+      console.log("✅ Socket conectado. Emitindo joinAsSpeaker...");
+      console.log("➡️ roomId:", roomId);
+      console.log("➡️ payload (user):", payload);
+      console.log("socket.emit('joinAsSpeaker'...)")
+      socket.emit("joinAsSpeaker", { roomId, user: payload });
     }
   };
 
@@ -125,8 +150,8 @@ export const RoomProvider = ({ children }) => {
     return () => {
       if (socket) {
         socket.off("currentUsersInRoom");
-        socket.off("userJoinsStage");
-        socket.off("userLeavesStage");
+        socket.off("updateSpeakers"); // <- correto agora
+        socket.off("userLeavesStage"); // ok, se ainda estiver usando
       }
     };
   }, [socket]);
@@ -147,6 +172,7 @@ export const RoomProvider = ({ children }) => {
         joinRoom,
         joinRoomListeners,
         emitLeaveRoom,
+        emitJoinAsSpeaker,
         setCurrentUsers,
       }}
     >

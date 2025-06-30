@@ -77,11 +77,11 @@ const MinimizedStatus = () => {
 const App = () => {
   return (
     <SocketProvider>
-          <Router>
-      <UserProvider>
-        <RoomProvider>
-          {" "}
-          {/* Make sure RoomProvider is wrapping the entire app */}
+      <Router>
+        <UserProvider>
+          <RoomProvider>
+            {" "}
+            {/* Make sure RoomProvider is wrapping the entire app */}
             <AudioProvider>
               <div className="mainParentContainer">
                 {/* flex 1 */}
@@ -171,9 +171,9 @@ const App = () => {
                 <div className="sideMenuContainerWideScreen"></div>
               </div>
             </AudioProvider>
-        </RoomProvider>
-      </UserProvider>
-          </Router>
+          </RoomProvider>
+        </UserProvider>
+      </Router>
     </SocketProvider>
   );
 };

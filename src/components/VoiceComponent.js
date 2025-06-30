@@ -3,18 +3,13 @@ import { useParams } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import AudioContext from "../context/AudioContext";
 import { useRoom } from "../context/RoomContext";
-import io from "socket.io-client";
-import Profile from "../pages/profile";
 
-const VoiceComponent = ({
-  isMinimized,
-  socket,
-  // currentUsersSpeaking,
-  setCurrentUsersSpeaking,
-}) => {
+const VoiceComponent = ({ isMinimized }) => {
   const { roomId } = useParams();
   const { currentUser } = useUser();
-  const { minimizedRoom } = useRoom();
+  const { emitJoinAsSpeaker } = useRoom();
+  const { testSocketConnection } = useRoom();
+
   const {
     joinChannel,
     leaveChannel,
@@ -28,18 +23,16 @@ const VoiceComponent = ({
   const [localError, setLocalError] = useState("");
   const [isSpeaker, setIsSpeaker] = useState(false);
 
-  // Join voice channel on mount
   useEffect(() => {
     if (!currentUser || !roomId || isInCall) return;
 
     const joinVoiceChannel = async () => {
       try {
-        console.log("✅ Joining voice channel for room:", roomId);
         await joinChannel(roomId, currentUser._id);
         setLocalError("");
       } catch (err) {
         console.error("Error joining Agora channel:", err);
-        setLocalError("Error joining voice chat. Please try again.");
+        setLocalError("Erro ao entrar no chat de voz.");
       }
     };
 
@@ -48,7 +41,6 @@ const VoiceComponent = ({
     }
   }, [isMinimized, roomId, currentUser, isInCall, joinChannel]);
 
-  // Toggle mic only if user is speaker
   useEffect(() => {
     const toggleMic = async () => {
       if (
@@ -61,50 +53,22 @@ const VoiceComponent = ({
       try {
         await toggleMicrophone(micState, currentUser._id, roomId);
       } catch (err) {
-        console.error("Error toggling microphone:", err);
-        setLocalError("Error with microphone. Please try again.");
+        setLocalError("Erro ao alternar microfone.");
       }
     };
 
     toggleMic();
-  }, [micState, agoraClient, toggleMicrophone, isSpeaker]);
+  }, [micState, isSpeaker]);
 
-  const joiningChat = () => {
-    console.log("🔥 Subindo ao palco via socket:", socket?.id);
-
-    const newSpeaker = {
-      _id: currentUser._id,
-      username: currentUser.username,
-      profileImage: currentUser.profileImage,
-      micOpen: micState, // ou false, dependendo da lógica
-    };
-
-    socket.emit("joinAsSpeaker", {
-      roomId,
-      user: newSpeaker,
-    });
-
-    // Atualiza visualmente no front-end imediatamente
-    // Feedback imediato: adiciona localmente enquanto espera confirmação do backend
-setCurrentUsersSpeaking((prev) => {
-  const alreadyExists = prev.some((u) => u._id === currentUser._id);
-  return alreadyExists
-    ? prev
-    : [
-        ...prev,
-        {
-          _id: currentUser._id,
-          username: currentUser.username,
-          profileImage: currentUser.profileImage,
-          isSpeaker: true,
-          micOpen: false,
-        },
-      ];
-});
-
+  const handleJoinAsSpeaker = () => {
+    console.log("1️⃣")
+    console.log("1 -> funcao chamada para subir ao palco")
+    console.log("roomId:", roomId)
+    console.log("currentUser:", currentUser)
+    console.log("micState", micState)
+    
+    emitJoinAsSpeaker(roomId, currentUser, micState);
     setIsSpeaker(true);
-    // this function needs to make it so that the participant is displayed in the currentUsersSpeaking in the liveRoom
-    // console.log("currentUsersSpeaking:", currentUsersSpeaking);
   };
 
   return (
@@ -112,16 +76,12 @@ setCurrentUsersSpeaking((prev) => {
       {localError && <div>{localError}</div>}
 
       {!isSpeaker ? (
-        <button
-          onClick={() => {
-            joiningChat();
-          }}
-        >
-          Subir ao palco
-        </button>
+        <button onClick={handleJoinAsSpeaker}>Subir ao palco</button>
       ) : (
         <button
-          onClick={() => toggleMicrophone(!micState, currentUser._id, roomId)}
+          onClick={() =>
+            toggleMicrophone(!micState, currentUser._id, roomId)
+          }
         >
           {micState ? "Desligar microfone" : "Ligar microfone"}
         </button>

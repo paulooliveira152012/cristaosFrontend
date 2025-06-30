@@ -98,7 +98,7 @@ export const addCurrentUserInRoom = async (roomId, currentUser, baseUrl) => {
 
       // necessario para mostrar usuarios online no app...
       if (window.socket) {
-        window.socket.emit("userJoinsRoom", { roomId });
+        window.socket.emit("joinRoom", { roomId });
       }
 
       return data.currentUsersInRoom;
