@@ -10,6 +10,9 @@ import "../styles/style.css";
 import VoiceComponent from "../components/VoiceComponent.js";
 import { handleBack } from "../components/functions/headerFunctions.js";
 import AudioContext from "../context/AudioContext.js";
+// import { handleLeaveRoom } from "./functions/liveRoomFunctions.js";
+
+
 
 import {
   addCurrentUserInRoom,
@@ -29,7 +32,8 @@ const LiveRoom = () => {
     currentUsersSpeaking,
     setCurrentUsersSpeaking,
     removeSpeaker,
-    currentUsers // ✅ já incluído aqui
+    currentUsers, // ✅ já incluído aqui
+    handleJoinRoom
   } = useRoom();
 
   const { leaveChannel } = useContext(AudioContext);
@@ -47,15 +51,23 @@ const LiveRoom = () => {
   const [isCreator, setIsCreator] = useState(false);
   const isRejoiningRef = useRef(false);
 
+  const { handleLeaveRoom } = useRoom(); // ✅ CERTA
+
+
   // const { currentUsers } = useRoom()
   console.log("currentUsers:", currentUsers);
 
   // acionar socket para adicionar usuario na sala
+  // useEffect(() => {
+  //   if (!roomId || !currentUser) return;
+  //   console.log("👥 Adicionando usuário à currentUsersInRoom");
+  //   addCurrentUserInRoom(roomId, currentUser, baseUrl);
+  //   console.log("🐶 usuarios na sala:", currentUsers);
+  // }, [roomId, currentUser]);
+
   useEffect(() => {
     if (!roomId || !currentUser) return;
-    console.log("👥 Adicionando usuário à currentUsersInRoom");
-    addCurrentUserInRoom(roomId, currentUser, baseUrl);
-    console.log("🐶 usuarios na sala:", currentUsers);
+    handleJoinRoom(roomId, currentUser, baseUrl);
   }, [roomId, currentUser]);
 
   // acionar busca de dados da sala
@@ -96,41 +108,6 @@ const LiveRoom = () => {
     console.log("👥 Lista atual de ouvintes:", currentUsers);
   }, [currentUsers]);
 
-  const handleLeaveRoom = async () => {
-    if (socket && socket.connected) {
-      emitLeaveRoom(roomId, currentUser._id);
-    } else {
-      console.warn("⚠️ Socket não disponível para emitir emitLeaveRoom.");
-    }
-
-    try {
-      await fetch(`${baseUrl}/api/rooms/removeMember`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roomId: sala?._id || roomId,
-          userId: currentUser._id,
-        }),
-      });
-      console.log("Usuário removido do banco de dados");
-    } catch (error) {
-      console.error("Erro ao remover usuário do banco:", error);
-    }
-
-    // ⛔ REMOVER DE currentUsersInRoom
-    await removeCurrentUserInRoom(roomId, currentUser._id, baseUrl, socket);
-    // ⛔ REMOVER DE currentUsersSpeaking
-    await removeSpeaker(roomId, currentUser._id, baseUrl); // ✅ aqui
-
-    minimizeRoom(null);
-    try {
-      await leaveChannel();
-      navigate("/");
-    } catch (error) {
-      console.error("Erro ao sair da call de voz:", error);
-    }
-  };
-
   const handleUpdateRoomTitle = () =>
     updateRoomTitle(roomId, newRoomTitle, setSala);
   const handleDeleteRoom = () => deleteRoom(roomId, navigate);
@@ -158,7 +135,9 @@ const LiveRoom = () => {
         showSettingsIcon={isCreator}
         openLiveSettings={() => setShowSettingsModal(true)}
         roomId={roomId}
-        handleLeaveRoom={handleLeaveRoom}
+        handleLeaveRoom={() =>
+          handleLeaveRoom(roomId, currentUser, baseUrl, leaveChannel, navigate)
+        }
         showBackArrow={true}
       />
 

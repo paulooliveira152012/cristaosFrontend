@@ -4,6 +4,7 @@ import { useUser } from "../context/UserContext";
 import AudioContext from "../context/AudioContext";
 import { useRoom } from "../context/RoomContext";
 import { addSpeakerToRoom } from "../pages/functions/liveRoomFunctions";
+import { removeSpeakerFromRoom } from "../pages/functions/liveRoomFunctions";
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
