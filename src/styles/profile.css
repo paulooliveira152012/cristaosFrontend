@@ -41,7 +41,7 @@
 .profile-error {
     text-align: center;
     font-size: 1.2em;
-    color: #ff0000;
+    /* color: #ff0000; */
 }
 
 /* Listings container */

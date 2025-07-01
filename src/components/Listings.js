@@ -320,7 +320,7 @@ const Listings = () => {
                         width: "100%",
                         maxWidth: "100%",
                         height: "auto",
-                        backgroundColor: "red",
+                        // backgroundColor: "red",
                       }}
                     />
                   )}

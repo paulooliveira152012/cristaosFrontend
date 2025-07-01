@@ -113,7 +113,7 @@ const styles = {
   },
   fallback: {
     marginTop: '20px',
-    color: '#ff0000',
+    // color: '#ff0000',
   },
   link: {
     textDecoration: 'none',
