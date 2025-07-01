@@ -112,17 +112,22 @@ export const addCurrentUserInRoom = async (roomId, currentUser, baseUrl) => {
   }
 };
 
+// remover current user online da sala do banco de dados
+// remover current user online da sala do banco de dados
+// remover current user online da sala do banco de dados
+export const removeCurrentUserInRoom = async (roomId, userId, baseUrl, socket) => {
+  console.log("✅ Função para remover usuario da sala chamada no liveRoomFunctions.js");
+  console.log("roomId:", roomId)
+  console.log("userId:", userId)
+  console.log("baseUrl:", baseUrl)
+  console.log("socket:", socket)
 
-// remover current user online da sala do banco de dados
-// remover current user online da sala do banco de dados
-// remover current user online da sala do banco de dados
-export const removeCurrentUserInRoom = async (roomId, userId, baseUrl) => {
   if (!roomId || !userId) {
-    console.error(
-      "❌ Falta roomId ou userId ao tentar remover usuário da sala."
-    );
+    console.error("❌ Falta roomId ou userId ao tentar remover usuário da sala.");
     return;
   }
+
+  console.log("✅ roomId e userId ok");
 
   try {
     const res = await fetch(`${baseUrl}/api/rooms/removeCurrentUser`, {
@@ -134,29 +139,29 @@ export const removeCurrentUserInRoom = async (roomId, userId, baseUrl) => {
     const data = await res.json();
 
     if (res.ok) {
-      console.log(
-        "✅ Usuário removido de currentUsersInRoom com sucesso:",
-        data
-      );
+      console.log("✅ Usuário removido de currentUsersInRoom com sucesso:", data);
 
-      // Emitir evento para outros clientes atualizarem a UI
-      if (window.socket && window.socket.connected) {
-        window.socket.emit("userLeavesRoom", { roomId });
-        console.log("📤 Evento 'userLeavesRoom' emitido para room:", roomId);
+      if (socket) {
+        if (socket.connected) {
+          socket.emit("userLeavesRoom", { roomId, userId });
+          console.log("📤 Evento 'userLeavesRoom' emitido para room:", roomId);
+        } else {
+          console.warn("⚠️ Socket não conectado, esperando reconectar...");
+          socket.once("connect", () => {
+            console.log("🔁 Reconectado. Emitindo 'userLeavesRoom'");
+            socket.emit("userLeavesRoom", { roomId, userId });
+          });
+        }
       } else {
-        console.warn("⚠️ Socket não conectado no momento de emitir 'userLeavesRoom'");
+        console.warn("⚠️ Socket não disponível para emitir 'userLeavesRoom'");
       }
     } else {
-      console.error(
-        "❌ Erro ao remover usuário:",
-        data.error || "Erro desconhecido"
-      );
+      console.error("❌ Erro ao remover usuário:", data.error || "Erro desconhecido");
     }
   } catch (error) {
     console.error("❌ Erro na requisição para remover usuário:", error);
   }
 };
-
 
 
 // buscar usuarios atuais na sala
@@ -176,3 +181,72 @@ export const fetchCurrentRoomUsers = async (roomId, baseUrl) => {
   }
 };
 
+// addSpeaker
+export const addSpeakerToRoom = async (roomId, user, baseUrl) => {
+  console.log("📞 Chamando addSpeakerToRoom para:", user.username, roomId);
+
+  if (!roomId || !user || !user._id) {
+    console.error("❌ roomId e dados do usuário são obrigatórios.");
+    return;
+  }
+
+  console.log("api usada:", baseUrl)
+
+  try {
+    const response = await fetch(`${baseUrl}/api/rooms/addSpeakerToRoom`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        roomId,
+        user: {
+          _id: user._id,
+          username: user.username,
+          profileImage: user.profileImage,
+        },
+      }),
+    });
+
+    const data = await response.json();
+
+
+    if (response.ok) {
+      console.log("✅ Usuário adicionado à lista de oradores.");
+      return data.currentUsersSpeaking;
+    } else {
+      console.error("❌ Erro ao adicionar orador:", data.error);
+      return null;
+    }
+  } catch (error) {
+    console.error("❌ Erro na requisição para adicionar orador:", error);
+    return null;
+  }
+};
+
+// remove speaker
+export const removeSpeakerFromRoom = async (roomId, userId, baseUrl) => {
+  if (!roomId || !userId) {
+    console.error("❌ roomId e userId são obrigatórios para remover orador.");
+    return;
+  }
+
+  try {
+    const response = await fetch(`${baseUrl}/api/rooms/removeSpeakerFromRoom`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ roomId, userId }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      console.log("✅ Usuário removido da lista de oradores.");
+      return data.currentUsersSpeaking;
+    } else {
+      console.error("❌ Erro ao remover orador:", data.error);
+      return null;
+    }
+  } catch (error) {
+    console.error("❌ Erro na requisição para remover orador:", error);
+    return null;
+  }
+};

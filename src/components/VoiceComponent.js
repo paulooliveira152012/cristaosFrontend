@@ -3,6 +3,9 @@ import { useParams } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import AudioContext from "../context/AudioContext";
 import { useRoom } from "../context/RoomContext";
+import { addSpeakerToRoom } from "../pages/functions/liveRoomFunctions";
+
+const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 const VoiceComponent = ({ isMinimized }) => {
   const { roomId } = useParams();
@@ -66,7 +69,10 @@ const VoiceComponent = ({ isMinimized }) => {
     console.log("roomId:", roomId)
     console.log("currentUser:", currentUser)
     console.log("micState", micState)
-    
+
+  // chamar funcao que acessa rota para adicionar ao banco de dados
+    addSpeakerToRoom(roomId, currentUser, baseUrl)
+    // chamar funcao que emit socket no useRoom (RoomContext.js)
     emitJoinAsSpeaker(roomId, currentUser, micState);
     setIsSpeaker(true);
   };

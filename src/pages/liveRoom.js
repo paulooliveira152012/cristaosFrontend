@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useContext } from "react";
 import { useLocation, useNavigate, useParams, Link } from "react-router-dom";
 import { useUser } from "../context/UserContext.js";
 import { useRoom } from "../context/RoomContext.js";
+import { useSocket } from "../context/SocketContext.js";
 import Header from "../components/Header.js";
 import ChatComponent from "../components/ChatComponent.js";
 import { updateRoomTitle, deleteRoom } from "./functions/liveFuncitons.js";
@@ -19,6 +20,7 @@ import {
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 const LiveRoom = () => {
+  const socket = useSocket();
   const { currentUser } = useUser();
   const {
     minimizeRoom,
@@ -26,7 +28,8 @@ const LiveRoom = () => {
     emitLeaveRoom,
     currentUsersSpeaking,
     setCurrentUsersSpeaking,
-    currentUsers, // ✅ já incluído aqui
+    removeSpeaker,
+    currentUsers // ✅ já incluído aqui
   } = useRoom();
 
   const { leaveChannel } = useContext(AudioContext);
@@ -45,14 +48,14 @@ const LiveRoom = () => {
   const isRejoiningRef = useRef(false);
 
   // const { currentUsers } = useRoom()
-  console.log("AQUI -->", currentUsers)
+  console.log("currentUsers:", currentUsers);
 
-// acionar socket para adicionar usuario na sala
+  // acionar socket para adicionar usuario na sala
   useEffect(() => {
     if (!roomId || !currentUser) return;
     console.log("👥 Adicionando usuário à currentUsersInRoom");
     addCurrentUserInRoom(roomId, currentUser, baseUrl);
-    console.log("🐶 usuarios na sala:", currentUsers)
+    console.log("🐶 usuarios na sala:", currentUsers);
   }, [roomId, currentUser]);
 
   // acionar busca de dados da sala
@@ -84,18 +87,22 @@ const LiveRoom = () => {
   // ✅ ENTRA NA SALA
   useEffect(() => {
     if (!roomId || !currentUser) return;
-    console.log("🔌 entrando na sala oficialmente")
-    const user = currentUser
+    console.log("🔌 entrando na sala oficialmente");
+    const user = currentUser;
     joinRoomListeners(roomId, user);
   }, [roomId, currentUser]);
 
   useEffect(() => {
-  console.log("👥 Lista atual de ouvintes:", currentUsers);
-}, [currentUsers]);
-
+    console.log("👥 Lista atual de ouvintes:", currentUsers);
+  }, [currentUsers]);
 
   const handleLeaveRoom = async () => {
-    emitLeaveRoom(roomId, currentUser._id);
+    if (socket && socket.connected) {
+      emitLeaveRoom(roomId, currentUser._id);
+    } else {
+      console.warn("⚠️ Socket não disponível para emitir emitLeaveRoom.");
+    }
+
     try {
       await fetch(`${baseUrl}/api/rooms/removeMember`, {
         method: "POST",
@@ -109,7 +116,12 @@ const LiveRoom = () => {
     } catch (error) {
       console.error("Erro ao remover usuário do banco:", error);
     }
-    await removeCurrentUserInRoom(roomId, currentUser._id, baseUrl);
+
+    // ⛔ REMOVER DE currentUsersInRoom
+    await removeCurrentUserInRoom(roomId, currentUser._id, baseUrl, socket);
+    // ⛔ REMOVER DE currentUsersSpeaking
+    await removeSpeaker(roomId, currentUser._id, baseUrl); // ✅ aqui
+
     minimizeRoom(null);
     try {
       await leaveChannel();
@@ -205,6 +217,7 @@ const LiveRoom = () => {
         </div>
 
         <div className="inRoomUsers">
+          {/* currenUsers vem do useRoom*/}
           {currentUsers && currentUsers.length > 0 ? (
             currentUsers.map((member, index) => (
               <div key={member._id} className="inRoomMembersParentContainer">
