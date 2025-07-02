@@ -16,7 +16,7 @@ const LiveUsers = () => {
 
   return (
     <div className="landingOnlineMembersContainer">
-      <p>Usuarios online:</p>
+      {/* <p>Usuarios online:</p> */}
       {/* Dynamically create divs for users who are online at the moment */}
       {onlineUsers.map((user) => (
         <Link key={user._id} to={`/profile/${user._id}`}>

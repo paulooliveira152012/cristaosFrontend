@@ -41,7 +41,6 @@ const SideMenu = ({ closeMenu }) => {
           <div onClick={closeMenu} className="closeBtn">
             Close Btn
           </div>
-
         </div>
 
         {/* Navigation options for the platform */}

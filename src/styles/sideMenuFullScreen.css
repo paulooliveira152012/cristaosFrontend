@@ -1,64 +1,43 @@
-.sideMenuFullScreen {
+/* .sideMenuFullScreen {
     height: 100vh;
     background-color: white;
-    /* position:fixed; */
     margin: 0;
     padding: 0;
     z-index: 10;
     display: block;
     z-index: 10;
 }
-
-
-
-/* 10px top  20px side*/
 .top {
-    /* background-color: orange;     */
     display: flex;
     padding: 10px;
     justify-content: space-between;
 }
 
-
-
-
-/* 1 */
 .profileImageContainer {
-    /* background-color: purple; */
-    /* height: auto; */
     display: flex;
-    /* flex-direction: column; */
     width: auto;
     justify-content: center;
     align-items: center;
-    /* float: left; */
 }
-
-/* 2 */
 .closeBtn {
     float: inline-end;
-    /* background-color: red; */
     width: auto;
     display: flex;
     align-items: center;
-    /* margin: 20px; */
 }
 
 .bottom {
-    /* background-color: pink !important; */
     height: auto;
     justify-content: top;
 }
 
 .menuOptions {
     justify-content:center;
-    /* background-color: green; */
     height: 100%;
     width: 100%;
     display: flex;
     flex-direction: column;
     justify-content: top;
-    /* z-index: 100000; */
 }
 
 .menuOptions li {
@@ -71,10 +50,7 @@
     border-radius: 10px;
 }
 
-
-
 .username {
-    /* background-color: yellow; */
     display: flex;
     margin: auto 10px;
-}
+} */
