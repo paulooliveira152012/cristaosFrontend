@@ -40,7 +40,10 @@ const Chat = () => {
     if (mainChatRoomId) {
       // Join the main chat room
       socket.emit("joinRoom", { roomId: mainChatRoomId, user: currentUser });
-      console.log(`Joined room: ${mainChatRoomId} with user: ${currentUser.username}`);
+      console.log("✅✅✅")
+      console.log("user:", currentUser)
+      console.log(`Joined room: ${mainChatRoomId}`)
+      // console.log(`Joined room: ${mainChatRoomId} with user: ${currentUser.username}`);
 
       // Request chat history for the main chat room
       socket.emit("requestChatHistory", { roomId: mainChatRoomId });
@@ -192,7 +195,9 @@ const Chat = () => {
           placeholder="Type a message..."
           style={styles.input}
         />
-        <button onClick={sendMessage} style={styles.button}>
+        <button 
+          onClick={sendMessage} 
+          style={styles.button}>
           Send
         </button>
       </div>
