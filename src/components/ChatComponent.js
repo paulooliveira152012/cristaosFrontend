@@ -45,18 +45,21 @@ const ChatComponent = ({ roomId }) => {
     return `rgb(${r}, ${g}, ${b})`;
   };
 
-  const handleScroll = () => {
-    const container = messagesContainerRef.current;
-    if (container) {
-      const isUserAtBottom =
-        container.scrollHeight - container.scrollTop === container.clientHeight;
-      setIsAtBottom(isUserAtBottom);
-    }
-  };
+ const handleScroll = () => {
+  const container = messagesContainerRef.current;
+  if (container) {
+    const isUserAtBottom =
+      container.scrollTop + container.clientHeight >=
+      container.scrollHeight - 20; // margem de segurança
+
+    setIsAtBottom(isUserAtBottom);
+  }
+};
+
 
   // Scroll to the bottom of the chat container
   const scrollToBottom = (smooth = true) => {
-    if (messagesEndRef.current && isAtBottom) {
+    if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({
         behavior: smooth ? "smooth" : "auto",
       });

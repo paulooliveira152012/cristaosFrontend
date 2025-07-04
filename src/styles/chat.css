@@ -37,9 +37,11 @@ html, body {
   .messagesContainer {
     padding: 10px;
     /* background-color: yellow; */
-    padding-bottom: 80px;
+    /* padding-bottom: 80px; */
     height: auto;
     /* height: 100%; */
+    /* margin-bottom: 50px; */
+    
   }
   
   .messageItem {

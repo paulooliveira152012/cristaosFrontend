@@ -232,7 +232,9 @@ const LiveRoom = () => {
           keepAlive={true}
           setCurrentUsersSpeaking={setCurrentUsersSpeaking}
         />
+        
         <ChatComponent roomId={roomId} />
+        
       </div>
 
       {showSettingsModal && (
