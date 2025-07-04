@@ -72,6 +72,19 @@
     display: flex;
     justify-content: center; /* Centraliza verticalmente */
     align-items: center;     /* Centraliza horizontalmente */
+    position: fixed; /* fara com que a scrolagem nao aconteça quando modal estiver aberto */
+}
+
+.closeModalButtonContainer {
+ /* background-color: red;  */
+ /* width: 20px; */
+ display: flex;
+ justify-content: right;
+ /* position: absolute; */
+ /* right: 0; */
+ float: right;
+ /* margin: 20px; */
+ cursor: pointer;
 }
 
 body.modal-open {
@@ -130,4 +143,19 @@ body.modal-open {
 
 .button:hover {
     background-color: #0056b3; /* Cor ao passar o mouse */
+}
+
+
+/* 64 */
+
+@media screen and (max-width: 500px) {
+    .modal {
+        /* background-color: red; */
+    }
+
+    .newRoomForm {
+    width: 90%;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Adiciona um leve sombreado */
+}
+
 }

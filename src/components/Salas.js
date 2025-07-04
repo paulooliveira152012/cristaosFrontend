@@ -51,10 +51,19 @@ const Salas = () => {
   }, []); // Empty dependency array to ensure fetch only runs once on mount
 
   // Toggle modal visibility
-  const toggleModal = () => {
-    const modal = document.getElementsByClassName("modal")[0];
-    modal.style.display = modal.style.display === "block" ? "none" : "block";
-  };
+const toggleModal = () => {
+  const modal = document.getElementsByClassName("modal")[0];
+  const isModalOpen = modal.style.display === "block";
+
+  if (isModalOpen) {
+    modal.style.display = "none";
+    document.body.style.overflow = ""; // Desbloqueia scroll
+  } else {
+    modal.style.display = "block";
+    document.body.style.overflow = "hidden"; // Bloqueia scroll
+  }
+};
+
 
   // Handle file selection
   const handleSelectImage = (event) => {
@@ -139,6 +148,12 @@ const Salas = () => {
       <div className="modal" style={{ display: "none" }}>
         <div>
           <form className="newRoomForm" onSubmit={(e) => e.preventDefault()}>
+        <div 
+          onClick={toggleModal}
+          className="closeModalButtonContainer"
+        >
+          X
+        </div>
             <label>Título Da Sala</label>
             <input
               className="nomeDaSala"
