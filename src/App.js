@@ -88,6 +88,9 @@ const AppWithLocation = () => {
   const hideFooterRoutes = ["/chat"];
   const shouldShowFooter = !hideFooterRoutes.includes(location.pathname);
 
+  const hideSideMenu = ["/login"]
+  const shouldShowSideMenu = !hideSideMenu.includes(location.pathname)
+
   return (
     <UserProvider>
       <RoomProvider>
@@ -98,8 +101,9 @@ const AppWithLocation = () => {
             {/* flex 1 */}
             <div className="sideMenuContainerWideScreen">
               {/* COLOCAR O MENU AQUI */}
-
-              <SideMenuFullScreen />
+              {shouldShowSideMenu && (
+                <SideMenuFullScreen />
+              )}
             </div>
             {/* flex 2 */}
             <div
