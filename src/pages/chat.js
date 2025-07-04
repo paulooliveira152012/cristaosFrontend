@@ -16,7 +16,7 @@ const Chat = () => {
   const inputRef = useRef(null); // Ref for the input field
   const usernameColors = useRef({}); // To store unique colors for each username
   const mainChatRoomId = "mainChatRoom"; // Default roomId for the main chat
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   // Generate random dark colors
   const getRandomDarkColor = () => {
@@ -40,9 +40,9 @@ const Chat = () => {
     if (mainChatRoomId) {
       // Join the main chat room
       socket.emit("joinRoom", { roomId: mainChatRoomId, user: currentUser });
-      console.log("✅✅✅")
-      console.log("user:", currentUser)
-      console.log(`Joined room: ${mainChatRoomId}`)
+      console.log("✅✅✅");
+      console.log("user:", currentUser);
+      console.log(`Joined room: ${mainChatRoomId}`);
       // console.log(`Joined room: ${mainChatRoomId} with user: ${currentUser.username}`);
 
       // Request chat history for the main chat room
@@ -87,7 +87,7 @@ const Chat = () => {
       profileImage: currentUser.profileImage, // Correct field name
       message,
       roomId: mainChatRoomId, // Attach the main chat roomId to the message
-      timestamp: new Date() // Add local timestamp 
+      timestamp: new Date(), // Add local timestamp
     };
 
     console.log("Sending message:", newMessage); // Log the message being sent
@@ -128,13 +128,10 @@ const Chat = () => {
   console.log("messages in chat.js", messages);
 
   return (
-    <div style={styles.pageContainer}>
-      <Header 
-        showProfileImage={false} 
-        navigate={navigate}
-      />
-      <div style={styles.chatContainer}>
-        <div style={styles.messagesContainer}>
+    <div className="pageContainer">
+      <Header showProfileImage={false} navigate={navigate} />
+      <div  className="chatContainer">
+        <div className="messagesContainer">
           {messages.map((msg, index) => {
             if (!usernameColors.current[msg.username]) {
               usernameColors.current[msg.username] = getRandomDarkColor();
@@ -146,21 +143,15 @@ const Chat = () => {
               : "Unknown time";
 
             return (
-              <div key={index} style={styles.messageItem}>
+              <div key={index} className="messageItem">
                 <div>
                   {/* profile image */}
                   <Link to={`/profile/${msg.userId}`}>
                     <div
                       style={{
-                        width: "40px", // Adjust size as needed
-                        height: "40px", // Adjust size as needed
                         backgroundImage: `url(${msg.profileImage || ""})`, // Set the profile image URL
-                        backgroundSize: "cover", // Ensure the image covers the entire div
-                        backgroundPosition: "center", // Center the image within the div
-                        backgroundColor: "#ddd", // Fallback background color
-                        borderRadius: "50%", // Make it a circle
-                        marginRight: "10px", // Add some spacing if needed
                       }}
+                      className="chatMessageProfileImage"
                     ></div>
                   </Link>
                   <strong
@@ -185,7 +176,8 @@ const Chat = () => {
           <div ref={messagesEndRef}></div>
         </div>
       </div>
-      <div style={styles.inputContainer}>
+      {/* 2 */}
+      <div className="inputContainer">
         <input
           ref={inputRef}
           type="text"
@@ -193,11 +185,9 @@ const Chat = () => {
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
           placeholder="Type a message..."
-          style={styles.input}
+          className="input"
         />
-        <button 
-          onClick={sendMessage} 
-          style={styles.button}>
+        <button onClick={sendMessage} className="sendBtn">
           Send
         </button>
       </div>
@@ -205,61 +195,5 @@ const Chat = () => {
   );
 };
 
-// Basic styles
-const styles = {
-  pageContainer: {
-    flex: 1,
-    justifyContent: "flex-start",
-    paddingBottom: "env(safe-area-inset-bottom)", // Add padding for iOS safe areas
-  },
-  chatContainer: {
-    display: "flex",
-    flexDirection: "column",
-    flex: 1,
-    overflowY: "auto",
-    backgroundColor: "white",
-    height: "75vh",
-    marginBottom: "200px",
-  },
-  messagesContainer: {
-    padding: "10px",
-    paddingBottom: "70px",
-  },
-  messageItem: {
-    marginBottom: "10px",
-    color: "black",
-    display: "flex",
-    justifyContent: "space-between",
-  },
-  inputContainer: {
-    display: "flex",
-    flexDirection: "column",
-    padding: "10px",
-    backgroundColor: "#fff",
-    position: "fixed",
-    bottom: 0,
-    width: "100%",
-    height: "15vh",
-    paddingBottom: "env(safe-area-inset-bottom)", // Safe area for mobile devices
-    maxWidth: "800px",
-    paddingBottom: "20px",
-  },
-  input: {
-    flex: 1,
-    padding: "10px",
-    fontSize: "16px",
-    borderRadius: "4px",
-    border: "1px solid #ddd",
-  },
-  button: {
-    padding: "10px 20px",
-    fontSize: "16px",
-    backgroundColor: "#007bff",
-    color: "white",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-  },
-};
 
 export default Chat;

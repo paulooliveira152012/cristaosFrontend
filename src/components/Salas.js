@@ -223,31 +223,3 @@ const Salas = () => {
 };
 
 export default Salas;
-
-// div para o container de lives
-// <div className="landingLivesContainer">
-//   {/* dinamicamente criar as salas lives atualmente abertas */}
-//   {openLiveRooms.map((sala, index) => (
-//     <div
-//       key={index}
-//       className="landingLiveContainer"
-//       onClick={() => openLive(sala)}
-//     >
-//       {/*  div para a imagem */}
-
-//       <div
-//         className="landingLiveImage"
-//         style={{
-//           backgroundImage: `url(${sala.roomImage})`, // Usando o background image
-//         }}
-//       >
-//         {" "}
-//       </div>
-
-//       {/* div para o titulo da sala */}
-//       <div className="landingLiveTitle">
-//         <p>{sala.roomTitle}</p>
-//       </div>
-//     </div>
-//   ))}
-// </div>

@@ -6,8 +6,10 @@
 
 body {
     overflow-x: hidden;
-    height: 100vh; /* Define a altura total da tela */
-    background-color: #1E1E1E; /* Fundo principal da página */
+    /* Define a altura total da tela */
+    height: 100vh; 
+    /* background-color: #1E1E1E;  */
+    background-color: white;
     color: black; /* Cor do texto principal */
     font-family: Arial, sans-serif; /* Fonte padrão */
 }
