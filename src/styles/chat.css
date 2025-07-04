@@ -100,9 +100,6 @@ html, body {
     cursor: pointer;
   }
 
-  .sendBtn {
-    /* margin-bottom: 200px; */
-  }
   
   .liveButton {
     background-color: #28a745;
