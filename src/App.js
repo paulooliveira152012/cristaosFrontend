@@ -85,8 +85,11 @@ const App = () => {
 // Criar o componente App
 const AppWithLocation = () => {
   const location = useLocation();
-  const hideFooterRoutes = ["/chat"];
-  const shouldShowFooter = !hideFooterRoutes.includes(location.pathname);
+  
+  const shouldShowFooter =
+  !location.pathname.startsWith("/chat") &&
+  !location.pathname.startsWith("/liveRoom");
+
 
   const hideSideMenu = ["/login"]
   const shouldShowSideMenu = !hideSideMenu.includes(location.pathname)

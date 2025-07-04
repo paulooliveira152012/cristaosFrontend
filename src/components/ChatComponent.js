@@ -113,6 +113,8 @@ const ChatComponent = ({ roomId }) => {
     socket.emit("sendMessage", newMessage);
 
     setMessage(""); // Clear input
+    setMessages((prevMessages) => [...prevMessages, newMessage]);
+
     scrollToBottom();
     inputRef.current.focus();
   };
@@ -284,11 +286,3 @@ const ChatComponent = ({ roomId }) => {
 
 export default ChatComponent;
 
-// fazer isso
-
-// Me regrar com tudo (disciplina)
-// - nao pegar celular quando acordar
-// faewr coisas que nao quero mas asao necessarias (intertacao social)
-
-// voluntariar para interagir com pessoas um momento por semana
-//  falar com a gabi para semana que vem nos dois passar na cessao psicologo
