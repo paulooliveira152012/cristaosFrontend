@@ -12,10 +12,13 @@ const Chat = () => {
   const { currentUser } = useUser(); // Access the logged-in user
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
+  const [isAtBottom, setIsAtBottom] = useState(true);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null); // Ref for the input field
   const usernameColors = useRef({}); // To store unique colors for each username
   const mainChatRoomId = "mainChatRoom"; // Default roomId for the main chat
+  const messagesContainerRef = useRef(null);
+
   const navigate = useNavigate();
 
   // Generate random dark colors
@@ -60,7 +63,6 @@ const Chat = () => {
 
         if (newMessage.roomId === mainChatRoomId) {
           setMessages((prevMessages) => [...prevMessages, newMessage]);
-          scrollToBottom();
         }
       });
 
@@ -103,6 +105,16 @@ const Chat = () => {
     inputRef.current.focus();
   };
 
+  const handleScroll = () => {
+    const container = messagesContainerRef.current;
+    if (container) {
+      const isUserAtBottom =
+        container.scrollTop + container.clientHeight >=
+        container.scrollHeight - 20;
+      setIsAtBottom(isUserAtBottom);
+    }
+  };
+
   const handleDeleteMessage = (messageId) => {
     if (currentUser) {
       socket.emit("deleteMessage", {
@@ -125,12 +137,25 @@ const Chat = () => {
     };
   }, []);
 
+  useEffect(() => {
+  if (isAtBottom) {
+    scrollToBottom();
+  }
+}, [messages]);
+
+
   console.log("messages in chat.js", messages);
 
   return (
     <div className="pageContainer">
       <Header showProfileImage={false} navigate={navigate} />
-      <div  className="chatContainer">
+      <div
+        className="chatContainer"
+        ref={messagesContainerRef}
+        onScroll={handleScroll}
+      >
+
+        
         <div className="messagesContainer">
           {messages.map((msg, index) => {
             if (!usernameColors.current[msg.username]) {
@@ -194,6 +219,5 @@ const Chat = () => {
     </div>
   );
 };
-
 
 export default Chat;
