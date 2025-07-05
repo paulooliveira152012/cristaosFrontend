@@ -33,6 +33,7 @@ const Chat = () => {
   const scrollToBottom = (smooth = true) => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({
+        top: messagesContainerRef.current.scrollHeight + 50, // <- empurra um pouco mais
         behavior: smooth ? "smooth" : "auto",
       });
     }
