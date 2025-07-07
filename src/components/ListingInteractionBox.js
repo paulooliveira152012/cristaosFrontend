@@ -28,6 +28,7 @@ const ListingInteractionBox = ({
   showShareButton = true,
   userId,
   setItems = { setItems },
+  sharedListings = [],
   updateListing, // Function to update the single listing (Listing.js)
   isSingleListing = false, // Indicates whether this is for a single listing
   listing,
@@ -127,7 +128,10 @@ const ListingInteractionBox = ({
           <div>
             <ShareIcon
               onClick={() => handleShare(listingId)}
-              style={{ cursor: "pointer" }}
+              style={{ 
+                cursor: "pointer",
+                color: sharedListings?.includes(listingId) ? "green" : "inherit", // ou uma classe CSS
+              }}
               alt="Share"
             />
           </div>

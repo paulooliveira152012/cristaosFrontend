@@ -1,17 +1,228 @@
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
-// 🔹 Buscar lista de amigos
+// 🔹 Buscar dados do perfil e listagens
+export const fetchUserData = async (userId) => {
+  try {
+    const response = await fetch(`${baseUrl}/api/listings/users/${userId}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      const data = await response.json();
+      return { user: data.user, listings: data.listings };
+    } else {
+      throw new Error("Response is not valid JSON");
+    }
+  } catch (error) {
+    console.error("Erro ao buscar dados do perfil:", error);
+    throw error;
+  }
+};
+
+// 🔹 Buscar comentários da listagem
+export const fetchListingComments = async (listingId) => {
+  try {
+    const response = await fetch(`${baseUrl}/api/comments/listings/${listingId}/comments`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!response.ok) throw new Error("Failed to fetch comments");
+
+    const data = await response.json();
+    return data.comments;
+  } catch (error) {
+    console.error("Erro ao buscar comentários:", error);
+    throw error;
+  }
+};
+
+// 🔹 Deletar listagem
+export const deleteListing = async (listingId) => {
+  try {
+    const response = await fetch(`${baseUrl}/api/listings/delete/${listingId}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!response.ok) throw new Error("Failed to delete listing.");
+
+    return await response.json();
+  } catch (error) {
+    console.error("Erro ao deletar listing:", error);
+    throw error;
+  }
+};
+
+// 🔹 Enviar comentário
+export const submitComment = async (listingId, userId, commentText) => {
+  try {
+    const response = await fetch(`${baseUrl}/api/comments/listings/${listingId}/comment`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, commentText }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to submit comment");
+    }
+
+    const data = await response.json();
+    return data.comment;
+  } catch (error) {
+    console.error("Erro ao enviar comentário:", error);
+    throw error;
+  }
+};
+
+// 🔹 Curtir/Descurtir listagem
+export const toggleListingLike = async (listingId, userId) => {
+  try {
+    const response = await fetch(`${baseUrl}/api/listings/listingLike/${listingId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to update like status");
+    }
+
+    const data = await response.json();
+    return data.likes;
+  } catch (error) {
+    console.error("Erro ao curtir/descurtir:", error);
+    throw error;
+  }
+};
+
+// 🔹 Deletar comentário (pai ou resposta)
+export const deleteComment = async (commentId, parentCommentId = null) => {
+  const baseUrl = process.env.REACT_APP_API_BASE_URL;
+
+  const endpoint = parentCommentId
+    ? `${baseUrl}/api/comments/${commentId}/${parentCommentId}`
+    : `${baseUrl}/api/comments/${commentId}`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      throw new Error("Erro ao deletar comentário.");
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Erro ao deletar comentário:", error);
+    throw error;
+  }
+};
+
+
+// 🔹 Enviar resposta para comentário
+export const submitReply = async (parentCommentId, userId, replyText) => {
+  const baseUrl = process.env.REACT_APP_API_BASE_URL;
+
+  try {
+    const response = await fetch(
+      `${baseUrl}/api/comments/listings/${parentCommentId}/reply`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, replyText }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Erro ao enviar resposta.");
+    }
+
+    const data = await response.json();
+    return data.reply;
+  } catch (error) {
+    console.error("Erro ao enviar resposta:", error);
+    throw error;
+  }
+};
+
+// 🔹 Curtir ou descurtir comentário ou resposta
+export const toggleCommentLike = async ({ commentId, userId, isReply = false, parentCommentId = null }) => {
+  const baseUrl = process.env.REACT_APP_API_BASE_URL;
+
+  const apiUrl = isReply
+    ? `${baseUrl}/api/comments/comment/like/${parentCommentId}/${commentId}`
+    : `${baseUrl}/api/comments/comment/like/${commentId}`;
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Erro ao curtir/descurtir comentário.");
+    }
+
+    const data = await response.json();
+    return data.likes;
+  } catch (error) {
+    console.error("Erro ao curtir/descurtir comentário:", error);
+    throw error;
+  }
+};
+
+
+// 🔹 Compartilhar uma listagem
+export const shareListing = async (listingId, userId) => {
+  const baseUrl = process.env.REACT_APP_API_BASE_URL;
+
+  try {
+    const response = await fetch(`${baseUrl}/api/listings/share/${listingId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ userId }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Erro ao compartilhar listagem.");
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Erro ao compartilhar a listagem:", error);
+    throw error;
+  }
+};
+
+
+// 🔹 Buscar amigos do usuário
 export const fetchUserFriends = async (userId) => {
   try {
     const response = await fetch(`${baseUrl}/api/users/${userId}/friends`, {
       method: "GET",
-      credentials: "include", // Se estiver usando cookies para auth
+      credentials: "include",
     });
 
     if (!response.ok) throw new Error("Erro ao buscar amigos.");
 
     const data = await response.json();
-    return data.friends; // [{ username, _id, profileImage }]
+    return data.friends;
   } catch (error) {
     console.error("Erro em fetchUserFriends:", error);
     return [];
@@ -20,8 +231,6 @@ export const fetchUserFriends = async (userId) => {
 
 // 🔹 Enviar pedido de amizade
 export const sendFriendRequest = async (friendId) => {
-    console.log("chamando backend para solicitar amizade")
-    console.log(baseUrl)
   try {
     const response = await fetch(`${baseUrl}/api/users/friendRequest/${friendId}`, {
       method: "POST",
@@ -92,7 +301,7 @@ export const removeFriend = async (friendId) => {
   }
 };
 
-// 🔹 Buscar pedidos pendentes recebidos
+// 🔹 Buscar pedidos pendentes
 export const fetchFriendRequests = async () => {
   try {
     const response = await fetch(`${baseUrl}/api/users/friendRequests`, {
@@ -102,8 +311,7 @@ export const fetchFriendRequests = async () => {
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Erro ao buscar pedidos.");
-
-    return data.friendRequests; // [{ _id, username, profileImage }]
+    return data.friendRequests;
   } catch (error) {
     console.error("Erro em fetchFriendRequests:", error);
     return [];
