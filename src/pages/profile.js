@@ -4,9 +4,19 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import ListingInteractionBox from "../components/ListingInteractionBox";
 import "../styles/profile.css";
+import { ProfileUserFriends } from "./profileComponents/friends";
+
+// funcoes para interação
+import {
+  sendFriendRequest,
+  acceptFriendRequest,
+  rejectFriendRequest,
+  removeFriend,
+} from "./functions/profilePageFunctions";
+
 const imagePlaceholder = require("../assets/images/profileplaceholder.png");
 
-const baseUrl = process.env.REACT_APP_API_BASE_URL
+const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 const Profile = () => {
   const { currentUser } = useUser();
@@ -18,6 +28,8 @@ const Profile = () => {
   const [comment, setComments] = useState([]);
   const navigate = useNavigate();
 
+  const [currentTab, setCurrentTab] = useState("");
+
   console.log(currentUser);
 
   // Fetch user data and listings
@@ -28,12 +40,15 @@ const Profile = () => {
     const fetchUserData = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`${baseUrl}/api/listings/users/${userId}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+        const response = await fetch(
+          `${baseUrl}/api/listings/users/${userId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
         const contentType = response.headers.get("content-type");
 
@@ -66,12 +81,15 @@ const Profile = () => {
   // Fetch listing comments
   const handleFetchComments = async (listingId) => {
     try {
-      const response = await fetch(`${baseUrl}/api/comments/listings/${listingId}/comments`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        `${baseUrl}/api/comments/listings/${listingId}/comments`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch comments");
@@ -101,12 +119,15 @@ const Profile = () => {
     }
 
     try {
-      const response = await fetch(`${baseUrl}/api/listings/delete/${listingId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json", // Ensure proper content type
-        },
-      });
+      const response = await fetch(
+        `${baseUrl}/api/listings/delete/${listingId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json", // Ensure proper content type
+          },
+        }
+      );
 
       if (response.ok) {
         setUserListings((prevListings) =>
@@ -135,11 +156,14 @@ const Profile = () => {
     };
 
     try {
-      const response = await fetch(`${baseUrl}/api/comments/listings/${listingId}/comment`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      });
+      const response = await fetch(
+        `${baseUrl}/api/comments/listings/${listingId}/comment`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to submit comment");
@@ -187,11 +211,14 @@ const Profile = () => {
     );
 
     try {
-      const response = await fetch(`${baseUrl}/api/listings/listingLike/${listingId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
-      });
+      const response = await fetch(
+        `${baseUrl}/api/listings/listingLike/${listingId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to update like status");
@@ -313,11 +340,14 @@ const Profile = () => {
     };
 
     try {
-      const response = await fetch(`${baseUrl}/api/comments/listings/${parentCommentId}/reply`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      });
+      const response = await fetch(
+        `${baseUrl}/api/comments/listings/${parentCommentId}/reply`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to submit reply.");
@@ -424,13 +454,16 @@ const Profile = () => {
     console.log("Current User ID:", userId);
 
     try {
-      const response = await fetch(`${baseUrl}/api/listings/share/${listingId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ userId }), // Send the logged-in user's ID
-      });
+      const response = await fetch(
+        `${baseUrl}/api/listings/share/${listingId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId }), // Send the logged-in user's ID
+        }
+      );
 
       const data = await response.json();
 
@@ -444,148 +477,241 @@ const Profile = () => {
     }
   };
 
+  // Arrumar daqui para cima
+  const handleSendRequest = async () => {
+    const profileUserId = user._id;
+
+    const result = await sendFriendRequest(profileUserId);
+    if (result.error) {
+      alert(result.error);
+    } else {
+      alert("Pedido enviado!");
+    }
+  };
+
+  const handleAcceptFriend = async (requesterId) => {
+    const res = await acceptFriendRequest(requesterId);
+    if (res.error) alert(res.error);
+    else alert("Amizade aceita!");
+  };
+
+  const handleRejectFriend = async (requesterId) => {
+    const res = await rejectFriendRequest(requesterId);
+    if (res.error) alert(res.error);
+    else alert("Pedido recusado.");
+  };
+
+  const handleRemoveFriend = async (friendId) => {
+    const res = await removeFriend(friendId);
+    if (res.error) alert(res.error);
+    else alert("Amigo removido.");
+  };
+
+  // didcernir qual opcao usar:
+  const renderFriendAction = () => {
+    if (!currentUser || !user || currentUser._id === user._id) return null;
+
+    const isFriend = currentUser.friends?.includes(user._id);
+    const hasSentRequest = currentUser.sentFriendRequests?.includes(user._id);
+    const hasReceivedRequest = currentUser.friendRequests?.includes(user._id);
+
+    if (isFriend) {
+      return (
+        <li onClick={() => handleRemoveFriend(user._id)}>✅ Amigo (Remover)</li>
+      );
+    }
+
+    if (hasReceivedRequest) {
+      return (
+        <>
+          <li onClick={() => handleAcceptFriend(user._id)}>
+            ✅ Aceitar amizade
+          </li>
+          <li onClick={() => handleRejectFriend(user._id)}>❌ Recusar</li>
+        </>
+      );
+    }
+
+    if (hasSentRequest) {
+      return <li>⏳ Pedido enviado</li>;
+    }
+
+    return <li onClick={handleSendRequest}>➕ Adicionar como amigo</li>;
+  };
+
   return (
     <div>
       <Header showProfileImage={false} navigate={navigate} />
-      <div className="profile-container">
-        <div
-          className="ProfileProfileImage"
-          style={{
-            backgroundImage: `url(${user?.profileImage || imagePlaceholder})`,
-            backgroundPosition: "center",
-          }}
-        ></div>
+      <div
+        className="ProfileProfileImage"
+        style={{
+          backgroundImage: `url(${user?.profileImage || imagePlaceholder})`,
+          backgroundPosition: "center",
+        }}
+      ></div>
+      <div className="profile-header">
+        <h2 className="profile-username">{user.username}</h2>
+      </div>
+      {currentTab && currentTab === null}{" "}
+      {
+        <div className="profile-container">
+          {/* 
+        container para opcoes de:
+          firends, 
+          mural (onde outras pessoas podem escrever coisas), 
+          adicionar amigo / remover amigo, 
+          mandar mensage,
+          bloquear,
+          reportar,
+        */}
 
-        <div className="profile-header">
-          <h2 className="profile-username">{user.username}</h2>
-        </div>
-        <div className="profile-listings">
-          {userListings.length > 0 ? (
-            userListings.map((listing) => (
-              <div key={listing._id} className="profile-listing-item">
-                {/* check listing type and render appropriately */}
+          <div className="">
+            <ul>
+              <li onClick={() => setCurrentTab("")}>Listagens</li>
+              <li onClick={() => setCurrentTab("userFriends")}>Amigos</li>
+              <li onClick={() => setCurrentTab("mural")}>Mural</li>
+              <li>{renderFriendAction()}</li>
+              <li>Iniciar conversa</li>
+              <li>Bloquear</li>
+              <li>Reportar</li>
+            </ul>
+          </div>
 
-                {/* if listing is an image */}
-                {listing.type === "image" && listing.imageUrl && (
-                  <Link
-                    to={`/openListing/${listing._id}`}
-                    className="profile-listing-link"
-                  >
-                    {listing.imageUrl && (
-                      <img
-                        src={listing.imageUrl}
-                        alt="Listing"
-                        className="profile-listing-image"
-                      />
-                    )}
-                  </Link>
-                )}
+          {currentTab === "" && (
+            <div className="profile-listings">
+              {userListings.length > 0 ? (
+                userListings.map((listing) => (
+                  <div key={listing._id} className="profile-listing-item">
+                    {/* check listing type and render appropriately */}
 
-                {/* if listing is a blog */}
-                {listing.type === "blog" && (
-                  <Link
-                    to={`/openListing/${listing._id}`}
-                    style={{ textDecoration: "none" }}
-                  >
-                    <div className="listing-content">
-                      <h2>{listing.blogTitle || "Untitled Blog"}</h2>
-                      <p
-                        style={{ textDecoration: "none", textAlign: "justify" }}
+                    {/* if listing is an image */}
+                    {listing.type === "image" && listing.imageUrl && (
+                      <Link
+                        to={`/openListing/${listing._id}`}
+                        className="profile-listing-link"
                       >
-                        {listing.blogContent
-                          ? listing.blogContent.split(" ").length > 100
-                            ? listing.blogContent
-                                .split(" ")
-                                .slice(0, 100)
-                                .join(" ") + "..."
-                            : listing.blogContent
-                          : "No content available."}
-                      </p>
-                      {/*  */}
+                        {listing.imageUrl && (
+                          <img
+                            src={listing.imageUrl}
+                            alt="Listing"
+                            className="profile-listing-image"
+                          />
+                        )}
+                      </Link>
+                    )}
 
-                      {listing.image && (
+                    {/* if listing is a blog */}
+                    {listing.type === "blog" && (
+                      <Link
+                        to={`/openListing/${listing._id}`}
+                        style={{ textDecoration: "none" }}
+                      >
+                        <div className="listing-content">
+                          <h2>{listing.blogTitle || "Untitled Blog"}</h2>
+                          <p
+                            style={{
+                              textDecoration: "none",
+                              textAlign: "justify",
+                            }}
+                          >
+                            {listing.blogContent
+                              ? listing.blogContent.split(" ").length > 100
+                                ? listing.blogContent
+                                    .split(" ")
+                                    .slice(0, 100)
+                                    .join(" ") + "..."
+                                : listing.blogContent
+                              : "No content available."}
+                          </p>
+                          {/*  */}
 
-                      <img
-                        src={listing.imageUrl}
-                        alt={`Listing image ${listing._id}`}
-                        className="listingImage"
-                        style={{
-                          width: "100%",
-                          maxWidth: "100%",
-                          height: "auto",
-                          backgroundColor: "red",
-                        }}
-                      />
-                      )}
+                          {listing.image && (
+                            <img
+                              src={listing.imageUrl}
+                              alt={`Listing image ${listing._id}`}
+                              className="listingImage"
+                              style={{
+                                width: "100%",
+                                maxWidth: "100%",
+                                height: "auto",
+                                backgroundColor: "red",
+                              }}
+                            />
+                          )}
+                        </div>
+                      </Link>
+                    )}
+
+                    {/* if listing is a poll */}
+                    {listing.type === "poll" && listing.poll && (
+                      <div className="poll-container">
+                        <h2>{listing.poll.question}</h2>
+                        <ul>
+                          {listing.poll.options.map((option, index) => (
+                            <li key={index}>{option}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    <div className="listing-link">
+                      <a
+                        href={listing.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {listing.link}
+                      </a>
                     </div>
-                  </Link>
-                )}
 
-                {/* if listing is a poll */}
-                {listing.type === "poll" && listing.poll && (
-                  <div className="poll-container">
-                    <h2>{listing.poll.question}</h2>
-                    <ul>
-                      {listing.poll.options.map((option, index) => (
-                        <li key={index}>{option}</li>
-                      ))}
-                    </ul>
+                    <ListingInteractionBox
+                      listingId={listing._id}
+                      handleLike={() => handleLike(listing._id)}
+                      likesCount={listing.likes.length}
+                      comments={listing.comments || []}
+                      commentsCount={
+                        listing.comments ? listing.comments.length : 0
+                      }
+                      isLiked={
+                        currentUser
+                          ? listing.likes.includes(currentUser._id)
+                          : false
+                      }
+                      handleCommentSubmit={handleCommentSubmit}
+                      handleReplySubmit={handleReplySubmit}
+                      handleDeleteComment={handleDeleteComment}
+                      handleDeleteListing={handleDeleteListing}
+                      currentUser={currentUser}
+                      commentLikesCount={(comment) =>
+                        comment.likes ? comment.likes.length : 0
+                      }
+                      isCommentLiked={(comment) =>
+                        comment.likes && Array.isArray(comment.likes)
+                          ? comment.likes.includes(currentUser._id)
+                          : false
+                      }
+                      commentCommentsCount={(comment) =>
+                        comment.replies ? comment.replies.length : 0
+                      }
+                      handleFetchComments={handleFetchComments}
+                      setItems={setUserListings} //Use userListings
+                      handleCommentLike={handleCommentLike}
+                      showDeleteButton={true}
+                      handleShare={handleShare}
+                      userId={userId}
+                    />
                   </div>
-                )}
-
-                <div className="listing-link">
-                  <a
-                    href={listing.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {listing.link}
-                  </a>
-                </div>
-
-                <ListingInteractionBox
-                  listingId={listing._id}
-                  handleLike={() => handleLike(listing._id)}
-                  likesCount={listing.likes.length}
-                  comments={listing.comments || []}
-                  commentsCount={listing.comments ? listing.comments.length : 0}
-                  isLiked={
-                    currentUser
-                      ? listing.likes.includes(currentUser._id)
-                      : false
-                  }
-                  handleCommentSubmit={handleCommentSubmit}
-                  handleReplySubmit={handleReplySubmit}
-                  handleDeleteComment={handleDeleteComment}
-                  handleDeleteListing={handleDeleteListing}
-                  currentUser={currentUser}
-                  commentLikesCount={(comment) =>
-                    comment.likes ? comment.likes.length : 0
-                  }
-                  isCommentLiked={(comment) =>
-                    comment.likes && Array.isArray(comment.likes)
-                      ? comment.likes.includes(currentUser._id)
-                      : false
-                  }
-                  commentCommentsCount={(comment) =>
-                    comment.replies ? comment.replies.length : 0
-                  }
-                  handleFetchComments={handleFetchComments}
-                  setItems={setUserListings} //Use userListings
-                  handleCommentLike={handleCommentLike}
-                  showDeleteButton={true}
-                  handleShare={handleShare}
-                  userId={userId}
-                />
-              </div>
-            ))
-          ) : (
-            <p className="profile-no-listings">
-              No listings available for {user.username}.
-            </p>
+                ))
+              ) : (
+                <p className="profile-no-listings">
+                  No listings available for {user.username}.
+                </p>
+              )}
+            </div>
           )}
         </div>
-      </div>
+      }
+      {currentTab === "userFriends" && <ProfileUserFriends user={user} />}
     </div>
   );
 };
