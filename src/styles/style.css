@@ -91,12 +91,21 @@ body {
 }
 
 .landingLiveTitle {
-    /* background-color: #333333; */
-    flex-grow: 1; /* Garante que o título ocupe o espaço disponível */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: bold; /* Destaca o título */
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: 6px 10px;
+  box-sizing: border-box;
+}
+
+.roomTitleText {
+  white-space: nowrap;
+  overflow: hidden;
+  /* adiciona automaticamente os ... se o texto excede o tamanho do container */
+  text-overflow: ellipsis; 
+  font-weight: bold;
+  font-size: 16px;
 }
 
 .landingOnlineMembersContainer {

@@ -226,7 +226,7 @@ const toggleModal = () => {
 
             {/* div for the room title */}
             <div className="landingLiveTitle">
-              <p>{sala.roomTitle}</p>
+              <p className="roomTitleText">{sala.roomTitle}</p>
             </div>
           </div>
         ))
