@@ -7,6 +7,7 @@ import Login from "./pages/login";
 import Signup from "./pages/signup";
 import NewListing from "./pages/newListing";
 import Profile from "./pages/profile";
+import { Notifications } from "./pages/notifications.js";
 import Donate from "./pages/Donate";
 import PasswordResetLink from "./pages/passwordLinkRequest.js";
 import PasswordReset from "./pages/PasswordReset.js";
@@ -135,37 +136,38 @@ const AppWithLocation = () => {
                 <Routes>
                   {/* Implementar rotas */}
                   <Route path="/" element={<Landing />} />
-                  <Route path="openListing/:id" element={<OpenListing />} />
-                  <Route path="liveRoom/:roomId" element={<LiveRoom />} />
-                  <Route path="chat" element={<Chat />} />
-                  <Route path="login" element={<Login />} />
-                  <Route path="signup" element={<Signup />} />
-                  <Route path="verifyAccount" element={<VerifyAccount />} />
-                  <Route path="newlisting" element={<NewListing />} />
-                  <Route path="profile/:userId" element={<Profile />} />
-                  <Route path="donate" element={<Donate />} />
+                  <Route path="/openListing/:id" element={<OpenListing />} />
+                  <Route path="/liveRoom/:roomId" element={<LiveRoom />} />
+                  <Route path="/chat" element={<Chat />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/verifyAccount" element={<VerifyAccount />} />
+                  <Route path="/newlisting" element={<NewListing />} />
+                  <Route path="/profile/:userId" element={<Profile />} />
+                  <Route path="/notifications" element={<Notifications />} />
+                  <Route path="/donate" element={<Donate />} />
                   <Route
-                    path="passwordResetLink"
+                    path="/passwordResetLink"
                     element={<PasswordResetLink />}
                   />
-                  <Route path="passwordReset" element={<PasswordReset />} />
-                  <Route path="guidelines" element={<PlatformGuidelines />} />
-                  <Route path="bibleStudies" element={<BibleStudiesByBook />} />
+                  <Route path="/passwordReset" element={<PasswordReset />} />
+                  <Route path="/guidelines" element={<PlatformGuidelines />} />
+                  <Route path="/bibleStudies" element={<BibleStudiesByBook />} />
                   <Route
-                    path="bibleStudies"
+                    path="/bibleStudies"
                     element={<BibleStudiesByTheme />}
                   />
-                  <Route path="privateRooms" element={<PrivateRooms />} />
-                  <Route path="suggestions" element={<Suggestions />} />
-                  <Route path="contactUs" element={<ContactUs />} />
-                  <Route path="findGathering" element={<FindGathering />} />
+                  <Route path="/privateRooms" element={<PrivateRooms />} />
+                  <Route path="/suggestions" element={<Suggestions />} />
+                  <Route path="/contactUs" element={<ContactUs />} />
+                  <Route path="/findGathering" element={<FindGathering />} />
                   <Route
-                    path="counselingSessions"
+                    path="/counselingSessions"
                     element={<CounselingSessions />}
                   />
-                  <Route path="churchSupport" element={<ChurchSupport />} />
-                  <Route path="promotions" element={<Promotions />} />
-                  <Route path="communityForum" element={<CommunityForum />} />
+                  <Route path="/churchSupport" element={<ChurchSupport />} />
+                  <Route path="/promotions" element={<Promotions />} />
+                  <Route path="/communityForum" element={<CommunityForum />} />
                 </Routes>
                 {/* Display the minimized room globally */}
                 <MinimizedStatus />

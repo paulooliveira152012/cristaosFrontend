@@ -10,26 +10,15 @@ import { ProfileUserFriends } from "./profileComponents/friends";
 import {
   fetchUserData,
   fetchListingComments,
-  deleteListing,
-  submitComment,
-  toggleListingLike,
-  fetchUserFriends,
   sendFriendRequest,
   acceptFriendRequest,
   rejectFriendRequest,
   removeFriend,
-  fetchFriendRequests,
-  deleteComment,
-  submitReply,
-  toggleCommentLike,
-  shareListing,
 } from "./functions/profilePageFunctions";
 
 import { useProfileLogic } from "./functions/useProfileLogic";
 
 const imagePlaceholder = require("../assets/images/profileplaceholder.png");
-
-const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 const Profile = () => {
   const { currentUser } = useUser();
@@ -38,7 +27,6 @@ const Profile = () => {
   const [userListings, setUserListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [comment, setComments] = useState([]);
   const navigate = useNavigate();
   const [currentTab, setCurrentTab] = useState("");
   const [sharedListings, setSharedListings] = useState([]); // guarda os IDs compartilhados
@@ -93,18 +81,9 @@ const Profile = () => {
 
   console.log("User Listings: ", userListings);
 
-  // Handle deleting a listing
-
   if (loading) return <p className="profile-loading">Loading profile...</p>;
   if (error) return <p className="profile-error">{error}</p>;
-
-  // Handle reply submission
-
-  // Inside Listings.js (or parent component)
-
-  // handle share
-
-  // Arrumar daqui para cima
+  
   const handleSendRequest = async () => {
     const profileUserId = user._id;
 
@@ -134,7 +113,6 @@ const Profile = () => {
     else alert("Amigo removido.");
   };
 
-  // didcernir qual opcao usar:
   const renderFriendAction = () => {
     if (!currentUser || !user || currentUser._id === user._id) return null;
 

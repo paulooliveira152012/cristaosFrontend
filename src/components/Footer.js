@@ -41,8 +41,11 @@ const Footer = () => {
                     <Plus />
                 </Link>
             )}
-
-            <BellIcon />
+            <div>
+            <Link to="/notifications">
+                <BellIcon />
+            </Link>
+            </div>
             
             
             {/* <div
