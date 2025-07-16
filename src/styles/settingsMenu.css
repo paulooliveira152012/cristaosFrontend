@@ -1,0 +1,41 @@
+/* settingsMenu.css */
+.settingsMenu {
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.settingsMenu h2 {
+  margin-bottom: 15px;
+}
+
+.settingsMenu label {
+  display: block;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.settingsMenu input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.settingsMenu button {
+  margin-top: 20px;
+  padding: 10px;
+  width: 100%;
+  border: none;
+  border-radius: 5px;
+  background-color: #005acd;
+  color: white;
+  cursor: pointer;
+}
+
+.settingsMenu button.danger {
+  background-color: #d9534f;
+}

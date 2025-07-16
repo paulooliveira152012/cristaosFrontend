@@ -24,6 +24,7 @@ import PlatformGuidelines from "./pages/menuPages/PlatformGuidelines.js";
 import PrivateRooms from "./pages/menuPages/PrivateRooms.js";
 import Promotions from "./pages/menuPages/Promotions.js";
 import Suggestions from "./pages/menuPages/Suggestions.js";
+import SettingsMenu  from "./pages/SettingsMenu.js";
 // Importar router, route e
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { UserProvider } from "./context/UserContext";
@@ -168,6 +169,7 @@ const AppWithLocation = () => {
                   <Route path="/churchSupport" element={<ChurchSupport />} />
                   <Route path="/promotions" element={<Promotions />} />
                   <Route path="/communityForum" element={<CommunityForum />} />
+                  <Route path="/settingsMenu" element={<SettingsMenu />} />
                 </Routes>
                 {/* Display the minimized room globally */}
                 <MinimizedStatus />

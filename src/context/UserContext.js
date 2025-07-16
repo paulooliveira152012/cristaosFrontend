@@ -116,7 +116,7 @@ const logout = () => {
 
 
   return (
-    <UserContext.Provider value={{ currentUser, login, logout }}>
+    <UserContext.Provider value={{ currentUser, setCurrentUser, login, logout }}>
       <UsersContext.Provider value={{ onlineUsers }}>
         {children}
       </UsersContext.Provider>

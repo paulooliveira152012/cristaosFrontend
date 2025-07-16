@@ -3,6 +3,7 @@ import { useUser } from "../context/UserContext";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import ListingInteractionBox from "../components/ListingInteractionBox";
+// import { SettingsMenu } from "./SettingsMenu";
 import "../styles/profile.css";
 import { ProfileUserFriends } from "./profileComponents/friends";
 
@@ -39,7 +40,12 @@ const Profile = () => {
     handleDeleteListing,
     handleDeleteComment,
     handleShare,
-  } = useProfileLogic({ currentUser, userListings, setUserListings, setSharedListings });
+  } = useProfileLogic({
+    currentUser,
+    userListings,
+    setUserListings,
+    setSharedListings,
+  });
 
   console.log(currentUser);
 
@@ -83,7 +89,7 @@ const Profile = () => {
 
   if (loading) return <p className="profile-loading">Loading profile...</p>;
   if (error) return <p className="profile-error">{error}</p>;
-  
+
   const handleSendRequest = async () => {
     const profileUserId = user._id;
 
@@ -170,15 +176,25 @@ const Profile = () => {
           reportar,
         */}
 
-          <div className="">
+          <div className="profileOptions">
             <ul>
               <li onClick={() => setCurrentTab("")}>Listagens</li>
               <li onClick={() => setCurrentTab("userFriends")}>Amigos</li>
               <li onClick={() => setCurrentTab("mural")}>Mural</li>
               <li>{renderFriendAction()}</li>
-              <li>Iniciar conversa</li>
-              <li>Bloquear</li>
-              <li>Reportar</li>
+              {/* <li onClick={() => setCurrentTab("settings")}>Configurações</li> */}
+              <li onClick={() => navigate("/settingsMenu")}>Configurações</li>
+              {currentUser._id !== user._id && (
+                <ul>
+                  <li>Iniciar conversa</li>
+                  <li>Bloquear</li>
+                  <li>Reportar</li>
+                </ul>
+              )}
+
+              {/* 
+              {currentUser._id === user._id && (
+              )} */}
             </ul>
           </div>
 
@@ -318,6 +334,7 @@ const Profile = () => {
         </div>
       }
       {currentTab === "userFriends" && <ProfileUserFriends user={user} />}
+      {/* {currentTab === "settings" && <SettingsMenu />} */}
     </div>
   );
 };

@@ -79,3 +79,7 @@
     font-size: 1.2em;
     color: #777;
 }
+
+.profileOptions ul {
+    list-style: none;
+}
