@@ -69,7 +69,14 @@ export const handleUpdate = async ({
 
 
 // ❌ Deletar conta
-export const handleDeleteAccount = async ({ currentUser }) => {
+export const handleDeleteAccount = async ({ currentUser, logout }) => {
+    console.log("Função para deletar conta...")
+
+     if (!currentUser || !currentUser._id) {
+    alert("Usuário não está autenticado.");
+    return;
+  }
+
   if (
     !window.confirm(
       "Tem certeza que deseja deletar sua conta? Essa ação não poderá ser desfeita."
@@ -79,7 +86,7 @@ export const handleDeleteAccount = async ({ currentUser }) => {
 
   try {
     const res = await fetch(
-      `${process.env.REACT_APP_API_BASE_URL}/api/users/${currentUser._id}`,
+      `${process.env.REACT_APP_API_BASE_URL}/api/users/delete-account/${currentUser._id}`,
       {
         method: "DELETE",
         credentials: "include",
@@ -89,8 +96,12 @@ export const handleDeleteAccount = async ({ currentUser }) => {
     if (!res.ok) throw new Error("Erro ao deletar a conta.");
 
     alert("Conta deletada com sucesso.");
+
+    logout()
+    
     window.location.href = "/";
   } catch (error) {
     alert("Erro: " + error.message);
+    console.log("Erro: " + error.message)
   }
 };

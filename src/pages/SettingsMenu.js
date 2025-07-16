@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUser } from "../context/UserContext";
 import "../styles/settingsMenu.css";
 import Header from "../components/Header";
@@ -11,14 +11,25 @@ import {
 
 const SettingsMenu = () => {
   const navigate = useNavigate();
-  const { currentUser, setCurrentUser } = useUser();
+  const { currentUser, setCurrentUser, logout } = useUser();
 
   const [formData, setFormData] = useState({
-    username: currentUser.username || "",
-    email: currentUser.email || "",
-    profileImage: currentUser.profileImage || "",
-    newPassword: "", // Novo campo
+    username: "",
+    email: "",
+    profileImage: "",
+    newPassword: "",
   });
+
+  useEffect(() => {
+    if (currentUser) {
+      setFormData({
+        username: currentUser.username || "",
+        email: currentUser.email || "",
+        profileImage: currentUser.profileImage || "",
+        newPassword: "",
+      });
+    }
+  }, [currentUser]);
 
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -30,6 +41,11 @@ const SettingsMenu = () => {
     newPassword: "",
     confirmPassword: "",
   });
+
+  if (!currentUser) {
+    navigate("/");
+    return null;
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -46,7 +62,7 @@ const SettingsMenu = () => {
     }));
   };
 
-  console.log("currentUser:", currentUser)
+  console.log("currentUser:", currentUser);
 
   return (
     <div>
@@ -119,7 +135,7 @@ const SettingsMenu = () => {
             <hr />
 
             <button
-              onClick={() => handleDeleteAccount(currentUser)}
+              onClick={() => handleDeleteAccount({ currentUser, logout })}
               className="danger"
             >
               ❌ Deletar minha conta
