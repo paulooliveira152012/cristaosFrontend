@@ -229,6 +229,7 @@ export const fetchUserFriends = async (userId) => {
   }
 };
 
+
 // 🔹 Enviar pedido de amizade
 export const sendFriendRequest = async (friendId) => {
   try {

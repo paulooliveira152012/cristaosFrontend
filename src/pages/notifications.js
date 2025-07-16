@@ -13,6 +13,7 @@ export const Notifications = () => {
   const [friendRequests, setFriendRequests] = useState([]);
   const [otherNotifications, setOtherNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState(null); // para evitar cliques múltiplos
 
   useEffect(() => {
     if (!currentUser) return;
@@ -21,9 +22,14 @@ export const Notifications = () => {
       try {
         const allNotifs = await fetchNotifications();
 
+        // Ordenar por data (mais recentes primeiro)
+        const sorted = allNotifs.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+
         // Separar pedidos de amizade das outras notificações
-        const requests = allNotifs.filter((n) => n.type === "friend_request");
-        const others = allNotifs.filter((n) => n.type !== "friend_request");
+        const requests = sorted.filter((n) => n.type === "friend_request");
+        const others = sorted.filter((n) => n.type !== "friend_request");
 
         setFriendRequests(requests);
         setOtherNotifications(others);
@@ -38,13 +44,21 @@ export const Notifications = () => {
   }, [currentUser]);
 
   const handleAccept = async (requesterId) => {
+    setProcessingId(requesterId);
     await acceptFriendRequest(requesterId);
-    setFriendRequests((prev) => prev.filter((r) => r.fromUser._id !== requesterId));
+    setFriendRequests((prev) =>
+      prev.filter((r) => r.fromUser._id !== requesterId)
+    );
+    setProcessingId(null);
   };
 
   const handleReject = async (requesterId) => {
+    setProcessingId(requesterId);
     await rejectFriendRequest(requesterId);
-    setFriendRequests((prev) => prev.filter((r) => r.fromUser._id !== requesterId));
+    setFriendRequests((prev) =>
+      prev.filter((r) => r.fromUser._id !== requesterId)
+    );
+    setProcessingId(null);
   };
 
   const handleNotificationClick = async (notifId) => {
@@ -67,8 +81,18 @@ export const Notifications = () => {
             {friendRequests.map((request) => (
               <li key={request._id}>
                 <strong>{request.fromUser.username}</strong> quer ser seu amigo!
-                <button onClick={() => handleAccept(request.fromUser._id)}>Aceitar</button>
-                <button onClick={() => handleReject(request.fromUser._id)}>Rejeitar</button>
+                <button
+                  onClick={() => handleAccept(request.fromUser._id)}
+                  disabled={processingId === request.fromUser._id}
+                >
+                  Aceitar
+                </button>
+                <button
+                  onClick={() => handleReject(request.fromUser._id)}
+                  disabled={processingId === request.fromUser._id}
+                >
+                  Rejeitar
+                </button>
               </li>
             ))}
           </ul>
