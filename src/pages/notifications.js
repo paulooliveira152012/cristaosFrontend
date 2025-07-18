@@ -8,7 +8,9 @@ import {
 } from "./functions/functions/notificationsFunctions.js";
 import "../styles/notifications.css";
 
-export const Notifications = () => {
+import { markAllNotificationsAsRead, checkForNewNotifications } from "../components/functions/footerFunctions.js";
+
+export const Notifications = ({ setNotifications }) => {
   const { currentUser } = useUser();
   const [friendRequests, setFriendRequests] = useState([]);
   const [otherNotifications, setOtherNotifications] = useState([]);
@@ -42,6 +44,15 @@ export const Notifications = () => {
 
     loadData();
   }, [currentUser]);
+
+  useEffect(() => {
+     if (!currentUser) return;
+    // Assim que abrir a página, marcar todas como lidas
+    markAllNotificationsAsRead().then(() => {
+        // 2. Atualizar o Footer (só chamar check novamente)
+      checkForNewNotifications(setNotifications);
+    });
+  }, []);
 
   const handleAccept = async (requesterId) => {
     setProcessingId(requesterId);

@@ -273,6 +273,22 @@ body {
     border: 2px solid white; /* Add a white border to separate it from the image */
   }
 
+  .BellIcon {
+    /* background-color: red; */
+    position: relative;
+  }
+
+  .notificationStatus {
+    width: 15px;
+    height: 15px;
+    background-color: red; /* Green color for online status */
+    border-radius: 50%; /* Make the green ball round */
+    position: absolute;
+    top: 0px; /* Adjust the position to the top-right */
+    right: -1px;
+    border: 2px solid white; /* Add a white border to separate it from the image */
+  }
+
   .liveRoomUsername {
     /* background-color: green; */
     font-weight: bold;
