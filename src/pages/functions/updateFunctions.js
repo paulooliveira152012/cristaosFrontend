@@ -1,5 +1,6 @@
 import { uploadImageToS3 } from "../../utils/s3Upload";
 
+
 // 📸 Picker de imagem de perfil
 export const handleImagePicker = ({ setFormData, setFile }) => {
   const input = document.createElement("input");
@@ -27,8 +28,12 @@ export const handleUpdate = async ({
   setMessage,
   setLoading,
   passwordData, // ← adicionar aqui
+  setDisplayModal,
+  setUpdateMessage,
+  navigate
 }) => {
   setLoading(true);
+  
   try {
     let imageUrl = formData.profileImage;
 
@@ -56,6 +61,16 @@ export const handleUpdate = async ({
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Erro ao atualizar.");
+
+    if(passwordData) {
+      setUpdateMessage("Senha atualizada")
+      setDisplayModal(true)
+      setTimeout(() => {
+        setDisplayModal(false)
+        // navigate back
+        navigate("/")
+      }, 3000)
+    }
 
     setCurrentUser(data.user);
     setMessage("Informações atualizadas com sucesso!");

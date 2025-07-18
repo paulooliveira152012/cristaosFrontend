@@ -12,6 +12,8 @@ import {
 const SettingsMenu = () => {
   const navigate = useNavigate();
   const { currentUser, setCurrentUser, logout } = useUser();
+  const [updateMessage, setUpdateMessage] = useState("")
+  const [displayModal, setDisplayModal] = useState(false)
 
   const [formData, setFormData] = useState({
     username: "",
@@ -66,6 +68,13 @@ const SettingsMenu = () => {
 
   return (
     <div>
+      {displayModal && (
+      <div className="modal">
+        <div className="modal-content">
+          <p>{updateMessage}</p>
+        </div>
+      </div>
+      )}
       <Header showProfileImage={false} navigate={navigate} />
       <div className="settingsMenu">
         <h2>Configurações</h2>
@@ -125,6 +134,9 @@ const SettingsMenu = () => {
                   setMessage,
                   setLoading,
                   passwordData,
+                  setUpdateMessage,
+                  setDisplayModal,
+                  navigate
                 })
               }
               disabled={loading}
@@ -185,6 +197,10 @@ const SettingsMenu = () => {
                   setCurrentUser,
                   setMessage,
                   setLoading,
+                  passwordData,
+                  setUpdateMessage,
+                  setDisplayModal,
+                  navigate
                 })
               }
               disabled={loading}

@@ -6,7 +6,7 @@ const baseUrl = process.env.REACT_APP_API_BASE_URL
 const VerifyAccount = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [message, setMessage] = useState("Verifying your account...");
+  const [message, setMessage] = useState("Verifying your account... Please check your email" );
 
   console.log("Pagina de verificacao de conta");
 
