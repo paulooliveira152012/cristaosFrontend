@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import socket from '../socket';
-import { useNavigate } from 'react-router-dom';
+import { createContext, useContext, useState, useEffect } from "react";
+import socket from "../socket";
+import { useNavigate } from "react-router-dom";
 
 const UserContext = createContext();
 const UsersContext = createContext();
@@ -16,40 +16,42 @@ export const UserProvider = ({ children }) => {
 
   // verificar se o usuario ainda existe no backend
   const validateUserExists = async (userId) => {
-  try {
-    const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/users/current`, {
-      credentials: 'include',
-    });
+    try {
+      const res = await fetch(
+        `${process.env.REACT_APP_API_BASE_URL}/api/users/current`,
+        {
+          credentials: "include",
+        }
+      );
 
-    if (res.status === 404 || res.status === 401) {
-      console.warn("🚨 Usuário não existe mais. Fazendo logout...");
-      logout(); // força o logout se não encontrado
+      if (res.status === 404 || res.status === 401) {
+        console.warn("🚨 Usuário não existe mais. Fazendo logout...");
+        logout(); // força o logout se não encontrado
+      }
+    } catch (error) {
+      console.error("Erro ao validar usuário:", error);
+      logout(); // fallback: se erro de rede, desloga também
     }
-  } catch (error) {
-    console.error("Erro ao validar usuário:", error);
-    logout(); // fallback: se erro de rede, desloga também
-  }
-};
-
+  };
 
   const emitLogin = (user) => {
     if (!user) return;
-    socket.emit('userLoggedIn', {
+    socket.emit("userLoggedIn", {
       _id: user._id,
       username: user.username,
-      profileImage: user.profileImage || 'https://via.placeholder.com/50',
+      profileImage: user.profileImage || "https://via.placeholder.com/50",
     });
     console.log("📡 Emitindo login para socket:", user.username);
   };
 
   useEffect(() => {
     // Restaurar usuário ao carregar
-    const storedUser = localStorage.getItem('user');
+    const storedUser = localStorage.getItem("user");
     if (storedUser) {
       const user = JSON.parse(storedUser);
       setCurrentUser(user);
 
-      validateUserExists(user._id)
+      validateUserExists(user._id);
 
       if (socket.connected) {
         emitLogin(user);
@@ -60,7 +62,7 @@ export const UserProvider = ({ children }) => {
     }
 
     // Emitir login pendente após reconexão
-    socket.on('connect', () => {
+    socket.on("connect", () => {
       if (pendingLoginUser) {
         emitLogin(pendingLoginUser);
         setPendingLoginUser(null);
@@ -73,109 +75,116 @@ export const UserProvider = ({ children }) => {
       setOnlineUsers(users);
     };
 
-    socket.on('onlineUsers', handleOnlineUsers);
+    socket.on("onlineUsers", handleOnlineUsers);
 
     return () => {
-      socket.off('onlineUsers', handleOnlineUsers);
-      socket.off('connect');
+      socket.off("onlineUsers", handleOnlineUsers);
+      socket.off("connect");
     };
   }, [pendingLoginUser]);
 
   // buscar usuario atual do backend
-useEffect(() => {
-  const fetchCurrentUserFromCookie = async () => {
-    const storedUser = localStorage.getItem('user');
+  useEffect(() => {
+    const fetchCurrentUserFromCookie = async () => {
+      const storedUser = localStorage.getItem("user");
 
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
-      setCurrentUser(user);
-      console.log("👤 Usuário carregado do localStorage:", user);
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        setCurrentUser(user);
+        console.log("👤 Usuário carregado do localStorage:", user);
 
-      try {
-        const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/users/current`, {
-          credentials: "include",
-        });
+        try {
+          const res = await fetch(
+            `${process.env.REACT_APP_API_BASE_URL}/api/users/current`,
+            {
+              credentials: "include",
+            }
+          );
 
-        if (!res.ok) throw new Error("Usuário não autenticado.");
+          if (!res.ok) throw new Error("Usuário não autenticado.");
 
-        const verifiedUser = await res.json();
-        setCurrentUser(verifiedUser);
-        localStorage.setItem("user", JSON.stringify(verifiedUser));
-        console.log("✅ Cookie JWT válido. Usuário confirmado.");
+          const verifiedUser = await res.json();
+          setCurrentUser(verifiedUser);
+          localStorage.setItem("user", JSON.stringify(verifiedUser));
+          console.log("✅ Cookie JWT válido. Usuário confirmado.");
 
-        if (socket.connected) {
-          emitLogin(verifiedUser);
-        } else {
-          setPendingLoginUser(verifiedUser);
-          socket.connect();
+          if (socket.connected) {
+            emitLogin(verifiedUser);
+          } else {
+            setPendingLoginUser(verifiedUser);
+            socket.connect();
+          }
+        } catch (err) {
+          console.warn(
+            "⚠️ Cookie inválido ou expirado. Mantendo user localStorage por enquanto."
+          );
         }
-      } catch (err) {
-        console.warn("⚠️ Cookie inválido ou expirado. Mantendo user localStorage por enquanto.");
       }
-    }
-  };
+    };
 
-  fetchCurrentUserFromCookie();
-}, []);
-
-
+    fetchCurrentUserFromCookie();
+  }, []);
 
   const login = (user) => {
     setCurrentUser(user);
-    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem("user", JSON.stringify(user));
     if (socket.connected) {
       emitLogin(user);
     } else {
       setPendingLoginUser(user);
       socket.connect();
     }
+
+    fetch(`${process.env.REACT_APP_API_BASE_URL}/api/users/debug/cookies`, {
+      credentials: "include",
+    });
   };
 
-const logout = () => {
-  if (currentUser) {
-    const userId = currentUser._id;
+  const logout = () => {
+    if (currentUser) {
+      const userId = currentUser._id;
 
-    // 1. Emite logout para backend
-    socket.emit('userLoggedOut', {
-      _id: userId,
-      username: currentUser.username,
-    });
+      // 1. Emite logout para backend
+      socket.emit("userLoggedOut", {
+        _id: userId,
+        username: currentUser.username,
+      });
 
-    // 2. Remove currentUser imediatamente
-    setCurrentUser(null);
-    localStorage.removeItem('user');
+      // 2. Remove currentUser imediatamente
+      setCurrentUser(null);
+      localStorage.removeItem("user");
 
-    // 3. Escuta uma única atualização de onlineUsers antes de desconectar
-    const handleUpdatedOnlineUsers = (users) => {
-      console.log("✅ Lista de online recebida após logout:", users);
-      setOnlineUsers(users.filter(u => u._id !== userId));
+      // 3. Escuta uma única atualização de onlineUsers antes de desconectar
+      const handleUpdatedOnlineUsers = (users) => {
+        console.log("✅ Lista de online recebida após logout:", users);
+        setOnlineUsers(users.filter((u) => u._id !== userId));
 
+        console.log("✅✅✅ onlineUsers after logout:", onlineUsers);
 
-      console.log("✅✅✅ onlineUsers after logout:", onlineUsers)
+        socket.off("onlineUsers", handleUpdatedOnlineUsers); // limpa listener
 
-      socket.off('onlineUsers', handleUpdatedOnlineUsers); // limpa listener
+        // 4. Agora pode desconectar e navegar
+        socket.disconnect();
+        navigate("/");
+      };
 
-      // 4. Agora pode desconectar e navegar
+      socket.once("onlineUsers", handleUpdatedOnlineUsers);
+
+      // ⏱ Segurança: se em 1s não receber, segue com o fluxo
+      setTimeout(() => {
+        socket.off("onlineUsers", handleUpdatedOnlineUsers);
+        navigate("/");
+      }, 1000);
+    } else {
       socket.disconnect();
-      navigate('/');
-    };
-
-    socket.once('onlineUsers', handleUpdatedOnlineUsers);
-
-    // ⏱ Segurança: se em 1s não receber, segue com o fluxo
-    setTimeout(() => {
-      socket.off('onlineUsers', handleUpdatedOnlineUsers);
-      navigate('/');
-    }, 1000);
-  } else {
-    socket.disconnect();
-    navigate('/');
-  }
-};
-
+      navigate("/");
+    }
+  };
 
   return (
-    <UserContext.Provider value={{ currentUser, setCurrentUser, login, logout }}>
+    <UserContext.Provider
+      value={{ currentUser, setCurrentUser, login, logout }}
+    >
       <UsersContext.Provider value={{ onlineUsers }}>
         {children}
       </UsersContext.Provider>
