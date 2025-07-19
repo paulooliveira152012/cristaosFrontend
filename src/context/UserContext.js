@@ -24,10 +24,10 @@ export const UserProvider = ({ children }) => {
         }
       );
 
-      if (res.status === 404 || res.status === 401) {
-        console.warn("🚨 Usuário não existe mais. Fazendo logout...");
-        logout(); // força o logout se não encontrado
-      }
+      // if (res.status === 404 || res.status === 401) {
+      //   console.warn("🚨 Usuário não existe mais. Fazendo logout...");
+      //   logout(); // força o logout se não encontrado
+      // }
     } catch (error) {
       console.error("Erro ao validar usuário:", error);
       logout(); // fallback: se erro de rede, desloga também
