@@ -7,8 +7,13 @@ import {
   markNotificationAsRead,
 } from "./functions/functions/notificationsFunctions.js";
 import "../styles/notifications.css";
+import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
-import { markAllNotificationsAsRead, checkForNewNotifications } from "../components/functions/footerFunctions.js";
+import {
+  markAllNotificationsAsRead,
+  checkForNewNotifications,
+} from "../components/functions/footerFunctions.js";
 
 export const Notifications = ({ setNotifications }) => {
   const { currentUser } = useUser();
@@ -16,6 +21,7 @@ export const Notifications = ({ setNotifications }) => {
   const [otherNotifications, setOtherNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null); // para evitar cliques múltiplos
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!currentUser) return;
@@ -46,10 +52,10 @@ export const Notifications = ({ setNotifications }) => {
   }, [currentUser]);
 
   useEffect(() => {
-     if (!currentUser) return;
+    if (!currentUser) return;
     // Assim que abrir a página, marcar todas como lidas
     markAllNotificationsAsRead().then(() => {
-        // 2. Atualizar o Footer (só chamar check novamente)
+      // 2. Atualizar o Footer (só chamar check novamente)
       checkForNewNotifications(setNotifications);
     });
   }, []);
@@ -72,14 +78,46 @@ export const Notifications = ({ setNotifications }) => {
     setProcessingId(null);
   };
 
-  const handleNotificationClick = async (notifId) => {
-    await markNotificationAsRead(notifId);
+  const handleNotificationClick = async (notif) => {
+    const token = localStorage.getItem("token");
+    await markNotificationAsRead(notif._id, token);
+
     setOtherNotifications((prev) =>
-      prev.map((n) => (n._id === notifId ? { ...n, isRead: true } : n))
+      prev.map((n) => (n._id === notif._id ? { ...n, isRead: true } : n))
     );
+
+    if (notif.type === "comment" || notif.type === "reply") {
+      if (notif.listingId && notif.commentId) {
+        navigate(
+          `/openListing/${notif.listingId}?commentId=${notif.commentId}`
+        );
+      } else if (notif.listingId) {
+        navigate(`/openListing/${notif.listingId}`);
+      }
+    } else if (notif.type === "like") {
+      if (notif.listingId) {
+        navigate(`/openListing/${notif.listingId}`);
+      }
+    }
   };
 
   if (loading) return <p>Carregando notificações...</p>;
+
+  console.log(otherNotifications);
+
+  const generateNotificationLink = (notif) => {
+    switch (notif.type) {
+      case "like":
+      case "comment":
+        return `/openListing/${notif.listingId}`;
+      case "reply":
+        return `/openListing/${notif.listingId}?commentId=${notif.commentId}`;
+      case "friend_request":
+        return `/friends`;
+      default:
+        return "/";
+    }
+  };
 
   return (
     <div className="notificationsContainer">
@@ -115,12 +153,17 @@ export const Notifications = ({ setNotifications }) => {
         {otherNotifications.length > 0 ? (
           <ul>
             {otherNotifications.map((notif) => (
-              <li
-                key={notif._id}
-                className={notif.isRead ? "read" : "unread"}
-                onClick={() => handleNotificationClick(notif._id)}
-              >
-                {notif.content}
+              <li key={notif._id} className={notif.isRead ? "read" : "unread"}>
+                <div
+                  onClick={() => handleNotificationClick(notif)}
+                  style={{
+                    cursor: "pointer",
+                    color: "blue",
+                    textDecoration: "underline",
+                  }}
+                >
+                  {notif.content}
+                </div>
               </li>
             ))}
           </ul>

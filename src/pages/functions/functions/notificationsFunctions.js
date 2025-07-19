@@ -65,14 +65,25 @@ export const fetchNotifications = async () => {
 
 
 // Marcar uma notificação como lida
-export const markNotificationAsRead = async (notifId) => {
+export const markNotificationAsRead = async (notifId, token) => {
   try {
+    if (typeof notifId !== "string") {
+      console.error("notifId precisa ser uma string:", notifId);
+      return;
+    }
+
     const response = await fetch(`${baseUrl}/api/notifications/read/${notifId}`, {
-      method: "PATCH",
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`, // se seu backend exige autenticação
+        "Content-Type": "application/json",
+      },
     });
+
     if (!response.ok) throw new Error("Erro ao marcar notificação como lida");
     return await response.json();
   } catch (error) {
     console.error("Erro ao marcar notificação como lida:", error);
   }
 };
+

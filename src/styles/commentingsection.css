@@ -132,3 +132,9 @@
     /* background-color: aliceblue; */
     /* border-bottom: 1px solid lightgray; */
 }
+
+
+.highlight {
+  background-color: #fffcb3;
+  transition: background-color 1s;
+}

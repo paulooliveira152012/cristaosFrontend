@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
 import LikeIcon from "../assets/icons/likeIcon";
 import LikedIcon from "../assets/icons/likedIcon";
@@ -37,8 +38,32 @@ const ListingInteractionBox = ({
   const [replyTextMap, setReplyTextMap] = useState({});
   const [commentText, setCommentText] = useState("");
   const [showReplyBox, setShowReplyBox] = useState({});
+  const location = useLocation();
 
   // console.log("currentUser in ListingInteractionBox:", currentUser); // Ensure it is passed correctly
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const commentId = queryParams.get("commentId");
+    const replyId = queryParams.get("replyId");
+
+    const scrollAndHighlight = (id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("highlight");
+        setTimeout(() => el.classList.remove("highlight"), 2000);
+      }
+    };
+
+    if (replyId) {
+      scrollAndHighlight(`reply-${replyId}`);
+      setShowComments(true);
+    } else if (commentId) {
+      scrollAndHighlight(`comment-${commentId}`);
+      setShowComments(true);
+    }
+  }, [location.search]);
 
   const handleCommentChange = (e) => {
     setCommentText(e.target.value);
@@ -50,8 +75,6 @@ const ListingInteractionBox = ({
       return { ...prev, [commentId]: text };
     });
   };
-  
-  
 
   const handleCommentSubmitClick = () => {
     if (commentText.trim()) {
@@ -67,18 +90,22 @@ const ListingInteractionBox = ({
     console.log("Reply Text Retrieved in handleReplySubmitClick:", replyText);
     if (replyText && replyText.trim()) {
       if (!replyTextMap[parentCommentId]) {
-        console.error("No reply text found for this parentCommentId:", parentCommentId);
+        console.error(
+          "No reply text found for this parentCommentId:",
+          parentCommentId
+        );
         return;
       }
-      await handleReplySubmit(listingId, parentCommentId, replyText, currentUser, setItems);
+      await handleReplySubmit(
+        listingId,
+        parentCommentId,
+        replyText,
+        currentUser,
+        setItems
+      );
       setReplyTextMap((prev) => ({ ...prev, [parentCommentId]: "" }));
     }
   };
-  
-  
-  
-  
-  
 
   const toggleReplyBox = (commentId) => {
     setShowReplyBox((prev) => ({
@@ -128,9 +155,11 @@ const ListingInteractionBox = ({
           <div>
             <ShareIcon
               onClick={() => handleShare(listingId)}
-              style={{ 
+              style={{
                 cursor: "pointer",
-                color: sharedListings?.includes(listingId) ? "green" : "inherit", // ou uma classe CSS
+                color: sharedListings?.includes(listingId)
+                  ? "green"
+                  : "inherit", // ou uma classe CSS
               }}
               alt="Share"
             />
@@ -156,7 +185,11 @@ const ListingInteractionBox = ({
       {showComments && comments.length > 0 && (
         <div className="commentSectionContainer">
           {comments.map((comment) => (
-            <div key={comment._id} className="commentsSection">
+            <div
+              key={comment._id}
+              className="commentsSection"
+              id={`comment-${comment._id}`}
+            >
               <div className="commentSection">
                 <div className="left">
                   <Link to={`/profile/${comment.user}`}>
@@ -177,45 +210,46 @@ const ListingInteractionBox = ({
                       <strong>{comment.username || "Unknown User"}:</strong>{" "}
                       {comment.text}
                     </p>
-                    <div className="commentsInteractionContainer" >
+                    <div className="commentsInteractionContainer">
                       {/* comments */}
                       <div className="left">
-                      <div
-                        onClick={() => handleCommentLike(comment._id, false)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        {/* comment like Icon */}
-                        {isCommentLiked(comment) ? <LikedIcon /> : <LikeIcon />}
-                        <span
-                          style={{ marginLeft: "0px", alignSelf: "center" }}
+                        <div
+                          onClick={() => handleCommentLike(comment._id, false)}
+                          style={{ cursor: "pointer" }}
                         >
-                          {commentLikesCount(comment)}
-                        </span>
-                      </div>
-                      <div onClick={() => toggleReplyBox(comment._id)}>
-                        <CommentIcon style={{ cursor: "pointer" }} />
-                        <span
-                          style={{ marginLeft: "0px", alignSelf: "center" }}
-                        >
-                          {commentCommentsCount(comment)}
-                        </span>
-                      </div>
-                      {/* clising right tag */}
+                          {/* comment like Icon */}
+                          {isCommentLiked(comment) ? (
+                            <LikedIcon />
+                          ) : (
+                            <LikeIcon />
+                          )}
+                          <span
+                            style={{ marginLeft: "0px", alignSelf: "center" }}
+                          >
+                            {commentLikesCount(comment)}
+                          </span>
+                        </div>
+                        <div onClick={() => toggleReplyBox(comment._id)}>
+                          <CommentIcon style={{ cursor: "pointer" }} />
+                          <span
+                            style={{ marginLeft: "0px", alignSelf: "center" }}
+                          >
+                            {commentCommentsCount(comment)}
+                          </span>
+                        </div>
+                        {/* clising right tag */}
                       </div>
 
                       {/* delete icon here */}
                       <div className="right">
-                              <TrashIcon
-                                onClick={() =>
-                                  handleDeleteComment(
-                                    listingId,
-                                    comment._id
-                                  )
-                                }
-                                style={{ cursor: "pointer" }}
-                                alt="Delete Reply"
-                              />
-                            </div>
+                        <TrashIcon
+                          onClick={() =>
+                            handleDeleteComment(listingId, comment._id)
+                          }
+                          style={{ cursor: "pointer" }}
+                          alt="Delete Reply"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -262,6 +296,7 @@ const ListingInteractionBox = ({
                       <div
                         key={reply._id}
                         className="replySection"
+                        id={`reply-${reply._id}`}
                         style={{ marginBottom: "10px" }}
                       >
                         <div className="replyContent">
@@ -300,7 +335,6 @@ const ListingInteractionBox = ({
                                 <LikeIcon />
                               )}
 
-                              
                               <span
                                 style={{
                                   marginLeft: "0px",
@@ -309,7 +343,6 @@ const ListingInteractionBox = ({
                               >
                                 {commentLikesCount(reply)}
                               </span>
-                              
                             </div>
                             {/* reply trash icon */}
                             <div className="right">
@@ -324,7 +357,6 @@ const ListingInteractionBox = ({
                                 style={{ cursor: "pointer" }}
                                 alt="Delete Reply"
                               />
-                              
                             </div>
                           </div>
                         </div>

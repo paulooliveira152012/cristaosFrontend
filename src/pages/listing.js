@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ListingInteractionBox from "../components/ListingInteractionBox";
 import { useUser } from "../context/UserContext";
+import { useSearchParams } from "react-router-dom";
 
 import {
   handleFetchComments,
@@ -16,7 +17,7 @@ import {
   handleCommentLike,
 } from "../components/functions/interactionFunctions";
 
-const baseUrl = process.env.REACT_APP_API_BASE_URL
+const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 const ListingPage = () => {
   const navigate = useNavigate();
@@ -27,11 +28,23 @@ const ListingPage = () => {
   const [loading, setLoading] = useState(true);
   const [newCommentId, setNewCommentId] = useState("");
 
+  const [searchParams] = useSearchParams();
+  const commentId = searchParams.get("commentId");
+
+  useEffect(() => {
+    if (commentId) {
+      const el = document.getElementById(commentId);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [commentId]);
+
   // Fetch the single listing as the first item in the items array
   useEffect(() => {
     const fetchListingData = async () => {
       try {
-        const response = await fetch(`${baseUrl}/api/listings/listings/${listingId}`);
+        const response = await fetch(
+          `${baseUrl}/api/listings/listings/${listingId}`
+        );
         if (!response.ok) {
           const errorText = await response.text(); // Capture error details
           console.error("API Error Details:", errorText); // Log for more insight
@@ -72,7 +85,9 @@ const ListingPage = () => {
         setNewCommentId(newComment._id);
 
         // Fetch the updated listing from the backend
-        const response = await fetch(`${baseUrl}/api/listings/listings/${listingId}`);
+        const response = await fetch(
+          `${baseUrl}/api/listings/listings/${listingId}`
+        );
 
         if (!response.ok) {
           throw new Error(
