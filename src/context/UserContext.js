@@ -14,6 +14,24 @@ export const UserProvider = ({ children }) => {
   const [pendingLoginUser, setPendingLoginUser] = useState(null);
   const navigate = useNavigate();
 
+  // verificar se o usuario ainda existe no backend
+  const validateUserExists = async (userId) => {
+  try {
+    const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/users/${userId}`, {
+      credentials: 'include',
+    });
+
+    if (res.status === 404 || res.status === 401) {
+      console.warn("🚨 Usuário não existe mais. Fazendo logout...");
+      logout(); // força o logout se não encontrado
+    }
+  } catch (error) {
+    console.error("Erro ao validar usuário:", error);
+    logout(); // fallback: se erro de rede, desloga também
+  }
+};
+
+
   const emitLogin = (user) => {
     if (!user) return;
     socket.emit('userLoggedIn', {
@@ -30,6 +48,8 @@ export const UserProvider = ({ children }) => {
     if (storedUser) {
       const user = JSON.parse(storedUser);
       setCurrentUser(user);
+
+      validateUserExists(user._id)
 
       if (socket.connected) {
         emitLogin(user);
