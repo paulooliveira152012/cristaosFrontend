@@ -5,6 +5,7 @@ import LikeIcon from "../assets/icons/likeIcon";
 import LikedIcon from "../assets/icons/likedIcon";
 import CommentIcon from "../assets/icons/commentIcon";
 import ShareIcon from "../assets/icons/shareIcon";
+import SharedIcon from "../assets/icons/sharedIcon";
 import TrashIcon from "../assets/icons/trashcan";
 import "../styles/commentingsection.css";
 
@@ -143,7 +144,7 @@ const ListingInteractionBox = ({
       <div className="interactionIcons">
         {/* like listing icon */}
         <div className="iconsContainer" onClick={() => handleLike(listingId)}>
-          {isLiked ? <LikedIcon alt="Liked" /> : <LikeIcon alt="Like" />}
+          {isLiked ? <LikedIcon alt="Liked" className="shared-feedback" /> : <LikeIcon alt="Like" />}
           <span style={{ marginLeft: "5px" }}>{likesCount}</span>
         </div>
 
@@ -158,16 +159,19 @@ const ListingInteractionBox = ({
 
         {showShareButton && (
           <div>
-            <ShareIcon
-              onClick={() => handleShare(listingId)}
-              style={{
-                cursor: "pointer",
-                color: sharedListings?.includes(listingId)
-                  ? "green"
-                  : "inherit", // ou uma classe CSS
-              }}
-              alt="Share"
-            />
+            {sharedListings?.includes(listingId) ? (
+              <SharedIcon
+                onClick={() => handleShare(listingId)}
+                className="shared-feedback"
+                style={{ cursor: "pointer" }}
+              />
+            ) : (
+              <ShareIcon
+                onClick={() => handleShare(listingId)}
+                style={{ cursor: "pointer" }}
+                alt="Share"
+              />
+            )}
           </div>
         )}
 

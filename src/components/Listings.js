@@ -25,6 +25,7 @@ const Listings = () => {
   // listingId when creating new comment to be available when liking new comments
   const [newCommentId, setNewCommentId] = useState("");
   const [openLeaderMenuId, setOpenLeaderMenuId] = useState(null);
+  const [sharedListings, setSharedListings] = useState([]);
 
   // Logging whenever newCommentId changes
   useEffect(() => {
@@ -37,11 +38,11 @@ const Listings = () => {
 
   // Fetch all listed items from the backend
   useEffect(() => {
-    console.log("✅ BUSCANDO ITENS")
+    console.log("✅ BUSCANDO ITENS");
     const fetchListings = async () => {
       const api = `${baseURL}/api/listings/alllistings`;
 
-      console.log("✅✅ api usada:", api)
+      console.log("✅✅ api usada:", api);
       try {
         setLoading(true); // Start loading before fetch
         const response = await fetch(api, {
@@ -52,10 +53,10 @@ const Listings = () => {
           },
         });
 
-        console.log("✅")
+        console.log("✅");
 
         if (!response.ok) {
-          console.log("✅ erro aqui => :", response.statusText)
+          console.log("✅ erro aqui => :", response.statusText);
           throw new Error(`Error fetching listings: ${response.statusText}`);
         }
 
@@ -160,8 +161,23 @@ const Listings = () => {
     handleLike(listingId, currentUser, items, setItems);
   };
 
-  const shareListing = (listingId) => {
-    handleShare(listingId, currentUser);
+  const shareListing = async (listingId) => {
+    if (!currentUser) {
+      alert("Você precisa estar logado para compartilhar.");
+      return;
+    }
+
+    try {
+      await handleShare(listingId, currentUser);
+
+      // Marca como compartilhado para o usuário atual (somente localmente)
+      setSharedListings((prev) =>
+        prev.includes(listingId) ? prev : [...prev, listingId]
+      );
+    } catch (error) {
+      console.error("Erro ao compartilhar:", error);
+      alert("Erro ao compartilhar.");
+    }
   };
 
   const likeCommentOrReply = async (
@@ -202,37 +218,39 @@ const Listings = () => {
   // console.log("currentUser in Listings:", currentUser); // Ensure it shows correct data
 
   const handleDeleteListing = async (listingId) => {
-  const confirmDelete = window.confirm("Tem certeza que deseja deletar esta postagem?");
-  if (!confirmDelete) return;
+    const confirmDelete = window.confirm(
+      "Tem certeza que deseja deletar esta postagem?"
+    );
+    if (!confirmDelete) return;
 
-  try {
-    const api = `${baseURL}/api/adm/admDeleteListing/${listingId}`;
-    console.log("calling api:", api, "with listingId of:", listingId)
+    try {
+      const api = `${baseURL}/api/adm/admDeleteListing/${listingId}`;
+      console.log("calling api:", api, "with listingId of:", listingId);
 
-    const response = await fetch(api, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      credentials: "include", // se o backend exigir autenticação por cookie
-    });
+      const response = await fetch(api, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // se o backend exigir autenticação por cookie
+      });
 
-    if (!response.ok) {
-      console.log("Erro ao tentar deletar listagem ")
-      throw new Error(`Erro ao deletar postagem: ${response.statusText}`);
+      if (!response.ok) {
+        console.log("Erro ao tentar deletar listagem ");
+        throw new Error(`Erro ao deletar postagem: ${response.statusText}`);
+      }
+
+      // Atualizar o estado removendo o item da lista
+      setItems((prevItems) =>
+        prevItems.filter((item) => item._id !== listingId)
+      );
+
+      alert("Postagem deletada com sucesso!");
+    } catch (error) {
+      console.error("Erro ao deletar a postagem:", error);
+      alert("Erro ao deletar a postagem.");
     }
-
-    // Atualizar o estado removendo o item da lista
-    setItems((prevItems) => prevItems.filter((item) => item._id !== listingId));
-
-    alert("Postagem deletada com sucesso!");
-
-  } catch (error) {
-    console.error("Erro ao deletar a postagem:", error);
-    alert("Erro ao deletar a postagem.");
-  }
-};
-
+  };
 
   return (
     <div className="landingListingsContainer">
@@ -283,14 +301,16 @@ const Listings = () => {
             </div>
 
             {openLeaderMenuId === listing._id && (
-                <div className="adminListingMenu">
-                  <ul>
-                    <li>
-                      <button onClick={() => handleDeleteListing(listing._id)}>delete</button>
-                    </li>
-                  </ul>
-                </div>
-              )}
+              <div className="adminListingMenu">
+                <ul>
+                  <li>
+                    <button onClick={() => handleDeleteListing(listing._id)}>
+                      delete
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            )}
 
             {listing.type === "blog" && (
               <Link
@@ -408,9 +428,14 @@ const Listings = () => {
               handleLike={likeListing}
               // using function to share listing
               handleShare={shareListing}
+              // pass sharedListings 
+              sharedListings={sharedListings}
               // using function to like comments or replies
               handleCommentLike={likeCommentOrReply}
+              // setItems
               setItems={setItems}
+               
+  
             />
           </div>
         ))
