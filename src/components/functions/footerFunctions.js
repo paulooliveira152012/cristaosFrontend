@@ -2,10 +2,16 @@ const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 export const checkForNewNotifications = async (setNotifications) => {
   console.log("function call for notifications check...");
+
+  const token = localStorage.getItem("token"); // ✅ pegar o token
+
   try {
     const response = await fetch(`${baseUrl}/api/notifications/`, {
       method: "GET",
-      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${token}`, // ✅ header Authorization
+        "Content-Type": "application/json",
+      },
     });
 
     if (!response.ok) {
@@ -26,13 +32,16 @@ export const checkForNewNotifications = async (setNotifications) => {
   }
 };
 
-
-
 export const markAllNotificationsAsRead = async () => {
+  const token = localStorage.getItem("token"); // ✅ pegar o token
+
   try {
     const res = await fetch(`${baseUrl}/api/notifications/read-all`, {
       method: "PUT",
-      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${token}`, // ✅ header Authorization
+        "Content-Type": "application/json",
+      },
     });
 
     if (!res.ok) {
@@ -46,4 +55,3 @@ export const markAllNotificationsAsRead = async () => {
     console.error("❌ Erro ao marcar notificações como lidas:", error);
   }
 };
-

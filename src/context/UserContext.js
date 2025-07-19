@@ -17,7 +17,7 @@ export const UserProvider = ({ children }) => {
   // verificar se o usuario ainda existe no backend
   const validateUserExists = async (userId) => {
   try {
-    const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/users/${userId}`, {
+    const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/users/current`, {
       credentials: 'include',
     });
 
@@ -80,6 +80,45 @@ export const UserProvider = ({ children }) => {
       socket.off('connect');
     };
   }, [pendingLoginUser]);
+
+  // buscar usuario atual do backend
+useEffect(() => {
+  const fetchCurrentUserFromCookie = async () => {
+    const storedUser = localStorage.getItem('user');
+
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      setCurrentUser(user);
+      console.log("👤 Usuário carregado do localStorage:", user);
+
+      try {
+        const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/users/current`, {
+          credentials: "include",
+        });
+
+        if (!res.ok) throw new Error("Usuário não autenticado.");
+
+        const verifiedUser = await res.json();
+        setCurrentUser(verifiedUser);
+        localStorage.setItem("user", JSON.stringify(verifiedUser));
+        console.log("✅ Cookie JWT válido. Usuário confirmado.");
+
+        if (socket.connected) {
+          emitLogin(verifiedUser);
+        } else {
+          setPendingLoginUser(verifiedUser);
+          socket.connect();
+        }
+      } catch (err) {
+        console.warn("⚠️ Cookie inválido ou expirado. Mantendo user localStorage por enquanto.");
+      }
+    }
+  };
+
+  fetchCurrentUserFromCookie();
+}, []);
+
+
 
   const login = (user) => {
     setCurrentUser(user);
