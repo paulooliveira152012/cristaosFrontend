@@ -138,3 +138,13 @@
   background-color: #fffcb3;
   transition: background-color 1s;
 }
+
+
+@keyframes flashBg {
+  0% {
+    background-color: #fffcb3;
+  }
+  100% {
+    background-color: transparent;
+  }
+}

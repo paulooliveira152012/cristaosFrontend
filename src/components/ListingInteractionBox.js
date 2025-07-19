@@ -39,6 +39,7 @@ const ListingInteractionBox = ({
   const [commentText, setCommentText] = useState("");
   const [showReplyBox, setShowReplyBox] = useState({});
   const location = useLocation();
+  const [pendingHighlightId, setPendingHighlightId] = useState(null);
 
   // console.log("currentUser in ListingInteractionBox:", currentUser); // Ensure it is passed correctly
 
@@ -47,23 +48,27 @@ const ListingInteractionBox = ({
     const commentId = queryParams.get("commentId");
     const replyId = queryParams.get("replyId");
 
-    const scrollAndHighlight = (id) => {
-      const el = document.getElementById(id);
+    if (replyId) {
+      setShowComments(true);
+      setPendingHighlightId(`reply-${replyId}`);
+    } else if (commentId) {
+      setShowComments(true);
+      setPendingHighlightId(`comment-${commentId}`);
+    }
+  }, [location.search]);
+
+  // Esse segundo useEffect espera os elementos renderizarem
+  useEffect(() => {
+    if (pendingHighlightId && showComments) {
+      const el = document.getElementById(pendingHighlightId);
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "center" });
         el.classList.add("highlight");
         setTimeout(() => el.classList.remove("highlight"), 2000);
+        setPendingHighlightId(null);
       }
-    };
-
-    if (replyId) {
-      scrollAndHighlight(`reply-${replyId}`);
-      setShowComments(true);
-    } else if (commentId) {
-      scrollAndHighlight(`comment-${commentId}`);
-      setShowComments(true);
     }
-  }, [location.search]);
+  }, [pendingHighlightId, showComments]);
 
   const handleCommentChange = (e) => {
     setCommentText(e.target.value);
