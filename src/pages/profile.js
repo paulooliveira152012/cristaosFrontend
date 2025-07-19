@@ -122,8 +122,11 @@ const Profile = () => {
   const renderFriendAction = () => {
     if (!currentUser || !user || currentUser._id === user._id) return null;
 
+    console.log("✅ 1 currentUser:", currentUser)
     const isFriend = currentUser.friends?.includes(user._id);
+    console.log("✅ 2 isfriend:", isFriend)
     const hasSentRequest = currentUser.sentFriendRequests?.includes(user._id);
+    console.log("✅ 3 has received friend request from user?", hasSentRequest)
     const hasReceivedRequest = currentUser.friendRequests?.includes(user._id);
 
     if (isFriend) {
@@ -142,7 +145,6 @@ const Profile = () => {
         </>
       );
     }
-
     if (hasSentRequest) {
       return <li>⏳ Pedido enviado</li>;
     }
