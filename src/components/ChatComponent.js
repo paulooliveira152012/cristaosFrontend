@@ -37,6 +37,7 @@ const ChatComponent = ({ roomId }) => {
       socket.off("disconnect");
     };
   }, []);
+  
 
   const getRandomDarkColor = () => {
     const r = Math.floor(Math.random() * 150);
@@ -171,9 +172,8 @@ const ChatComponent = ({ roomId }) => {
   }
 };
 
-
   return (
-    <div className="chatContainerWrapper">
+    <div className="chatContainerWrapper" >
       <div
         ref={messagesContainerRef}
         className="chatContainer"
@@ -236,9 +236,7 @@ const ChatComponent = ({ roomId }) => {
       </div>
       
       <div className="inputContainer">
-        <div style={{
-          display: "flex"
-        }}>
+        
           <input
             ref={inputRef}
             type="text"
@@ -281,7 +279,7 @@ const ChatComponent = ({ roomId }) => {
           >
             {micState ? <MicOn /> : <MicOff2 />}
           </div>
-        </div>
+        
       </div>
     </div>
   );

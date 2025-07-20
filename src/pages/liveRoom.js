@@ -7,6 +7,7 @@ import Header from "../components/Header.js";
 import ChatComponent from "../components/ChatComponent.js";
 import { updateRoomTitle, deleteRoom } from "./functions/liveFuncitons.js";
 import "../styles/style.css";
+import "../styles/liveRoom.css";
 import VoiceComponent from "../components/VoiceComponent.js";
 import { handleBack } from "../components/functions/headerFunctions.js";
 import AudioContext from "../context/AudioContext.js";
@@ -50,6 +51,13 @@ const LiveRoom = () => {
   const isRejoiningRef = useRef(false);
 
   const { handleLeaveRoom } = useRoom(); // ✅ CERTA
+
+  const [chatFocus, setChatFocus] = useState(false);
+
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
+  const handleFocus = () => setIsKeyboardOpen(true);
+  const handleBlur = () => setIsKeyboardOpen(false);
 
   // const { currentUsers } = useRoom()
   console.log("currentUsers:", currentUsers);
@@ -105,6 +113,28 @@ const LiveRoom = () => {
     console.log("👥 Lista atual de ouvintes:", currentUsers);
   }, [currentUsers]);
 
+  // App.js ou LiveRoom.js
+useEffect(() => {
+  const setAppHeight = () => {
+    const height =
+      window.visualViewport?.height || window.innerHeight;
+    document.documentElement.style.setProperty('--app-height', `${height}px`);
+  };
+
+  setAppHeight();
+
+  // iOS Safari precisa escutar isso também:
+  window.visualViewport?.addEventListener('resize', setAppHeight);
+  window.addEventListener('resize', setAppHeight);
+
+  return () => {
+    window.visualViewport?.removeEventListener('resize', setAppHeight);
+    window.removeEventListener('resize', setAppHeight);
+  };
+}, []);
+
+
+
   const handleUpdateRoomTitle = () =>
     updateRoomTitle(roomId, newRoomTitle, setSala);
   const handleDeleteRoom = () => deleteRoom(roomId, navigate);
@@ -112,9 +142,9 @@ const LiveRoom = () => {
   if (!sala && !roomId) return <p>Error: Room information is missing!</p>;
 
   return (
-    // 100vh
     <div className="liveRoomWrapper">
       <div className="topo">
+        {/* header */}
         <Header
           showProfileImage={false}
           showLogoutButton={false}
@@ -145,19 +175,10 @@ const LiveRoom = () => {
           }
           showBackArrow={true}
         />
+        {/* 50 - 7 = 43 roomTheme*/}
+        <p className="roomTheme">{roomTheme}</p>
 
-        {/* room theme */}
-        <p
-          style={{
-            textAlign: "center",
-            marginBottom: "10px",
-            fontStyle: "italic",
-          }}
-        >
-          {roomTheme}
-        </p>
-
-        {/* liveRoomMebers */}
+        {/* live room members container */}
         <div className="liveInRoomMembersContainer">
           {currentUsersSpeaking.length > 0 ? (
             currentUsersSpeaking.map((member, index) => (
@@ -194,7 +215,7 @@ const LiveRoom = () => {
           )}
         </div>
 
-        {/* in room users */}
+        {/* inRoomUsers */}
         <div className="inRoomUsers">
           {currentUsers && currentUsers.length > 0 ? (
             currentUsers.map((member, index) => (
@@ -214,9 +235,9 @@ const LiveRoom = () => {
                         }}
                       />
                     </Link>
-                    {/* <p className="liveRoomUsername">
+                    <p className="liveRoomUsername">
                       {member.username || "Anonymous"}
-                    </p> */}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -226,7 +247,6 @@ const LiveRoom = () => {
           )}
         </div>
 
-        {/* Voice COmponent */}
         <VoiceComponent
           microphoneOn={microphoneOn}
           roomId={roomId}
@@ -236,29 +256,8 @@ const LiveRoom = () => {
       </div>
 
       <div className="fundo">
-        {/* <ChatComponent roomId={roomId} /> */}
+        <ChatComponent roomId={roomId} />
       </div>
-        {showSettingsModal && (
-          <div
-            className="modal-overlay"
-            onClick={() => setShowSettingsModal(false)}
-          >
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <h2>Room Settings</h2>
-              <label htmlFor="newRoomTitle">Novo Titulo</label>
-              <input
-                type="text"
-                id="newRoomTitle"
-                value={newRoomTitle}
-                onChange={(e) => setNewRoomTitle(e.target.value)}
-                placeholder="Enter new room title"
-              />
-              <button onClick={handleUpdateRoomTitle}>Edit Room Title</button>
-              <button onClick={handleDeleteRoom}>Delete Room</button>
-              <button onClick={() => setShowSettingsModal(false)}>Close</button>
-            </div>
-          </div>
-        )}
     </div>
   );
 };

@@ -266,30 +266,16 @@ body {
     border: 2px solid white; /* Add a white border to separate it from the image */
   }
 
-  .liveRoomWrapper {
-    display: flex;
-    flex-direction: column;
-    height: 100dvh;
-    background-color: #fff;
-    overflow: hidden; /* evita scroll duplicado */
-    /* display: none; */
-  }
+  
 
-  .topo {
-    flex: 1;
-    background-color: green;
-    overflow-y: auto;
-  }
 
-  .fundo {
-    flex: 1;
-    background-color: red;
-    overflow-y: auto;
-  }
+
+
+
 
   /* inRoomUsers */
 .topo .inRoomUsers {
-    background-color: purple;
+    /* background-color: purple; */
     display: flex;
     /* justify-content: left; */
     /* justify-content: baseline; */

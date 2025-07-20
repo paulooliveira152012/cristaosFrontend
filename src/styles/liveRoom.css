@@ -1,0 +1,45 @@
+.liveRoomWrapper {
+  display: flex;
+  flex-direction: column;
+   height: var(--app-height); /* 👈 altura real da tela, mesmo com teclado */
+  /* background-color: red !important; */
+  overflow: hidden; /* evita scroll duplicado */
+  /* display: none; */
+}
+
+.topo {
+  flex-shrink: 0;
+  transition: height 0.3s ease;
+  /* height: 50%; */
+  /* flex: 1; */
+  overflow-x: auto;
+  /* background-color: green; */
+}
+
+.topo.minimized {
+  height: 60px; /* barra mínima com scroll horizontal dos falantes */
+}
+
+.fundo {
+  flex: 1; /* a outra metade */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* justify-content: flex-end; */
+  /* background: orange; */
+  /* transition: all 0.3s ease; */
+  height: 100%;
+}
+
+.fundo-expandido {
+  flex: 1.9;
+}
+
+.roomTheme {
+  text-align: center;
+  margin-bottom: 10px;
+  font-style: "italic";
+}
+
+/* configuraçøes do chatComponent esta no chat.css*/
+
