@@ -180,23 +180,7 @@ body {
 }
 
 
-.liveInRoomMembersContainer {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    padding: 0px 0px 0px;
-    gap: 20px; /* Espaço entre os membros */
-    background-color: #FBFBFB;
-    margin: 5px;
-    border-radius: 10px;
-    /* height: 40vh; */
-    height: auto;
-    min-height: 150px;
-    max-height: 35vh;
-    overflow-y: auto;
-    border: solid lightgray .5px;
-    /* background-color: blue; */
-}
+
 
 
 .blogTitle {
@@ -206,14 +190,7 @@ body {
 
 /* In Room */
 
-.inRoomUsers {
-    /* background-color: green; */
-    display: flex;
-    /* justify-content: left; */
-    /* justify-content: baseline; */
-    /* justify-content: space-between; */
-    width: 100%;
-}
+
 
 .inRoomMembersParentContainer  {
     /* background-color: #002D9F; */
@@ -289,6 +266,61 @@ body {
     border: 2px solid white; /* Add a white border to separate it from the image */
   }
 
+  .liveRoomWrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh; /* usa a altura visível real do celular */
+    background-color: #fff;
+    overflow: hidden; /* evita scroll duplicado */
+  }
+
+  .topo {
+    height:30vh;
+    background-color: green;
+  }
+
+  .fundo {
+    height: 70vh;
+    background-color: red;
+  }
+
+  /* inRoomUsers */
+.fundo .inRoomUsers {
+    background-color: purple;
+    display: flex;
+    /* justify-content: left; */
+    /* justify-content: baseline; */
+    /* justify-content: space-between; */
+    width: 100%;
+}
+  
+  
+  .liveRoomContent {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-bottom: 80px; /* deixa espaço pro chat/microfone */
+    height: 100%;
+    background-color: red;
+    margin: 0 20px;
+}
+
+.liveInRoomMembersContainer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    padding: 0px 0px 0px;
+    gap: 20px; /* Espaço entre os membros */
+    background-color: #FBFBFB;
+    margin: 5px;
+    border-radius: 10px;
+    /* height: 40vh; */
+    height: 20vh;
+    overflow-y: auto;
+    border: solid lightgray .5px;
+    /* background-color: blue; */
+}
+
+
   .liveRoomUsername {
     /* background-color: green; */
     font-weight: bold;
@@ -340,8 +372,8 @@ body {
   align-items: center;
   font-weight: bold;
   border-top: 1px solid #002D9F;
-  /* REMOVA: position: fixed; */
-  /* REMOVA: left, right, bottom */
+  position: fixed;
+  bottom: 0;
 }
 
 

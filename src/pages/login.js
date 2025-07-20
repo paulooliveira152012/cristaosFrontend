@@ -57,7 +57,7 @@ const Login = () => {
       }
     } catch (err) {
       console.error("Error:", err);
-      setError("Something went wrong. Please try again.");
+      setError(`Something went wrong. Please try again. ${err}`);
     }
   };
 

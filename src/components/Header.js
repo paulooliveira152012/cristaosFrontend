@@ -47,21 +47,23 @@ const Header = ({
   };
 
   useEffect(() => {
-  if (showSideMenu) {
-    document.getElementById("scrollableContainer").classList.add("no-scroll");
-  } else {
-    document.getElementById("scrollableContainer").classList.remove("no-scroll");
-  }
+    if (showSideMenu) {
+      document.getElementById("scrollableContainer").classList.add("no-scroll");
+    } else {
+      document
+        .getElementById("scrollableContainer")
+        .classList.remove("no-scroll");
+    }
 
-  return () => {
-    document.body.classList.remove("no-scroll");
-  };
-}, [showSideMenu]);
-
-
+    return () => {
+      document.body.classList.remove("no-scroll");
+    };
+  }, [showSideMenu]);
 
   return (
-    <div>
+    <div
+      className="stickyHeader"
+    >
       {/* Conditionally render SideMenu based on showSideMenu */}
       {showSideMenu && <SideMenu closeMenu={toggleSideMenu} />}
       <div className="header">

@@ -12,7 +12,6 @@ import { handleBack } from "../components/functions/headerFunctions.js";
 import AudioContext from "../context/AudioContext.js";
 // import { handleLeaveRoom } from "./functions/liveRoomFunctions.js";
 
-
 import {
   addCurrentUserInRoom,
   removeCurrentUserInRoom,
@@ -32,7 +31,7 @@ const LiveRoom = () => {
     setCurrentUsersSpeaking,
     removeSpeaker,
     currentUsers, // ✅ já incluído aqui
-    handleJoinRoom
+    handleJoinRoom,
   } = useRoom();
 
   const { leaveChannel } = useContext(AudioContext);
@@ -51,7 +50,6 @@ const LiveRoom = () => {
   const isRejoiningRef = useRef(false);
 
   const { handleLeaveRoom } = useRoom(); // ✅ CERTA
-
 
   // const { currentUsers } = useRoom()
   console.log("currentUsers:", currentUsers);
@@ -114,50 +112,52 @@ const LiveRoom = () => {
   if (!sala && !roomId) return <p>Error: Room information is missing!</p>;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <Header
-        showProfileImage={false}
-        showLogoutButton={false}
-        showCloseIcon={true}
-        onBack={() =>
-          handleBack(
-            navigate,
-            null,
-            roomId,
-            currentUser?._id,
-            minimizeRoom,
-            sala,
-            isRejoiningRef,
-            microphoneOn
-          )
-        }
-        showSettingsIcon={isCreator}
-        openLiveSettings={() => setShowSettingsModal(true)}
-        roomId={roomId}
-        handleLeaveRoom={() =>
-          handleLeaveRoom(roomId, currentUser, baseUrl, leaveChannel, navigate)
-        }
-        showBackArrow={true}
-      />
+    // 100vh
+    <div>
+      <div className="topo">
+        <Header
+          showProfileImage={false}
+          showLogoutButton={false}
+          showCloseIcon={true}
+          onBack={() =>
+            handleBack(
+              navigate,
+              null,
+              roomId,
+              currentUser?._id,
+              minimizeRoom,
+              sala,
+              isRejoiningRef,
+              microphoneOn
+            )
+          }
+          showSettingsIcon={isCreator}
+          openLiveSettings={() => setShowSettingsModal(true)}
+          roomId={roomId}
+          handleLeaveRoom={() =>
+            handleLeaveRoom(
+              roomId,
+              currentUser,
+              baseUrl,
+              leaveChannel,
+              navigate
+            )
+          }
+          showBackArrow={true}
+        />
 
-      <p
-        style={{
-          textAlign: "center",
-          marginBottom: "10px",
-          fontStyle: "italic",
-        }}
-      >
-        {roomTheme}
-      </p>
+        {/* room theme */}
+        <p
+          style={{
+            textAlign: "center",
+            marginBottom: "10px",
+            fontStyle: "italic",
+          }}
+        >
+          {roomTheme}
+        </p>
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          flexGrow: 1,
-          overflow: "hidden",
-        }}
-      >
+        {/* liveRoomMebers */}
         <div className="liveInRoomMembersContainer">
           {currentUsersSpeaking.length > 0 ? (
             currentUsersSpeaking.map((member, index) => (
@@ -193,9 +193,11 @@ const LiveRoom = () => {
             <p>Nenhum membro no palco.</p>
           )}
         </div>
+      </div>
 
+      <div className="fundo">
+        {/* in room users */}
         <div className="inRoomUsers">
-          {/* currenUsers vem do useRoom*/}
           {currentUsers && currentUsers.length > 0 ? (
             currentUsers.map((member, index) => (
               <div key={member._id} className="inRoomMembersParentContainer">
@@ -226,38 +228,38 @@ const LiveRoom = () => {
           )}
         </div>
 
+        {/* Voice COmponent */}
         <VoiceComponent
           microphoneOn={microphoneOn}
           roomId={roomId}
           keepAlive={true}
           setCurrentUsersSpeaking={setCurrentUsersSpeaking}
         />
-        
-        <ChatComponent roomId={roomId} />
-        
-      </div>
 
-      {showSettingsModal && (
-        <div
-          className="modal-overlay"
-          onClick={() => setShowSettingsModal(false)}
-        >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>Room Settings</h2>
-            <label htmlFor="newRoomTitle">Novo Titulo</label>
-            <input
-              type="text"
-              id="newRoomTitle"
-              value={newRoomTitle}
-              onChange={(e) => setNewRoomTitle(e.target.value)}
-              placeholder="Enter new room title"
-            />
-            <button onClick={handleUpdateRoomTitle}>Edit Room Title</button>
-            <button onClick={handleDeleteRoom}>Delete Room</button>
-            <button onClick={() => setShowSettingsModal(false)}>Close</button>
+        <ChatComponent roomId={roomId} />
+
+        {showSettingsModal && (
+          <div
+            className="modal-overlay"
+            onClick={() => setShowSettingsModal(false)}
+          >
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <h2>Room Settings</h2>
+              <label htmlFor="newRoomTitle">Novo Titulo</label>
+              <input
+                type="text"
+                id="newRoomTitle"
+                value={newRoomTitle}
+                onChange={(e) => setNewRoomTitle(e.target.value)}
+                placeholder="Enter new room title"
+              />
+              <button onClick={handleUpdateRoomTitle}>Edit Room Title</button>
+              <button onClick={handleDeleteRoom}>Delete Room</button>
+              <button onClick={() => setShowSettingsModal(false)}>Close</button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
