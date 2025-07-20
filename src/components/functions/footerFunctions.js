@@ -8,10 +8,7 @@ export const checkForNewNotifications = async (setNotifications) => {
   try {
     const response = await fetch(`${baseUrl}/api/notifications/`, {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`, // ✅ header Authorization
-        "Content-Type": "application/json",
-      },
+      credentials: "include"
     });
 
     if (!response.ok) {
@@ -38,8 +35,8 @@ export const markAllNotificationsAsRead = async () => {
   try {
     const res = await fetch(`${baseUrl}/api/notifications/read-all`, {
       method: "PUT",
+      credentials: "include",
       headers: {
-        Authorization: `Bearer ${token}`, // ✅ header Authorization
         "Content-Type": "application/json",
       },
     });
