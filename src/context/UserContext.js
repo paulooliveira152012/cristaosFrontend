@@ -14,6 +14,8 @@ export const UserProvider = ({ children }) => {
   const [pendingLoginUser, setPendingLoginUser] = useState(null);
   const navigate = useNavigate();
 
+  let hasFetchedUser = false;
+
   // verificar se o usuario ainda existe no backend
   const validateUserExists = async (userId) => {
     try {
@@ -51,7 +53,7 @@ export const UserProvider = ({ children }) => {
       const user = JSON.parse(storedUser);
       setCurrentUser(user);
 
-      validateUserExists(user._id);
+      // validateUserExists(user._id);
 
       if (socket.connected) {
         emitLogin(user);
@@ -86,6 +88,9 @@ export const UserProvider = ({ children }) => {
   // buscar usuario atual do backend
  useEffect(() => {
   const fetchCurrentUserFromCookie = async () => {
+  if (hasFetchedUser) return; // ✅ impede chamadas duplicadas
+  hasFetchedUser = true;
+
     const storedUser = localStorage.getItem("user");
 
     if (storedUser) {
@@ -120,6 +125,8 @@ export const UserProvider = ({ children }) => {
           console.warn(
             "⚠️ Cookie inválido ou expirado. Mantendo user localStorage por enquanto."
           );
+
+          setCurrentUser(user)  // não zere o currentUser se já tiver no localStorage
         }
       }, 500);
     }
