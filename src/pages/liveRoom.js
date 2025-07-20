@@ -236,7 +236,7 @@ const LiveRoom = () => {
           setCurrentUsersSpeaking={setCurrentUsersSpeaking}
         />
 
-        {/* <ChatComponent roomId={roomId} /> */}
+        <ChatComponent roomId={roomId} />
 
         {showSettingsModal && (
           <div
