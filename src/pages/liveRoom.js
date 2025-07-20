@@ -113,7 +113,7 @@ const LiveRoom = () => {
 
   return (
     // 100vh
-    <div>
+    <div className="liveRoomWrapper">
       <div className="topo">
         <Header
           showProfileImage={false}
@@ -193,9 +193,7 @@ const LiveRoom = () => {
             <p>Nenhum membro no palco.</p>
           )}
         </div>
-      </div>
 
-      <div className="fundo">
         {/* in room users */}
         <div className="inRoomUsers">
           {currentUsers && currentUsers.length > 0 ? (
@@ -216,9 +214,9 @@ const LiveRoom = () => {
                         }}
                       />
                     </Link>
-                    <p className="liveRoomUsername">
+                    {/* <p className="liveRoomUsername">
                       {member.username || "Anonymous"}
-                    </p>
+                    </p> */}
                   </div>
                 </div>
               </div>
@@ -235,9 +233,11 @@ const LiveRoom = () => {
           keepAlive={true}
           setCurrentUsersSpeaking={setCurrentUsersSpeaking}
         />
+      </div>
 
-        <ChatComponent roomId={roomId} />
-
+      <div className="fundo">
+        {/* <ChatComponent roomId={roomId} /> */}
+      </div>
         {showSettingsModal && (
           <div
             className="modal-overlay"
@@ -259,7 +259,6 @@ const LiveRoom = () => {
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 };
