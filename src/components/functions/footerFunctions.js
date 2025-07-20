@@ -38,7 +38,8 @@ export const markAllNotificationsAsRead = async () => {
       credentials: "include",
       headers: {
         "Content-Type": "application/json",
-      },
+      }, 
+       
     });
 
     if (!res.ok) {

@@ -84,15 +84,17 @@ export const UserProvider = ({ children }) => {
   }, [pendingLoginUser]);
 
   // buscar usuario atual do backend
-  useEffect(() => {
-    const fetchCurrentUserFromCookie = async () => {
-      const storedUser = localStorage.getItem("user");
+ useEffect(() => {
+  const fetchCurrentUserFromCookie = async () => {
+    const storedUser = localStorage.getItem("user");
 
-      if (storedUser) {
-        const user = JSON.parse(storedUser);
-        setCurrentUser(user);
-        console.log("👤 Usuário carregado do localStorage:", user);
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      setCurrentUser(user);
+      console.log("👤 Usuário carregado do localStorage:", user);
 
+      // espera meio segundo antes de validar o cookie
+      setTimeout(async () => {
         try {
           const res = await fetch(
             `${process.env.REACT_APP_API_BASE_URL}/api/users/current`,
@@ -119,11 +121,13 @@ export const UserProvider = ({ children }) => {
             "⚠️ Cookie inválido ou expirado. Mantendo user localStorage por enquanto."
           );
         }
-      }
-    };
+      }, 500);
+    }
+  };
 
-    fetchCurrentUserFromCookie();
-  }, []);
+  fetchCurrentUserFromCookie();
+}, []);
+
 
   const login = (user) => {
     setCurrentUser(user);

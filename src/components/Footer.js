@@ -14,7 +14,7 @@ import { checkForNewNotifications } from "./functions/footerFunctions";
 const Footer = () => {
   const navigate = useNavigate();
   const { currentUser } = useUser(); // Destructure currentUser from useUser hook
-  const [notifications, setNotifications] = useState(false)
+  const [notifications, setNotifications] = useState(false);
   // console.log("Current user in footer component is is:", currentUser)
   // console.log("currentUser.userId in footer component is:", currentUser._id)
 
@@ -27,18 +27,23 @@ const Footer = () => {
   };
 
   useEffect(() => {
-    console.log("✅✅✅✅currentUser:", currentUser)
+    console.log("✅✅✅✅currentUser:", currentUser);
 
     if (!currentUser) {
       console.log("no current user...");
       return;
     }
 
-
     console.log(
       `checking for new notifications for ${currentUser?.username}...`
     );
-    checkForNewNotifications(setNotifications);
+
+    const timeout = setTimeout(() => {
+      checkForNewNotifications(setNotifications);
+    }, 1000); // espera 1 segundo
+
+    return () => clearTimeout(timeout); // boa prática: limpa timeout se componente desmontar
+    
   }, [currentUser]);
 
   return (
@@ -60,20 +65,20 @@ const Footer = () => {
       )}
 
       {notifications && (
-      <div className="BellIcon">
-        <Link to="/notifications">
-          <BellIcon />
-          <span className="notificationStatus"></span>
-        </Link>
-      </div>  
+        <div className="BellIcon">
+          <Link to="/notifications">
+            <BellIcon />
+            <span className="notificationStatus"></span>
+          </Link>
+        </div>
       )}
 
       {!notifications && (
-      <div className="BellIcon">
-        <Link to="/notifications">
-          <BellIcon />
-        </Link>
-      </div>
+        <div className="BellIcon">
+          <Link to="/notifications">
+            <BellIcon />
+          </Link>
+        </div>
       )}
 
       {/* <div
