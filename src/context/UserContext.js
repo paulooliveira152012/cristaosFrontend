@@ -46,6 +46,23 @@ export const UserProvider = ({ children }) => {
     console.log("📡 Emitindo login para socket:", user.username);
   };
 
+  const wakeServerAndConnectSocket = async (user) => {
+  try {
+    console.log("⏰ Acordando servidor...");
+    await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/users/ping`);
+    console.log("☀️ Servidor acordado. Conectando socket...");
+
+    socket.connect();
+
+    socket.once("connect", () => {
+      emitLogin(user);
+    });
+  } catch (err) {
+    console.error("❌ Erro ao acordar servidor:", err);
+  }
+};
+
+
   useEffect(() => {
     // Restaurar usuário ao carregar
     const storedUser = localStorage.getItem("user");
@@ -55,12 +72,16 @@ export const UserProvider = ({ children }) => {
 
       // validateUserExists(user._id);
 
-      if (socket.connected) {
-        emitLogin(user);
-      } else {
-        setPendingLoginUser(user);
-        socket.connect();
-      }
+      // if (socket.connected) {
+      //   emitLogin(user);
+      // } else {
+      //   setPendingLoginUser(user);
+      //   socket.connect();
+      // }
+
+      wakeServerAndConnectSocket(user);
+
+
     }
 
     // Emitir login pendente após reconexão
