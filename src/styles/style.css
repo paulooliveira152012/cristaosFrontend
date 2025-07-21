@@ -284,14 +284,7 @@ body {
 }
   
   
-  .liveRoomContent {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding-bottom: 80px; /* deixa espaço pro chat/microfone */
-    height: 100%;
-    background-color: red;
-    margin: 0 20px;
-}
+
 
 .liveInRoomMembersContainer {
     display: flex;

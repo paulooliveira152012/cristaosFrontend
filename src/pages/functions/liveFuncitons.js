@@ -1,4 +1,4 @@
-
+import { useEffect } from "react";
 const baseUrl = process.env.REACT_APP_API_BASE_URL
 
 // Function to update room title using fetch
@@ -209,4 +209,51 @@ export const startVoiceChat = async (
   await peerConnection.setLocalDescription(offer);
   socket.emit("webrtc-offer", { roomId, offer }); // Send the offer to the server
   socket.emit("startVoiceChat", { roomId }); // Notify the server that the voice chat has started
+};
+
+
+// src/pages/functions/liveRoomEffects.js
+
+export const useJoinRoomEffect = (roomId, currentUser, handleJoinRoom, baseUrl) => {
+  useEffect(() => {
+    if (!roomId || !currentUser) return;
+    handleJoinRoom(roomId, currentUser, baseUrl);
+  }, [roomId, currentUser]);
+};
+
+export const useFetchRoomDataEffect = (roomId, currentUser, setSala, setNewRoomTitle, setIsCreator, baseUrl) => {
+  useEffect(() => {
+    const fetchRoomData = async () => {
+      if (!roomId || !currentUser) return;
+      try {
+        const response = await fetch(`${baseUrl}/api/rooms/fetchRoomData/${roomId}`);
+        const data = await response.json();
+        if (response.ok) {
+          setSala(data);
+          setNewRoomTitle(data.roomTitle);
+          setIsCreator(data.createdBy?._id === currentUser._id);
+        } else {
+          console.error("Erro ao buscar dados da sala:", data.error || "Erro desconhecido");
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados da sala:", error);
+      }
+    };
+
+    fetchRoomData();
+  }, [roomId, currentUser]);
+};
+
+export const useJoinRoomListenersEffect = (roomId, currentUser, joinRoomListeners) => {
+  useEffect(() => {
+    if (!roomId || !currentUser) return;
+    console.log("🔌 entrando na sala oficialmente");
+    joinRoomListeners(roomId, currentUser);
+  }, [roomId, currentUser]);
+};
+
+export const useDebugCurrentUsersEffect = (currentUsers) => {
+  useEffect(() => {
+    console.log("👥 Lista atual de ouvintes:", currentUsers);
+  }, [currentUsers]);
 };

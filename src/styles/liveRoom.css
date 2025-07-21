@@ -1,10 +1,23 @@
+/* prevent scrolling on the entire page */
+html, body {
+  overflow: hidden;
+  height: 100%;
+}
+
 .liveRoomWrapper {
+  height: 100vh;
+  overflow: hidden; /* evita scroll duplicado */
   display: flex;
   flex-direction: column;
-   height: var(--app-height); /* 👈 altura real da tela, mesmo com teclado */
-  /* background-color: red !important; */
-  overflow: hidden; /* evita scroll duplicado */
-  /* display: none; */
+  
+  /* background-color: blue; */
+}
+
+.liveRoomContent {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .topo {

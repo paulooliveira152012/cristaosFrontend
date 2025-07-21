@@ -5,9 +5,18 @@ import { useRoom } from "../context/RoomContext.js";
 import { useSocket } from "../context/SocketContext.js";
 import Header from "../components/Header.js";
 import ChatComponent from "../components/ChatComponent.js";
-import { updateRoomTitle, deleteRoom } from "./functions/liveFuncitons.js";
+import ChatComponent2 from "../components/ChatComponent2.0.js";
+// todas as logicas importadas
+import {
+  updateRoomTitle,
+  deleteRoom,
+  useJoinRoomEffect,
+  useFetchRoomDataEffect,
+  useJoinRoomListenersEffect,
+  useDebugCurrentUsersEffect,
+} from "./functions/liveFuncitons.js";
 import "../styles/style.css";
-import "../styles/liveRoom.css";
+import "../styles/liveRoom.css"
 import VoiceComponent from "../components/VoiceComponent.js";
 import { handleBack } from "../components/functions/headerFunctions.js";
 import AudioContext from "../context/AudioContext.js";
@@ -52,88 +61,20 @@ const LiveRoom = () => {
 
   const { handleLeaveRoom } = useRoom(); // ✅ CERTA
 
-  const [chatFocus, setChatFocus] = useState(false);
-
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
-
-  const handleFocus = () => setIsKeyboardOpen(true);
-  const handleBlur = () => setIsKeyboardOpen(false);
+  useJoinRoomEffect(roomId, currentUser, handleJoinRoom, baseUrl);
+  useFetchRoomDataEffect(
+    roomId,
+    currentUser,
+    setSala,
+    setNewRoomTitle,
+    setIsCreator,
+    baseUrl
+  );
+  useJoinRoomListenersEffect(roomId, currentUser, joinRoomListeners);
+  useDebugCurrentUsersEffect(currentUsers);
 
   // const { currentUsers } = useRoom()
   console.log("currentUsers:", currentUsers);
-
-  // acionar socket para adicionar usuario na sala
-  // useEffect(() => {
-  //   if (!roomId || !currentUser) return;
-  //   console.log("👥 Adicionando usuário à currentUsersInRoom");
-  //   addCurrentUserInRoom(roomId, currentUser, baseUrl);
-  //   console.log("🐶 usuarios na sala:", currentUsers);
-  // }, [roomId, currentUser]);
-
-  useEffect(() => {
-    if (!roomId || !currentUser) return;
-    handleJoinRoom(roomId, currentUser, baseUrl);
-  }, [roomId, currentUser]);
-
-  // acionar busca de dados da sala
-  useEffect(() => {
-    const fetchRoomData = async () => {
-      if (!roomId || !currentUser) return;
-      try {
-        const response = await fetch(
-          `${baseUrl}/api/rooms/fetchRoomData/${roomId}`
-        );
-        const data = await response.json();
-        if (response.ok) {
-          setSala(data);
-          setNewRoomTitle(data.roomTitle);
-          setIsCreator(data.createdBy?._id === currentUser._id);
-        } else {
-          console.error(
-            "Erro ao buscar dados da sala:",
-            data.error || "Erro desconhecido"
-          );
-        }
-      } catch (error) {
-        console.error("Erro ao buscar dados da sala:", error);
-      }
-    };
-    fetchRoomData();
-  }, [roomId, currentUser]);
-
-  // ✅ ENTRA NA SALA
-  useEffect(() => {
-    if (!roomId || !currentUser) return;
-    console.log("🔌 entrando na sala oficialmente");
-    const user = currentUser;
-    joinRoomListeners(roomId, user);
-  }, [roomId, currentUser]);
-
-  useEffect(() => {
-    console.log("👥 Lista atual de ouvintes:", currentUsers);
-  }, [currentUsers]);
-
-  // App.js ou LiveRoom.js
-useEffect(() => {
-  const setAppHeight = () => {
-    const height =
-      window.visualViewport?.height || window.innerHeight;
-    document.documentElement.style.setProperty('--app-height', `${height}px`);
-  };
-
-  setAppHeight();
-
-  // iOS Safari precisa escutar isso também:
-  window.visualViewport?.addEventListener('resize', setAppHeight);
-  window.addEventListener('resize', setAppHeight);
-
-  return () => {
-    window.visualViewport?.removeEventListener('resize', setAppHeight);
-    window.removeEventListener('resize', setAppHeight);
-  };
-}, []);
-
-
 
   const handleUpdateRoomTitle = () =>
     updateRoomTitle(roomId, newRoomTitle, setSala);
@@ -142,9 +83,9 @@ useEffect(() => {
   if (!sala && !roomId) return <p>Error: Room information is missing!</p>;
 
   return (
+    // 100vh
     <div className="liveRoomWrapper">
-      <div className="topo">
-        {/* header */}
+      <div className="liveRoomContent">
         <Header
           showProfileImage={false}
           showLogoutButton={false}
@@ -175,10 +116,18 @@ useEffect(() => {
           }
           showBackArrow={true}
         />
-        {/* 50 - 7 = 43 roomTheme*/}
-        <p className="roomTheme">{roomTheme}</p>
 
-        {/* live room members container */}
+        <p
+          style={{
+            textAlign: "center",
+            marginBottom: "10px",
+            fontStyle: "italic",
+          }}
+        >
+          {roomTheme}
+        </p>
+
+        {/* min to max height 150px, 35vh */}
         <div className="liveInRoomMembersContainer">
           {currentUsersSpeaking.length > 0 ? (
             currentUsersSpeaking.map((member, index) => (
@@ -215,7 +164,6 @@ useEffect(() => {
           )}
         </div>
 
-        {/* inRoomUsers */}
         <div className="inRoomUsers">
           {currentUsers && currentUsers.length > 0 ? (
             currentUsers.map((member, index) => (
@@ -253,11 +201,32 @@ useEffect(() => {
           keepAlive={true}
           setCurrentUsersSpeaking={setCurrentUsersSpeaking}
         />
+
+        <ChatComponent roomId={roomId} />
+        {/* <ChatComponent2 roomId={roomId} /> */}
       </div>
 
-      <div className="fundo">
-        <ChatComponent roomId={roomId} />
-      </div>
+      {showSettingsModal && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowSettingsModal(false)}
+        >
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Room Settings</h2>
+            <label htmlFor="newRoomTitle">Novo Titulo</label>
+            <input
+              type="text"
+              id="newRoomTitle"
+              value={newRoomTitle}
+              onChange={(e) => setNewRoomTitle(e.target.value)}
+              placeholder="Enter new room title"
+            />
+            <button onClick={handleUpdateRoomTitle}>Edit Room Title</button>
+            <button onClick={handleDeleteRoom}>Delete Room</button>
+            <button onClick={() => setShowSettingsModal(false)}>Close</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

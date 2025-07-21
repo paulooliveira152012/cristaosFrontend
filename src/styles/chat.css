@@ -6,12 +6,10 @@
     color: grey;
 } */
 
-/* html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
+html, body {
   overflow: hidden;
-} */
+  height: 100%;
+}
 
 /* .pageContainer {
   padding-bottom: env(safe-area-inset-bottom);
@@ -21,20 +19,20 @@
   overflow: hidden;
   } */
 
-  
 
 .chatContainerWrapper {
-  flex: 1;
+  height: 10vh;
   display: flex;
   flex-direction: column;
-  /* background-color: blue; */
-  height: 100%;
   overflow: hidden;
+  flex: 0.75;
+  /* background-color: pink; */
 }
 
 .chatContainer {
   flex: 1;
   overflow-y: auto;
+  padding: 10px;
 }
 
 .messagesContainer {
