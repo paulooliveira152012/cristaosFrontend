@@ -3,9 +3,13 @@ import { useUser } from "../context/UserContext";
 import imagePlaceholder from "../assets/images/profileplaceholder.png";
 import { useNavigate } from "react-router-dom";
 import CloseIcon from "../assets/icons/closeIcon";
+// importar funcao de logout
+import { handleLogout } from "./functions/headerFunctions";
+
+let logout;
 
 const SideMenu = ({ closeMenu }) => {
-  const { currentUser } = useUser();
+  const { currentUser, logout } = useUser();
   const navigate = useNavigate();
 
   return (
@@ -65,6 +69,18 @@ const SideMenu = ({ closeMenu }) => {
             </li>
             <li onClick={() => navigate("suggestions")}>Sugestões</li>
             <li onClick={() => navigate("contactUs")}>Fale Conosco</li>
+
+            {currentUser && (
+              <button
+                onClick={() => {
+                  handleLogout(logout, navigate)
+                  closeMenu()
+                } }
+                className="logout-button"
+              >
+                Logout
+              </button>
+            )}
           </ul>
         </div>
       </div>
