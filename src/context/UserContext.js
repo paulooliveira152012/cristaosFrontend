@@ -36,7 +36,10 @@ export const UserProvider = ({ children }) => {
     }
   };
 
+  
   const emitLogin = (user) => {
+    console.log("emitindo user:", user)
+
     if (!user) return;
     socket.emit("userLoggedIn", {
       _id: user._id,
@@ -85,12 +88,21 @@ export const UserProvider = ({ children }) => {
     }
 
     // Emitir login pendente após reconexão
-    socket.on("connect", () => {
-      if (pendingLoginUser) {
-        emitLogin(pendingLoginUser);
-        setPendingLoginUser(null);
-      }
-    });
+socket.on("connect", () => {
+  console.log("🔌 Reconectado.");
+  if (pendingLoginUser) {
+    emitLogin(pendingLoginUser);
+    setPendingLoginUser(null);
+  } else if (currentUser) {
+    emitLogin(currentUser); // ← isso é essencial!
+  }
+
+  // Aguarda o login ser processado, então pede os onlineUsers
+  setTimeout(() => {
+    socket.emit("getOnlineUsers");
+  }, 200);
+});
+
 
     // Atualiza lista de usuários online
     const handleOnlineUsers = (users) => {
