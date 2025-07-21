@@ -37,6 +37,7 @@ const ChatComponent = ({ roomId }) => {
       socket.off("disconnect");
     };
   }, []);
+  
 
   const getRandomDarkColor = () => {
     const r = Math.floor(Math.random() * 150);
@@ -45,68 +46,68 @@ const ChatComponent = ({ roomId }) => {
     return `rgb(${r}, ${g}, ${b})`;
   };
 
-  const handleScroll = () => {
-    const container = messagesContainerRef.current;
-    if (container) {
-      const isUserAtBottom =
-        container.scrollTop + container.clientHeight >=
-        container.scrollHeight - 20; // margem de segurança
+ const handleScroll = () => {
+  const container = messagesContainerRef.current;
+  if (container) {
+    const isUserAtBottom =
+      container.scrollTop + container.clientHeight >=
+      container.scrollHeight - 20; // margem de segurança
 
-      setIsAtBottom(isUserAtBottom);
-    }
-  };
+    setIsAtBottom(isUserAtBottom);
+  }
+};
+
 
   // Scroll to the bottom of the chat container
   const scrollToBottom = (smooth = true) => {
-    const container = messagesContainerRef.current;
-    if (!container) return;
-
-    const behavior = smooth ? "smooth" : "auto";
-    container.scrollTo({
-      top: container.scrollHeight,
-      behavior,
-    });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({
+        behavior: smooth ? "smooth" : "auto",
+      });
+    }
   };
 
   console.log("🟢 Socket ID at render:", socket.id);
 
   // Join the room and listen for messages
   useEffect(() => {
-    if (!roomId || !socket || !currentUser) return;
 
-    // Join the room-specific chat 1
-    socket.emit("joinRoomChat", { roomId, user: currentUser });
-    console.log("Client joined room:", roomId); // Should log room join
+    if (!roomId || !socket || !currentUser) return 
 
-    // Request chat history for this specific room
-    socket.emit("requestChatHistory", { roomId });
+      // Join the room-specific chat 1
+      socket.emit("joinRoomChat", { roomId, user: currentUser });
+      console.log("Client joined room:", roomId); // Should log room join
 
-    console.log("🟢 uma nova mensagem chegou, atualizando as mensagens...");
-    const handleChatHistory = (history) => {
-      console.log("history:", history);
-      setMessages(history);
-      scrollToBottom(false);
-    };
+      // Request chat history for this specific room
+      socket.emit("requestChatHistory", { roomId });
 
-    const handleReceiveMessages = (newMessage) => {
-      console.log("New message received:", newMessage);
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
-    };
+      console.log("🟢 uma nova mensagem chegou, atualizando as mensagens...")
+      const handleChatHistory = (history) => {
+        console.log("history:", history)
+        setMessages(history)
+        scrollToBottom(false)
+      };
 
-    // Listen for chat history
-    // socket.on("chatHistory", (history) => {
-    //   setMessages(history);
-    //   scrollToBottom(false); // Scroll to bottom after loading chat history
-    // });
+      const handleReceiveMessages = (newMessage) => {
+        console.log("New message received:", newMessage)
+        setMessages((prevMessages) => [...prevMessages, newMessage])
+      }
 
-    socket.on("chatHistory", handleChatHistory);
-    socket.on("receiveMessage", handleReceiveMessages);
+      // Listen for chat history
+      // socket.on("chatHistory", (history) => {
+      //   setMessages(history);
+      //   scrollToBottom(false); // Scroll to bottom after loading chat history
+      // });
 
-    return () => {
-      socket.emit("leaveRoomChat", { roomId });
-      socket.off("chatHistory", handleChatHistory);
-      socket.off("receiveMessage", handleReceiveMessages);
-    };
+      socket.on("chatHistory", handleChatHistory);
+      socket.on("receiveMessage", handleReceiveMessages)
+
+      return () => {
+        socket.emit("leaveRoomChat", { roomId });
+        socket.off("chatHistory", handleChatHistory);
+        socket.off("receiveMessage", handleReceiveMessages);
+      };
+    
   }, [roomId, currentUser]);
 
   // Send message
@@ -166,27 +167,26 @@ const ChatComponent = ({ roomId }) => {
     }
   }, [messages, isAtBottom]);
 
-  // Toggle the microphone when the button is clicked
-  const handleToggleMicrophone = async () => {
-    try {
-      const newMicState = !micState; // Vai ligar ou desligar
+    // Toggle the microphone when the button is clicked
+ const handleToggleMicrophone = async () => {
+  try {
+    const newMicState = !micState; // Vai ligar ou desligar
 
-      await toggleMicrophone(newMicState); // Atualiza no AudioContext
+    await toggleMicrophone(newMicState); // Atualiza no AudioContext
 
-      // Enviar o estado via socket para os outros
-      socket.emit("micStatusChanged", {
-        roomId,
-        userId: currentUser._id,
-        micOpen: newMicState,
-      });
-    } catch (error) {
-      console.error("Error toggling microphone:", error);
-    }
-  };
-  
+    // Enviar o estado via socket para os outros
+    socket.emit("micStatusChanged", {
+      roomId,
+      userId: currentUser._id,
+      micOpen: newMicState,
+    });
+  } catch (error) {
+    console.error("Error toggling microphone:", error);
+  }
+};
 
   return (
-    <div className="chatContainerWrapper">
+    <div className="chatContainerWrapper" >
       <div
         ref={messagesContainerRef}
         className="chatContainer"
@@ -244,61 +244,55 @@ const ChatComponent = ({ roomId }) => {
               </div>
             );
           })}
-          {/* <div
-            ref={messagesEndRef}
-            style={{
-              height: 0,
-              margin: 0,
-              padding: 0,
-              overflow: "hidden",
-            }}
-          ></div> */}
+          <div ref={messagesEndRef}></div>
         </div>
       </div>
-
+      
       <div className="inputContainer">
-        <input
-          ref={inputRef}
-          type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-          placeholder="Type a message..."
-          className="input"
-          style={{
-            height: "20px",
-            borderRadius: "30px",
-            marginBottom: "10px",
-          }}
-        />
+        
+          <input
+            ref={inputRef}
+            type="text"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+            placeholder="Type a message..."
+            className="input"
+            style={{
+              height: "20px",
+              borderRadius: "30px",
+              marginBottom: "10px"
+            }}
+          />
 
-        <div
+          <div
           style={{
             // width: "100%",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
             marginBottom: "10px",
-            marginRight: "10px",
+            marginRight: "10px"
           }}
           onClick={sendMessage}
-        >
+          >
           <SendIcon />
-        </div>
+          </div>
 
-        <div
-          onClick={handleToggleMicrophone}
-          style={{
-            // width: "100%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            marginBottom: "10px",
-            marginRight: "10px",
-          }}
-        >
-          {micState ? <MicOn /> : <MicOff2 />}
-        </div>
+          <div
+            onClick={handleToggleMicrophone}
+            style={{
+              // width: "100%",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              marginBottom: "10px",
+              marginRight: "10px"
+            }}
+          >
+            {micState ? <MicOn /> : <MicOff2 />}
+          </div>
+        
       </div>
     </div>
   );

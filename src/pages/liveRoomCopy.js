@@ -5,7 +5,15 @@ import { useRoom } from "../context/RoomContext.js";
 import { useSocket } from "../context/SocketContext.js";
 import Header from "../components/Header.js";
 import ChatComponent from "../components/ChatComponent.js";
-import { updateRoomTitle, deleteRoom } from "./functions/liveFuncitons.js";
+// todas as logicas importadas
+import {
+  updateRoomTitle,
+  deleteRoom,
+  useJoinRoomEffect,
+  useFetchRoomDataEffect,
+  useJoinRoomListenersEffect,
+  useDebugCurrentUsersEffect,
+} from "./functions/liveFuncitons.js";
 import "../styles/style.css";
 import VoiceComponent from "../components/VoiceComponent.js";
 import { handleBack } from "../components/functions/headerFunctions.js";
@@ -51,59 +59,20 @@ const LiveRoom = () => {
 
   const { handleLeaveRoom } = useRoom(); // ✅ CERTA
 
+  useJoinRoomEffect(roomId, currentUser, handleJoinRoom, baseUrl);
+  useFetchRoomDataEffect(
+    roomId,
+    currentUser,
+    setSala,
+    setNewRoomTitle,
+    setIsCreator,
+    baseUrl
+  );
+  useJoinRoomListenersEffect(roomId, currentUser, joinRoomListeners);
+  useDebugCurrentUsersEffect(currentUsers);
+
   // const { currentUsers } = useRoom()
   console.log("currentUsers:", currentUsers);
-
-  // acionar socket para adicionar usuario na sala
-  // useEffect(() => {
-  //   if (!roomId || !currentUser) return;
-  //   console.log("👥 Adicionando usuário à currentUsersInRoom");
-  //   addCurrentUserInRoom(roomId, currentUser, baseUrl);
-  //   console.log("🐶 usuarios na sala:", currentUsers);
-  // }, [roomId, currentUser]);
-
-  useEffect(() => {
-    if (!roomId || !currentUser) return;
-    handleJoinRoom(roomId, currentUser, baseUrl);
-  }, [roomId, currentUser]);
-
-  // acionar busca de dados da sala
-  useEffect(() => {
-    const fetchRoomData = async () => {
-      if (!roomId || !currentUser) return;
-      try {
-        const response = await fetch(
-          `${baseUrl}/api/rooms/fetchRoomData/${roomId}`
-        );
-        const data = await response.json();
-        if (response.ok) {
-          setSala(data);
-          setNewRoomTitle(data.roomTitle);
-          setIsCreator(data.createdBy?._id === currentUser._id);
-        } else {
-          console.error(
-            "Erro ao buscar dados da sala:",
-            data.error || "Erro desconhecido"
-          );
-        }
-      } catch (error) {
-        console.error("Erro ao buscar dados da sala:", error);
-      }
-    };
-    fetchRoomData();
-  }, [roomId, currentUser]);
-
-  // ✅ ENTRA NA SALA
-  useEffect(() => {
-    if (!roomId || !currentUser) return;
-    console.log("🔌 entrando na sala oficialmente");
-    const user = currentUser;
-    joinRoomListeners(roomId, user);
-  }, [roomId, currentUser]);
-
-  useEffect(() => {
-    console.log("👥 Lista atual de ouvintes:", currentUsers);
-  }, [currentUsers]);
 
   const handleUpdateRoomTitle = () =>
     updateRoomTitle(roomId, newRoomTitle, setSala);
@@ -113,44 +82,48 @@ const LiveRoom = () => {
 
   return (
     // 100vh
-    <div className="liveRoomWrapper">  
-    <div className="liveRoomContent">
-      <Header
-        showProfileImage={false}
-        showLogoutButton={false}
-        showCloseIcon={true}
-        onBack={() =>
-          handleBack(
-            navigate,
-            null,
-            roomId,
-            currentUser?._id,
-            minimizeRoom,
-            sala,
-            isRejoiningRef,
-            microphoneOn
-          )
-        }
-        showSettingsIcon={isCreator}
-        openLiveSettings={() => setShowSettingsModal(true)}
-        roomId={roomId}
-        handleLeaveRoom={() =>
-          handleLeaveRoom(roomId, currentUser, baseUrl, leaveChannel, navigate)
-        }
-        showBackArrow={true}
-      />
+    <div className="liveRoomWrapper">
+      <div className="liveRoomContent">
+        <Header
+          showProfileImage={false}
+          showLogoutButton={false}
+          showCloseIcon={true}
+          onBack={() =>
+            handleBack(
+              navigate,
+              null,
+              roomId,
+              currentUser?._id,
+              minimizeRoom,
+              sala,
+              isRejoiningRef,
+              microphoneOn
+            )
+          }
+          showSettingsIcon={isCreator}
+          openLiveSettings={() => setShowSettingsModal(true)}
+          roomId={roomId}
+          handleLeaveRoom={() =>
+            handleLeaveRoom(
+              roomId,
+              currentUser,
+              baseUrl,
+              leaveChannel,
+              navigate
+            )
+          }
+          showBackArrow={true}
+        />
 
-
-      
-      <p
-        style={{
-          textAlign: "center",
-          marginBottom: "10px",
-          fontStyle: "italic",
-        }}
-      >
-        {roomTheme}
-      </p>
+        <p
+          style={{
+            textAlign: "center",
+            marginBottom: "10px",
+            fontStyle: "italic",
+          }}
+        >
+          {roomTheme}
+        </p>
 
         {/* min to max height 150px, 35vh */}
         <div className="liveInRoomMembersContainer">
@@ -228,8 +201,6 @@ const LiveRoom = () => {
         />
 
         <ChatComponent roomId={roomId} />
-
-        
       </div>
 
       {showSettingsModal && (

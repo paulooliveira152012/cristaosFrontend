@@ -1,0 +1,58 @@
+/* prevent scrolling on the entire page */
+html, body {
+  overflow: hidden;
+  height: 100%;
+}
+
+.liveRoomWrapper {
+  height: 100vh;
+  overflow: hidden; /* evita scroll duplicado */
+  display: flex;
+  flex-direction: column;
+  
+  /* background-color: blue; */
+}
+
+.liveRoomContent {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.topo {
+  flex-shrink: 0;
+  transition: height 0.3s ease;
+  /* height: 50%; */
+  /* flex: 1; */
+  overflow-x: auto;
+  /* background-color: green; */
+}
+
+.topo.minimized {
+  height: 60px; /* barra mínima com scroll horizontal dos falantes */
+}
+
+.fundo {
+  flex: 1; /* a outra metade */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* justify-content: flex-end; */
+  /* background: orange; */
+  /* transition: all 0.3s ease; */
+  height: 100%;
+}
+
+.fundo-expandido {
+  flex: 1.9;
+}
+
+.roomTheme {
+  text-align: center;
+  margin-bottom: 10px;
+  font-style: "italic";
+}
+
+/* configuraçøes do chatComponent esta no chat.css*/
+
