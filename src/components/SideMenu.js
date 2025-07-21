@@ -67,15 +67,16 @@ const SideMenu = ({ closeMenu }) => {
             <li onClick={() => navigate("guidelines")}>
               Diretrizes da Plataforma
             </li>
+
             <li onClick={() => navigate("suggestions")}>Sugestões</li>
             <li onClick={() => navigate("contactUs")}>Fale Conosco</li>
 
             {currentUser && (
               <button
                 onClick={() => {
-                  handleLogout(logout, navigate)
-                  closeMenu()
-                } }
+                  handleLogout(logout, navigate);
+                  closeMenu();
+                }}
                 className="logout-button"
               >
                 Logout

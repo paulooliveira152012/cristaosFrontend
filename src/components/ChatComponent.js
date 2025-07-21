@@ -72,42 +72,39 @@ const ChatComponent = ({ roomId }) => {
 
   // Join the room and listen for messages
   useEffect(() => {
-    if (!roomId || !socket || !currentUser) return;
+    if (!roomId || !currentUser) return;
 
-    // Join the room-specific chat 1
+    // Join room and request history
     socket.emit("joinRoomChat", { roomId, user: currentUser });
-    console.log("Client joined room:", roomId); // Should log room join
-
-    // Request chat history for this specific room
     socket.emit("requestChatHistory", { roomId });
 
-    console.log("🟢 uma nova mensagem chegou, atualizando as mensagens...");
     const handleChatHistory = (history) => {
-      console.log("history:", history);
+      console.log("📜 Histórico:", history);
       setMessages(history);
       scrollToBottom(false);
     };
 
-    const handleReceiveMessages = (newMessage) => {
-      console.log("New message received:", newMessage);
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
-    };
-
-    // Listen for chat history
-    // socket.on("chatHistory", (history) => {
-    //   setMessages(history);
-    //   scrollToBottom(false); // Scroll to bottom after loading chat history
-    // });
-
     socket.on("chatHistory", handleChatHistory);
-    socket.on("receiveMessage", handleReceiveMessages);
 
     return () => {
       socket.emit("leaveRoomChat", { roomId });
       socket.off("chatHistory", handleChatHistory);
-      socket.off("receiveMessage", handleReceiveMessages);
     };
   }, [roomId, currentUser]);
+
+  // 🔄 Mensagens recebidas de outros usuários
+  useEffect(() => {
+    const handleReceiveMessage = (newMessage) => {
+      console.log("📩 Mensagem recebida via socket:", newMessage);
+      setMessages((prev) => [...prev, newMessage]);
+    };
+
+    socket.on("receiveMessage", handleReceiveMessage);
+
+    return () => {
+      socket.off("receiveMessage", handleReceiveMessage);
+    };
+  }, []);
 
   // Send message
   const sendMessage = () => {
@@ -127,12 +124,11 @@ const ChatComponent = ({ roomId }) => {
 
     console.log("Emitting message to the server", newMessage);
     socket.emit("sendMessage", newMessage);
+    // setMessages((prev) => [...prev, { ...newMessage, timestamp: new Date() }]); // adiciona localmente
 
     setMessage(""); // Clear input
-    setMessages((prevMessages) => [...prevMessages, newMessage]);
-
     scrollToBottom();
-    inputRef.current.focus();
+    inputRef.current?.focus();
   };
 
   // Handle message deletion
@@ -183,7 +179,6 @@ const ChatComponent = ({ roomId }) => {
       console.error("Error toggling microphone:", error);
     }
   };
-  
 
   return (
     <div className="chatContainerWrapper">
