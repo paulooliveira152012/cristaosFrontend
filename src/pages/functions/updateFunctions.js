@@ -1,6 +1,5 @@
 import { uploadImageToS3 } from "../../utils/s3Upload";
 
-
 // 📸 Picker de imagem de perfil
 export const handleImagePicker = ({ setFormData, setFile }) => {
   const input = document.createElement("input");
@@ -30,7 +29,7 @@ export const handleUpdate = async ({
   passwordData,
   setDisplayModal,
   setUpdateMessage,
-  navigate
+  navigate,
 }) => {
   setLoading(true);
 
@@ -71,6 +70,10 @@ export const handleUpdate = async ({
       changes.push("Atualização de email pendente, verificar via email");
     }
 
+    if (formData.phone !== currentUser.phone) {
+      changes.push("Telefone atualizado");
+    }
+
     if (file) {
       changes.push("Foto de perfil atualizada");
     }
@@ -103,13 +106,11 @@ export const handleUpdate = async ({
   }
 };
 
-
-
 // ❌ Deletar conta
 export const handleDeleteAccount = async ({ currentUser, logout }) => {
-    console.log("Função para deletar conta...")
+  console.log("Função para deletar conta...");
 
-     if (!currentUser || !currentUser._id) {
+  if (!currentUser || !currentUser._id) {
     alert("Usuário não está autenticado.");
     return;
   }
@@ -134,11 +135,11 @@ export const handleDeleteAccount = async ({ currentUser, logout }) => {
 
     alert("Conta deletada com sucesso.");
 
-    logout()
-    
+    logout();
+
     window.location.href = "/";
   } catch (error) {
     alert("Erro: " + error.message);
-    console.log("Erro: " + error.message)
+    console.log("Erro: " + error.message);
   }
 };

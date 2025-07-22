@@ -17,6 +17,7 @@ const SettingsMenu = () => {
 
   const [formData, setFormData] = useState({
     username: "",
+    phone: "",
     email: "",
     profileImage: "",
     newPassword: "",
@@ -27,6 +28,7 @@ const SettingsMenu = () => {
       setFormData({
         username: currentUser.username || "",
         email: currentUser.email || "",
+        phone: currentUser.phone || "",
         profileImage: currentUser.profileImage || "",
         newPassword: "",
       });
@@ -95,6 +97,14 @@ const SettingsMenu = () => {
               type="email"
               name="email"
               value={formData.email}
+              onChange={handleChange}
+            />
+
+            <label>Tel:</label>
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
               onChange={handleChange}
             />
 
