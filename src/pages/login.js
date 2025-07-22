@@ -14,7 +14,9 @@ const Login = () => {
   // State to manage input fields
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("")
   const [error, setError] = useState("");
+  const [identifier, setIdentifier] = useState("")
 
   // connect to socket right away
   useEffect(() => {
@@ -55,7 +57,7 @@ const Login = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }), // Sending email and password to backend
+        body: JSON.stringify({ identifier, password }), // Sending email and password to backend
         credentials: "include", // Include credentials if applicable (cookies, auth headers, etc.)
       });
 
@@ -126,14 +128,14 @@ const Login = () => {
         <form onSubmit={handleLogin} style={styles.form}>
           {/* Email input */}
           <div style={styles.formGroup}>
-            <label htmlFor="email" style={styles.label}>
+            <label htmlFor="identifier" style={styles.label}>
               Email:
             </label>
             <input
               type="text"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="identifier"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               required
               style={styles.input}
             />

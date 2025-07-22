@@ -48,6 +48,7 @@ const Signup = () => {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
   const [profileImage, setProfileImage] = useState(null);
   const [file, setFile] = useState(null); // Store file for S3 upload
@@ -99,6 +100,7 @@ const Signup = () => {
         body: JSON.stringify({
           username,
           email,
+          phone,
           password,
           profileImage: imageUrl, // Include S3 URL in the request, if applicable
         }),
@@ -165,6 +167,21 @@ const Signup = () => {
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
+              style={styles.input}
+            />
+          </div>
+
+              {/* phone input */}
+          <div style={styles.formGroup}>
+            <label htmlFor="phone" style={styles.label}>
+              Phone:
+            </label>
+            <input
+              type="text"
+              id="phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
               required
               style={styles.input}
             />
