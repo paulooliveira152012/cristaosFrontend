@@ -1,5 +1,6 @@
 .landingListingsContainer {
-    flex-grow: 1; /* Ocupar o espaço disponível */
+    flex-grow: 1;
+    /* Ocupar o espaço disponível */
     width: 100%;
     /* background-color: #333333; */
     display: flex;
@@ -10,14 +11,18 @@
 
 
 .landingListingContainer {
-    width: 100%; /* Ajusta a largura para caber dentro do container */
-    aspect-ratio: 3; /* Mantém a proporção */
+    width: 100%;
+    /* Ajusta a largura para caber dentro do container */
+    aspect-ratio: 3;
+    /* Mantém a proporção */
     /* color: white; */
-    /* background-color: #1E1E1E; */
-    margin: 10px 0; /* Melhor espaçamento entre as listagens */
+    background-color: #f199e1;
+    margin: 10px 0;
+    /* Melhor espaçamento entre as listagens */
     /* border-top: 1px  solid lightgray; */
-    border-bottom: 1px  solid lightgray;;
-    
+    border-bottom: 1px solid lightgray;
+    ;
+
     padding: 20px;
     position: relative;
 }
@@ -33,9 +38,9 @@
     display: flex;
     text-align: center;
     /* vertically aligh when flex applied */
-    align-items: center; 
+    align-items: center;
     padding: 10px 0;
-    
+
 }
 
 .userName {
@@ -73,6 +78,4 @@
     /* padding: 10px; */
 }
 
-.adminListingMenu ul li button {
-
-}
+.adminListingMenu ul li button {}

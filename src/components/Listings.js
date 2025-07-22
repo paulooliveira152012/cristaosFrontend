@@ -268,9 +268,9 @@ const Listings = () => {
                     <Link to={`/profile/${listing.userId._id}`}>
                       <div
                         style={{
-                          height: "50px",
-                          width: "50px",
-                          borderRadius: "40%",
+                          height: "45px",
+                          width: "45px",
+                          borderRadius: "50%",
                           backgroundImage: `url(${
                             listing.userId.profileImage || image
                           })`,

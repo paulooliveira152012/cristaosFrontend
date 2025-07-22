@@ -13,7 +13,7 @@ const ListingInteractionBox = ({
   listingId,
   handleLike,
   likesCount,
-  comments = [], // Comments array directly passed from listing
+  comments = [],
   commentsCount,
   isLiked,
   handleCommentSubmit,
@@ -31,18 +31,17 @@ const ListingInteractionBox = ({
   userId,
   setItems = { setItems },
   sharedListings = [],
-  updateListing, // Function to update the single listing (Listing.js)
-  isSingleListing = false, // Indicates whether this is for a single listing
+  updateListing,
+  isSingleListing = false,
   listing,
 }) => {
-  const [showComments, setShowComments] = useState(false); // Toggle for showing/hiding comments
+  const [showComments, setShowComments] = useState(false);
   const [replyTextMap, setReplyTextMap] = useState({});
   const [commentText, setCommentText] = useState("");
   const [showReplyBox, setShowReplyBox] = useState({});
   const location = useLocation();
   const [pendingHighlightId, setPendingHighlightId] = useState(null);
-
-  // console.log("currentUser in ListingInteractionBox:", currentUser); // Ensure it is passed correctly
+  const [showCommentBox, setShowCommentBox] = useState(false);
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -58,7 +57,6 @@ const ListingInteractionBox = ({
     }
   }, [location.search]);
 
-  // Esse segundo useEffect espera os elementos renderizarem
   useEffect(() => {
     if (pendingHighlightId && showComments) {
       const el = document.getElementById(pendingHighlightId);
@@ -76,10 +74,7 @@ const ListingInteractionBox = ({
   };
 
   const handleReplyChange = (commentId, text) => {
-    setReplyTextMap((prev) => {
-      console.log("Updating replyTextMap:", { ...prev, [commentId]: text });
-      return { ...prev, [commentId]: text };
-    });
+    setReplyTextMap((prev) => ({ ...prev, [commentId]: text }));
   };
 
   const handleCommentSubmitClick = () => {
@@ -89,19 +84,9 @@ const ListingInteractionBox = ({
     }
   };
 
-  // console.log("currentUser:", currentUser);
-
   const handleReplySubmitClick = async (parentCommentId) => {
     const replyText = replyTextMap[parentCommentId];
-    console.log("Reply Text Retrieved in handleReplySubmitClick:", replyText);
     if (replyText && replyText.trim()) {
-      if (!replyTextMap[parentCommentId]) {
-        console.error(
-          "No reply text found for this parentCommentId:",
-          parentCommentId
-        );
-        return;
-      }
       await handleReplySubmit(
         listingId,
         parentCommentId,
@@ -122,6 +107,7 @@ const ListingInteractionBox = ({
 
   const toggleShowComments = () => {
     setShowComments((prevShowComments) => !prevShowComments);
+    setShowCommentBox((prevShowCommentBox) => !prevShowCommentBox);
   };
 
   const renderTrashIcon = () => {
@@ -137,14 +123,15 @@ const ListingInteractionBox = ({
     return null;
   };
 
-  // console.log("comments:", comments);
-
   return (
     <div className="interactionBoxContainer">
       <div className="interactionIcons">
-        {/* like listing icon */}
         <div className="iconsContainer" onClick={() => handleLike(listingId)}>
-          {isLiked ? <LikedIcon alt="Liked" className="shared-feedback" /> : <LikeIcon alt="Like" />}
+          {isLiked ? (
+            <LikedIcon alt="Liked" className="shared-feedback" />
+          ) : (
+            <LikeIcon alt="Like" />
+          )}
           <span style={{ marginLeft: "5px" }}>{likesCount}</span>
         </div>
 
@@ -178,18 +165,26 @@ const ListingInteractionBox = ({
         {renderTrashIcon()}
       </div>
 
-      <div className="commentBox">
-        <input
-          type="text"
-          value={commentText}
-          onChange={handleCommentChange}
-          placeholder="Type your comment"
-          className="commentInput"
-        />
-        <button className="submitCommentBtn" onClick={handleCommentSubmitClick}>
-          Submit
-        </button>
-      </div>
+      {showCommentBox && (
+        <div className="commentBox">
+          <div className="commentInputWrapper">
+            <input
+              type="text"
+              value={commentText}
+              onChange={handleCommentChange}
+              placeholder="Type your comment"
+              className="commentInput"
+            />
+            <button
+              className="submitCommentBtn"
+              onClick={handleCommentSubmitClick}
+            >
+              →
+            </button>
+          </div>
+        </div>
+      )}
+
 
       {showComments && comments.length > 0 && (
         <div className="commentSectionContainer">
@@ -214,19 +209,16 @@ const ListingInteractionBox = ({
                   </Link>
 
                   <div className="commentContainer">
-                    {/* username on comment */}
                     <p>
                       <strong>{comment.username || "Unknown User"}:</strong>{" "}
                       {comment.text}
                     </p>
                     <div className="commentsInteractionContainer">
-                      {/* comments */}
                       <div className="left">
                         <div
                           onClick={() => handleCommentLike(comment._id, false)}
                           style={{ cursor: "pointer" }}
                         >
-                          {/* comment like Icon */}
                           {isCommentLiked(comment) ? (
                             <LikedIcon />
                           ) : (
@@ -246,10 +238,8 @@ const ListingInteractionBox = ({
                             {commentCommentsCount(comment)}
                           </span>
                         </div>
-                        {/* clising right tag */}
                       </div>
 
-                      {/* delete icon here */}
                       <div className="right">
                         <TrashIcon
                           onClick={() =>
@@ -297,7 +287,6 @@ const ListingInteractionBox = ({
                 </div>
               )}
 
-              {/* reply section */}
               {comment.replies && comment.replies.length > 0 && (
                 <div className="replySectionContainer">
                   <div className="repliesSection">
@@ -314,9 +303,7 @@ const ListingInteractionBox = ({
                               <div
                                 className="commentProfileImage"
                                 style={{
-                                  backgroundImage: `url(${
-                                    reply.profileImage || ""
-                                  })`,
+                                  backgroundImage: `url(${reply.profileImage || ""})`,
                                   backgroundPosition: "center",
                                   backgroundSize: "cover",
                                   backgroundRepeat: "no-repeat",
@@ -343,7 +330,6 @@ const ListingInteractionBox = ({
                               ) : (
                                 <LikeIcon />
                               )}
-
                               <span
                                 style={{
                                   marginLeft: "0px",
@@ -353,7 +339,6 @@ const ListingInteractionBox = ({
                                 {commentLikesCount(reply)}
                               </span>
                             </div>
-                            {/* reply trash icon */}
                             <div className="right">
                               <TrashIcon
                                 onClick={() =>
