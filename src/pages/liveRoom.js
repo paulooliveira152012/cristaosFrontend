@@ -178,7 +178,7 @@ const LiveRoom = () => {
                           backgroundSize: "cover",
                           backgroundPosition: "center",
                           backgroundColor: "#ddd",
-                          borderRadius: "40%",
+                          borderRadius: "50%",
                           cursor: "pointer",
                         }}
                       />

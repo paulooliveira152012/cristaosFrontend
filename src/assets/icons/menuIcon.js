@@ -10,7 +10,7 @@ const MenuIcon = (props) => (
   >
     <path
       d="M1 1H31.3333M1 10.5833H31.3333M1 20.1667H31.3333"
-      stroke="#002D9F"
+      stroke="#2A68D8"
       strokeWidth={2}
       strokeLinecap="round"
     />

@@ -1,0 +1,53 @@
+/* Centraliza o botão no centro da tela */
+.supportUsContainer {
+  display: flex;
+  justify-content: center;   /* Alinha horizontalmente */
+  align-items: center;       /* Alinha verticalmente */
+  height: 10vh;             /* Ocupa toda a altura da tela */
+  background-color: #ffffff; /* (Opcional) fundo claro para contraste */
+}
+
+/* Botão que começa redondo e estica */
+.shinyButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #2A68D8;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+  font-weight: bold;
+  overflow: hidden;
+  text-align: center;
+  text-decoration: none;
+  position: relative;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.9s ease;
+  animation: stretchWithText 0.8s ease-out forwards;
+}
+
+/* Animação: bolinha estica e revela texto */
+@keyframes stretchWithText {
+  0% {
+    width: 60px;
+    border-radius: 50%;
+    opacity: 0;
+    letter-spacing: -1em;
+    color: transparent;
+  }
+  50% {
+    opacity: 1;
+    color: white;
+  }
+  100% {
+    width: 160px;
+    border-radius: 30px;
+    opacity: 1;
+    letter-spacing: normal;
+    color: white;
+  }
+}

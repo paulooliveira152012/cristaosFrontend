@@ -20,32 +20,33 @@
     flex-direction: column;
     cursor: pointer;
     flex-shrink: 0; /* Evita que os itens encolham */
-    width: 150px; /* Define uma largura fixa */
+    width: 120px; /* Define uma largura fixa */
     /* border: 2px solid #333333;  */
-    border-radius: 10px; /* Bordas arredondadas para suavizar o visual */
+    /* border-radius: 30px;  */
 }
 
 .landingLiveNewRoomContainer {
-    height: 100%;
+    height: 120px;
     aspect-ratio: 1;
-    /* background-color: #1E1E1E;  */
-    /* color: white;  */
+    background-color: white; 
+    color: #2A68D8; 
     text-align: center;   
     display: flex;
     flex-direction: column;
+    justify-content: center;    /* Centraliza verticalmente */
+    /* align-items: center;        Centraliza horizontalmente */
     cursor: pointer;
-    flex-shrink: 0; /* Evita que os itens encolham */
-    width: 150px; /* Define uma largura fixa */
-    /* border: 2px solid #333333;  */
-    border-radius: 10px; /* Bordas arredondadas para suavizar o visual */
+    flex-shrink: 0;
+    width: 120px;
+    border-radius: 45px;
     border: 1px solid transparent;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Adds shadow effect */
+    box-shadow: 0 4px 8px rgba(97, 129, 211, 0.3);
     transition: height 0.3s, box-shadow 0.3s, background-color 0.3s;
-}
+  }
 
 .landingLiveNewRoomContainer:hover {
-    height: 102%;
-    transition: .3s;
+    height: 70%;
+    transition: .2s;
     /* background-color: #E5F3FD; */
 }
 
@@ -101,7 +102,7 @@ body.modal-open {
     aspect-ratio: 0.75; /* Mantém a proporção */
     background-color: white;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Adiciona um leve sombreado */
-    border-radius: 8px; /* Adiciona bordas arredondadas para um estilo mais moderno */
+    /* border-radius: 100px; Adiciona bordas arredondadas para um estilo mais moderno */
     padding: 20px; /* Adiciona padding interno */
     margin: auto;
     margin-top: 20%;
@@ -124,7 +125,7 @@ body.modal-open {
     width: 50%;
     aspect-ratio: 1;
     /* background-color: black; */
-    border-radius: 50%;   
+    border-radius: 100%;   
     margin: 0px auto 20px auto; /* Centraliza o contêiner da imagem */
     border: 1px solid grey;
     cursor: pointer;
@@ -132,7 +133,7 @@ body.modal-open {
 }
 
 .button {
-    background-color: #002D9F; /* Cor do botão */
+    background-color: #2A68D8; /* Cor do botão */
     color: white;
     border: none;
     cursor: pointer;

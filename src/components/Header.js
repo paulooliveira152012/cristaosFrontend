@@ -101,9 +101,8 @@ const Header = ({
             <div
               className="headerProfileImage"
               style={{
-                backgroundImage: `url(${
-                  currentUser?.profileImage || imagePlaceholder
-                })`,
+                backgroundImage: `url(${currentUser?.profileImage || imagePlaceholder
+                  })`,
                 backgroundPosition: "center",
               }}
               onClick={toggleSideMenu}
@@ -113,28 +112,10 @@ const Header = ({
 
         <div className="right-section">
           {/* Conditionally render login or logout */}
-          {!currentUser && showLoginButton ? (
+          {!currentUser && (
             <Link to={"/login"} className="link">
               <button className="login-button">Login</button>
             </Link>
-          ) : (
-            currentUser && (
-              <div className="user-section">
-                {showWelcomeMessage && (
-                  <p className="welcome-message">
-                    Bem Vindo, {currentUser.username}
-                  </p>
-                )}
-                {showLogoutButton && (
-                  <button
-                    onClick={() => handleLogout(logout, navigate)}
-                    className="logout-button"
-                  >
-                    Logout
-                  </button>
-                )}
-              </div>
-            )
           )}
 
           {/* Conditionally render exit room button */}

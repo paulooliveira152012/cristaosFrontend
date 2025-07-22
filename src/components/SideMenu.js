@@ -43,7 +43,7 @@ const SideMenu = ({ closeMenu }) => {
           </div>
 
           <div onClick={closeMenu} className="closeBtn">
-            Close Btn
+            Close 
           </div>
         </div>
 
