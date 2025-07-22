@@ -31,7 +31,9 @@ export const RoomProvider = ({ children }) => {
 
   // ➖ Remove user da sala
   const removeCurrentUser = async (roomId, userId, baseUrl) => {
-    console.log("1️⃣🟢🟢🟢removendo usuario dos currentUsers no RoomContext.js...")
+    console.log(
+      "1️⃣🟢🟢🟢removendo usuario dos currentUsers no RoomContext.js..."
+    );
     if (!roomId || !userId) return;
     await apiRemoveUser(roomId, userId, baseUrl, socket);
     setCurrentUsers((prev) => prev.filter((u) => u._id !== userId));
@@ -46,7 +48,7 @@ export const RoomProvider = ({ children }) => {
 
   // 🔇 Remover speaker
   const removeSpeaker = async (roomId, userId, baseUrl) => {
-    console.log("🔇🔇🔇 removendo usuario do speaker...")
+    console.log("🔇🔇🔇 removendo usuario do speaker...");
     if (!roomId || !userId) return;
     const updated = await removeSpeakerFromRoom(roomId, userId, baseUrl);
     if (updated) setCurrentUsersSpeaking(updated);
@@ -54,22 +56,20 @@ export const RoomProvider = ({ children }) => {
 
   // useEffect de notificar usuarios que entram e saem da sala:
   // 🔄 Escutar atualizações de ouvintes (users na sala)
-useEffect(() => {
-  if (!socket) return;
+  useEffect(() => {
+    if (!socket) return;
 
-  const handleUpdateListeners = (users) => {
-    console.log("📣 Atualização recebida via socket de currentUsers:", users);
-    setCurrentUsers(users || []);
-  };
+    const handleUpdateListeners = (users) => {
+      console.log("📣 Atualização recebida via socket de currentUsers:", users);
+      setCurrentUsers(users || []);
+    };
 
-  socket.on("liveRoomUsers", handleUpdateListeners);
+    socket.on("liveRoomUsers", handleUpdateListeners);
 
-  return () => {
-    socket.off("liveRoomUsers", handleUpdateListeners);
-  };
-}, [socket]);
-
-
+    return () => {
+      socket.off("liveRoomUsers", handleUpdateListeners);
+    };
+  }, [socket]);
 
   // ▶️ Entrar na sala
   const joinRoomListeners = (roomId, user) => {
@@ -162,6 +162,61 @@ useEffect(() => {
       socket.off("updateSpeakers", handleUpdateSpeakers);
     };
   }, [socket]);
+
+  // 👂 Escutar usuário subindo ao palco
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleUserJoinsStage = ({ user }) => {
+      console.log("🧑‍🎤 Usuário subiu ao palco:", user);
+      setCurrentUsersSpeaking((prev) => {
+        // Evita duplicação
+        const exists = prev.some((u) => u._id === user._id);
+        return exists ? prev : [...prev, user];
+      });
+    };
+
+    socket.on("userJoinsStage", handleUserJoinsStage);
+
+    return () => {
+      socket.off("userJoinsStage", handleUserJoinsStage);
+    };
+  }, [socket]);
+
+  // 👋 Remover usuário que saiu (desconectou ou fechou aba)
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleUserLeft = ({ userId }) => {
+      console.log("🚪 Usuário saiu da sala:", userId);
+      setCurrentUsers((prev) => prev.filter((u) => u._id !== userId));
+      setCurrentUsersSpeaking((prev) => prev.filter((u) => u._id !== userId));
+    };
+
+    socket.on("userLeft", handleUserLeft);
+
+    return () => {
+      socket.off("userLeft", handleUserLeft);
+    };
+  }, [socket]);
+
+  // Detectar quando o usuário fecha a aba ou perde conexão
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (currentRoomId && user?._id) {
+        socket.emit("userLeavesRoom", {
+          roomId: currentRoomId,
+          userId: user._id,
+        });
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [currentRoomId, user, socket]);
 
   // logic for joining a room
   const handleJoinRoom = async (roomId, user, baseUrl) => {

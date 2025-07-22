@@ -166,7 +166,12 @@ const LiveRoom = () => {
 
         <div className="inRoomUsers">
           {currentUsers && currentUsers.length > 0 ? (
-            currentUsers.map((member, index) => (
+            currentUsers
+            .filter(
+              (listener) =>
+                !currentUsersSpeaking.some((speaker) => speaker._id === listener._id)
+            )
+            .map((member, index) => (
               <div key={member._id} className="inRoomMembersParentContainer">
                 <div className="inRoomLiveMemberContainer">
                   <div className="liveMemberContent">
