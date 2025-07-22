@@ -5,6 +5,12 @@
   overflow: hidden;
 }
 
+.chatPageContainer {
+  flex: 1;
+  overflow-y: auto;
+}
+
+
 /* Ocupa tudo entre o header e o input */
 .messagesContainer {
     display: flex;

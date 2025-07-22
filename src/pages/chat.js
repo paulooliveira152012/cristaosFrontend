@@ -8,6 +8,19 @@ import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 
+import {
+  useSocketConnectionLogger,
+  useJoinRoomChat,
+  useReceiveMessage,
+  useListenMessageDeleted,
+  useAutoScrollToBottom,
+  getRandomDarkColor,
+  handleScrollUtil,
+  scrollToBottomUtil,
+  sendMessageUtil,
+  handleDeleteMessageUtil,
+} from "../components/functions/chatComponentFunctions";
+
 const Chat = () => {
   const { currentUser } = useUser(); // Access the logged-in user
   const [messages, setMessages] = useState([]);
@@ -21,114 +34,39 @@ const Chat = () => {
 
   const navigate = useNavigate();
 
-  // Generate random dark colors
-  const getRandomDarkColor = () => {
-    const r = Math.floor(Math.random() * 150); // Limit to darker shades
-    const g = Math.floor(Math.random() * 150);
-    const b = Math.floor(Math.random() * 150);
-    return `rgb(${r}, ${g}, ${b})`;
-  };
+  // utilizando funções importadas
+  useSocketConnectionLogger();
+  useJoinRoomChat(mainChatRoomId, currentUser, setMessages, () =>
+    scrollToBottomUtil(messagesContainerRef)
+  );
+  useReceiveMessage(setMessages);
+  useListenMessageDeleted(mainChatRoomId, setMessages);
+  useAutoScrollToBottom(messages, isAtBottom, () =>
+    scrollToBottomUtil(messagesContainerRef)
+  );
 
-  // Scroll to the bottom of the chat
-  const scrollToBottom = (smooth = true) => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({
-        behavior: smooth ? "smooth" : "auto",
-        block: "start",
-      });
-    }
-  };
-
-  // Join room and listen to messages and chat history
-  useEffect(() => {
-    if (mainChatRoomId) {
-      // Join the main chat room
-      socket.emit("joinRoom", { roomId: mainChatRoomId, user: currentUser });
-      console.log("✅✅✅");
-      console.log("user:", currentUser);
-      console.log(`Joined room: ${mainChatRoomId}`);
-      // console.log(`Joined room: ${mainChatRoomId} with user: ${currentUser.username}`);
-
-      // Request chat history for the main chat room
-      socket.emit("requestChatHistory", { roomId: mainChatRoomId });
-
-      // Listen for chat history
-      socket.on("chatHistory", (history) => {
-        setMessages(history);
-
-        // Espera o próximo ciclo do event loop para garantir que o DOM renderizou
-        requestAnimationFrame(() => {
-          scrollToBottom(false);
-        });
-      });
-
-      // Listen for new messages
-      socket.on("receiveMessage", (newMessage) => {
-        console.log("Message received from backend:", newMessage);
-
-        if (newMessage.roomId === mainChatRoomId) {
-          setMessages((prevMessages) => [...prevMessages, newMessage]);
-        }
-      });
-
-      // Clean up when leaving the room
-      return () => {
-        socket.emit("leaveRoom", { roomId: mainChatRoomId });
-        socket.off("chatHistory");
-        socket.off("receiveMessage");
-      };
-    }
-  }, [mainChatRoomId, currentUser]);
-
-  const sendMessage = () => {
-    if (!currentUser) {
-      alert("Please log in to send messages");
-      return;
-    }
-
-    if (message.trim() === "") return;
-
-    const newMessage = {
-      userId: currentUser._id,
-      username: currentUser.username,
-      profileImage: currentUser.profileImage, // Correct field name
+  const sendMessage = () =>
+    sendMessageUtil({
+      currentUser,
       message,
-      roomId: mainChatRoomId, // Attach the main chat roomId to the message
-      timestamp: new Date(), // Add local timestamp
-    };
+      roomId: mainChatRoomId,
+      socket,
+      setMessages,
+      setMessage,
+      scrollToBottom: () => scrollToBottomUtil(messagesContainerRef),
+      inputRef,
+    });
 
-    console.log("Sending message:", newMessage); // Log the message being sent
+  const handleScroll = () =>
+    handleScrollUtil(messagesContainerRef, setIsAtBottom);
 
-    // Emit the message to the server
-    socket.emit("sendMessage", newMessage);
-
-    // Optimistically update the local messages state
-    // setMessages((prevMessages) => [...prevMessages, newMessage]);
-
-    setMessage(""); // Clear input
-    scrollToBottom();
-    inputRef.current.focus();
-  };
-
-  const handleScroll = () => {
-    const container = messagesContainerRef.current;
-    if (container) {
-      const isUserAtBottom =
-        container.scrollTop + container.clientHeight >=
-        container.scrollHeight - 20;
-      setIsAtBottom(isUserAtBottom);
-    }
-  };
-
-  const handleDeleteMessage = (messageId) => {
-    if (currentUser) {
-      socket.emit("deleteMessage", {
-        messageId,
-        userId: currentUser._id,
-        roomId: mainChatRoomId, // Pass the main chat roomId when deleting a message
-      });
-    }
-  };
+  const handleDeleteMessage = (messageId) =>
+    handleDeleteMessageUtil({
+      messageId,
+      currentUser,
+      socket,
+      roomId: mainChatRoomId,
+    });
 
   useEffect(() => {
     socket.on("messageDeleted", (messageId) => {
@@ -145,8 +83,8 @@ const Chat = () => {
   useEffect(() => {
     if (isAtBottom) {
       setTimeout(() => {
-        scrollToBottom();
-      }, 50); // Pequeno delay para garantir que DOM já renderizou as mensagens
+        scrollToBottomUtil(messagesContainerRef);
+      }, 50);
     }
   }, [messages]);
 
@@ -158,7 +96,7 @@ const Chat = () => {
       <div className="messagesContainer">
         <div
           className="chatPageContainer"
-          ref={messagesContainerRef}
+          ref={messagesContainerRef} // ✅ CERTO
           onScroll={handleScroll}
         >
           <div className="messagesContainer">
@@ -203,7 +141,7 @@ const Chat = () => {
                 </div>
               );
             })}
-            <div ref={messagesEndRef}></div>
+            
           </div>
         </div>
       </div>
