@@ -136,11 +136,11 @@ body {
     height: 50px;
     aspect-ratio: 1;
     background-size: cover;
-    border-radius: 40%; /* Imagens dos usuários em formato circular */
+    border-radius: 50%; /* Imagens dos usuários em formato circular */
     cursor: pointer;
     background-position: center;
     flex-shrink: 0; /* Evita que os itens encolham */
-    box-shadow: 0px 2px 5px 0px #1E1E1E;
+    box-shadow: 0px 2px 5px 0px #8c99b9;
 }
 
 .OnlineUserUsernameDisplay {
