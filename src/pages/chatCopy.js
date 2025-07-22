@@ -152,58 +152,57 @@ const Chat = () => {
   return (
     <div className="chatPageWrapper">
       <Header showProfileImage={false} navigate={navigate} />
-      <div className="messagesContainer">
-        <div
-          className="chatPageContainer"
-          ref={messagesContainerRef}
-          onScroll={handleScroll}
-        >
-          <div className="messagesContainer">
-            {messages.map((msg, index) => {
-              if (!usernameColors.current[msg.username]) {
-                usernameColors.current[msg.username] = getRandomDarkColor();
-              }
+      <div
+        className="chatPageContainer"
+        ref={messagesContainerRef}
+        onScroll={handleScroll}
+      >
+        <div className="messagesContainer">
+          {messages.map((msg, index) => {
+            if (!usernameColors.current[msg.username]) {
+              usernameColors.current[msg.username] = getRandomDarkColor();
+            }
 
-              // Ensure valid timestamp before formatting
-              const formattedTime = msg.timestamp
-                ? format(new Date(msg.timestamp), "PPpp")
-                : "Unknown time";
+            // Ensure valid timestamp before formatting
+            const formattedTime = msg.timestamp
+              ? format(new Date(msg.timestamp), "PPpp")
+              : "Unknown time";
 
-              return (
-                <div key={index} className="messageItem">
-                  <div>
-                    {/* profile image */}
-                    <Link to={`/profile/${msg.userId}`}>
-                      <div
-                        style={{
-                          backgroundImage: `url(${msg.profileImage || ""})`, // Set the profile image URL
-                        }}
-                        className="chatMessageProfileImage"
-                      ></div>
-                    </Link>
-                    <strong
+            return (
+              <div key={index} className="messageItem">
+                <div>
+                  {/* profile image */}
+                  <Link to={`/profile/${msg.userId}`}>
+                    <div
                       style={{
-                        color: usernameColors.current[msg.username],
+                        backgroundImage: `url(${msg.profileImage || ""})`, // Set the profile image URL
                       }}
-                    >
-                      {msg.username}:
-                    </strong>{" "}
-                    {msg.message} <br />
-                    <small>{formattedTime}</small>
-                  </div>
-                  {currentUser && msg.userId === currentUser._id && (
-                    <TrashIcon
-                      onClick={() => handleDeleteMessage(msg._id)}
-                      style={{ cursor: "pointer" }}
-                    />
-                  )}
+                      className="chatMessageProfileImage"
+                    ></div>
+                  </Link>
+                  <strong
+                    style={{
+                      color: usernameColors.current[msg.username],
+                    }}
+                  >
+                    {msg.username}:
+                  </strong>{" "}
+                  {msg.message} <br />
+                  <small>{formattedTime}</small>
                 </div>
-              );
-            })}
-            <div ref={messagesEndRef}></div>
-          </div>
+                {currentUser && msg.userId === currentUser._id && (
+                  <TrashIcon
+                    onClick={() => handleDeleteMessage(msg._id)}
+                    style={{ cursor: "pointer" }}
+                  />
+                )}
+              </div>
+            );
+          })}
+          <div ref={messagesEndRef}></div>
         </div>
       </div>
+      {/* 2 */}
       <div className="chatPageInputContainer">
         <input
           ref={inputRef}

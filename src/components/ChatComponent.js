@@ -4,7 +4,7 @@ import socket from "../socket";
 import TrashIcon from "../assets/icons/trashcan";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
-import "../styles/chat.css";
+import "../styles/chatComponent.css";
 import MicOn from "../assets/icons/microphone/micOn.js";
 import MicOff2 from "../assets/icons/microphone/micOff2.js";
 import AudioContext from "../context/AudioContext.js";

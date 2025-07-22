@@ -70,7 +70,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between; /* Distribui o espaço de forma balanceada */
-    margin-bottom: 10%;
+    margin-bottom: 17vh;
 }
 
 
