@@ -98,8 +98,6 @@ const SettingsMenu = () => {
               onChange={handleChange}
             />
 
-            <h4>Alterar Senha</h4>
-
             <label>Senha atual:</label>
             <input
               type="password"

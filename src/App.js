@@ -12,6 +12,7 @@ import Donate from "./pages/Donate";
 import PasswordResetLink from "./pages/passwordLinkRequest.js";
 import PasswordReset from "./pages/PasswordReset.js";
 import VerifyAccount from "./pages/verifyAccount.js";
+import VerifyEmailUpdate from "./pages/verifyEmailUpdate.js"
 // paginas do menu
 import BibleStudiesByBook from "./pages/menuPages/BibleStudiesByBook.js";
 import BibleStudiesByTheme from "./pages/menuPages/BibleStudiesByTheme.js";
@@ -143,6 +144,9 @@ const AppWithLocation = () => {
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/verifyAccount" element={<VerifyAccount />} />
+
+                  <Route path="/confirm-email-update/:token" element={<VerifyEmailUpdate />} />
+
                   <Route path="/newlisting" element={<NewListing />} />
                   <Route path="/profile/:userId" element={<Profile />} />
                   <Route path="/notifications" element={<Notifications />} />

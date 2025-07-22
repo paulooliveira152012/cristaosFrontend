@@ -27,13 +27,13 @@ export const handleUpdate = async ({
   setCurrentUser,
   setMessage,
   setLoading,
-  passwordData, // ← adicionar aqui
+  passwordData,
   setDisplayModal,
   setUpdateMessage,
   navigate
 }) => {
   setLoading(true);
-  
+
   try {
     let imageUrl = formData.profileImage;
 
@@ -44,16 +44,14 @@ export const handleUpdate = async ({
     const payload = {
       ...formData,
       profileImage: imageUrl,
-      ...passwordData, // ← incluir as senhas aqui!
+      ...passwordData,
     };
 
     const res = await fetch(
       `${process.env.REACT_APP_API_BASE_URL}/api/users/update/${currentUser._id}`,
       {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(payload),
       }
@@ -62,14 +60,37 @@ export const handleUpdate = async ({
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Erro ao atualizar.");
 
-    if(passwordData) {
-      setUpdateMessage("Senha atualizada")
-      setDisplayModal(true)
+    // 💬 Verifica o que foi alterado e mostra alertas específicos
+    const changes = [];
+
+    if (passwordData?.currentPassword && passwordData?.newPassword) {
+      changes.push("Senha atualizada");
+    }
+
+    if (formData.email !== currentUser.email) {
+      changes.push("Atualização de email pendente, verificar via email");
+    }
+
+    if (file) {
+      changes.push("Foto de perfil atualizada");
+    }
+
+    if (formData.username !== currentUser.username) {
+      changes.push("Nome de usuário atualizado");
+    }
+
+    if (formData.name !== currentUser.name) {
+      changes.push("Nome completo atualizado");
+    }
+
+    if (changes.length > 0) {
+      setUpdateMessage(changes.join(" · "));
+      setDisplayModal(true);
+
       setTimeout(() => {
-        setDisplayModal(false)
-        // navigate back
-        navigate("/")
-      }, 3000)
+        setDisplayModal(false);
+        navigate("/");
+      }, 3000);
     }
 
     setCurrentUser(data.user);
@@ -81,6 +102,7 @@ export const handleUpdate = async ({
     setLoading(false);
   }
 };
+
 
 
 // ❌ Deletar conta
