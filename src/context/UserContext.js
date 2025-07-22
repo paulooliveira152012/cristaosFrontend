@@ -36,9 +36,8 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  
   const emitLogin = (user) => {
-    console.log("emitindo user:", user)
+    console.log("emitindo user:", user);
 
     if (!user) return;
     socket.emit("userLoggedIn", {
@@ -49,17 +48,19 @@ export const UserProvider = ({ children }) => {
     console.log("📡 Emitindo login para socket:", user.username);
   };
 
-  const wakeServerAndConnectSocket = async (user) => {
+const wakeServerAndConnectSocket = async (user) => {
   try {
     console.log("⏰ Acordando servidor...");
     await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/users/ping`);
     console.log("☀️ Servidor acordado. Conectando socket...");
 
-    socket.connect();
+    if (!socket.connected) {
+      socket.connect();
+    }
 
-    socket.once("connect", () => {
-      emitLogin(user);
-    });
+    // Sempre emitir login, independente de ser a primeira vez ou reconexão
+    emitLogin(user);
+
   } catch (err) {
     console.error("❌ Erro ao acordar servidor:", err);
   }
@@ -83,26 +84,25 @@ export const UserProvider = ({ children }) => {
       // }
 
       wakeServerAndConnectSocket(user);
-
-
+      // setPendingLoginUser(user)
+      // socket.connect()
     }
 
     // Emitir login pendente após reconexão
-socket.on("connect", () => {
-  console.log("🔌 Reconectado.");
-  if (pendingLoginUser) {
-    emitLogin(pendingLoginUser);
-    setPendingLoginUser(null);
-  } else if (currentUser) {
-    emitLogin(currentUser); // ← isso é essencial!
-  }
+    socket.on("connect", () => {
+      console.log("🔌 Reconectado.");
+      if (pendingLoginUser) {
+        emitLogin(pendingLoginUser);
+        setPendingLoginUser(null);
+      } else if (currentUser) {
+        emitLogin(currentUser); // ← isso é essencial!
+      }
 
-  // Aguarda o login ser processado, então pede os onlineUsers
-  setTimeout(() => {
-    socket.emit("getOnlineUsers");
-  }, 200);
-});
-
+      // Aguarda o login ser processado, então pede os onlineUsers
+      setTimeout(() => {
+        socket.emit("getOnlineUsers");
+      }, 200);
+    });
 
     // Atualiza lista de usuários online
     const handleOnlineUsers = (users) => {
@@ -119,55 +119,54 @@ socket.on("connect", () => {
   }, [pendingLoginUser]);
 
   // buscar usuario atual do backend
- useEffect(() => {
-  const fetchCurrentUserFromCookie = async () => {
-  if (hasFetchedUser) return; // ✅ impede chamadas duplicadas
-  hasFetchedUser = true;
+  useEffect(() => {
+    const fetchCurrentUserFromCookie = async () => {
+      if (hasFetchedUser) return; // ✅ impede chamadas duplicadas
+      hasFetchedUser = true;
 
-    const storedUser = localStorage.getItem("user");
+      const storedUser = localStorage.getItem("user");
 
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
-      setCurrentUser(user);
-      console.log("👤 Usuário carregado do localStorage:", user);
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        setCurrentUser(user);
+        console.log("👤 Usuário carregado do localStorage:", user);
 
-      // espera meio segundo antes de validar o cookie
-      setTimeout(async () => {
-        try {
-          const res = await fetch(
-            `${process.env.REACT_APP_API_BASE_URL}/api/users/current`,
-            {
-              credentials: "include",
+        // espera meio segundo antes de validar o cookie
+        setTimeout(async () => {
+          try {
+            const res = await fetch(
+              `${process.env.REACT_APP_API_BASE_URL}/api/users/current`,
+              {
+                credentials: "include",
+              }
+            );
+
+            if (!res.ok) throw new Error("Usuário não autenticado.");
+
+            const verifiedUser = await res.json();
+            setCurrentUser(verifiedUser);
+            localStorage.setItem("user", JSON.stringify(verifiedUser));
+            console.log("✅ Cookie JWT válido. Usuário confirmado.");
+
+            if (socket.connected) {
+              emitLogin(verifiedUser);
+            } else {
+              setPendingLoginUser(verifiedUser);
+              socket.connect();
             }
-          );
+          } catch (err) {
+            console.warn(
+              "⚠️ Cookie inválido ou expirado. Mantendo user localStorage por enquanto."
+            );
 
-          if (!res.ok) throw new Error("Usuário não autenticado.");
-
-          const verifiedUser = await res.json();
-          setCurrentUser(verifiedUser);
-          localStorage.setItem("user", JSON.stringify(verifiedUser));
-          console.log("✅ Cookie JWT válido. Usuário confirmado.");
-
-          if (socket.connected) {
-            emitLogin(verifiedUser);
-          } else {
-            setPendingLoginUser(verifiedUser);
-            socket.connect();
+            setCurrentUser(user); // não zere o currentUser se já tiver no localStorage
           }
-        } catch (err) {
-          console.warn(
-            "⚠️ Cookie inválido ou expirado. Mantendo user localStorage por enquanto."
-          );
+        }, 500);
+      }
+    };
 
-          setCurrentUser(user)  // não zere o currentUser se já tiver no localStorage
-        }
-      }, 500);
-    }
-  };
-
-  fetchCurrentUserFromCookie();
-}, []);
-
+    fetchCurrentUserFromCookie();
+  }, []);
 
   const login = (user) => {
     setCurrentUser(user);
