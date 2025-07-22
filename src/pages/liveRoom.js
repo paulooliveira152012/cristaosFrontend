@@ -42,6 +42,7 @@ const LiveRoom = () => {
     removeSpeaker,
     currentUsers, // ✅ já incluído aqui
     handleJoinRoom,
+    roomReady
   } = useRoom();
 
   const { leaveChannel } = useContext(AudioContext);
@@ -59,7 +60,7 @@ const LiveRoom = () => {
   const [isCreator, setIsCreator] = useState(false);
   const isRejoiningRef = useRef(false);
 
-  const { handleLeaveRoom } = useRoom(); // ✅ CERTA
+  const { handleLeaveRoom } = useRoom(); // ✅ CERTA  
 
   useJoinRoomEffect(roomId, currentUser, handleJoinRoom, baseUrl);
   useFetchRoomDataEffect(
@@ -81,6 +82,16 @@ const LiveRoom = () => {
   const handleDeleteRoom = () => deleteRoom(roomId, navigate);
 
   if (!sala && !roomId) return <p>Error: Room information is missing!</p>;
+
+  if (!roomReady) {
+  return (
+    <div className="loadingContainer">
+      <p>Entrando na sala...</p>
+    </div>
+  );
+}
+
+  
 
   return (
     // 100vh

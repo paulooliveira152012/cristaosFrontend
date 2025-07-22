@@ -21,12 +21,13 @@ export const RoomProvider = ({ children }) => {
   const [currentRoomId, setCurrentRoomId] = useState(null);
   const [currentUsers, setCurrentUsers] = useState([]);
   const [currentUsersSpeaking, setCurrentUsersSpeaking] = useState([]);
+  const [roomReady, setRoomReady] = useState(false);
 
   // ➕ Add user como ouvinte
   const addCurrentUser = async (roomId, currentUser, baseUrl) => {
     if (!roomId || !currentUser?._id) return;
     const users = await apiAddUser(roomId, currentUser, baseUrl);
-    if (users) setCurrentUsers(users);
+    // if (users) setCurrentUsers(users);
   };
 
   // ➖ Remove user da sala
@@ -42,8 +43,9 @@ export const RoomProvider = ({ children }) => {
   // 🎤 Adicionar speaker
   const addSpeaker = async (roomId, user, baseUrl) => {
     if (!roomId || !user?._id) return;
-    const updated = await addSpeakerToRoom(roomId, user, baseUrl);
-    if (updated) setCurrentUsersSpeaking(updated);
+    // ❌ Não atualiza manualmente o estado:
+    // const updated = await addSpeakerToRoom(roomId, user, baseUrl);
+    // if (updated) setCurrentUsersSpeaking(updated);
   };
 
   // 🔇 Remover speaker
@@ -62,6 +64,11 @@ export const RoomProvider = ({ children }) => {
     const handleUpdateListeners = (users) => {
       console.log("📣 Atualização recebida via socket de currentUsers:", users);
       setCurrentUsers(users || []);
+
+      // ⏳ Pequeno atraso para evitar renderização com dados antigos
+      setTimeout(() => {
+        setRoomReady(true);
+      }, 50);
     };
 
     socket.on("liveRoomUsers", handleUpdateListeners);
@@ -75,6 +82,8 @@ export const RoomProvider = ({ children }) => {
   const joinRoomListeners = (roomId, user) => {
     if (!roomId || !user) return;
     setCurrentRoomId(roomId);
+    setCurrentUsers([]); // <-- limpa ouvintes antigos
+    setCurrentUsersSpeaking([]); // <-- limpa falantes antigos
 
     const userPayload = {
       _id: user._id,
@@ -221,8 +230,9 @@ export const RoomProvider = ({ children }) => {
   // logic for joining a room
   const handleJoinRoom = async (roomId, user, baseUrl) => {
     if (!roomId || !user) return;
-    await addCurrentUser(roomId, user, baseUrl); // MongoDB
     joinRoomListeners(roomId, user); // socket.io
+    await new Promise((resolve) => setTimeout(resolve, 200)); // Espera 200ms
+    await addCurrentUser(roomId, user, baseUrl); // banco
   };
 
   // logic for leaving the room
@@ -274,6 +284,7 @@ export const RoomProvider = ({ children }) => {
   return (
     <RoomContext.Provider
       value={{
+        roomReady,
         minimizedRoom,
         micOpen,
         hasJoinedBefore,
