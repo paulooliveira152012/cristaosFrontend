@@ -31,14 +31,11 @@ const Chat = () => {
 
   // Scroll to the bottom of the chat
   const scrollToBottom = (smooth = true) => {
-    const container = messagesContainerRef.current;
-    if (container) {
-      setTimeout(() => {
-        container.scrollTo({
-          top: container.scrollHeight,
-          behavior: smooth ? "smooth" : "auto",
-        });
-      }, 30); // delay evita bug visual
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({
+        behavior: smooth ? "smooth" : "auto",
+        block: "start",
+      });
     }
   };
 
@@ -58,7 +55,11 @@ const Chat = () => {
       // Listen for chat history
       socket.on("chatHistory", (history) => {
         setMessages(history);
-        scrollToBottom(false); // Scroll to bottom immediately after loading chat history
+
+        // Espera o próximo ciclo do event loop para garantir que o DOM renderizou
+        requestAnimationFrame(() => {
+          scrollToBottom(false);
+        });
       });
 
       // Listen for new messages
@@ -143,7 +144,9 @@ const Chat = () => {
 
   useEffect(() => {
     if (isAtBottom) {
-      scrollToBottom();
+      setTimeout(() => {
+        scrollToBottom();
+      }, 50); // Pequeno delay para garantir que DOM já renderizou as mensagens
     }
   }, [messages]);
 

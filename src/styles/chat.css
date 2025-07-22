@@ -7,6 +7,7 @@
 
 /* Ocupa tudo entre o header e o input */
 .messagesContainer {
+    display: flex;
     flex: 1;
     height: auto;
     min-height: 0;
