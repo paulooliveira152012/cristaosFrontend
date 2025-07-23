@@ -2,8 +2,10 @@ import { useState } from "react";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"; // Use the browser-friendly AWS SDK
 import Header from "../components/Header";
 import { useUser } from "../context/UserContext";
+import { motion } from "framer-motion";
 import { json, useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid"; // For generating unique file names
+
 // import { response } from "express";
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
@@ -56,6 +58,7 @@ const Signup = () => {
 
   const [newUserId, setNewUserId] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Handle image selection
   const handleImagePicker = () => {
@@ -128,54 +131,61 @@ const Signup = () => {
   };
 
   const verifyByEmail = async () => {
-  console.log(`verificando conta por e-mail ${newUserId}`);
+    console.log(`verificando conta por e-mail ${newUserId}`);
 
-  try {
-    const response = await fetch(`${baseUrl}/api/users/sendVerificationByEmail`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ userId: newUserId }), // Use "userId" como chave
-    });
+    setIsLoading(true)
 
-    const data = await response.json();
-    if (response.ok) {
-      console.log("Email enviado com sucesso!");
-      setTimeout(() => {
-          navigate('/login')
-        },3000)
-    } else {
-      console.error("Erro ao enviar email:", data.message);
+    try {
+      const response = await fetch(
+        `${baseUrl}/api/users/sendVerificationByEmail`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId: newUserId }), // Use "userId" como chave
+        }
+      );
+
+      const data = await response.json();
+      if (response.ok) {
+        console.log("Email enviado com sucesso!");
+      } else {
+        console.error("Erro ao enviar email:", data.message);
+      }
+    } catch (error) {
+      console.log("Erro ao enviar email:", error);
+    } finally {
+      setIsLoading(false)
+      navigate("/login");
     }
-  } catch (error) {
-    console.log("Erro ao enviar email:", error);
-  }
-};
+  };
 
+  const verifyByPhone = async () => {
+    console.log(`verificando conta por telefone ${newUserId}`);
 
-const verifyByPhone = async () => {
-  console.log(`verificando conta por telefone ${newUserId}`);
+    try {
+      const response = await fetch(
+        `${baseUrl}/api/users/sendVerificationByPhone`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId: newUserId }), // Use "userId" como chave
+        }
+      );
 
-  try {
-    const response = await fetch(`${baseUrl}/api/users/sendVerificationByPhone`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ userId: newUserId }), // Use "userId" como chave
-    });
-
-    const data = await response.json();
-    if (response.ok) {
-      console.log("Mensagem enviada!");
-    } else {
-      console.error("Erro ao enviar SMS:", data.message);
+      const data = await response.json();
+      if (response.ok) {
+        console.log("Mensagem enviada!");
+      } else {
+        console.error("Erro ao enviar SMS:", data.message);
+      }
+    } catch (error) {
+      console.log("erro ao enviar mensagem SMS:", error);
     }
-  } catch (error) {
-    console.log("erro ao enviar mensagem SMS:", error);
-  }
-};
+  };
 
   return (
     <div>
@@ -259,8 +269,8 @@ const verifyByPhone = async () => {
           </div>
 
           {/* Submit button */}
-          <button type="submit" style={styles.button}>
-            Signup
+          <button type="submit" style={styles.button} disabled={isLoading}>
+            {isLoading ? "Criando conta..." : "Signup"}
           </button>
         </form>
 
@@ -272,21 +282,39 @@ const verifyByPhone = async () => {
         <div className="modal">
           <div className="modal-content">
             <h2>Conta criada com sucesso!</h2>
+
+            {isLoading && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1, rotate: 360 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                style={{
+                  margin: "20px auto",
+                  width: "50px",
+                  height: "50px",
+                  border: "5px solid #ccc",
+                  borderTop: "5px solid #28a745",
+                  borderRadius: "50%",
+                }}
+              />
+            )}
+
             <p>por favor verificar conta para ter acesso.</p>
 
             <button onClick={verifyByEmail}>Verificar por email</button>
-            <button 
+            <button
               onClick={verifyByPhone}
               disabled
               style={{
-                cursor:"no-drop",
+                cursor: "no-drop",
                 backgroundColor: "grey",
                 // color: "lightgrey",
-                opacity: 0.5
+                opacity: 0.5,
               }}
             >
               Verificar por telefone
-              </button>
+            </button>
           </div>
         </div>
       )}
