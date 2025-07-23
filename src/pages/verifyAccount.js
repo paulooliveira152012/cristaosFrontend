@@ -11,41 +11,56 @@ const VerifyAccount = () => {
   );
   const [expired, setExpired] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isVerified, setIsVerified] = useState(false); // <- NOVO
 
   const queryParams = new URLSearchParams(location.search);
   const token = queryParams.get("token");
 
   useEffect(() => {
-    const verifyToken = async () => {
-      try {
-        const response = await fetch(`${baseUrl}/api/users/verifyAccount/${token}`, {
+    if (token) {
+      verifyToken();
+    }
+  }, []);
+
+  const verifyToken = async () => {
+    try {
+      const response = await fetch(
+        `${baseUrl}/api/users/verifyAccount/${token}`,
+        {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
           },
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          setMessage("Conta verificada com sucesso! Redirecionando para login...");
-          setTimeout(() => {
-            navigate("/login");
-          }, 2000);
-        } else {
-          setMessage(data.message || "Link inválido ou expirado.");
-          setExpired(true);
         }
-      } catch (error) {
-        setMessage("Erro ao verificar a conta. Tente novamente.");
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage(
+          "Conta verificada com sucesso! Redirecionando para login..."
+        );
+        setIsVerified(true); // <- MARCA COMO VERIFICADO
+        window.history.replaceState({}, document.title, "/verifyAccount");
+
+        console.log("isVerified?", isVerified);
+        console.log("Conta verificada com sucesso!");
+
+        // setTimeout(() => {
+        //   navigate("/login");
+        // }, 2000);
+
+        // Evita loop removendo o token da URL
+        // navigate("/verifyAccount", { replace: true });
+      } else {
+        setMessage(data.message || "Link inválido ou expirado.");
         setExpired(true);
       }
-    };
-
-    if (token) {
-      verifyToken();
+    } catch (error) {
+      setMessage("Erro ao verificar a conta. Tente novamente.");
+      setExpired(true);
     }
-  }, [token, navigate]);
+  };
 
   const handleResendLink = async () => {
     setLoading(true);
@@ -70,11 +85,14 @@ const VerifyAccount = () => {
   const handleSendLinkBySms = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${baseUrl}/api/users/resendVerificationByPhone`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      });
+      const res = await fetch(
+        `${baseUrl}/api/users/resendVerificationByPhone`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        }
+      );
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
@@ -91,17 +109,22 @@ const VerifyAccount = () => {
     <div className="verifyAccountPage">
       <h2>{message}</h2>
 
-      
-        <div style={{ marginTop: "20px", display: "flex", flexDirection: "column", gap: "10px" }}>
-          <button onClick={handleResendLink} disabled={loading}>
-            {loading ? "Enviando..." : "Reenviar link por e-mail"}
-          </button>
+      <div
+        style={{
+          marginTop: "20px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "10px",
+        }}
+      >
+        <button onClick={handleResendLink} disabled={loading}>
+          {loading ? "Enviando..." : "Reenviar link por e-mail"}
+        </button>
 
-          <button onClick={handleSendLinkBySms} disabled={loading}>
-            {loading ? "Enviando..." : "Receber link por SMS"}
-          </button>
-        </div>
-      
+        <button onClick={handleSendLinkBySms} disabled={loading}>
+          {loading ? "Enviando..." : "Receber link por SMS"}
+        </button>
+      </div>
     </div>
   );
 };
