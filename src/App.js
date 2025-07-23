@@ -26,6 +26,7 @@ import PrivateRooms from "./pages/menuPages/PrivateRooms.js";
 import Promotions from "./pages/menuPages/Promotions.js";
 import Suggestions from "./pages/menuPages/Suggestions.js";
 import SettingsMenu  from "./pages/SettingsMenu.js";
+import ResendVerification from "./pages/resend-verification.js";
 // Importar router, route e
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { UserProvider } from "./context/UserContext";
@@ -142,6 +143,8 @@ const AppWithLocation = () => {
                   <Route path="/liveRoom/:roomId" element={<LiveRoom />} />
                   <Route path="/chat" element={<Chat />} />
                   <Route path="/login" element={<Login />} />
+                  
+                  <Route path="/resend-verification" element={<ResendVerification />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/verifyAccount" element={<VerifyAccount />} />
 

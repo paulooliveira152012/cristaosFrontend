@@ -4,7 +4,7 @@ import { useUser } from "../context/UserContext";
 import { useNavigate, Link } from "react-router-dom";
 import socket from "../socket";
 
-const baseUrl = process.env.REACT_APP_API_BASE_URL
+const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 const Login = () => {
   // referenciar a logica de login do useUser
@@ -14,9 +14,9 @@ const Login = () => {
   // State to manage input fields
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("")
+  const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
-  const [identifier, setIdentifier] = useState("")
+  const [identifier, setIdentifier] = useState("");
 
   // connect to socket right away
   useEffect(() => {
@@ -24,32 +24,31 @@ const Login = () => {
   }, []);
 
   useEffect(() => {
-  socket.connect();
+    socket.connect();
 
-  /* Inicializar o botão de login do Google */
-  if (window.google) {
-    window.google.accounts.id.initialize({
-      client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-      callback: handleGoogleCallback,
-    });
+    /* Inicializar o botão de login do Google */
+    if (window.google) {
+      window.google.accounts.id.initialize({
+        client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+        callback: handleGoogleCallback,
+      });
 
-    window.google.accounts.id.renderButton(
-      document.getElementById("googleSignInDiv"),
-      {
-        theme: "outline",
-        size: "large",
-        width: "100%",
-      }
-    );
-  }
-}, []);
-
+      window.google.accounts.id.renderButton(
+        document.getElementById("googleSignInDiv"),
+        {
+          theme: "outline",
+          size: "large",
+          width: "100%",
+        }
+      );
+    }
+  }, []);
 
   // Handle form submission
   const handleLogin = async (e) => {
-    e.preventDefault(); // Prevent form from refreshing the page    
+    e.preventDefault(); // Prevent form from refreshing the page
 
-    console.log("tentando alcancar backend")
+    console.log("tentando alcancar backend");
 
     try {
       const response = await fetch(`${baseUrl}/api/users/login`, {
@@ -60,7 +59,6 @@ const Login = () => {
         body: JSON.stringify({ identifier, password }), // Sending email and password to backend
         credentials: "include", // Include credentials if applicable (cookies, auth headers, etc.)
       });
-
 
       const data = await response.json();
 
@@ -86,35 +84,34 @@ const Login = () => {
   };
 
   const handleGoogleCallback = async (response) => {
-  try {
-    const res = await fetch(`${baseUrl}/api/users/google-login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({ token: response.credential }),
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      login(data);
-      socket.emit("userLoggedIn", {
-        _id: data._id,
-        email: data.email,
-        profileImage: data.profileImage || "https://via.placeholder.com/50",
+    try {
+      const res = await fetch(`${baseUrl}/api/users/google-login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ token: response.credential }),
       });
-      navigate("/");
-    } else {
-      setError(data.message || "Falha no login com Google");
-    }
-  } catch (err) {
-    console.error("Erro no login com Google:", err);
-    setError("Erro ao tentar logar com o Google.");
-  }
-};
 
+      const data = await res.json();
+
+      if (res.ok) {
+        login(data);
+        socket.emit("userLoggedIn", {
+          _id: data._id,
+          email: data.email,
+          profileImage: data.profileImage || "https://via.placeholder.com/50",
+        });
+        navigate("/");
+      } else {
+        setError(data.message || "Falha no login com Google");
+      }
+    } catch (err) {
+      console.error("Erro no login com Google:", err);
+      setError("Erro ao tentar logar com o Google.");
+    }
+  };
 
   return (
     <div>
@@ -162,7 +159,6 @@ const Login = () => {
           </button>
 
           <div id="googleSignInDiv" style={{ marginTop: 20 }}></div>
-
         </form>
 
         <p style={{ marginTop: 20 }}>
@@ -181,7 +177,20 @@ const Login = () => {
         </div>
 
         {/* Display error message */}
-        {error && <p style={styles.error}>{error}</p>}
+        {error && (
+          <div>
+            <p style={styles.error}>{error}</p>
+
+            {error === "Verifique sua conta antes de fazer login." && (
+              <p style={{ marginTop: 10 }}>
+                Não recebeu o email de verificação?{" "}
+                <Link to="/resend-verification" style={styles.link}>
+                  Reenviar agora
+                </Link>
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
