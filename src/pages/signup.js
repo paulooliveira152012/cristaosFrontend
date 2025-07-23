@@ -2,10 +2,11 @@ import { useState } from "react";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"; // Use the browser-friendly AWS SDK
 import Header from "../components/Header";
 import { useUser } from "../context/UserContext";
-import { useNavigate } from "react-router-dom";
+import { json, useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid"; // For generating unique file names
+// import { response } from "express";
 
-const baseUrl = process.env.REACT_APP_API_BASE_URL
+const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 // Configure AWS S3 Client
 const s3 = new S3Client({
@@ -53,6 +54,9 @@ const Signup = () => {
   const [profileImage, setProfileImage] = useState(null);
   const [file, setFile] = useState(null); // Store file for S3 upload
 
+  const [newUserId, setNewUserId] = useState("");
+  const [showModal, setShowModal] = useState(false);
+
   // Handle image selection
   const handleImagePicker = () => {
     const input = document.createElement("input");
@@ -91,7 +95,6 @@ const Signup = () => {
         imageUrl = await uploadImageToS3(file);
       }
 
-
       const response = await fetch(`${baseUrl}/api/users/signup`, {
         method: "POST",
         headers: {
@@ -111,7 +114,10 @@ const Signup = () => {
       if (response.ok) {
         console.log("Signup successful!", data);
         // Navigate to the email verification page after successful signup
-        navigate("/verifyAccount", { state: { email } });
+        // navigate("/verifyAccount", { state: { email } });
+        console.log("new userId:", data.userId);
+        setNewUserId(data.userId);
+        setShowModal(true);
       } else {
         setError(data.message || "Signup failed"); // Set error message from the response
       }
@@ -120,6 +126,56 @@ const Signup = () => {
       setError("Something went wrong. Please try again.");
     }
   };
+
+  const verifyByEmail = async () => {
+  console.log(`verificando conta por e-mail ${newUserId}`);
+
+  try {
+    const response = await fetch(`${baseUrl}/api/users/sendVerificationByEmail`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ userId: newUserId }), // Use "userId" como chave
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      console.log("Email enviado com sucesso!");
+      setTimeout(() => {
+          navigate('/login')
+        },3000)
+    } else {
+      console.error("Erro ao enviar email:", data.message);
+    }
+  } catch (error) {
+    console.log("Erro ao enviar email:", error);
+  }
+};
+
+
+const verifyByPhone = async () => {
+  console.log(`verificando conta por telefone ${newUserId}`);
+
+  try {
+    const response = await fetch(`${baseUrl}/api/users/sendVerificationByPhone`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ userId: newUserId }), // Use "userId" como chave
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      console.log("Mensagem enviada!");
+    } else {
+      console.error("Erro ao enviar SMS:", data.message);
+    }
+  } catch (error) {
+    console.log("erro ao enviar mensagem SMS:", error);
+  }
+};
 
   return (
     <div>
@@ -172,7 +228,7 @@ const Signup = () => {
             />
           </div>
 
-              {/* phone input */}
+          {/* phone input */}
           <div style={styles.formGroup}>
             <label htmlFor="phone" style={styles.label}>
               Phone:
@@ -211,6 +267,29 @@ const Signup = () => {
         {/* Display error message */}
         {error && <p style={styles.error}>{error}</p>}
       </div>
+
+      {showModal && (
+        <div className="modal">
+          <div className="modal-content">
+            <h2>Conta criada com sucesso!</h2>
+            <p>por favor verificar conta para ter acesso.</p>
+
+            <button onClick={verifyByEmail}>Verificar por email</button>
+            <button 
+              onClick={verifyByPhone}
+              disabled
+              style={{
+                cursor:"no-drop",
+                backgroundColor: "grey",
+                // color: "lightgrey",
+                opacity: 0.5
+              }}
+            >
+              Verificar por telefone
+              </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
