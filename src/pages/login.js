@@ -124,7 +124,7 @@ const Login = () => {
         navigate={navigate}
       />
       <div style={styles.loginContainer}>
-        <h2>Login</h2>
+        <h2>Logi</h2>
         <form onSubmit={handleLogin} style={styles.form}>
           {/* Email input */}
           <div style={styles.formGroup}>
