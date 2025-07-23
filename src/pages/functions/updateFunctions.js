@@ -70,7 +70,7 @@ export const handleUpdate = async ({
       changes.push("Atualização de email pendente, verificar via email");
     }
 
-    if (formData.phone !== currentUser.phone) {
+    if (formData.phone && currentUser.phone && formData.phone !== currentUser.phone) {
       changes.push("Telefone atualizado");
     }
 
