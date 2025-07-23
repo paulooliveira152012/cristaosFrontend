@@ -24,25 +24,25 @@ const Login = () => {
   }, []);
 
   useEffect(() => {
-  socket.connect();
+    socket.connect();
 
-  /* Inicializar o botão de login do Google */
-  if (window.google) {
-    window.google.accounts.id.initialize({
-      client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-      callback: handleGoogleCallback,
-    });
+    /* Inicializar o botão de login do Google */
+    if (window.google) {
+      window.google.accounts.id.initialize({
+        client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+        callback: handleGoogleCallback,
+      });
 
-    window.google.accounts.id.renderButton(
-      document.getElementById("googleSignInDiv"),
-      {
-        theme: "outline",
-        size: "large",
-        width: "100%",
-      }
-    );
-  }
-}, []);
+      window.google.accounts.id.renderButton(
+        document.getElementById("googleSignInDiv"),
+        {
+          theme: "outline",
+          size: "large",
+          width: "100%",
+        }
+      );
+    }
+  }, []);
 
 
   // Handle form submission
@@ -86,34 +86,34 @@ const Login = () => {
   };
 
   const handleGoogleCallback = async (response) => {
-  try {
-    const res = await fetch(`${baseUrl}/api/users/google-login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({ token: response.credential }),
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      login(data);
-      socket.emit("userLoggedIn", {
-        _id: data._id,
-        email: data.email,
-        profileImage: data.profileImage || "https://via.placeholder.com/50",
+    try {
+      const res = await fetch(`${baseUrl}/api/users/google-login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ token: response.credential }),
       });
-      navigate("/");
-    } else {
-      setError(data.message || "Falha no login com Google");
+
+      const data = await res.json();
+
+      if (res.ok) {
+        login(data);
+        socket.emit("userLoggedIn", {
+          _id: data._id,
+          email: data.email,
+          profileImage: data.profileImage || "https://via.placeholder.com/50",
+        });
+        navigate("/");
+      } else {
+        setError(data.message || "Falha no login com Google");
+      }
+    } catch (err) {
+      console.error("Erro no login com Google:", err);
+      setError("Erro ao tentar logar com o Google.");
     }
-  } catch (err) {
-    console.error("Erro no login com Google:", err);
-    setError("Erro ao tentar logar com o Google.");
-  }
-};
+  };
 
 
   return (
