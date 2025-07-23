@@ -12,7 +12,7 @@ const PasswordReset = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token"); // Get the token from URL query params
-
+  const [success, setSuccess] = useState(false)
   useEffect(() => {
     // If no token is provided in the URL, set an error
     if (!token) {
@@ -43,7 +43,10 @@ const PasswordReset = () => {
 
       if (response.ok) {
         console.log("Password updated successfully", data);
-        navigate("/login"); // Redirect to login after successful reset
+        setSuccess(true)
+        setTimeout(() => {
+          navigate("/login"); // Redirect to login after successful reset
+        }, 5000)
       } else {
         setError(data.message || "Failed to update password.");
       }
@@ -92,6 +95,14 @@ const PasswordReset = () => {
           {/* Display error message */}
           {error && <p style={styles.error}>{error}</p>}
         </form>
+
+        {success && (
+          <div className="modal">
+            <div className="modal-content">
+            <p className="successMessage">Senha atualizada!</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
