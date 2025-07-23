@@ -232,6 +232,8 @@ export const fetchUserFriends = async (userId) => {
 
 // 🔹 Enviar pedido de amizade
 export const sendFriendRequest = async (friendId) => {
+  console.log("sending friend request...")
+  
   try {
     const response = await fetch(`${baseUrl}/api/users/friendRequest/${friendId}`, {
       method: "POST",
