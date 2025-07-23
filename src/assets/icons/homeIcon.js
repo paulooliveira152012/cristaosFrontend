@@ -1,24 +1,24 @@
-import * as React from "react"
-const SvgComponent = (props) => (
+import * as React from "react";
+const SVGComponent = (props) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width={27}
-    height={27}
+    width={24}
+    height={24}
     fill="none"
+    viewBox="0 0 24 24"
     {...props}
   >
-    <path
-      fill="#2A68D8"
-      fillRule="evenodd"
-      d="M12.832 1.676a1.094 1.094 0 0 1 1.343 0l9.848 7.66c.266.207.422.525.422.863v12.036a3.282 3.282 0 0 1-3.282 3.282H5.845a3.282 3.282 0 0 1-3.283-3.282V10.199c0-.338.156-.656.423-.864l9.847-7.659Zm-8.081 9.058v11.5a1.094 1.094 0 0 0 1.094 1.095h15.318a1.094 1.094 0 0 0 1.094-1.094v-11.5l-8.753-6.809-8.753 6.808Z"
-      clipRule="evenodd"
-    />
-    <path
-      fill="#2A68D8"
-      fillRule="evenodd"
-      d="M9.127 13.481c0-.604.49-1.094 1.094-1.094h6.565c.604 0 1.094.49 1.094 1.094v10.942a1.094 1.094 0 0 1-2.188 0v-9.847h-4.377v9.847a1.094 1.094 0 0 1-2.188 0V13.48Z"
-      clipRule="evenodd"
-    />
+    <g clipPath="url(#a)">
+      <path
+        fill="#484C52"
+        d="M13.338.833a2 2 0 0 0-2.676 0L0 10.43v10.4a3.2 3.2 0 0 0 3.2 3.2h17.6a3.2 3.2 0 0 0 3.2-3.2v-10.4L13.338.833ZM15 22.026H9V17a3 3 0 1 1 6 0v5.026Zm7-1.2a1.2 1.2 0 0 1-1.2 1.2H17V17a5 5 0 0 0-10 0v5.026H3.2a1.2 1.2 0 0 1-1.2-1.2V11.32l10-9 10 9v9.507Z"
+      />
+    </g>
+    <defs>
+      <clipPath id="a">
+        <path fill="#fff" d="M0 0h24v24H0z" />
+      </clipPath>
+    </defs>
   </svg>
-)
-export default SvgComponent
+);
+export default SVGComponent;
