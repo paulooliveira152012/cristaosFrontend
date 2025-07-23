@@ -198,10 +198,8 @@ const toggleModal = () => {
       </div>
 
       {/* Button to open the modal */}
-      <div className="landingLiveNewRoomContainer">
-        <div className="newChatContainer" onClick={toggleModal}>
+      <div className="landingLiveNewRoomContainer" onClick={toggleModal}>
           <NewChat className="newChatICon" />
-        </div>
       </div>
 
       {/* Mapping through fetched rooms (following the openLiveRooms pattern) */}

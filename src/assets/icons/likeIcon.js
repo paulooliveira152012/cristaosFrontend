@@ -1,18 +1,19 @@
-import * as React from "react";
-const LikeIcon = (props) => (
+import * as React from "react"
+const SvgComponent = (props) => (
   <svg
-    width={50}
-    height={50}
-    viewBox="0 0 17 11"
-    fill="none"
     xmlns="http://www.w3.org/2000/svg"
+    width={24}
+    height={24}
+    fill="none"
     {...props}
   >
     <path
-      d="M2.0399 6.37461L5.22652 9.36809C5.38025 9.51251 5.61977 9.51251 5.7735 9.36809L8.96012 6.37461C9.8567 5.53236 9.96558 4.14637 9.21151 3.17446L9.06972 2.99171C8.16764 1.82903 6.35692 2.02402 5.72307 3.3521C5.63353 3.5397 5.36649 3.5397 5.27695 3.3521C4.6431 2.02402 2.83238 1.82903 1.9303 2.99171L1.78851 3.17446C1.03444 4.14637 1.14332 5.53236 2.0399 6.37461Z"
-      fill="white"
-      stroke="#535353"
+      stroke="#000"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M12 7.694C10 3 3 3.5 3 9.5s9 11 9 11 9-5 9-11-7-6.5-9-1.806Z"
     />
   </svg>
-);
-export default LikeIcon;
+)
+export default SvgComponent

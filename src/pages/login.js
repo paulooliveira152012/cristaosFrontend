@@ -26,12 +26,12 @@ const Login = () => {
   useEffect(() => {
     socket.connect();
 
-    /* Inicializar o botão de login do Google */
-    if (window.google) {
-      window.google.accounts.id.initialize({
-        client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-        callback: handleGoogleCallback,
-      });
+  /* Inicializar o botão de login do Google */
+  if (window.google) {
+    window.google.accounts.id.initialize({
+      client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+      callback: handleGoogleCallback,
+    });
 
       window.google.accounts.id.renderButton(
         document.getElementById("googleSignInDiv"),
@@ -121,7 +121,7 @@ const Login = () => {
         navigate={navigate}
       />
       <div style={styles.loginContainer}>
-        <h2>Login</h2>
+        <h2>Logi</h2>
         <form onSubmit={handleLogin} style={styles.form}>
           {/* Email input */}
           <div style={styles.formGroup}>

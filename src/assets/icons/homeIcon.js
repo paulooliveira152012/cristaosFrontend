@@ -1,19 +1,24 @@
 import * as React from "react";
-const HomeIcon = (props) => (
+const SVGComponent = (props) => (
   <svg
-  width={34}
-  height={34}
-    viewBox="0 0 23 20"
-    fill="none"
     xmlns="http://www.w3.org/2000/svg"
+    width={24}
+    height={24}
+    fill="none"
+    viewBox="0 0 24 24"
     {...props}
   >
-    <path
-      d="M19.1 7.63158V19H14.35M3.9 7.63158V19H8.65M14.1125 19V14.5C14.1125 13.0612 12.9428 11.8947 11.5 11.8947C10.0572 11.8947 8.8875 13.0612 8.8875 14.5V19M2 8.57893L11.5 1L21 8.57893"
-      stroke="#2A68D8"
-      strokeWidth={1.5}
-      strokeLinecap="square"
-    />
+    <g clipPath="url(#a)">
+      <path
+        fill="#484C52"
+        d="M13.338.833a2 2 0 0 0-2.676 0L0 10.43v10.4a3.2 3.2 0 0 0 3.2 3.2h17.6a3.2 3.2 0 0 0 3.2-3.2v-10.4L13.338.833ZM15 22.026H9V17a3 3 0 1 1 6 0v5.026Zm7-1.2a1.2 1.2 0 0 1-1.2 1.2H17V17a5 5 0 0 0-10 0v5.026H3.2a1.2 1.2 0 0 1-1.2-1.2V11.32l10-9 10 9v9.507Z"
+      />
+    </g>
+    <defs>
+      <clipPath id="a">
+        <path fill="#fff" d="M0 0h24v24H0z" />
+      </clipPath>
+    </defs>
   </svg>
 );
-export default HomeIcon;
+export default SVGComponent;
