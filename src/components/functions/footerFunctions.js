@@ -53,3 +53,21 @@ export const markAllNotificationsAsRead = async () => {
     console.error("❌ Erro ao marcar notificações como lidas:", error);
   }
 };
+
+export const checkForNewMessages = async (setUnreadMessagesCount) => {
+  console.log("checking for unread messages function calling...")
+  try {
+    const res = await fetch(`${baseUrl}/api/users/checkUnreadMainChat`, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    const data = await res.json(); // { count: 3 }
+    console.log(data)
+    setUnreadMessagesCount(data.count || 0);
+  } catch (err) {
+    console.error("Erro ao verificar mensagens não lidas:", err);
+    setUnreadMessagesCount(0);
+  }
+};
+

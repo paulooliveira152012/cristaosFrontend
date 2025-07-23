@@ -31,11 +31,11 @@ const Chat = () => {
   const usernameColors = useRef({}); // To store unique colors for each username
   const mainChatRoomId = "mainChatRoom"; // Default roomId for the main chat
   const messagesContainerRef = useRef(null);
-
   const navigate = useNavigate();
 
-  // utilizando funções importadas
-  useSocketConnectionLogger();
+  const baseURL = process.env.REACT_APP_API_BASE_URL;
+    // utilizando funções importadas
+    useSocketConnectionLogger();
   useJoinRoomChat(mainChatRoomId, currentUser, setMessages, () =>
     scrollToBottomUtil(messagesContainerRef)
   );
@@ -87,6 +87,18 @@ const Chat = () => {
       }, 50);
     }
   }, [messages]);
+
+  // mark main chat as read
+  useEffect(() => {
+    const markAsRead = async () => {
+      await fetch(`${baseURL}/api/users/markMainChatAsRead`, {
+        method: "POST",
+        credentials: "include",
+      });
+    };
+
+    markAsRead();
+  }, []);
 
   console.log("messages in chat.js", messages);
 
@@ -141,7 +153,6 @@ const Chat = () => {
                 </div>
               );
             })}
-            
           </div>
         </div>
       </div>

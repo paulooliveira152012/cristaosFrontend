@@ -9,12 +9,17 @@ import Plus from "../assets/icons/plusIcon";
 import HomeIcon from "../assets/icons/homeIcon";
 import BellIcon from "../assets/icons/bellIcon";
 import { useNavigate } from "react-router-dom";
-import { checkForNewNotifications } from "./functions/footerFunctions";
+import {
+  checkForNewNotifications,
+  checkForNewMessages,
+} from "./functions/footerFunctions";
 
 const Footer = () => {
   const navigate = useNavigate();
   const { currentUser } = useUser(); // Destructure currentUser from useUser hook
   const [notifications, setNotifications] = useState(false);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+
   // console.log("Current user in footer component is is:", currentUser)
   // console.log("currentUser.userId in footer component is:", currentUser._id)
 
@@ -40,11 +45,13 @@ const Footer = () => {
 
     const timeout = setTimeout(() => {
       checkForNewNotifications(setNotifications);
+      checkForNewMessages(setUnreadMessagesCount);
     }, 1000); // espera 1 segundo
 
     return () => clearTimeout(timeout); // boa prática: limpa timeout se componente desmontar
-    
   }, [currentUser]);
+
+  console.log("unreadMessagesCount:", unreadMessagesCount)
 
   return (
     <div className="footerContainer">
@@ -53,8 +60,15 @@ const Footer = () => {
       </Link>
 
       {/* <MenuIcon /> */}
-      <div onClick={navigateToMainChat}>
+      <div
+        className="notificationIcon"
+        onClick={navigateToMainChat}
+        style={{ position: "relative" }}
+      >
         <MessageIcon />
+        {unreadMessagesCount > 0 && (
+          <span className="notificationCount">{unreadMessagesCount}</span>
+        )}
       </div>
 
       {/* conditionally render Plus button */}
@@ -65,7 +79,7 @@ const Footer = () => {
       )}
 
       {notifications && (
-        <div className="BellIcon">
+        <div className="notificationIcon">
           <Link to="/notifications">
             <BellIcon />
             <span className="notificationStatus"></span>
