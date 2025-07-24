@@ -12,20 +12,17 @@
 
 .landingListingContainer {
     width: 100%;
-    /* Ajusta a largura para caber dentro do container */
-    aspect-ratio: 3;
-    /* Mantém a proporção */
-    /* color: white; */
-    background-color: #ffffff;
-    margin: 10px 0;
-    /* Melhor espaçamento entre as listagens */
-    /* border-top: 1px  solid lightgray; */
-    border-bottom: 1px solid lightgray;
-    ;
-
+    /* background-color: #9f3939; */
+    
+    margin: 20px 20px 0 20px; /* top: 20px, right: 20px, bottom: 0, left: 20px */
     padding: 20px;
+  
     position: relative;
-}
+    /* border-top: 1px solid lightgray; */
+    border-bottom: 0.5px solid lightgray;
+    
+  }
+  
 
 @media screen and (max-width: 500px) {
     .landingListingContainer {
@@ -37,11 +34,9 @@
     width: 100%;
     display: flex;
     text-align: center;
-    /* vertically aligh when flex applied */
     align-items: center;
-    padding: 10px 0;
-
-}
+    /* background-color: aquamarine; */
+  }
 
 .userName {
     margin-left: 10px;

@@ -1,5 +1,6 @@
 .interactionBoxContainer {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
+    margin-top: 15px;
   }
   
   .commentContainer {
@@ -21,7 +22,7 @@
     flex-direction: row;
     width: 100%;
     margin-bottom: 10px;
-    /* background-color: green; */
+    /* background-xcolor: green; */
     /* justify-content: center; */
     /* align-items: center; */
     
@@ -33,21 +34,27 @@
     width: 100%;
     display: flex;
     align-items: center;
-    background-color: white;
+    background-color: rgb(255, 255, 255);
     justify-content: center;
     border-radius: 40px;
-    border: 1px solid #ccc;
+    border: 1px solid #ebebeb;
+    margin-top: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
   }
   
   .commentInput {
     width: 100%;
     padding: 10px 45px 10px 15px; /* espaço pro botão redondo */
+    margin-right: 5px;
     font-size: 14px;
     border: none;
     border-radius: 40px;
-    background-color: #f9f9f9;
+    background-color: rgb(255, 255, 255);
     box-sizing: border-box;
     display: flex;
+    outline: none;
+    /* box-shadow: 0 0 0 2px #ccc; */
     
   }
   
@@ -55,14 +62,14 @@
     /* top: 50%; */
     transform: translateX(-10%);
     margin: 0;
-    width: 30px;
+    width: 34px;
     height: 30px;
     border: none;
-    border-radius: 50%;
+    border-radius: 48%;
     background-color: #2A68D8;
     color: white;
-    font-size: 18px;
-    font-weight: bold;
+    font-size: 20px;
+    /* font-weight: bold; */
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -70,6 +77,7 @@
     padding: 0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     z-index: 2;
+    margin-right: 4px;
   }
   
   /* .submitCommentBtn:hover {
@@ -79,7 +87,9 @@
   
   .interactionIcons {
     display: flex;
-    justify-content: space-around;
+    justify-content: flex-start; /* alinha tudo à esquerda */
+    gap: 40px; /* opcional: define o espacinho entre os itens */
+    margin-left: 10px;
   }
   
   .interactionIcons * {
@@ -88,7 +98,7 @@
   
   .commentSectionContainer {
     justify-content: center;
-    border-bottom: 1px solid lightgray;
+    /* border-bottom: 1px solid lightgray; */
     text-align: justify;
   }
   
@@ -102,7 +112,7 @@
   
   .iconsContainer {
     display: flex;
-    align-items: center;
+    /* align-items: center; */
     cursor: pointer;
   }
   
