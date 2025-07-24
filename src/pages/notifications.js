@@ -36,7 +36,10 @@ export const Notifications = ({ setNotifications }) => {
         );
 
         // Separar pedidos de amizade das outras notificações
-        const requests = sorted.filter((n) => n.type === "friend_request");
+        const requests = sorted.filter(
+          (n) => n.type === "friend_request" && n.fromUser !== null
+        );
+
         const others = sorted.filter((n) => n.type !== "friend_request");
 
         setFriendRequests(requests);
@@ -119,6 +122,8 @@ export const Notifications = ({ setNotifications }) => {
     }
   };
 
+  console.log("friendRequests", friendRequests);
+
   return (
     <div className="notificationsContainer">
       <h2>Notificações</h2>
@@ -129,7 +134,7 @@ export const Notifications = ({ setNotifications }) => {
           <ul>
             {friendRequests.map((request) => (
               <li key={request._id}>
-                <strong>{request.fromUser.username}</strong> quer ser seu amigo!
+                <strong>{request.fromUser?.username || "Usuário desconhecido"} </strong> quer ser seu amigo!
                 <button
                   onClick={() => handleAccept(request.fromUser._id)}
                   disabled={processingId === request.fromUser._id}
