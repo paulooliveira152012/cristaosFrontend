@@ -1,16 +1,27 @@
 import * as React from "react";
-const Plus = (props) => (
+const SVGComponent = (props) => (
   <svg
-    width={37}
-    height={37}
-    viewBox="0 0 37 37"
-    fill="none"
     xmlns="http://www.w3.org/2000/svg"
+    width={23}
+    height={23}
+    fill="none"
+    viewBox="0 0 23 23"
     {...props}
   >
-    <circle cx={18.5} cy={18.5} r={18.5} fill="#2A68D8" />
-    <line x1={18.5} y1={9} x2={18.5} y2={30} stroke="white" />
-    <line x1={7} y1={19.5} x2={30} y2={19.5} stroke="white" />
+    <path
+      stroke="#484C52"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={1.558}
+      d="M6 11.5h5.5m0 0H17m-5.5 0V17m0-5.5V6"
+    />
+    <circle
+      cx={11.5}
+      cy={11.5}
+      r={10.569}
+      stroke="#484C52"
+      strokeWidth={1.861}
+    />
   </svg>
 );
-export default Plus;
+export default SVGComponent;
