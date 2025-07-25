@@ -54,20 +54,31 @@ export const markAllNotificationsAsRead = async () => {
   }
 };
 
-export const checkForNewMessages = async (setUnreadMessagesCount) => {
-  console.log("checking for unread messages function calling...")
+export const checkForNewMessages = async (setUnreadMessagesCount, currentUserId) => {
+  console.log("🔍 Verificando mensagens não lidas para:", currentUserId);
   try {
     const res = await fetch(`${baseUrl}/api/users/checkUnreadMainChat`, {
       method: "GET",
       credentials: "include",
     });
 
-    const data = await res.json(); // { count: 3 }
-    console.log(data)
-    setUnreadMessagesCount(data.count || 0);
+    const data = await res.json(); // { count, lastMessageUserId }
+    console.log("📬 Dados de mensagens:", data);
+
+    if (
+      data.count > 0 &&
+      data.lastMessageUserId &&
+      data.lastMessageUserId !== currentUserId
+    ) {
+      setUnreadMessagesCount(data.count);
+    } else {
+      setUnreadMessagesCount(0);
+    }
   } catch (err) {
     console.error("Erro ao verificar mensagens não lidas:", err);
     setUnreadMessagesCount(0);
   }
 };
+
+
 

@@ -2,7 +2,8 @@
 import Landing from "./pages/landing";
 import OpenListing from "./pages/listing";
 import LiveRoom from "./pages/liveRoom";
-import Chat from "./pages/chat";
+import MainChat from "./pages/mainChat.js";
+import Chat from "./pages/chat.js";
 import Login from "./pages/login";
 import Signup from "./pages/signup";
 import NewListing from "./pages/newListing";
@@ -12,7 +13,7 @@ import Donate from "./pages/Donate";
 import PasswordResetLink from "./pages/passwordLinkRequest.js";
 import PasswordReset from "./pages/PasswordReset.js";
 import VerifyAccount from "./pages/verifyAccount.js";
-import VerifyEmailUpdate from "./pages/verifyEmailUpdate.js"
+import VerifyEmailUpdate from "./pages/verifyEmailUpdate.js";
 // paginas do menu
 import BibleStudiesByBook from "./pages/menuPages/BibleStudiesByBook.js";
 import BibleStudiesByTheme from "./pages/menuPages/BibleStudiesByTheme.js";
@@ -25,8 +26,9 @@ import PlatformGuidelines from "./pages/menuPages/PlatformGuidelines.js";
 import PrivateRooms from "./pages/menuPages/PrivateRooms.js";
 import Promotions from "./pages/menuPages/Promotions.js";
 import Suggestions from "./pages/menuPages/Suggestions.js";
-import SettingsMenu  from "./pages/SettingsMenu.js";
+import SettingsMenu from "./pages/SettingsMenu.js";
 import ResendVerification from "./pages/resend-verification.js";
+import PrivateChat from "./pages/PrivateChat.js";
 // Importar router, route e
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { UserProvider } from "./context/UserContext";
@@ -89,14 +91,15 @@ const App = () => {
 // Criar o componente App
 const AppWithLocation = () => {
   const location = useLocation();
-  
+
   const shouldShowFooter =
-  !location.pathname.startsWith("/chat") &&
-  !location.pathname.startsWith("/liveRoom");
+    !location.pathname.startsWith("/mainChat") &&
+    !location.pathname.startsWith("/liveRoom") &&
+    !location.pathname.startsWith("/privateChat/:id") 
+    ;
 
-
-  const hideSideMenu = ["/login"]
-  const shouldShowSideMenu = !hideSideMenu.includes(location.pathname)
+  const hideSideMenu = ["/login"];
+  const shouldShowSideMenu = !hideSideMenu.includes(location.pathname);
 
   return (
     <UserProvider>
@@ -108,9 +111,7 @@ const AppWithLocation = () => {
             {/* flex 1 */}
             <div className="sideMenuContainerWideScreen">
               {/* COLOCAR O MENU AQUI */}
-              {shouldShowSideMenu && (
-                <SideMenuFullScreen />
-              )}
+              {shouldShowSideMenu && <SideMenuFullScreen />}
             </div>
             {/* flex 2 */}
             <div
@@ -143,12 +144,18 @@ const AppWithLocation = () => {
                   <Route path="/liveRoom/:roomId" element={<LiveRoom />} />
                   <Route path="/chat" element={<Chat />} />
                   <Route path="/login" element={<Login />} />
-                  
-                  <Route path="/resend-verification" element={<ResendVerification />} />
+
+                  <Route
+                    path="/resend-verification"
+                    element={<ResendVerification />}
+                  />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/verifyAccount" element={<VerifyAccount />} />
 
-                  <Route path="/confirm-email-update/:token" element={<VerifyEmailUpdate />} />
+                  <Route
+                    path="/confirm-email-update/:token"
+                    element={<VerifyEmailUpdate />}
+                  />
 
                   <Route path="/newlisting" element={<NewListing />} />
                   <Route path="/profile/:userId" element={<Profile />} />
@@ -160,7 +167,10 @@ const AppWithLocation = () => {
                   />
                   <Route path="/passwordReset" element={<PasswordReset />} />
                   <Route path="/guidelines" element={<PlatformGuidelines />} />
-                  <Route path="/bibleStudies" element={<BibleStudiesByBook />} />
+                  <Route
+                    path="/bibleStudies"
+                    element={<BibleStudiesByBook />}
+                  />
                   <Route
                     path="/bibleStudies"
                     element={<BibleStudiesByTheme />}
@@ -177,6 +187,8 @@ const AppWithLocation = () => {
                   <Route path="/promotions" element={<Promotions />} />
                   <Route path="/communityForum" element={<CommunityForum />} />
                   <Route path="/settingsMenu" element={<SettingsMenu />} />
+                  <Route path="/mainChat" element={<MainChat />} />
+                  <Route path="/privateChat/:id" element={<PrivateChat />} />
                 </Routes>
                 {/* Display the minimized room globally */}
                 <MinimizedStatus />

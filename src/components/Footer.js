@@ -45,7 +45,8 @@ const Footer = () => {
 
     const timeout = setTimeout(() => {
       checkForNewNotifications(setNotifications);
-      checkForNewMessages(setUnreadMessagesCount);
+      checkForNewMessages(setUnreadMessagesCount, currentUser._id);
+
     }, 1000); // espera 1 segundo
 
     return () => clearTimeout(timeout); // boa prática: limpa timeout se componente desmontar
