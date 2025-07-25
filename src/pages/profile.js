@@ -15,8 +15,7 @@ import {
   acceptFriendRequest,
   rejectFriendRequest,
   removeFriend,
-  requestChat
-
+  requestChat,
 } from "./functions/profilePageFunctions";
 
 import { useProfileLogic } from "./functions/useProfileLogic";
@@ -124,11 +123,11 @@ const Profile = () => {
   const renderFriendAction = () => {
     if (!currentUser || !user || currentUser._id === user._id) return null;
 
-    console.log("✅ 1 currentUser:", currentUser)
+    console.log("✅ 1 currentUser:", currentUser);
     const isFriend = currentUser.friends?.includes(user._id);
-    console.log("✅ 2 isfriend:", isFriend)
+    console.log("✅ 2 isfriend:", isFriend);
     const hasSentRequest = currentUser.sentFriendRequests?.includes(user._id);
-    console.log("✅ 3 has received friend request from user?", hasSentRequest)
+    console.log("✅ 3 has received friend request from user?", hasSentRequest);
     const hasReceivedRequest = currentUser.friendRequests?.includes(user._id);
 
     if (isFriend) {
@@ -190,7 +189,9 @@ const Profile = () => {
               <li onClick={() => navigate("/settingsMenu")}>Configurações</li>
               {currentUser._id !== user._id && (
                 <ul>
-                  <li onClick={() => requestChat(currentUser?._id, user?._id)}>Iniciar conversa</li>
+                  <li onClick={() => requestChat(currentUser?._id, user?._id)}>
+                    Iniciar conversa
+                  </li>
                   <li>Bloquear</li>
                   <li>Reportar</li>
                 </ul>
