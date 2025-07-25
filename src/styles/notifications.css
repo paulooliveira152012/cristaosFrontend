@@ -1,0 +1,11 @@
+.chatRequestDecision {
+    display: flex;
+    
+}
+
+.chatRequestDecision button {
+    width: auto;
+    margin-left: 20px;
+    height: auto;
+    padding: 3px
+}

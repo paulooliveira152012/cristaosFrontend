@@ -18,6 +18,7 @@ import {
 export const Notifications = ({ setNotifications }) => {
   const { currentUser } = useUser();
   const [friendRequests, setFriendRequests] = useState([]);
+  const [dmRequests, setDmRequests] = useState([]);
   const [otherNotifications, setOtherNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null); // para evitar cliques múltiplos
@@ -40,9 +41,16 @@ export const Notifications = ({ setNotifications }) => {
           (n) => n.type === "friend_request" && n.fromUser !== null
         );
 
-        const others = sorted.filter((n) => n.type !== "friend_request");
+        const dm = sorted.filter(
+          (n) => n.type === "chat_request" && n.fromUser !== null
+        );
+
+        const others = sorted.filter(
+          (n) => n.type !== "friend_request" && n.type !== "chat_request"
+        );
 
         setFriendRequests(requests);
+        setDmRequests(dm);
         setOtherNotifications(others);
       } catch (error) {
         console.error("Erro ao carregar notificações:", error);
@@ -134,7 +142,10 @@ export const Notifications = ({ setNotifications }) => {
           <ul>
             {friendRequests.map((request) => (
               <li key={request._id}>
-                <strong>{request.fromUser?.username || "Usuário desconhecido"} </strong> quer ser seu amigo!
+                <strong>
+                  {request.fromUser?.username || "Usuário desconhecido"}{" "}
+                </strong>{" "}
+                quer ser seu amigo!
                 <button
                   onClick={() => handleAccept(request.fromUser._id)}
                   disabled={processingId === request.fromUser._id}
@@ -153,7 +164,26 @@ export const Notifications = ({ setNotifications }) => {
         </div>
       )}
 
+      {/* chatRequests */}
+      {dmRequests.length > 0 && (
+        <div className="dmRequests">
+          <h3>Solicitaçoes de conversa</h3>
+          <ul>
+            {dmRequests.map((request) => (
+              <div className="chatRequestDecision">
+                <li key={request._id}>
+                  {request.content}
+                  <button>Accept</button>
+                  <button>Reject</button>
+                </li>
+              </div>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="generalNotifications">
+        <br></br>
         <h3>Outras notificações</h3>
         {otherNotifications.length > 0 ? (
           <ul>
@@ -173,7 +203,7 @@ export const Notifications = ({ setNotifications }) => {
             ))}
           </ul>
         ) : (
-          <p>Você não tem novas notificações.</p>
+          <p></p>
         )}
       </div>
     </div>

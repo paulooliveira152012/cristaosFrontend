@@ -15,6 +15,8 @@ import {
   acceptFriendRequest,
   rejectFriendRequest,
   removeFriend,
+  requestChat
+
 } from "./functions/profilePageFunctions";
 
 import { useProfileLogic } from "./functions/useProfileLogic";
@@ -188,7 +190,7 @@ const Profile = () => {
               <li onClick={() => navigate("/settingsMenu")}>Configurações</li>
               {currentUser._id !== user._id && (
                 <ul>
-                  <li>Iniciar conversa</li>
+                  <li onClick={() => requestChat(currentUser?._id, user?._id)}>Iniciar conversa</li>
                   <li>Bloquear</li>
                   <li>Reportar</li>
                 </ul>
