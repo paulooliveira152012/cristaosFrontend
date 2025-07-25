@@ -5,6 +5,8 @@ import {
   acceptFriendRequest,
   rejectFriendRequest,
   markNotificationAsRead,
+  acceptDmRequest,
+  rejectDmRequest,
 } from "./functions/functions/notificationsFunctions.js";
 import "../styles/notifications.css";
 import { Link } from "react-router-dom";
@@ -74,6 +76,7 @@ export const Notifications = ({ setNotifications }) => {
   const handleAccept = async (requesterId) => {
     setProcessingId(requesterId);
     await acceptFriendRequest(requesterId);
+
     setFriendRequests((prev) =>
       prev.filter((r) => r.fromUser._id !== requesterId)
     );
@@ -86,6 +89,24 @@ export const Notifications = ({ setNotifications }) => {
     setFriendRequests((prev) =>
       prev.filter((r) => r.fromUser._id !== requesterId)
     );
+    setProcessingId(null);
+  };
+
+  const handleAcceptDm = async (request) => {
+    setProcessingId(request._id);
+    await acceptDmRequest(request.fromUser._id, currentUser._id, request._id);
+
+    setDmRequests((prev) => prev.filter((r) => r._id !== request._id));
+
+    setProcessingId(null);
+  };
+
+  const handleRejectDm = async (request) => {
+    setProcessingId(request._id);
+    await rejectDmRequest(request.fromUser._id, currentUser._id, request._id);
+
+    setDmRequests((prev) => prev.filter((r) => r._id !== request._id));
+
     setProcessingId(null);
   };
 
@@ -173,8 +194,18 @@ export const Notifications = ({ setNotifications }) => {
               <div className="chatRequestDecision">
                 <li key={request._id}>
                   {request.content}
-                  <button>Accept</button>
-                  <button>Reject</button>
+                  <button
+                    onClick={() => handleAcceptDm(request)}
+                    disabled={processingId === request._id}
+                  >
+                    Aceitar
+                  </button>
+                  <button
+                    onClick={() => handleRejectDm(request)}
+                    disabled={processingId === request._id}
+                  >
+                    Rejeitar
+                  </button>
                 </li>
               </div>
             ))}
