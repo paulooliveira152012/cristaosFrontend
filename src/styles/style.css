@@ -272,10 +272,30 @@ body.dark-mode .onlineStatus {
 
 }
 
-  .BellIcon {
+
+  .notificationIcon {
     /* background-color: red; */
     position: relative;
   }
+
+  .notificationCount {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 2px 6px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
 
   .notificationStatus {
     width: 15px;

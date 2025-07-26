@@ -53,3 +53,31 @@ export const markAllNotificationsAsRead = async () => {
     console.error("❌ Erro ao marcar notificações como lidas:", error);
   }
 };
+
+export const checkForNewMessages = async (setUnreadMessagesCount, userId) => {
+  try {
+    const resMain = await fetch(
+      `${process.env.REACT_APP_API_BASE_URL}/api/users/checkUnreadMainChat`,
+      { credentials: "include" }
+    );
+    const dataMain = await resMain.json(); // { count: 3 }
+
+    const resDM = await fetch(
+      `${process.env.REACT_APP_API_BASE_URL}/api/dm/totalUnread/${userId}`,
+      { credentials: "include" }
+    );
+    const dataDM = await resDM.json(); // { totalUnread: 5 }
+
+    const totalUnread = (dataMain.count || 0) + (dataDM.totalUnread || 0);
+    setUnreadMessagesCount(totalUnread);
+  } catch (err) {
+    console.error("Erro ao verificar mensagens não lidas:", err);
+    setUnreadMessagesCount(0);
+  }
+};
+
+
+
+
+
+

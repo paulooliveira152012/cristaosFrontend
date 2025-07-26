@@ -3,7 +3,7 @@ import { useLocation, Link, useNavigate } from "react-router-dom";
 import "../styles/style.css";
 
 import MessageIcon from "../assets/icons/messageIcon";
-import MessageIconSolid from "../assets/icons/messageIconSolid";
+import MessageIconSolid from "../assets/icons/messageIconSolid.js";
 
 import HomeIcon from "../assets/icons/homeIcon";
 import HomeIconSolid from "../assets/icons/homeIconSolid";
@@ -14,14 +14,22 @@ import PlusIconSolid from "../assets/icons/plusIconSolid";
 import BellIcon from "../assets/icons/bellIcon";
 import BellIconSolid from "../assets/icons/bellIconSolid";
 
+import {
+  checkForNewNotifications,
+  checkForNewMessages,
+} from "./functions/footerFunctions";
+
 import { useUser } from "../context/UserContext";
-import { checkForNewNotifications } from "./functions/footerFunctions";
 
 const Footer = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser } = useUser();
   const [notifications, setNotifications] = useState(false);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+
+  // console.log("Current user in footer component is is:", currentUser)
+  // console.log("currentUser.userId in footer component is:", currentUser._id)
 
   const navigateToMainChat = () => {
     if (currentUser) {
@@ -36,10 +44,13 @@ const Footer = () => {
 
     const timeout = setTimeout(() => {
       checkForNewNotifications(setNotifications);
-    }, 1000);
+      checkForNewMessages(setUnreadMessagesCount, currentUser._id);
+    }, 1000); // espera 1 segundo
 
-    return () => clearTimeout(timeout);
+    return () => clearTimeout(timeout); // boa prática: limpa timeout se componente desmontar
   }, [currentUser]);
+
+  console.log("unreadMessagesCount:", unreadMessagesCount);
 
   return (
     <div className="footerContainer">
@@ -47,19 +58,30 @@ const Footer = () => {
         {location.pathname === "/" ? <HomeIconSolid /> : <HomeIcon />}
       </Link>
 
-      <div onClick={navigateToMainChat}>
+      <div className="notificationIcon" onClick={navigateToMainChat}>
         {location.pathname === "/chat" ? <MessageIconSolid /> : <MessageIcon />}
+        {unreadMessagesCount > 0 && (
+          <span className="notificationStatus">{unreadMessagesCount}</span>
+        )}
       </div>
 
       {currentUser && (
         <Link to="/newlisting">
-          {location.pathname === "/newlisting" ? <PlusIconSolid /> : <PlusIcon />}
+          {location.pathname === "/newlisting" ? (
+            <PlusIconSolid />
+          ) : (
+            <PlusIcon />
+          )}
         </Link>
       )}
 
-      <div className="BellIcon">
+      <div className="notificationIcon">
         <Link to="/notifications">
-          {location.pathname === "/notifications" ? <BellIconSolid /> : <BellIcon />}
+          {location.pathname === "/notifications" ? (
+            <BellIconSolid />
+          ) : (
+            <BellIcon />
+          )}
           {notifications && <span className="notificationStatus"></span>}
         </Link>
       </div>

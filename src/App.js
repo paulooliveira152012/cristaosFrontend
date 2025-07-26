@@ -1,8 +1,10 @@
+import { useLocation } from "react-router-dom";
 // Importar a página inicial
 import Landing from "./pages/landing";
 import OpenListing from "./pages/listing";
 import LiveRoom from "./pages/liveRoom";
-import Chat from "./pages/chat";
+import MainChat from "./pages/mainChat.js";
+import Chat from "./pages/chat.js";
 import Login from "./pages/login";
 import Signup from "./pages/signup";
 import NewListing from "./pages/newListing";
@@ -28,9 +30,9 @@ import Promotions from "./pages/menuPages/Promotions.js";
 import Suggestions from "./pages/menuPages/Suggestions.js";
 import SettingsMenu from "./pages/SettingsMenu.js";
 import ResendVerification from "./pages/resend-verification.js";
-
-// Importar router e contextos
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from "react-router-dom";
+import PrivateChat from "./pages/PrivateChat.js";
+// Importar router, route e
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { UserProvider } from "./context/UserContext";
 import { RoomProvider, useRoom } from "./context/RoomContext";
 import { AudioProvider } from "./context/AudioContext";
@@ -83,8 +85,10 @@ const AppWithLocation = () => {
   const location = useLocation();
 
   const shouldShowFooter =
-    !location.pathname.startsWith("/chat") &&
-    !location.pathname.startsWith("/liveRoom");
+    !location.pathname.startsWith("/mainChat") &&
+    !location.pathname.startsWith("/liveRoom") &&
+    !location.pathname.startsWith("/privateChat/:id") 
+    ;
 
   const hideSideMenu = ["/login"];
   const shouldShowSideMenu = !hideSideMenu.includes(location.pathname);
@@ -95,6 +99,7 @@ const AppWithLocation = () => {
         <AudioProvider>
           <div className="mainParentContainer">
             <div className="sideMenuContainerWideScreen">
+              {/* COLOCAR O MENU AQUI */}
               {shouldShowSideMenu && <SideMenuFullScreen />}
             </div>
 
@@ -123,10 +128,19 @@ const AppWithLocation = () => {
                   <Route path="/liveRoom/:roomId" element={<LiveRoom />} />
                   <Route path="/chat" element={<Chat />} />
                   <Route path="/login" element={<Login />} />
-                  <Route path="/resend-verification" element={<ResendVerification />} />
+
+                  <Route
+                    path="/resend-verification"
+                    element={<ResendVerification />}
+                  />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/verifyAccount" element={<VerifyAccount />} />
-                  <Route path="/confirm-email-update/:token" element={<VerifyEmailUpdate />} />
+
+                  <Route
+                    path="/confirm-email-update/:token"
+                    element={<VerifyEmailUpdate />}
+                  />
+
                   <Route path="/newlisting" element={<NewListing />} />
                   <Route path="/profile/:userId" element={<Profile />} />
                   <Route path="/notifications" element={<Notifications />} />
@@ -134,7 +148,14 @@ const AppWithLocation = () => {
                   <Route path="/passwordResetLink" element={<PasswordResetLink />} />
                   <Route path="/passwordReset" element={<PasswordReset />} />
                   <Route path="/guidelines" element={<PlatformGuidelines />} />
-                  <Route path="/bibleStudies" element={<BibleStudiesByBook />} />
+                  <Route
+                    path="/bibleStudies"
+                    element={<BibleStudiesByBook />}
+                  />
+                  <Route
+                    path="/bibleStudies"
+                    element={<BibleStudiesByTheme />}
+                  />
                   <Route path="/privateRooms" element={<PrivateRooms />} />
                   <Route path="/suggestions" element={<Suggestions />} />
                   <Route path="/contactUs" element={<ContactUs />} />
@@ -144,6 +165,8 @@ const AppWithLocation = () => {
                   <Route path="/promotions" element={<Promotions />} />
                   <Route path="/communityForum" element={<CommunityForum />} />
                   <Route path="/settingsMenu" element={<SettingsMenu />} />
+                  <Route path="/mainChat" element={<MainChat />} />
+                  <Route path="/privateChat/:id" element={<PrivateChat />} />
                 </Routes>
                 <MinimizedStatus />
               </div>

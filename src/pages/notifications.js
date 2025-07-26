@@ -5,6 +5,8 @@ import {
   acceptFriendRequest,
   rejectFriendRequest,
   markNotificationAsRead,
+  acceptDmRequest,
+  rejectDmRequest,
 } from "./functions/functions/notificationsFunctions.js";
 import "../styles/notifications.css";
 import { Link } from "react-router-dom";
@@ -18,6 +20,7 @@ import {
 export const Notifications = ({ setNotifications }) => {
   const { currentUser } = useUser();
   const [friendRequests, setFriendRequests] = useState([]);
+  const [dmRequests, setDmRequests] = useState([]);
   const [otherNotifications, setOtherNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null); // para evitar cliques múltiplos
@@ -36,10 +39,20 @@ export const Notifications = ({ setNotifications }) => {
         );
 
         // Separar pedidos de amizade das outras notificações
-        const requests = sorted.filter((n) => n.type === "friend_request");
-        const others = sorted.filter((n) => n.type !== "friend_request");
+        const requests = sorted.filter(
+          (n) => n.type === "friend_request" && n.fromUser !== null
+        );
+
+        const dm = sorted.filter(
+          (n) => n.type === "chat_request" && n.fromUser !== null
+        );
+
+        const others = sorted.filter(
+          (n) => n.type !== "friend_request" && n.type !== "chat_request"
+        );
 
         setFriendRequests(requests);
+        setDmRequests(dm);
         setOtherNotifications(others);
       } catch (error) {
         console.error("Erro ao carregar notificações:", error);
@@ -63,6 +76,7 @@ export const Notifications = ({ setNotifications }) => {
   const handleAccept = async (requesterId) => {
     setProcessingId(requesterId);
     await acceptFriendRequest(requesterId);
+
     setFriendRequests((prev) =>
       prev.filter((r) => r.fromUser._id !== requesterId)
     );
@@ -75,6 +89,24 @@ export const Notifications = ({ setNotifications }) => {
     setFriendRequests((prev) =>
       prev.filter((r) => r.fromUser._id !== requesterId)
     );
+    setProcessingId(null);
+  };
+
+  const handleAcceptDm = async (request) => {
+    setProcessingId(request._id);
+    await acceptDmRequest(request.fromUser._id, currentUser._id, request._id);
+
+    setDmRequests((prev) => prev.filter((r) => r._id !== request._id));
+
+    setProcessingId(null);
+  };
+
+  const handleRejectDm = async (request) => {
+    setProcessingId(request._id);
+    await rejectDmRequest(request.fromUser._id, currentUser._id, request._id);
+
+    setDmRequests((prev) => prev.filter((r) => r._id !== request._id));
+
     setProcessingId(null);
   };
 
@@ -119,6 +151,8 @@ export const Notifications = ({ setNotifications }) => {
     }
   };
 
+  console.log("friendRequests", friendRequests);
+
   return (
     <div className="notificationsContainer">
       <h2>Notificações</h2>
@@ -129,7 +163,10 @@ export const Notifications = ({ setNotifications }) => {
           <ul>
             {friendRequests.map((request) => (
               <li key={request._id}>
-                <strong>{request.fromUser.username}</strong> quer ser seu amigo!
+                <strong>
+                  {request.fromUser?.username || "Usuário desconhecido"}{" "}
+                </strong>{" "}
+                quer ser seu amigo!
                 <button
                   onClick={() => handleAccept(request.fromUser._id)}
                   disabled={processingId === request.fromUser._id}
@@ -148,7 +185,36 @@ export const Notifications = ({ setNotifications }) => {
         </div>
       )}
 
+      {/* chatRequests */}
+      {dmRequests.length > 0 && (
+        <div className="dmRequests">
+          <h3>Solicitaçoes de conversa</h3>
+          <ul>
+            {dmRequests.map((request) => (
+              <div className="chatRequestDecision">
+                <li key={request._id}>
+                  {request.content}
+                  <button
+                    onClick={() => handleAcceptDm(request)}
+                    disabled={processingId === request._id}
+                  >
+                    Aceitar
+                  </button>
+                  <button
+                    onClick={() => handleRejectDm(request)}
+                    disabled={processingId === request._id}
+                  >
+                    Rejeitar
+                  </button>
+                </li>
+              </div>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="generalNotifications">
+        <br></br>
         <h3>Outras notificações</h3>
         {otherNotifications.length > 0 ? (
           <ul>
@@ -168,7 +234,7 @@ export const Notifications = ({ setNotifications }) => {
             ))}
           </ul>
         ) : (
-          <p>Você não tem novas notificações.</p>
+          <p></p>
         )}
       </div>
     </div>

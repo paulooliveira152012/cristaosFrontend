@@ -320,3 +320,22 @@ export const fetchFriendRequests = async () => {
     return [];
   }
 };
+
+
+// requesting chat
+export const requestChat = async (requester, requested) => {
+    console.log( requester, "requesting chat with", requested)
+
+    try {
+      const response = await fetch(`${baseUrl}/api/dm/sendChatRequest`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requester, requested }),
+      })
+
+      console.log("response:", response)
+    } catch(error) {
+      console.log(error)
+    }
+}
