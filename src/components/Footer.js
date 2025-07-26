@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import "../styles/style.css";
 
-import MenuIcon from "../assets/icons/menuIcon";
 import MessageIcon from "../assets/icons/messageIcon";
 import MessageIconSolid from "../assets/icons/messageIconSolid";
 
