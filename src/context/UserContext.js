@@ -9,6 +9,7 @@ export const useUser = () => useContext(UserContext);
 export const useUsers = () => useContext(UsersContext);
 
 export const UserProvider = ({ children }) => {
+  const [darkMode, setDarkMode] = useState(false); // 🌙 estado de temac
   const [currentUser, setCurrentUser] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [pendingLoginUser, setPendingLoginUser] = useState(null);
@@ -226,8 +227,16 @@ const wakeServerAndConnectSocket = async (user) => {
 
   return (
     <UserContext.Provider
-      value={{ currentUser, setCurrentUser, login, logout }}
-    >
+  value={{
+    currentUser,
+    setCurrentUser,
+    login,
+    logout,
+    darkMode,       // ✅ novo
+    setDarkMode,    // ✅ novo
+  }}
+>
+
       <UsersContext.Provider value={{ onlineUsers }}>
         {children}
       </UsersContext.Provider>

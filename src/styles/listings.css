@@ -9,6 +9,11 @@
     margin-bottom: 50px;
 }
 
+body.dark-mode .landingListingsContainer {
+    background-color: black;
+    color: white;
+}
+
 
 .landingListingContainer {
     width: 100%;
@@ -20,7 +25,16 @@
     position: relative;
     /* border-top: 1px solid lightgray; */
     border-bottom: 0.5px solid lightgray;
-    
+  }
+
+  body.dark-mode .landingListingContainer
+    .userInfo, .userName  {
+    color: white;
+  }
+
+  .landingListingContainer .header {
+    /* background-color: blueviolet; */
+   
   }
   
 
@@ -36,10 +50,12 @@
     text-align: center;
     align-items: center;
     /* background-color: aquamarine; */
+    
   }
 
 .userName {
     margin-left: 10px;
+    color: black;
 }
 
 .iteractionContainer {
