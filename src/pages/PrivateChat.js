@@ -40,11 +40,14 @@ const PrivateChat = () => {
 
     const markAsRead = async () => {
       try {
-        await fetch(`${baseURL}/api/dm/markAsRead/${conversationId}`, {
+        const res = await fetch(`${baseURL}/api/dm/markAsRead/${conversationId}`, {
           method: "POST",
           credentials: "include",
         });
         console.log("🔵 Conversa marcada como lida");
+        socket.emit("privateChatRead", { conversationId, userId: currentUser._id });
+        const data = await res.json();
+        console.log("mensagens nao lidas: ", data)
       } catch (error) {
         console.error("Erro ao marcar como lida:", error);
       }
