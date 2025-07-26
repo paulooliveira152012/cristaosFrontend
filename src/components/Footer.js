@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import "../styles/style.css";
 
-import MenuIcon from "../assets/icons/menuIcon";
 import MessageIcon from "../assets/icons/messageIcon";
-import MessageIconSolid from "../assets/icons/messageIconSolid";
+import MessageIconSolid from "../assets/icons/messageIconSolid.js";
 
 import HomeIcon from "../assets/icons/homeIcon";
 import HomeIconSolid from "../assets/icons/homeIconSolid";
@@ -13,11 +12,14 @@ import PlusIcon from "../assets/icons/plusIcon";
 import PlusIconSolid from "../assets/icons/plusIconSolid";
 
 import BellIcon from "../assets/icons/bellIcon";
+import BellIconSolid from "../assets/icons/bellIconSolid";
 
 import {
   checkForNewNotifications,
   checkForNewMessages,
 } from "./functions/footerFunctions";
+
+import { useUser } from "../context/UserContext";
 
 const Footer = () => {
   const navigate = useNavigate();
@@ -43,13 +45,12 @@ const Footer = () => {
     const timeout = setTimeout(() => {
       checkForNewNotifications(setNotifications);
       checkForNewMessages(setUnreadMessagesCount, currentUser._id);
-
     }, 1000); // espera 1 segundo
 
     return () => clearTimeout(timeout); // boa prática: limpa timeout se componente desmontar
   }, [currentUser]);
 
-  console.log("unreadMessagesCount:", unreadMessagesCount)
+  console.log("unreadMessagesCount:", unreadMessagesCount);
 
   return (
     <div className="footerContainer">
@@ -59,17 +60,28 @@ const Footer = () => {
 
       <div className="notificationIcon" onClick={navigateToMainChat}>
         {location.pathname === "/chat" ? <MessageIconSolid /> : <MessageIcon />}
+        {unreadMessagesCount > 0 && (
+          <span className="notificationStatus">{unreadMessagesCount}</span>
+        )}
       </div>
 
       {currentUser && (
         <Link to="/newlisting">
-          {location.pathname === "/newlisting" ? <PlusIconSolid /> : <PlusIcon />}
+          {location.pathname === "/newlisting" ? (
+            <PlusIconSolid />
+          ) : (
+            <PlusIcon />
+          )}
         </Link>
       )}
 
       <div className="notificationIcon">
         <Link to="/notifications">
-          {location.pathname === "/notifications" ? <BellIconSolid /> : <BellIcon />}
+          {location.pathname === "/notifications" ? (
+            <BellIconSolid />
+          ) : (
+            <BellIcon />
+          )}
           {notifications && <span className="notificationStatus"></span>}
         </Link>
       </div>

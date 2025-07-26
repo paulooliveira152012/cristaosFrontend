@@ -1,3 +1,4 @@
+import { useLocation } from "react-router-dom";
 // Importar a página inicial
 import Landing from "./pages/landing";
 import OpenListing from "./pages/listing";
