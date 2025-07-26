@@ -1,12 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import socket from "../socket";
 import "../styles/chat.css";
 import { format } from "date-fns";
 import Header from "../components/Header";
-import { handleBack } from "../components/functions/headerFunctions";
-import { useNavigate } from "react-router-dom";
 
 const PrivateChat = () => {
   const { conversationId } = useParams();
@@ -16,16 +14,11 @@ const PrivateChat = () => {
   const messagesContainerRef = useRef(null);
 
   const baseURL = process.env.REACT_APP_API_BASE_URL;
-
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!conversationId || !currentUser) return;
 
-    // Entrar na sala de chat privada
-    socket.emit("joinPrivateChat", conversationId);
-
-    // Buscar mensagens antigas
     const fetchMessages = async () => {
       try {
         const res = await fetch(`${baseURL}/api/dm/messages/${conversationId}`, {
@@ -38,14 +31,31 @@ const PrivateChat = () => {
       }
     };
 
-    fetchMessages();
-
-    // Escutar mensagens novas
-    socket.on("newPrivateMessage", (newMsg) => {
-      if (newMsg.conversationId === conversationId) {
-        setMessages((prev) => [...prev, newMsg]);
+    const markAsRead = async () => {
+      try {
+        await fetch(`${baseURL}/api/dm/markAsRead/${conversationId}`, {
+          method: "POST",
+          credentials: "include",
+        });
+        console.log("🔵 Conversa marcada como lida");
+      } catch (error) {
+        console.error("Erro ao marcar como lida:", error);
       }
-    });
+    };
+
+    const enterRoomAndFetch = async () => {
+      socket.emit("joinPrivateChat", conversationId);
+      await fetchMessages();
+      await markAsRead();
+
+      socket.on("newPrivateMessage", (newMsg) => {
+        if (newMsg.conversationId === conversationId) {
+          setMessages((prev) => [...prev, newMsg]);
+        }
+      });
+    };
+
+    enterRoomAndFetch();
 
     return () => {
       socket.emit("leavePrivateChat", conversationId);
@@ -63,22 +73,23 @@ const PrivateChat = () => {
     };
 
     socket.emit("sendPrivateMessage", msg);
-    setMessages((prev) => [...prev, { ...msg, username: currentUser.username, timestamp: new Date() }]);
+    setMessages((prev) => [
+      ...prev,
+      { ...msg, username: currentUser.username, timestamp: new Date() },
+    ]);
     setMessage("");
   };
 
   useEffect(() => {
     if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      messagesContainerRef.current.scrollTop =
+        messagesContainerRef.current.scrollHeight;
     }
   }, [messages]);
 
   return (
     <div className="chatPageWrapper">
-        <Header 
-            showProfileImage={false}
-            navigate={navigate}
-        />
+      <Header showProfileImage={false} navigate={navigate} />
       <div className="messagesContainer">
         <div className="chatPageContainer" ref={messagesContainerRef}>
           <div className="messagesContainer">
@@ -86,7 +97,9 @@ const PrivateChat = () => {
               <div key={index} className="messageItem">
                 <strong>{msg.username || "Você"}:</strong> {msg.message}
                 <br />
-                <small>{format(new Date(msg.timestamp || new Date()), "PPpp")}</small>
+                <small>
+                  {format(new Date(msg.timestamp || new Date()), "PPpp")}
+                </small>
               </div>
             ))}
           </div>
@@ -102,7 +115,9 @@ const PrivateChat = () => {
           placeholder="Digite sua mensagem..."
           className="input"
         />
-        <button onClick={sendMessage} className="sendBtn">Enviar</button>
+        <button onClick={sendMessage} className="sendBtn">
+          Enviar
+        </button>
       </div>
     </div>
   );
