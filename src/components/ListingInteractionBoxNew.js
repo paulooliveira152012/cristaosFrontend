@@ -101,7 +101,7 @@ const InteractionContainer = ({
           onChange={(e) => setNewComment(e.target.value)}
           placeholder="Adicionar comentario"
           className="commentInput"
-          style={{ padding: "10px", width: "100%" }}
+          style={{ padding: "20px", width: "100%" }}
         />
         <button
           className="submitCommentBtn"

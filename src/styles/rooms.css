@@ -1,12 +1,16 @@
 .landingLivesContainer {
     height: 200px; /* Remove o calc desnecessário */
     width: 100%;
-    /* background-color: white;  */
+    /* background-color: rgb(189, 34, 34);  */
     display: flex;
     overflow-x: auto; /* Adiciona rolagem horizontal */
     white-space: nowrap; /* Garante que os itens fiquem em linha e não quebrem para a próxima linha */
     gap: 15px; /* Espaçamento entre os itens */
     padding: 10px 10px;
+}
+
+body.dark-mode .landingLivesContainer {
+    background-color: black;
 }
 
 
@@ -43,6 +47,12 @@
     box-shadow: 0 4px 8px rgba(97, 129, 211, 0.3);
     transition: height 0.3s, box-shadow 0.3s, background-color 0.3s;
   }
+
+  body.dark-mode .landingLiveNewRoomContainer {
+  background-color: #000000;
+  box-shadow: none;
+  border: 1px solid #333; /* opcional, pra dar leve destaque */
+}
 
 .landingLiveNewRoomContainer:hover {
     height: 70%;

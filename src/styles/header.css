@@ -11,15 +11,27 @@
     margin: auto;
     align-items: center;
     padding: 10px ;
-    height: 7vh;
+    height: 9vh;
   }
-
+  body.dark-mode .header {
+    background-color: rgb(0, 0, 0); 
+    color: rgb(255, 255, 255);
+    
+  }
   .stickyHeader {
   /* position: sticky; */
   top: 0;
   z-index: 1000;
   background-color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(131, 6, 6, 0.05);
+}
+
+body.dark-mode .stickyHeader {
+  top: 0;
+  z-index: 1000;
+  background-color: rgb(24, 24, 24); /* opcional, mas escurece no dark */
+  box-shadow: none; /* remove o sombreado */
+  border-bottom: 0.7px solid rgba(255, 255, 255, 0.1); /* linha fina clara */
 }
 
   

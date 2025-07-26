@@ -14,7 +14,8 @@ import PasswordResetLink from "./pages/passwordLinkRequest.js";
 import PasswordReset from "./pages/PasswordReset.js";
 import VerifyAccount from "./pages/verifyAccount.js";
 import VerifyEmailUpdate from "./pages/verifyEmailUpdate.js";
-// paginas do menu
+
+// páginas do menu
 import BibleStudiesByBook from "./pages/menuPages/BibleStudiesByBook.js";
 import BibleStudiesByTheme from "./pages/menuPages/BibleStudiesByTheme.js";
 import ChurchSupport from "./pages/menuPages/ChurchSupport.js";
@@ -34,39 +35,27 @@ import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { UserProvider } from "./context/UserContext";
 import { RoomProvider, useRoom } from "./context/RoomContext";
 import { AudioProvider } from "./context/AudioContext";
-import { useLocation } from "react-router-dom";
+import { SocketProvider } from "./context/SocketContext.js";
+import { DarkModeProvider } from "./context/DarkModeContext.js"; // ✅ novo
 
 import "./styles/style.css";
 import SideMenuFullScreen from "./components/SideMenuFullScreen.js";
 import Footer from "./components/Footer.js";
+import "./styles/darkMode.css";
 
-// import context
-import { SocketProvider } from "./context/SocketContext.js";
 
 // Componente para exibir o ícone da sala minimizada globalmente
 const MinimizedStatus = () => {
   const location = useLocation();
-  const { minimizedRoom } = useRoom(); // Obter minimizedRoom do contexto
-  // console.log("Minimized room state:", minimizedRoom); // Log the state to check if it's being updated
-  if (!minimizedRoom) return null; // Se não houver sala minimizada, não exibe nada
-
-  // verificar se a rota atual e a liveRoom
-  if (location.pathname.includes("/liveRoom")) {
-    return null; // Nao renderizar nada se estiver dentro da liveRoom
-  }
+  const { minimizedRoom } = useRoom();
+  if (!minimizedRoom || location.pathname.includes("/liveRoom")) return null;
 
   return (
-    <div
-      style={{ position: "fixed", bottom: "20px", right: "20px", zIndex: 1000 }}
-    >
-      <Link
-        to={`/liveRoom/${minimizedRoom._id}`} // Pass the room ID in the URL
-        state={{ sala: minimizedRoom }} // Also pass the sala object in the state
-        className="minimizedRoomLink"
-      >
+    <div style={{ position: "fixed", bottom: "20px", right: "20px", zIndex: 1000 }}>
+      <Link to={`/liveRoom/${minimizedRoom._id}`} state={{ sala: minimizedRoom }} className="minimizedRoomLink">
         <div className="minimizedRoomIcon" style={styles.minimizedRoom}>
           <img
-            src={minimizedRoom.roomImage || "defaultIcon.png"} // Ensure the image is correct
+            src={minimizedRoom.roomImage || "defaultIcon.png"}
             alt={minimizedRoom.roomTitle}
             style={{ width: "50px", height: "50px", borderRadius: "50%" }}
           />
@@ -77,18 +66,20 @@ const MinimizedStatus = () => {
   );
 };
 
-// Componente App principal — só para envolver com contextos e Router
+// Componente App principal
 const App = () => {
   return (
     <SocketProvider>
-      <Router>
-        <AppWithLocation />
-      </Router>
+      <DarkModeProvider>
+        <Router>
+          <AppWithLocation />
+        </Router>
+      </DarkModeProvider>
     </SocketProvider>
   );
 };
 
-// Criar o componente App
+// App com localização
 const AppWithLocation = () => {
   const location = useLocation();
 
@@ -104,19 +95,15 @@ const AppWithLocation = () => {
   return (
     <UserProvider>
       <RoomProvider>
-        {" "}
-        {/* Make sure RoomProvider is wrapping the entire app */}
         <AudioProvider>
           <div className="mainParentContainer">
-            {/* flex 1 */}
             <div className="sideMenuContainerWideScreen">
               {/* COLOCAR O MENU AQUI */}
               {shouldShowSideMenu && <SideMenuFullScreen />}
             </div>
-            {/* flex 2 */}
+
             <div
               style={{
-                // backgroundColor: "red",
                 flex: 2,
                 display: "flex",
                 flexDirection: "column",
@@ -126,19 +113,15 @@ const AppWithLocation = () => {
               }}
               id="scrollableContainer"
             >
-              {/* Wrap your entire app in a div with global styling */}
               <div
                 style={{
-                  // maxWidth: "800px",
                   flex: 1,
                   margin: "0 auto",
                   width: "100%",
                   maxWidth: 800,
-                  // position: "relative",
                 }}
               >
                 <Routes>
-                  {/* Implementar rotas */}
                   <Route path="/" element={<Landing />} />
                   <Route path="/openListing/:id" element={<OpenListing />} />
                   <Route path="/liveRoom/:roomId" element={<LiveRoom />} />
@@ -161,10 +144,7 @@ const AppWithLocation = () => {
                   <Route path="/profile/:userId" element={<Profile />} />
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/donate" element={<Donate />} />
-                  <Route
-                    path="/passwordResetLink"
-                    element={<PasswordResetLink />}
-                  />
+                  <Route path="/passwordResetLink" element={<PasswordResetLink />} />
                   <Route path="/passwordReset" element={<PasswordReset />} />
                   <Route path="/guidelines" element={<PlatformGuidelines />} />
                   <Route
@@ -179,10 +159,7 @@ const AppWithLocation = () => {
                   <Route path="/suggestions" element={<Suggestions />} />
                   <Route path="/contactUs" element={<ContactUs />} />
                   <Route path="/findGathering" element={<FindGathering />} />
-                  <Route
-                    path="/counselingSessions"
-                    element={<CounselingSessions />}
-                  />
+                  <Route path="/counselingSessions" element={<CounselingSessions />} />
                   <Route path="/churchSupport" element={<ChurchSupport />} />
                   <Route path="/promotions" element={<Promotions />} />
                   <Route path="/communityForum" element={<CommunityForum />} />
@@ -190,18 +167,16 @@ const AppWithLocation = () => {
                   <Route path="/mainChat" element={<MainChat />} />
                   <Route path="/privateChat/:id" element={<PrivateChat />} />
                 </Routes>
-                {/* Display the minimized room globally */}
                 <MinimizedStatus />
               </div>
 
-              {/* Footer posicionado dentro do flex:2 */}
               {shouldShowFooter && (
                 <div style={{ position: "sticky", bottom: 0 }}>
                   <Footer />
                 </div>
               )}
-            </div>{" "}
-            {/* final da div flex 2 */}
+            </div>
+
             <div className="sideMenuContainerWideScreen"></div>
           </div>
         </AudioProvider>
@@ -210,7 +185,6 @@ const AppWithLocation = () => {
   );
 };
 
-// CSS styles for the minimized room icon
 const styles = {
   minimizedRoom: {
     padding: "10px",
@@ -221,5 +195,4 @@ const styles = {
   },
 };
 
-// Exportar o componente App
 export default App;
