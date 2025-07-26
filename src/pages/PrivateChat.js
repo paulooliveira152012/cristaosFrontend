@@ -7,7 +7,8 @@ import { format } from "date-fns";
 import Header from "../components/Header";
 
 const PrivateChat = () => {
-  const { conversationId } = useParams();
+  const { id: conversationId } = useParams();
+
   const { currentUser } = useUser();
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
@@ -16,14 +17,20 @@ const PrivateChat = () => {
   const baseURL = process.env.REACT_APP_API_BASE_URL;
   const navigate = useNavigate();
 
+  console.log("conversationId:",conversationId)
+
   useEffect(() => {
     if (!conversationId || !currentUser) return;
 
+
     const fetchMessages = async () => {
       try {
-        const res = await fetch(`${baseURL}/api/dm/messages/${conversationId}`, {
-          credentials: "include",
-        });
+        const res = await fetch(
+          `${baseURL}/api/dm/messages/${conversationId}`,
+          {
+            credentials: "include",
+          }
+        );
         const data = await res.json();
         setMessages(data);
       } catch (err) {
@@ -49,10 +56,15 @@ const PrivateChat = () => {
       await markAsRead();
 
       socket.on("newPrivateMessage", (newMsg) => {
-        if (newMsg.conversationId === conversationId) {
-          setMessages((prev) => [...prev, newMsg]);
-        }
-      });
+  if (newMsg.conversationId === conversationId) {
+    setMessages((prev) => {
+      const alreadyExists = prev.some((msg) => msg._id === newMsg._id);
+      if (!alreadyExists) return [...prev, newMsg];
+      return prev;
+    });
+  }
+});
+
     };
 
     enterRoomAndFetch();
@@ -61,10 +73,12 @@ const PrivateChat = () => {
       socket.emit("leavePrivateChat", conversationId);
       socket.off("newPrivateMessage");
     };
-  }, [conversationId, currentUser]);
+  }, [conversationId, currentUser, baseURL]);
 
   const sendMessage = () => {
     if (!message.trim()) return;
+
+    console.log("📤 Emitindo para conversa:", conversationId); // <--- aqui!
 
     const msg = {
       conversationId,
@@ -73,11 +87,7 @@ const PrivateChat = () => {
     };
 
     socket.emit("sendPrivateMessage", msg);
-    setMessages((prev) => [
-      ...prev,
-      { ...msg, username: currentUser.username, timestamp: new Date() },
-    ]);
-    setMessage("");
+    setMessage(""); // limpa input
   };
 
   useEffect(() => {
