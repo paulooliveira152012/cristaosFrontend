@@ -60,7 +60,11 @@ const PrivateChat = () => {
     };
 
     const enterRoomAndFetch = async () => {
-      socket.emit("joinPrivateChat", conversationId);
+      socket.emit("joinPrivateChat", {
+        conversationId,
+        userId: currentUser._id,
+      });
+      
       await fetchMessages();
       await markAsRead();
 
