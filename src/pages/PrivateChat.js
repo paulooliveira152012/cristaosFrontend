@@ -18,11 +18,10 @@ const PrivateChat = () => {
   const baseURL = process.env.REACT_APP_API_BASE_URL;
   const navigate = useNavigate();
 
-  console.log("conversationId:",conversationId)
+  console.log("conversationId:", conversationId);
 
   useEffect(() => {
     if (!conversationId || !currentUser) return;
-
 
     const fetchMessages = async () => {
       try {
@@ -41,14 +40,20 @@ const PrivateChat = () => {
 
     const markAsRead = async () => {
       try {
-        const res = await fetch(`${baseURL}/api/dm/markAsRead/${conversationId}`, {
-          method: "POST",
-          credentials: "include",
-        });
+        const res = await fetch(
+          `${baseURL}/api/dm/markAsRead/${conversationId}`,
+          {
+            method: "POST",
+            credentials: "include",
+          }
+        );
         console.log("🔵 Conversa marcada como lida");
-        socket.emit("privateChatRead", { conversationId, userId: currentUser._id });
+        socket.emit("privateChatRead", {
+          conversationId,
+          userId: currentUser._id,
+        });
         const data = await res.json();
-        console.log("mensagens nao lidas: ", data)
+        console.log("mensagens nao lidas: ", data);
       } catch (error) {
         console.error("Erro ao marcar como lida:", error);
       }
@@ -60,15 +65,14 @@ const PrivateChat = () => {
       await markAsRead();
 
       socket.on("newPrivateMessage", (newMsg) => {
-  if (newMsg.conversationId === conversationId) {
-    setMessages((prev) => {
-      const alreadyExists = prev.some((msg) => msg._id === newMsg._id);
-      if (!alreadyExists) return [...prev, newMsg];
-      return prev;
-    });
-  }
-});
-
+        if (newMsg.conversationId === conversationId) {
+          setMessages((prev) => {
+            const alreadyExists = prev.some((msg) => msg._id === newMsg._id);
+            if (!alreadyExists) return [...prev, newMsg];
+            return prev;
+          });
+        }
+      });
     };
 
     enterRoomAndFetch();
@@ -103,9 +107,9 @@ const PrivateChat = () => {
 
   return (
     <div className="chatPageWrapper">
-      <Header 
-        showProfileImage={false} 
-        navigate={navigate} 
+      <Header
+        showProfileImage={false}
+        navigate={navigate}
         showLeavePrivateRoomButton={true}
         handleLeaveDirectMessagingChat={handleLeaveDirectMessagingChat}
         roomId={conversationId} // <--- isso aqui é o ID da conversa
@@ -114,12 +118,21 @@ const PrivateChat = () => {
         <div className="chatPageContainer" ref={messagesContainerRef}>
           <div className="messagesContainer">
             {messages.map((msg, index) => (
-              <div key={index} className="messageItem">
-                <strong>{msg.username || "Você"}:</strong> {msg.message}
-                <br />
-                <small>
-                  {format(new Date(msg.timestamp || new Date()), "PPpp")}
-                </small>
+              <div
+                key={index}
+                className={`messageItem ${msg.system ? "systemMessage" : ""}`}
+              >
+                {msg.system ? (
+                  <em>{msg.message}</em>
+                ) : (
+                  <>
+                    <strong>{msg.username || "Você"}:</strong> {msg.message}
+                    <br />
+                    <small>
+                      {format(new Date(msg.timestamp || new Date()), "PPpp")}
+                    </small>
+                  </>
+                )}
               </div>
             ))}
           </div>
