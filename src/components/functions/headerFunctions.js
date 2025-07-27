@@ -46,3 +46,34 @@ export const handleBack = (
   console.log("Attempting to navigate back to '/'");
   navigate("/");
 };
+
+
+export const handleLeaveDirectMessagingChat = async ({
+  conversationId,
+  userId,
+  navigate,
+}) => {
+
+  console.log("conversationId:", conversationId, "userId:", userId, "navigate:", navigate)
+  try {
+    const res = await fetch(
+      `${process.env.REACT_APP_API_BASE_URL}/api/dm/leaveChat/${conversationId}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId }),
+      }
+    );
+
+    if (!res.ok) throw new Error("Erro ao sair da conversa");
+
+    const data = await res.json();
+    console.log("✅ Saiu da conversa:", data.message);
+    navigate("/"); // ou outro caminho adequado
+  } catch (err) {
+    console.error("Erro ao sair da conversa:", err);
+  }
+};

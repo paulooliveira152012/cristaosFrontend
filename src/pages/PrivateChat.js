@@ -5,6 +5,7 @@ import socket from "../socket";
 import "../styles/chat.css";
 import { format } from "date-fns";
 import Header from "../components/Header";
+import { handleLeaveDirectMessagingChat } from "../components/functions/headerFunctions";
 
 const PrivateChat = () => {
   const { id: conversationId } = useParams();
@@ -102,7 +103,13 @@ const PrivateChat = () => {
 
   return (
     <div className="chatPageWrapper">
-      <Header showProfileImage={false} navigate={navigate} />
+      <Header 
+        showProfileImage={false} 
+        navigate={navigate} 
+        showLeavePrivateRoomButton={true}
+        handleLeaveDirectMessagingChat={handleLeaveDirectMessagingChat}
+        roomId={conversationId} // <--- isso aqui é o ID da conversa
+      />
       <div className="messagesContainer">
         <div className="chatPageContainer" ref={messagesContainerRef}>
           <div className="messagesContainer">

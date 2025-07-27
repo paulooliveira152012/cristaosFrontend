@@ -7,6 +7,7 @@ import SettingsIcon from "../assets/icons/settingIcon";
 import SideMenu from "./SideMenu";
 import BackArrow from "../assets/icons/Arrow_left";
 import CloseIcon from "../assets/icons/closeIcon";
+import PrivateMessageSettings from "./PrivateMessageSettings";
 
 // Import the functions from the headerFunctions.js file
 import { handleLogout, handleBack } from "./functions/headerFunctions";
@@ -16,6 +17,8 @@ const Header = ({
   showLoginButton = true,
   showLogoutButton = true,
   showWelcomeMessage = true,
+  showLeavePrivateRoomButton = false,
+  handleLeaveDirectMessagingChat,
   showProfileImage = true,
   showSettingsIcon = false,
   showBackArrow = true,
@@ -35,6 +38,8 @@ const Header = ({
   // State to control the modal visibility and new room title
   const [newRoomTitle, setNewRoomTitle] = useState(roomTitle); // Add state for room title
   const [showSideMenu, setShowSideMenu] = useState(false);
+  const [showPrivateMessagingSettings, setShowPrivateMessagingSettings] =
+    useState(false);
 
   // Use effect to initialize the room title if it's defined later
   useEffect(() => {
@@ -61,9 +66,7 @@ const Header = ({
   }, [showSideMenu]);
 
   return (
-    <div
-      className="stickyHeader"
-    >
+    <div className="stickyHeader">
       {/* Conditionally render SideMenu based on showSideMenu */}
       {showSideMenu && <SideMenu closeMenu={toggleSideMenu} />}
       <div className="header">
@@ -101,8 +104,9 @@ const Header = ({
             <div
               className="headerProfileImage"
               style={{
-                backgroundImage: `url(${currentUser?.profileImage || imagePlaceholder
-                  })`,
+                backgroundImage: `url(${
+                  currentUser?.profileImage || imagePlaceholder
+                })`,
                 backgroundPosition: "center",
               }}
               onClick={toggleSideMenu}
@@ -136,6 +140,22 @@ const Header = ({
           {/* Conditionally render settings icon */}
           {showSettingsIcon && (
             <SettingsIcon className="settingsIcon" onClick={openLiveSettings} />
+          )}
+
+          {showLeavePrivateRoomButton && (
+            <p onClick={() => setShowPrivateMessagingSettings(true)}>Menu</p>
+          )}
+          {showPrivateMessagingSettings && (
+            <PrivateMessageSettings
+              onClose={() => setShowPrivateMessagingSettings(false)}
+              onLeave={() =>
+                handleLeaveDirectMessagingChat({
+                  conversationId: roomId,
+                  userId: currentUser._id,
+                  navigate,
+                })
+              }
+            />
           )}
         </div>
       </div>

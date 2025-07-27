@@ -156,6 +156,15 @@ body.dark-mode .stickyHeader {
   width: auto;
 }
 
+.privateMessageSettings {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 100%;
+  background-color: rgb(255, 0, 0);
+}
+
   
   @media screen and (max-width: 500px) {
     .header {
