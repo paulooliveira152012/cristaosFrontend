@@ -14,13 +14,11 @@ const SideMenu = ({ closeMenu, isOpen }) => {
 
   return (
     <>
-      {/* Fundo escurecido */}
       <div
         className={`sideMenuOverlay ${isOpen ? "visible" : ""}`}
         onClick={closeMenu}
       ></div>
 
-      {/* Menu lateral */}
       <div className={`sideMenu ${isOpen ? "open" : ""}`}>
         <div className="top">
           <div className="profileImageContainer">
@@ -28,17 +26,14 @@ const SideMenu = ({ closeMenu, isOpen }) => {
               className="headerProfileImage"
               style={{
                 backgroundImage: `url(${currentUser?.profileImage || imagePlaceholder})`,
-                backgroundPosition: "center",
               }}
               onClick={() => navigate(`profile/${currentUser._id}`)}
             ></div>
           </div>
-          <div onClick={closeMenu} className="closeBtn">
-            Fechar
-          </div>
+          <div onClick={closeMenu} className="closeBtn">Fechar</div>
         </div>
 
-        <div className="bottom">
+        <div className="scrollableMenuContent">
           <ul className="menuOptions">
             <li onClick={() => navigate("bibleStudies")}>Estudos Bíblico</li>
             <li onClick={() => navigate("privateRooms")}>Salas de Reuniões Privadas</li>
@@ -51,27 +46,27 @@ const SideMenu = ({ closeMenu, isOpen }) => {
             <li onClick={() => navigate("contactUs")}>Fale Conosco</li>
           </ul>
 
-          <div className="sideMenuButtons">
+          {currentUser && (
             <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="themeToggleBtn"
-              title={darkMode ? "Modo Claro" : "Modo Escuro"}
+              onClick={() => {
+                handleLogout(logout, navigate);
+                closeMenu();
+              }}
+              className="logout-button"
             >
-              {darkMode ? <SunIcon /> : <MoonIcon />}
+              Sair
             </button>
+          )}
+        </div>
 
-            {currentUser && (
-              <button
-                onClick={() => {
-                  handleLogout(logout, navigate);
-                  closeMenu();
-                }}
-                className="logout-button"
-              >
-                Logout
-              </button>
-            )}
-          </div>
+        <div className="bottomFixedTheme">
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="themeToggleBtn"
+            title={darkMode ? "Modo Claro" : "Modo Escuro"}
+          >
+            {darkMode ? <SunIcon /> : <MoonIcon />}
+          </button>
         </div>
       </div>
     </>

@@ -1,134 +1,161 @@
-/* Overlay escuro */
 .sideMenuOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.4);
-    z-index: 99;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease;
-  }
-  
-  .sideMenuOverlay.visible {
-    opacity: 1;
-    visibility: visible;
-  }
-  
-  /* Menu lateral */
-  .sideMenu {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 70%;
-    height: 100vh;
-    background-color: white;
-    z-index: 100;
-    display: flex;
-    flex-direction: column;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease-in-out;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 100px; /* Espaço extra pro botão de logout */
-  }
-  
-  .sideMenu.open {
-    transform: translateX(0);
-  }
-  
-  body.dark-mode .sideMenu {
-    background-color: #151515;
-    color: white;
-  }
-  
-  /* Topo do menu */
-  .top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-  }
-  
-  .profileImageContainer {
-    display: flex;
-    align-items: center;
-  }
-  
-  .headerProfileImage {
-    width: 50px;
-    height: 50px;
-    border-radius: 100%;
-    background-size: cover;
-    background-position: center;
-    cursor: pointer;
-  }
-  
-  /* Lista de opções */
-  .menuOptions {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  
-  .menuOptions li {
-    padding: 15px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  /* Hover modo claro/escuro */
-  body.dark-mode .menuOptions li:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-  }
-  
-  body:not(.dark-mode) .menuOptions li:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-  }
-  
-  /* Botões */
-  .sideMenuButtons {
-    margin-top: auto;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  /* Ícone do modo tema: removida borda e padding extra */
-  .themeToggleBtn {
-    background-color: transparent;
-    border: none;
-    border-radius: 8px;
-    color: inherit;
-    cursor: pointer;
-    width: fit-content;
-    align-self: flex-start;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px;
-  }
-  
-  .themeToggleBtn svg {
-    width: 24px;
-    height: 24px;
-  }
-  
-  /* Botão de logout */
-  .logout-button {
-    padding: 10px;
-    background-color: #e63946;
-    border: none;
-    border-radius: 8px;
-    color: white;
-    cursor: pointer;
-  }
-  
-  .logout-button:hover {
-    opacity: 0.9;
-  }
-  
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100dvh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease;
+}
+
+.sideMenuOverlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.sideMenu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 80%;
+  height: 100dvh;
+  background-color: white;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease-in-out;
+}
+
+.sideMenu.open {
+  transform: translateX(0);
+}
+
+body.dark-mode .sideMenu {
+  background-color: #121212;
+  color: white;
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+}
+
+.profileImageContainer {
+  display: flex;
+  align-items: center;
+}
+
+.headerProfileImage {
+  width: 50px;
+  height: 50px;
+  border-radius: 100%;
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+}
+
+/* Conteúdo com rolagem */
+.scrollableMenuContent {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 60px; /* espaço para o botão fixo não cobrir conteúdo */
+}
+
+.menuOptions {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.menuOptions li {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px 20px;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: bold;
+  color: #1A1A1A;
+}
+
+body.dark-mode .menuOptions li {
+  color: #F1F1F1;
+}
+
+.menuOptions li:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+body.dark-mode .menuOptions li:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.logout-button {
+  padding: 16px 20px;
+  background-color: transparent;
+  color: #CE3B3D;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+  align-self: stretch;
+  text-align: left;
+}
+
+.logout-button:hover {
+  opacity: 0.9;
+}
+
+/* Botão fixo no rodapé com transparência e blur */
+.bottomFixedTheme {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 50px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  background-color: rgba(255, 255, 255, 0.2);
+  /* background-color: #CE3B3D; */
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 10;
+  box-sizing: border-box;
+}
+
+body.dark-mode .bottomFixedTheme {
+  background-color: rgba(18, 18, 18, 0.7);
+}
+
+.themeToggleBtn {
+  background-color: transparent;
+  border: none;
+  border-radius: 8px;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  margin: 0;
+}
+
+.themeToggleBtn svg {
+  width: 24px;
+  height: 24px;
+}
