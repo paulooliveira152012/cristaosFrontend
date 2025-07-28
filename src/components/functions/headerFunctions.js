@@ -1,3 +1,5 @@
+import socket from "../../socket";
+
 // Function to handle logout and navigation
 export const handleLogout = (logout, navigate) => {
   logout(); // Clear the user from context (logout)
@@ -51,10 +53,11 @@ export const handleBack = (
 export const handleLeaveDirectMessagingChat = async ({
   conversationId,
   userId,
+  username,
   navigate,
 }) => {
+  console.log("conversationId:", conversationId, "userId:", userId);
 
-  console.log("conversationId:", conversationId, "userId:", userId, "navigate:", navigate)
   try {
     const res = await fetch(
       `${process.env.REACT_APP_API_BASE_URL}/api/dm/leaveChat/${conversationId}`,
@@ -72,7 +75,16 @@ export const handleLeaveDirectMessagingChat = async ({
 
     const data = await res.json();
     console.log("✅ Saiu da conversa:", data.message);
-    navigate("/"); // ou outro caminho adequado
+
+    // 🔴 Emitir saída via socket
+    socket.emit("leavePrivateChat", {
+      conversationId,
+      userId,
+      username,
+    });
+
+    // ✅ Navegar para home
+    navigate("/");
   } catch (err) {
     console.error("Erro ao sair da conversa:", err);
   }

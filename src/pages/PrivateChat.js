@@ -9,7 +9,6 @@ import { handleLeaveDirectMessagingChat } from "../components/functions/headerFu
 
 const PrivateChat = () => {
   const { id: conversationId } = useParams();
-
   const { currentUser } = useUser();
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
@@ -18,18 +17,15 @@ const PrivateChat = () => {
   const baseURL = process.env.REACT_APP_API_BASE_URL;
   const navigate = useNavigate();
 
-  console.log("conversationId:", conversationId);
-
   useEffect(() => {
     if (!conversationId || !currentUser) return;
 
+    // fetch messages
     const fetchMessages = async () => {
       try {
         const res = await fetch(
           `${baseURL}/api/dm/messages/${conversationId}`,
-          {
-            credentials: "include",
-          }
+          { credentials: "include" }
         );
         const data = await res.json();
         setMessages(data);
@@ -38,6 +34,7 @@ const PrivateChat = () => {
       }
     };
 
+    // mark chat as read
     const markAsRead = async () => {
       try {
         const res = await fetch(
@@ -47,50 +44,41 @@ const PrivateChat = () => {
             credentials: "include",
           }
         );
-        console.log("🔵 Conversa marcada como lida");
         socket.emit("privateChatRead", {
           conversationId,
           userId: currentUser._id,
         });
-        const data = await res.json();
-        console.log("mensagens nao lidas: ", data);
       } catch (error) {
         console.error("Erro ao marcar como lida:", error);
       }
     };
 
-    const enterRoomAndFetch = async () => {
-      socket.emit("joinPrivateChat", {
-        conversationId,
-        userId: currentUser._id,
-      });
-      
-      await fetchMessages();
-      await markAsRead();
-
-      socket.on("newPrivateMessage", (newMsg) => {
-        if (newMsg.conversationId === conversationId) {
-          setMessages((prev) => {
-            const alreadyExists = prev.some((msg) => msg._id === newMsg._id);
-            if (!alreadyExists) return [...prev, newMsg];
-            return prev;
-          });
-        }
-      });
+    // Listener fora da função principal
+    const handleIncomingMessage = (newMsg) => {
+      if (newMsg.conversationId === conversationId) {
+        setMessages((prev) => {
+          const alreadyExists = prev.some((msg) => msg._id === newMsg._id);
+          if (!alreadyExists) return [...prev, newMsg];
+          return prev;
+        });
+      }
     };
 
-    enterRoomAndFetch();
+    // Entrar na sala e buscar mensagens
+    socket.emit("joinPrivateChat", {
+      conversationId,
+      userId: currentUser._id,
+    });
 
-    return () => {
-      socket.emit("leavePrivateChat", conversationId);
-      socket.off("newPrivateMessage");
-    };
+    fetchMessages();
+    markAsRead();
+
+    // Escutar mensagens novas (inclusive as de sistema)
+    socket.on("newPrivateMessage", handleIncomingMessage);
   }, [conversationId, currentUser, baseURL]);
 
   const sendMessage = () => {
     if (!message.trim()) return;
-
-    console.log("📤 Emitindo para conversa:", conversationId); // <--- aqui!
 
     const msg = {
       conversationId,
@@ -99,7 +87,7 @@ const PrivateChat = () => {
     };
 
     socket.emit("sendPrivateMessage", msg);
-    setMessage(""); // limpa input
+    setMessage("");
   };
 
   useEffect(() => {
@@ -109,6 +97,13 @@ const PrivateChat = () => {
     }
   }, [messages]);
 
+
+  // socket.on("userLeftPrivateChat", ({ conversationId: convId, leftUser }) => {
+  //     if (convId === conversationId) {
+  //       console.log(`🟠 ${leftUser.username} saiu da conversa!`);
+  //     }
+  //   });
+
   return (
     <div className="chatPageWrapper">
       <Header
@@ -116,8 +111,9 @@ const PrivateChat = () => {
         navigate={navigate}
         showLeavePrivateRoomButton={true}
         handleLeaveDirectMessagingChat={handleLeaveDirectMessagingChat}
-        roomId={conversationId} // <--- isso aqui é o ID da conversa
+        roomId={conversationId}
       />
+
       <div className="messagesContainer">
         <div className="chatPageContainer" ref={messagesContainerRef}>
           <div className="messagesContainer">
