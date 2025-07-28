@@ -5,7 +5,10 @@ import socket from "../socket";
 import "../styles/chat.css";
 import { format } from "date-fns";
 import Header from "../components/Header";
-import { handleLeaveDirectMessagingChat } from "../components/functions/headerFunctions";
+import {
+  handleLeaveDirectMessagingChat,
+  handleInviteBackToChat,
+} from "../components/functions/headerFunctions";
 
 const PrivateChat = () => {
   const { id: conversationId } = useParams();
@@ -179,7 +182,7 @@ const PrivateChat = () => {
         {hasOtherUserLeft ? (
           <button
             className="inviteBackBtn"
-            onClick={() => alert("Função de convite ainda não implementada.")}
+            onClick={() => handleInviteBackToChat(conversationId, currentUser._id)}
           >
             Convidar usuário de volta
           </button>
