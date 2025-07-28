@@ -66,7 +66,7 @@ const SideMenu = ({ closeMenu }) => {
                 className="logout-button"
                 style={{
                   padding: "10px",
-                  backgroundColor: "#d32f2f",
+                  backgroundColor: "white",
                   border: "none",
                   borderRadius: "8px",
                   color: "#fff",

@@ -18,7 +18,6 @@ const SideMenuFullScreen = () => {
             className="sideMenuProfileImage"
             style={{
               backgroundImage: `url(${currentUser?.profileImage || imagePlaceholder})`,
-              backgroundPosition: "center",
             }}
             onClick={() => navigate(`profile/${currentUser._id}`)}
           ></div>
@@ -41,7 +40,6 @@ const SideMenuFullScreen = () => {
             <li
               onClick={() => handleLogout(logout, navigate)}
               className="logout-buttonFullScreen"
-              style={{ color: "red", fontWeight: "bold" }}
             >
               Logout
             </li>
@@ -51,17 +49,6 @@ const SideMenuFullScreen = () => {
         <button
           onClick={() => setDarkMode(!darkMode)}
           className="themeToggleBtnFullScreen"
-          style={{
-            marginTop: "20px",
-            padding: "10px",
-            width: "90%",
-            alignSelf: "center",
-            backgroundColor: "transparent",
-            border: "1px solid currentColor",
-            borderRadius: "8px",
-            color: "inherit",
-            cursor: "pointer",
-          }}
         >
           {darkMode ? "☀️ Tema Claro" : "🌙 Tema Escuro"}
         </button>

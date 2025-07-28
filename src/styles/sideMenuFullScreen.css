@@ -1,69 +1,111 @@
 .sideMenuFullScreen {
-    background-color: white;
-    padding: 0 16px;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    height: 100%;
-    max-height: 100dvh; /* mobile safe height */
-  }
-  
-  
-  .topFullScreen {
-    display: flex;
-    padding: 10px 0;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .profileImageContainer {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .bottomFullScreen {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .menuOptionsFullScreen {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  
-  .menuOptionsFullScreen li {
-    cursor: pointer;
-    background-color: #44d82a;
-    color: white;
-    padding: 10px;
-    list-style-type: none;
-    border-radius: 10px;
-    text-align: center;
-  }
-  
-  .themeToggleBtn,
-  .logout-buttonFullScreen {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 12px;
-    border: none;
-    border-radius: 10px;
-    font-weight: bold;
-    cursor: pointer;
-  }
-  
-  .themeToggleBtnFullScreen {
-    background-color: #f0f0f0;
-    color: #222;
-  }
-  
-  .logout-buttonFullScreen {
-    background-color: #ff4d4d;
-    color: white;
-  }
-  
+  background-color: white;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  height: 100%;
+  max-height: 100dvh; /* altura segura para mobile */
+}
+
+body.dark-mode .sideMenuFullScreen {
+
+  background-color: #151515;
+}
+
+
+/* Topo com imagem de perfil */
+.topFullScreen {
+  display: flex;
+  padding: 10px 0;
+  justify-content: center;
+  align-items: center;
+}
+
+.profileImageContainerFullScreen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.sideMenuProfileImage {
+  height: 70px;
+  width: 70px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* Parte inferior */
+.bottomFullScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Lista de opções */
+.menuOptionsFullScreen {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.menuOptionsFullScreen li {
+  cursor: pointer;
+  background-color: #000;
+  color: #fff;
+  padding: 10px;
+  list-style-type: none;
+  border-radius: 10px;
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+
+.menuOptionsFullScreen li:hover {
+  background-color: #222;
+}
+
+/* Botões gerais */
+.themeToggleBtnFullScreen,
+.logout-buttonFullScreen {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+/* Tema claro/escuro */
+.themeToggleBtnFullScreen {
+  background-color: #f0f0f0;
+  color: #222;
+}
+
+.themeToggleBtnFullScreen:hover {
+  background-color: #e0e0e0;
+}
+
+body.dark-mode .themeToggleBtnFullScreen {
+  background-color: #1a1a1a;
+  color: #fff;
+}
+
+body.dark-mode .themeToggleBtnFullScreen:hover {
+  background-color: #333;
+}
+
+/* Botão logout */
+.logout-buttonFullScreen {
+  background-color: #ff4d4d;
+  color: white;
+}
+
+.logout-buttonFullScreen:hover {
+  background-color: #cc0000;
+}
