@@ -99,7 +99,10 @@ export const handleLeaveDirectMessagingChat = async ({
   }
 };
 
-export const handleInviteBackToChat = async (conversationId, currentUserId) => {
+export const handleInviteBackToChat = async (
+  conversationId, 
+  currentUserId,
+) => {
   console.log(`
     conversationId: ${conversationId}, 
     currentUser: ${currentUserId}
