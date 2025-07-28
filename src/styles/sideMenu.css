@@ -1,17 +1,23 @@
-/* ========= Overlay (fundo escurecido) ========= */
+/* Overlay escuro */
 .sideMenuOverlay {
     position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.8);
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 99;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+  }
   
-  z-index: 10;
-}
+  .sideMenuOverlay.visible {
+    opacity: 1;
+    visibility: visible;
+  }
   
-  
-  /* ========= Menu lateral ========= */
+  /* Menu lateral */
   .sideMenu {
     position: fixed;
     top: 0;
@@ -19,108 +25,79 @@
     width: 70%;
     height: 100vh;
     background-color: white;
-    z-index: 10;
+    z-index: 100;
     display: flex;
     flex-direction: column;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
     overflow-y: auto;
-    padding-bottom: 80px;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 100px; /* Garantir espaço pro botão de logout */
+  }
+  
+  .sideMenu.open {
+    transform: translateX(0);
   }
   
   body.dark-mode .sideMenu {
     background-color: #151515;
+    color: white;
   }
   
-  /* ========= Topo do menu ========= */
+  /* Topo do menu */
   .top {
     display: flex;
-    padding: 10px 20px;
     justify-content: space-between;
     align-items: center;
+    padding: 20px;
   }
   
-  /* ========= Imagem de perfil ========= */
   .profileImageContainer {
     display: flex;
-    justify-content: center;
     align-items: center;
   }
   
-  .sideMenuProfileImage {
-    height: 50px;
+  .headerProfileImage {
     width: 50px;
+    height: 50px;
+    border-radius: 100%;
     background-size: cover;
     background-position: center;
-    border-radius: 40%;
     cursor: pointer;
   }
   
-  /* ========= Botão de fechar ========= */
-  .closeBtn {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-  }
-  
-  /* ========= Parte inferior do menu ========= */
-  .bottom {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding-bottom: 20px;
-    overflow-y: auto;
-  }
-  
-  /* ========= Lista de opções ========= */
+  /* Lista de opções */
   .menuOptions {
-    height: 90%;
-    overflow-y: auto;
-    padding-bottom: 100px;
-    display: flex;
-    flex-direction: column;
-    background-color: white;
+    list-style: none;
+    padding: 0;
+    margin: 0;
   }
   
   .menuOptions li {
-    cursor: pointer;
-    background-color: white;
-    color: #000;
-    padding: 5%;
-    list-style-type: none;
-    margin: 0;
-    border-radius: 1px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  }
-  
-  .menuOptions li:last-child {
-    border-bottom: none;
-  }
-  
-  body.dark-mode .menuOptions {
-    background-color: #151515;
-  }
-  
-  body.dark-mode .menuOptions li {
-    background-color: #151515;
-    color: white;
+    padding: 15px 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: background-color 0.2s;
   }
   
-  /* ========= Nome de usuário (se usado) ========= */
-  .username {
-    display: flex;
-    margin: auto 10px;
+  /* Ajuste hover modo claro/escuro */
+  body.dark-mode .menuOptions li:hover {
+    background-color: rgba(255, 255, 255, 0.05);
   }
   
-  /* ========= Container dos botões ========= */
+  body:not(.dark-mode) .menuOptions li:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Botões */
   .sideMenuButtons {
+    margin-top: auto;
     padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 10px;
   }
   
-  /* ========= Botão de alternar tema ========= */
   .themeToggleBtn {
     padding: 10px;
     background-color: transparent;
@@ -128,39 +105,18 @@
     border-radius: 8px;
     color: inherit;
     cursor: pointer;
-    transition: background-color 0.3s ease;
   }
   
-  .themeToggleBtn:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-  }
-  
-  body.dark-mode .themeToggleBtn:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-  
-  /* ========= Botão de logout ========= */
   .logout-button {
     padding: 10px;
-    background-color: #d32f2f;
+    background-color: #e63946;
     border: none;
     border-radius: 8px;
-    color: #fff;
+    color: white;
     cursor: pointer;
-    transition: background-color 0.3s ease;
   }
   
   .logout-button:hover {
-    background-color: #b71c1c;
-  }
-  
-  /* ========= Responsividade ========= */
-  @media screen and (min-width: 600px) {
-    .sideMenu {
-      height: 100vh;
-      position: absolute;
-      left: 0 !important;
-      overflow-y: hidden;
-    }
+    opacity: 0.9;
   }
   
