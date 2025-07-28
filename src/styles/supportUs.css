@@ -12,7 +12,7 @@ body.dark-mode .supportUsContainer  {
   justify-content: center;   /* Alinha horizontalmente */
   align-items: center;       /* Alinha verticalmente */
   height: 10vh;             /* Ocupa toda a altura da tela */
-  background-color: #000000; /* (Opcional) fundo claro para contraste */
+  background-color: #1A1A1A; /* (Opcional) fundo claro para contraste */
 }
 
 /* Botão que começa redondo e estica */

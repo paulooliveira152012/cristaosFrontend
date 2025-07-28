@@ -28,9 +28,6 @@ const Footer = () => {
   const [notifications, setNotifications] = useState(false);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
-  // console.log("Current user in footer component is is:", currentUser)
-  // console.log("currentUser.userId in footer component is:", currentUser._id)
-
   const navigateToMainChat = () => {
     if (currentUser) {
       navigate("/chat");
@@ -45,21 +42,27 @@ const Footer = () => {
     const timeout = setTimeout(() => {
       checkForNewNotifications(setNotifications);
       checkForNewMessages(setUnreadMessagesCount, currentUser._id);
-    }, 1000); // espera 1 segundo
+    }, 1000);
 
-    return () => clearTimeout(timeout); // boa prática: limpa timeout se componente desmontar
+    return () => clearTimeout(timeout);
   }, [currentUser]);
-
-  console.log("unreadMessagesCount:", unreadMessagesCount);
 
   return (
     <div className="footerContainer">
       <Link to={"/"}>
-        {location.pathname === "/" ? <HomeIconSolid /> : <HomeIcon />}
+        {location.pathname === "/" ? (
+          <HomeIconSolid className="icon" />
+        ) : (
+          <HomeIcon className="icon" />
+        )}
       </Link>
 
       <div className="notificationIcon" onClick={navigateToMainChat}>
-        {location.pathname === "/chat" ? <MessageIconSolid /> : <MessageIcon />}
+        {location.pathname === "/chat" ? (
+          <MessageIconSolid className="icon" />
+        ) : (
+          <MessageIcon className="icon" />
+        )}
         {unreadMessagesCount > 0 && (
           <span className="notificationStatus">{unreadMessagesCount}</span>
         )}
@@ -68,9 +71,9 @@ const Footer = () => {
       {currentUser && (
         <Link to="/newlisting">
           {location.pathname === "/newlisting" ? (
-            <PlusIconSolid />
+            <PlusIconSolid className="icon" />
           ) : (
-            <PlusIcon />
+            <PlusIcon className="icon" />
           )}
         </Link>
       )}
@@ -78,9 +81,9 @@ const Footer = () => {
       <div className="notificationIcon">
         <Link to="/notifications">
           {location.pathname === "/notifications" ? (
-            <BellIconSolid />
+            <BellIconSolid className="icon" />
           ) : (
-            <BellIcon />
+            <BellIcon className="icon" />
           )}
           {notifications && <span className="notificationStatus"></span>}
         </Link>

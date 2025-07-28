@@ -2,7 +2,7 @@
     flex-grow: 1;
     /* Ocupar o espaço disponível */
     width: 100%;
-    /* background-color: #333333; */
+    /* background-color: #ff0000; */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -10,8 +10,8 @@
 }
 
 body.dark-mode .landingListingsContainer {
-    background-color: black;
-    color: white;
+    background-color: #1A1A1A;
+    color: #F1F1F1;
 }
 
 
@@ -27,9 +27,16 @@ body.dark-mode .landingListingsContainer {
     border-bottom: 0.5px solid lightgray;
   }
 
+  body.dark-mode .landingListingContainer {
+    border-bottom: 0.5px solid rgb(86, 86, 86);
+  }
+
   body.dark-mode .landingListingContainer
     .userInfo, .userName  {
-    color: white;
+    color: rgb(255, 255, 255);
+    /* background-color: blueviolet; */
+    font-weight: 600;
+   
   }
 
   .landingListingContainer .header {
@@ -58,6 +65,10 @@ body.dark-mode .landingListingsContainer {
     color: black;
 }
 
+body.dark-mode .userName {
+    margin-left: 10px;
+    color: #E0E0E0;
+}
 .iteractionContainer {
     height: 50px;
     /* background-color: green; */
@@ -72,6 +83,12 @@ body.dark-mode .landingListingsContainer {
     color: black;
     text-decoration: none;
     padding-bottom: 0;
+}
+
+body.dark-mode .listing-content {
+    /* background-color: aqua; */
+    color: #E0E0E0;
+
 }
 
 .adminListingMenu {

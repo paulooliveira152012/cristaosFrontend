@@ -10,7 +10,7 @@
 }
 
 body.dark-mode .landingLivesContainer {
-    background-color: black;
+    background-color: #1A1A1A;
 }
 
 
@@ -49,7 +49,7 @@ body.dark-mode .landingLivesContainer {
   }
 
   body.dark-mode .landingLiveNewRoomContainer {
-  background-color: #000000;
+  background-color:  #1A1A1A ;
   box-shadow: none;
   border: 1px solid #333; /* opcional, pra dar leve destaque */
 }
