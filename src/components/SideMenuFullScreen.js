@@ -4,6 +4,8 @@ import { useDarkMode } from "../context/DarkModeContext";
 import imagePlaceholder from "../assets/images/profileplaceholder.png";
 import { useNavigate } from "react-router-dom";
 import { handleLogout } from "./functions/headerFunctions";
+import MoonIcon from "../assets/icons/darkModeIcon";
+import SunIcon from "../assets/icons/lightModeIcon";
 
 const SideMenuFullScreen = () => {
   const { currentUser, logout } = useUser();
@@ -49,8 +51,9 @@ const SideMenuFullScreen = () => {
         <button
           onClick={() => setDarkMode(!darkMode)}
           className="themeToggleBtnFullScreen"
+          aria-label="Alternar tema"
         >
-          {darkMode ? "☀️ Tema Claro" : "🌙 Tema Escuro"}
+          {darkMode ? <SunIcon /> : <MoonIcon />}
         </button>
       </div>
     </div>

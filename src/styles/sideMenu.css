@@ -32,7 +32,7 @@
     transition: transform 0.3s ease-in-out;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 100px; /* Garantir espaço pro botão de logout */
+    padding-bottom: 100px; /* Espaço extra pro botão de logout */
   }
   
   .sideMenu.open {
@@ -80,7 +80,7 @@
     transition: background-color 0.2s;
   }
   
-  /* Ajuste hover modo claro/escuro */
+  /* Hover modo claro/escuro */
   body.dark-mode .menuOptions li:hover {
     background-color: rgba(255, 255, 255, 0.05);
   }
@@ -98,15 +98,27 @@
     gap: 10px;
   }
   
+  /* Ícone do modo tema: removida borda e padding extra */
   .themeToggleBtn {
-    padding: 10px;
     background-color: transparent;
-    border: 1px solid currentColor;
+    border: none;
     border-radius: 8px;
     color: inherit;
     cursor: pointer;
+    width: fit-content;
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
   }
   
+  .themeToggleBtn svg {
+    width: 24px;
+    height: 24px;
+  }
+  
+  /* Botão de logout */
   .logout-button {
     padding: 10px;
     background-color: #e63946;
