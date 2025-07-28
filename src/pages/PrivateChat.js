@@ -13,6 +13,7 @@ const PrivateChat = () => {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
   const messagesContainerRef = useRef(null);
+  const [isOtherUserInChat, setIsOtherUserInChat] = useState(false);
 
   const baseURL = process.env.REACT_APP_API_BASE_URL;
   const navigate = useNavigate();
@@ -77,6 +78,23 @@ const PrivateChat = () => {
     socket.on("newPrivateMessage", handleIncomingMessage);
   }, [conversationId, currentUser, baseURL]);
 
+  useEffect(() => {
+    
+    const handlePresence = ({ conversationId: convId, users }) => {
+      if (convId === conversationId) {
+        console.log("📡 Atualização de presença recebida:", users);
+        setIsOtherUserInChat(users.length > 0);
+      }
+    };
+
+    socket.on("currentUsersInPrivateChat", handlePresence);
+
+    return () => {
+      socket.off("currentUsersInPrivateChat", handlePresence);
+    };
+  }, [conversationId, socket]);
+
+
   const sendMessage = () => {
     if (!message.trim()) return;
 
@@ -97,12 +115,29 @@ const PrivateChat = () => {
     }
   }, [messages]);
 
+  useEffect(() => {
+    const handleUserJoined = ({ conversationId: convId, joinedUser }) => {
+      if (convId === conversationId) {
+        console.log(`🟢 ${joinedUser.username} entrou na conversa!`);
+        setIsOtherUserInChat(true);
+      }
+    };
 
-  // socket.on("userLeftPrivateChat", ({ conversationId: convId, leftUser }) => {
-  //     if (convId === conversationId) {
-  //       console.log(`🟠 ${leftUser.username} saiu da conversa!`);
-  //     }
-  //   });
+    const handleUserLeft = ({ conversationId: convId, leftUser }) => {
+      if (convId === conversationId) {
+        console.log(`🔴 ${leftUser.username} saiu da conversa!`);
+        setIsOtherUserInChat(false);
+      }
+    };
+
+    socket.on("userJoinedPrivateChat", handleUserJoined);
+    socket.on("userLeftPrivateChat", handleUserLeft);
+
+    return () => {
+      socket.off("userJoinedPrivateChat", handleUserJoined);
+      socket.off("userLeftPrivateChat", handleUserLeft);
+    };
+  }, [conversationId]);
 
   return (
     <div className="chatPageWrapper">
@@ -140,17 +175,28 @@ const PrivateChat = () => {
       </div>
 
       <div className="chatPageInputContainer">
-        <input
-          type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-          placeholder="Digite sua mensagem..."
-          className="input"
-        />
-        <button onClick={sendMessage} className="sendBtn">
-          Enviar
-        </button>
+        {isOtherUserInChat ? (
+          <>
+            <input
+              type="text"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              placeholder="Digite sua mensagem..."
+              className="input"
+            />
+            <button onClick={sendMessage} className="sendBtn">
+              Enviar
+            </button>
+          </>
+        ) : (
+          <button
+            className="inviteBackBtn"
+            onClick={() => alert("Função de convite ainda não implementada.")}
+          >
+            Convidar usuário de volta
+          </button>
+        )}
       </div>
     </div>
   );
