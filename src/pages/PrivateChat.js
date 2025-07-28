@@ -14,6 +14,7 @@ const PrivateChat = () => {
   const [message, setMessage] = useState("");
   const messagesContainerRef = useRef(null);
   const [isOtherUserInChat, setIsOtherUserInChat] = useState(false);
+  const [hasOtherUserLeft, setHasOtherUserLeft] = useState(false); // ✅ nova flag
 
   const baseURL = process.env.REACT_APP_API_BASE_URL;
   const navigate = useNavigate();
@@ -79,7 +80,6 @@ const PrivateChat = () => {
   }, [conversationId, currentUser, baseURL]);
 
   useEffect(() => {
-    
     const handlePresence = ({ conversationId: convId, users }) => {
       if (convId === conversationId) {
         console.log("📡 Atualização de presença recebida:", users);
@@ -93,7 +93,6 @@ const PrivateChat = () => {
       socket.off("currentUsersInPrivateChat", handlePresence);
     };
   }, [conversationId, socket]);
-
 
   const sendMessage = () => {
     if (!message.trim()) return;
@@ -120,6 +119,7 @@ const PrivateChat = () => {
       if (convId === conversationId) {
         console.log(`🟢 ${joinedUser.username} entrou na conversa!`);
         setIsOtherUserInChat(true);
+        setHasOtherUserLeft(false); // reset caso ele volte
       }
     };
 
@@ -127,6 +127,7 @@ const PrivateChat = () => {
       if (convId === conversationId) {
         console.log(`🔴 ${leftUser.username} saiu da conversa!`);
         setIsOtherUserInChat(false);
+        setHasOtherUserLeft(true); // ✅ agora sim!
       }
     };
 
@@ -175,7 +176,14 @@ const PrivateChat = () => {
       </div>
 
       <div className="chatPageInputContainer">
-        {isOtherUserInChat ? (
+        {hasOtherUserLeft ? (
+          <button
+            className="inviteBackBtn"
+            onClick={() => alert("Função de convite ainda não implementada.")}
+          >
+            Convidar usuário de volta
+          </button>
+        ) : (
           <>
             <input
               type="text"
@@ -189,13 +197,6 @@ const PrivateChat = () => {
               Enviar
             </button>
           </>
-        ) : (
-          <button
-            className="inviteBackBtn"
-            onClick={() => alert("Função de convite ainda não implementada.")}
-          >
-            Convidar usuário de volta
-          </button>
         )}
       </div>
     </div>
