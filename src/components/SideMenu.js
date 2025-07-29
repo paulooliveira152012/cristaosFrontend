@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { handleLogout } from "./functions/headerFunctions";
 import MoonIcon from "../assets/icons/darkModeIcon.js";
 import SunIcon from "../assets/icons/lightModeIcon.js";
+import ArrowLeftIcon from "../assets/icons/ArrowLeftIcon.js";
 
 const SideMenu = ({ closeMenu, isOpen }) => {
   const { currentUser, logout } = useUser();
@@ -21,19 +22,35 @@ const SideMenu = ({ closeMenu, isOpen }) => {
 
       <div className={`sideMenu ${isOpen ? "open" : ""}`}>
         <div className="top">
-          <div className="profileImageContainer">
-            <div
-              className="headerProfileImage"
-              style={{
-                backgroundImage: `url(${currentUser?.profileImage || imagePlaceholder})`,
+          <div className="topRight">
+            <div className="profileImageContainer">
+              <div
+                className="headerProfileImage"
+                style={{
+                  backgroundImage: `url(${currentUser?.profileImage || imagePlaceholder})`,
+                }}
+                onClick={() => navigate(`profile/${currentUser._id}`)}
+              ></div>
+            </div>
+
+            <button
+              className="viewProfileButton"
+              onClick={() => {
+                navigate(`profile/${currentUser._id}`);
+                closeMenu();
               }}
-              onClick={() => navigate(`profile/${currentUser._id}`)}
-            ></div>
+            >
+              Ver Perfil
+            </button>
           </div>
-          <div onClick={closeMenu} className="closeBtn">Fechar</div>
+
+          {/* <div onClick={closeMenu} className="closeBtn">
+            <ArrowLeftIcon />
+          </div> */}
         </div>
 
         <div className="scrollableMenuContent">
+          {/* Primeira seção de links */}
           <ul className="menuOptions">
             <li onClick={() => navigate("bibleStudies")}>Estudos Bíblico</li>
             <li onClick={() => navigate("privateRooms")}>Salas de Reuniões Privadas</li>
@@ -41,11 +58,16 @@ const SideMenu = ({ closeMenu, isOpen }) => {
             <li onClick={() => navigate("findGathering")}>Encontrar Reunião Próxima</li>
             <li onClick={() => navigate("promotions")}>Promoções</li>
             <li onClick={() => navigate("communityForum")}>Fórum da Comunidade</li>
+          </ul>
+
+          {/* Divisor visual e segunda seção */}
+          <ul className="secondaryMenuOptions">
             <li onClick={() => navigate("guidelines")}>Diretrizes da Plataforma</li>
             <li onClick={() => navigate("suggestions")}>Sugestões</li>
             <li onClick={() => navigate("contactUs")}>Fale Conosco</li>
           </ul>
 
+          {/* Botão de logout */}
           {currentUser && (
             <button
               onClick={() => {
