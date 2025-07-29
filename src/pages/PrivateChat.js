@@ -8,6 +8,7 @@ import Header from "../components/Header";
 import {
   handleLeaveDirectMessagingChat,
   handleInviteBackToChat,
+  handleFetchRoomMembers
 } from "../components/functions/headerFunctions";
 
 const PrivateChat = () => {
@@ -21,6 +22,12 @@ const PrivateChat = () => {
 
   const baseURL = process.env.REACT_APP_API_BASE_URL;
   const navigate = useNavigate();
+
+  useEffect(() => {
+    handleFetchRoomMembers(conversationId, setIsOtherUserInChat);
+    console.log("isOtherUserInRoom:",isOtherUserInChat)
+}, [conversationId]);
+
 
   useEffect(() => {
     if (!conversationId || !currentUser) return;
@@ -80,6 +87,7 @@ const PrivateChat = () => {
 
     // Escutar mensagens novas (inclusive as de sistema)
     socket.on("newPrivateMessage", handleIncomingMessage);
+
   }, [conversationId, currentUser, baseURL]);
 
   useEffect(() => {
@@ -179,7 +187,7 @@ const PrivateChat = () => {
       </div>
 
       <div className="chatPageInputContainer">
-        {hasOtherUserLeft ? (
+        {!isOtherUserInChat ? (
           <button
             className="inviteBackBtn"
             onClick={() => handleInviteBackToChat(conversationId, currentUser._id)}

@@ -136,3 +136,25 @@ export const handleInviteBackToChat = async (
     console.error("Erro ao convidar de volta:", err);
   }
 };
+
+export const handleFetchRoomMembers = async (id, setIsOtherUserInChat) => {
+  console.log("fetching users in room", id);
+
+  try {
+    const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/dm/usersInChat/${id}`, {
+      credentials: "include",
+    });
+
+    const data = await res.json();
+    console.log("Usuários na sala:", data.users); // data.users
+
+    if (data.length > 0) {
+      setIsOtherUserInChat(true)
+    }
+
+    return data; // importante para usar depois
+  } catch (error) {
+    console.error("Erro ao buscar usuários na sala:", error);
+    return null;
+  }
+};
