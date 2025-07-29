@@ -8,7 +8,7 @@ import Header from "../components/Header";
 import {
   handleLeaveDirectMessagingChat,
   handleInviteBackToChat,
-  handleFetchRoomMembers
+  handleFetchRoomMembers,
 } from "../components/functions/headerFunctions";
 
 const PrivateChat = () => {
@@ -24,10 +24,21 @@ const PrivateChat = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    handleFetchRoomMembers(conversationId, setIsOtherUserInChat);
-    console.log("isOtherUserInRoom:",isOtherUserInChat)
-}, [conversationId]);
+    const debugListener = (data) => {
+      console.log("📡 [SOCKET DEBUG]", data);
+    };
 
+    socket.on("debugLog", debugListener);
+
+    return () => {
+      socket.off("debugLog", debugListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    handleFetchRoomMembers(conversationId, setIsOtherUserInChat);
+    console.log("isOtherUserInRoom:", isOtherUserInChat);
+  }, [conversationId]);
 
   useEffect(() => {
     if (!conversationId || !currentUser) return;
@@ -76,6 +87,9 @@ const PrivateChat = () => {
       }
     };
 
+    // 🔐 Registra o listener ANTES de tudo
+    socket.off("newPrivateMessage").on("newPrivateMessage", handleIncomingMessage);
+
     // Entrar na sala e buscar mensagens
     socket.emit("joinPrivateChat", {
       conversationId,
@@ -85,15 +99,16 @@ const PrivateChat = () => {
     fetchMessages();
     markAsRead();
 
-    // Escutar mensagens novas (inclusive as de sistema)
-    socket.on("newPrivateMessage", handleIncomingMessage);
-
-  }, [conversationId, currentUser, baseURL]);
+    return () => {
+      // 🔇 Limpa quando sai do componente
+      socket.off("newPrivateMessage", handleIncomingMessage);
+    };
+  }, [conversationId, currentUser, baseURL, socket]);
 
   useEffect(() => {
     const handlePresence = ({ conversationId: convId, users }) => {
       if (convId === conversationId) {
-        console.log("📡 Atualização de presença recebida:", users);
+        // console.log("📡 Atualização de presença recebida:", users);
         setIsOtherUserInChat(users.length > 0);
       }
     };
@@ -128,7 +143,7 @@ const PrivateChat = () => {
   useEffect(() => {
     const handleUserJoined = ({ conversationId: convId, joinedUser }) => {
       if (convId === conversationId) {
-        console.log(`🟢 ${joinedUser.username} entrou na conversa!`);
+        // console.log(`🟢 ${joinedUser.username} entrou na conversa!`);
         setIsOtherUserInChat(true);
         setHasOtherUserLeft(false); // reset caso ele volte
       }
@@ -190,7 +205,9 @@ const PrivateChat = () => {
         {!isOtherUserInChat ? (
           <button
             className="inviteBackBtn"
-            onClick={() => handleInviteBackToChat(conversationId, currentUser._id)}
+            onClick={() =>
+              handleInviteBackToChat(conversationId, currentUser._id)
+            }
           >
             Convidar usuário de volta
           </button>
