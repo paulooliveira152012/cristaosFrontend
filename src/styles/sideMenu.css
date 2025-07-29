@@ -157,6 +157,7 @@ body.dark-mode .menuOptions li:hover {
   /* border-top: 1px solid #ccc; */
   margin-top: 8px;
   padding-top: 8px;
+  /* gap: 10px; */
 }
 
 body.dark-mode .secondaryMenuOptions {
@@ -166,11 +167,11 @@ body.dark-mode .secondaryMenuOptions {
 .secondaryMenuOptions li {
   width: 100%;
   box-sizing: border-box;
-  padding: 1px 20px;
+  padding: 13px 20px;
   border-radius: 3px;
   transition: background-color 0.2s;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: normal;
   color: #1A1A1A;
 }
