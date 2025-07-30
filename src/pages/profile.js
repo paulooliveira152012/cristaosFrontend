@@ -186,7 +186,11 @@ const Profile = () => {
               <li onClick={() => setCurrentTab("mural")}>Mural</li>
               <li>{renderFriendAction()}</li>
               {/* <li onClick={() => setCurrentTab("settings")}>Configurações</li> */}
-              <li onClick={() => navigate("/settingsMenu")}>Configurações</li>
+
+              {currentUser._id == user._id && (
+                <li onClick={() => navigate("/settingsMenu")}>Configurações</li>
+              )}
+
               {currentUser._id !== user._id && (
                 <ul>
                   <li onClick={() => requestChat(currentUser?._id, user?._id)}>

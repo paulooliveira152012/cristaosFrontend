@@ -44,7 +44,7 @@ export const Notifications = ({ setNotifications }) => {
         );
 
         const dm = sorted.filter(
-          (n) => n.type === "chat_request" && n.fromUser !== null
+          (n) => n.type === "chat_request" || n.type === "chat_reinvite" && n.fromUser !== null
         );
 
         const others = sorted.filter(

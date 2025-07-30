@@ -119,6 +119,7 @@ const Header = ({
                 handleLeaveDirectMessagingChat({
                   conversationId: roomId,
                   userId: currentUser._id,
+                  username: currentUser.username,
                   navigate,
                 })
               }
