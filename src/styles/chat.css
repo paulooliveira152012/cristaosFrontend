@@ -5,6 +5,12 @@
   flex-direction: column;
   height: 100dvh;
   overflow: hidden;
+  background-color: rgb(255, 255, 255);
+}
+
+body.dark-mode .chatPageWrapper {
+  background-color: #1E1E1E;
+  color: #F1F1F1;
 }
 
 .chatPageContainer {
@@ -39,11 +45,16 @@
 .chatPreview {
   cursor: pointer;
   padding: 0.5rem;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 0.8px solid #dbdbdb;
   /* background-color: green; */
   position: relative;
   display: flex;
   justify-content: space-between;
+}
+
+body.dark-mode .chatPreview {
+  border-bottom: 0.7px solid #2d2d2d;
+
 }
 
 .notificationIconChatPage {
@@ -52,7 +63,7 @@
   /* right: -6px; */
   width: 10px;
   height: 10px;
-  background-color: red;
+  background-color: rgb(249, 12, 40);
   color: white;
   border-radius: 50%;
   font-size: 12px;

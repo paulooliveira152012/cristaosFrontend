@@ -42,6 +42,11 @@
     margin-left: 10px;
     margin-right: 10px;
   }
+
+  body.dark-mode .commentInputWrapper {
+    background-color: #1A1A1A;
+    border: 1px solid #363636;
+  }
   
   .commentInput {
     width: 100%;
@@ -56,6 +61,10 @@
     outline: none;
     /* box-shadow: 0 0 0 2px #ccc; */
     
+  }
+
+  body.dark-mode .commentInput {
+    background-color: #1A1A1A;
   }
   
   .submitCommentBtn {
@@ -78,6 +87,11 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     z-index: 2;
     margin-right: 4px;
+  }
+
+  body.dark-mode .submitCommentBtn {
+    background-color: #2A68D8;
+    color: rgb(255, 255, 255);
   }
   
   /* .submitCommentBtn:hover {

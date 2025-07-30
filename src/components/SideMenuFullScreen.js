@@ -4,6 +4,8 @@ import { useDarkMode } from "../context/DarkModeContext";
 import imagePlaceholder from "../assets/images/profileplaceholder.png";
 import { useNavigate } from "react-router-dom";
 import { handleLogout } from "./functions/headerFunctions";
+import MoonIcon from "../assets/icons/darkModeIcon";
+import SunIcon from "../assets/icons/lightModeIcon";
 
 const SideMenuFullScreen = () => {
   const { currentUser, logout } = useUser();
@@ -18,7 +20,6 @@ const SideMenuFullScreen = () => {
             className="sideMenuProfileImage"
             style={{
               backgroundImage: `url(${currentUser?.profileImage || imagePlaceholder})`,
-              backgroundPosition: "center",
             }}
             onClick={() => navigate(`profile/${currentUser._id}`)}
           ></div>
@@ -41,7 +42,6 @@ const SideMenuFullScreen = () => {
             <li
               onClick={() => handleLogout(logout, navigate)}
               className="logout-buttonFullScreen"
-              style={{ color: "red", fontWeight: "bold" }}
             >
               Logout
             </li>
@@ -51,19 +51,9 @@ const SideMenuFullScreen = () => {
         <button
           onClick={() => setDarkMode(!darkMode)}
           className="themeToggleBtnFullScreen"
-          style={{
-            marginTop: "20px",
-            padding: "10px",
-            width: "90%",
-            alignSelf: "center",
-            backgroundColor: "transparent",
-            border: "1px solid currentColor",
-            borderRadius: "8px",
-            color: "inherit",
-            cursor: "pointer",
-          }}
+          aria-label="Alternar tema"
         >
-          {darkMode ? "☀️ Tema Claro" : "🌙 Tema Escuro"}
+          {darkMode ? <SunIcon /> : <MoonIcon />}
         </button>
       </div>
     </div>

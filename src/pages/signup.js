@@ -25,6 +25,8 @@ const uploadImageToS3 = async (file) => {
   const res = await fetch(`${baseUrl}/api/upload-url`);
   const { uploadURL, key } = await res.json();
 
+  console.log(`uploadURL: ${uploadURL}, key: ${key}`)
+
   // Step 2: Upload directly to S3 using the URL
   const upload = await fetch(uploadURL, {
     method: "PUT",
