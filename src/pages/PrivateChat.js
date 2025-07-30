@@ -84,17 +84,20 @@ const PrivateChat = () => {
           if (!alreadyExists) return [...prev, newMsg];
           return prev;
         });
+        console.log("📥 Nova mensagem recebida:", newMsg);
       }
     };
 
     // 🔐 Registra o listener ANTES de tudo
-    socket.off("newPrivateMessage").on("newPrivateMessage", handleIncomingMessage);
+    socket.off("newPrivateMessage");
+    socket.on("newPrivateMessage", handleIncomingMessage);
 
-    // Entrar na sala e buscar mensagens
-    socket.emit("joinPrivateChat", {
-      conversationId,
-      userId: currentUser._id,
-    });
+    setTimeout(() => {
+      socket.emit("joinPrivateChat", {
+        conversationId,
+        userId: currentUser._id,
+      });
+    }, 0);
 
     fetchMessages();
     markAsRead();
