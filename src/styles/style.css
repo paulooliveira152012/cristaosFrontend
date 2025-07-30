@@ -317,14 +317,23 @@ body.dark-mode .onlineStatus {
 
 
   .notificationStatus {
-    width: 15px;
-    height: 15px;
-    background-color: red; /* Green color for online status */
-    border-radius: 50%; /* Make the green ball round */
-    position: absolute;
-    top: 0px; /* Adjust the position to the top-right */
-    right: -1px;
-    border: 2px solid white; /* Add a white border to separate it from the image */
+    width: 17px;
+  height: 17px;
+  background-color: #2A68D8;
+  color: white;
+  font-size: 11px;
+  /* font-weight: bold; */
+  border-radius: 50%;
+  position: absolute;
+  top: -3px;
+  right: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  /* border: 1.5px solid #ffffff; */
+    
   }
 
   
