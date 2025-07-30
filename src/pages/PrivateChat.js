@@ -92,12 +92,24 @@ const PrivateChat = () => {
     socket.off("newPrivateMessage");
     socket.on("newPrivateMessage", handleIncomingMessage);
 
-    setTimeout(() => {
+    if (socket.connected) {
       socket.emit("joinPrivateChat", {
         conversationId,
         userId: currentUser._id,
       });
-    }, 0);
+    } else {
+      socket.on("connect", () => {
+        socket.emit("joinPrivateChat", {
+          conversationId,
+          userId: currentUser._id,
+        });
+      });
+    }
+
+    socket.emit("joinPrivateChat", {
+      conversationId,
+      userId: currentUser._id,
+    });
 
     fetchMessages();
     markAsRead();
