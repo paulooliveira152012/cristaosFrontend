@@ -1,107 +1,250 @@
+.sideMenuOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100dvh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease;
+}
+
+.sideMenuOverlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
 .sideMenu {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 70%;
-    height: 100vh;
-    background-color: white;
-    z-index: 10;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto; /* permite rolar */
-    padding-bottom: 80px; /* espaço para botão não ficar colado ou cortado */
-  }
-  
-  
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 75%;
+  height: 100dvh;
+  background-color: white;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease-in-out;
+}
 
-/* 10px top  20px side*/
+.sideMenu.open {
+  transform: translateX(0);
+}
+
+body.dark-mode .sideMenu {
+  background-color: #121212;
+  color: white;
+}
+
 .top {
-    /* background-color: orange;     */
-    display: flex;
-    padding: 10px;
-    justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  gap: 12px;
+  height: 220px;
+  /* background-color: rgb(93, 51, 88); */
 }
 
+.topRight {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  /* background-color: aquamarine; */
+  width: 100%;
+}
 
-/* 1 */
 .profileImageContainer {
-    /* background-color: purple; */
-    /* height: auto; */
-    display: flex;
-    /* flex-direction: column; */
-    width: auto;
-    justify-content: center;
-    align-items: center;
-    /* float: left; */
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-/* 2 */
+.viewProfileButton {
+  background-color: transparent;
+  border: 1px solid #2A68D8;
+  border-radius: 8px;
+  color: #2A68D8;
+  padding: 3px 10px;
+  font-size: 15px;
+  cursor: pointer;
+  height: fit-content;
+  margin: 0;
+  width: auto;
+}
+
+body.dark-mode .viewProfileButton {
+  border: 1px solid #f1f1f1;
+  color: #f1f1f1;
+}
+
 .closeBtn {
-    float: inline-end;
-    /* background-color: red; */
-    width: auto;
-    display: flex;
-    align-items: center;
-    /* margin: 20px; */
-}
-
-.bottom {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding-bottom: 20px;
-    overflow-y: auto;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  color: inherit;
+  background: none;
+  border: none;
+  display: flex;
+  /* flex: 1; */
+  justify-content: end;
+  /* background-color: olive; */
 }
 
 
-  
+.sideMenu .headerProfileImage {
+  width: 110px;
+  height: 110px;
+  border-radius: 100%;
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+}
 
-  .menuOptions {
-    height: 90%;
-    overflow-y: auto;
-    padding-bottom: 100px;
-    display: flex;
-    flex-direction: column;
-    background-color: rgb(255, 255, 255);
-  }
-  
+/* Conteúdo com rolagem */
+.scrollableMenuContent {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 60px;
+}
 
+/* Estilo base para menus */
+.menuOptions,
+.secondaryMenuOptions {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+/* Itens principais */
 .menuOptions li {
-    cursor: pointer;
-    background-color: white;
-    color: #1fb017;
-    /* color: white; */
-    padding: 5%;
-    list-style-type: none;
-    margin: 10px;
-    border-radius: 10px;
-
-    /* border: 1px solid rgb(180, 112, 39); */
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px 20px;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: bold;
+  color: #1A1A1A;
+  
 }
 
-
-.username {
-    /* background-color: yellow; */
-    display: flex;
-    margin: auto 10px;
+body.dark-mode .menuOptions li {
+  color: #F1F1F1;
 }
 
-.sideMenuProfileImage {
-    height: 50px;
-    width: 50px;
-    background-size: cover;
-    /* border-radius: 50%; */
-    border-radius: 40%;
-    
+.menuOptions li:hover {
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
+body.dark-mode .menuOptions li:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
 
-@media screen and (min-width: 600px) {
-    .sideMenu {
-        height: 100vh;
-        position: absolute;
-        left: 0px !important;
-        overflow-y: hidden;
-    }
+/* Itens secundários com linha divisória */
+.secondaryMenuOptions {
+  /* border-top: 1px solid #ccc; */
+  margin-top: 8px;
+  padding-top: 8px;
+  /* gap: 10px; */
+}
+
+body.dark-mode .secondaryMenuOptions {
+  /* border-top: 1px solid #444; */
+}
+
+.secondaryMenuOptions li {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 20px;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: normal;
+  color: #1A1A1A;
+}
+
+body.dark-mode .secondaryMenuOptions li {
+  color: #F1F1F1;
+}
+
+.secondaryMenuOptions li:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+body.dark-mode .secondaryMenuOptions li:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Botão de logout */
+.logout-button {
+  padding: 16px 20px;
+  background-color: transparent;
+  color: #CE3B3D;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+  align-self: stretch;
+  text-align: left;
+  margin-top: 8px;
+}
+
+.logout-button:hover {
+  opacity: 0.9;
+}
+
+/* Botão fixo no rodapé com transparência e blur */
+.bottomFixedTheme {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 50px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 10;
+  box-sizing: border-box;
+}
+
+body.dark-mode .bottomFixedTheme {
+  background-color: rgba(18, 18, 18, 0.7);
+}
+
+.themeToggleBtn {
+  background-color: transparent;
+  border: none;
+  border-radius: 8px;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  margin: 0;
+}
+
+.themeToggleBtn svg {
+  width: 24px;
+  height: 24px;
+  /* background-color: aquamarine; */
 }

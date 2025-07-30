@@ -4,6 +4,15 @@
     box-sizing: border-box; /* Garante que padding seja incluído no cálculo da largura e altura */
 }
 
+.icon {
+    color: #222; /* ícone escuro no modo claro */
+  }
+  
+  body.dark-mode .icon {
+    color: white; /* ícone branco no modo escuro */
+  }
+
+  
 body {
     overflow-x: hidden;
     /* Define a altura total da tela */
@@ -12,6 +21,12 @@ body {
     background-color: white;
     color: black; /* Cor do texto principal */
     font-family: Arial, sans-serif; /* Fonte padrão */
+}
+
+body.dark-mode {
+    background-color: #1A1A1A;
+    color: white;
+
 }
 
 .mainParentContainer {
@@ -31,7 +46,7 @@ body {
     /* position: absolute; */
     z-index: 20;
     /* background-color: #0093cb; */
-    background-color:#005acd;
+    /* background-color:#005acd; */
     
 }
 
@@ -66,6 +81,7 @@ body {
     width: 100%;
     min-height: 100vh; /* Garante que o container ocupe pelo menos a altura total da tela */
     background-color: white;
+    /* background-color: rgb(126, 23, 23); */
     /* color: white; */
     display: flex;
     flex-direction: column;
@@ -73,6 +89,9 @@ body {
     margin-bottom: 17vh;
 }
 
+body.dark-mode .landingContainer {
+    background-color:  #1A1A1A;
+}
 
 .blogContent {
     white-space: pre-wrap; /* Preserves whitespace and line breaks */
@@ -113,7 +132,7 @@ body {
 }
 
 body.dark-mode .roomTitleText {
-    color: white;
+    color: #F1F1F1;
 }
 
 .landingOnlineMembersContainer {
@@ -133,7 +152,7 @@ body.dark-mode .roomTitleText {
 body.dark-mode .landingOnlineMembersContainer {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background-color: #000000; /* opcional para destacar o fundo no dark */
+  background-color: #1A1A1A; /* opcional para destacar o fundo no dark */
 }
 
 .landingOnlineUserContainer {
@@ -268,7 +287,7 @@ body.dark-mode .landingOnlineUserImage {
   }
 
 body.dark-mode .onlineStatus {
-    border: 1.8px solid rgb(0, 0, 0); 
+    border: 1.8px solid #1A1A1A; 
 
 }
 
@@ -383,18 +402,27 @@ body.dark-mode .onlineStatus {
 .footerContainer {
     width: 100%;
     height: 50px;
-    background-color: rgb(252, 252, 252);
-    color: white;
+    background-color: rgba(255, 255, 255, 0.7); /* F1F1F1 com opacidade */
+    color: black;
+    backdrop-filter: blur(6px);
     display: flex;
     justify-content: space-evenly;
     align-items: center;
     font-weight: bold;
     position: fixed;
     bottom: 0;
-    box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.05); /* sombra leve no topo */
+    /* box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.05); */
     z-index: 10;
+  
 
 }
+
+body.dark-mode .footerContainer {
+    background-color: rgba(26, 26, 26, 0.1); /* #1A1A1A com 90% opacidade */
+    color: white;
+    backdrop-filter: blur(6px); /* opcional: dá um efeito de vidro fosco */
+  }
+  
 
 
 

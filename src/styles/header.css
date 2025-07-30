@@ -14,7 +14,7 @@
     height: 9vh;
   }
   body.dark-mode .header {
-    background-color: rgb(0, 0, 0); 
+    background-color: #1A1A1A ; 
     color: rgb(255, 255, 255);
     
   }
@@ -29,7 +29,7 @@
 body.dark-mode .stickyHeader {
   top: 0;
   z-index: 1000;
-  background-color: rgb(24, 24, 24); /* opcional, mas escurece no dark */
+  background-color: #1A1A1A; /* opcional, mas escurece no dark */
   box-shadow: none; /* remove o sombreado */
   border-bottom: 0.7px solid rgba(255, 255, 255, 0.1); /* linha fina clara */
 }
@@ -154,6 +154,15 @@ body.dark-mode .stickyHeader {
   padding: 10px;
   background-color: red;
   width: auto;
+}
+
+.privateMessageSettings {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 100%;
+  background-color: rgb(255, 0, 0);
 }
 
   

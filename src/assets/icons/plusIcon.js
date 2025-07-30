@@ -1,4 +1,5 @@
 import * as React from "react";
+
 const SVGComponent = (props) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -6,10 +7,10 @@ const SVGComponent = (props) => (
     height={23}
     fill="none"
     viewBox="0 0 23 23"
-    {...props}
+    {...props} // permite aplicar `color` externamente com className ou style
   >
     <path
-      stroke="#484C52"
+      stroke="currentColor"
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth={1.558}
@@ -19,9 +20,10 @@ const SVGComponent = (props) => (
       cx={11.5}
       cy={11.5}
       r={10.569}
-      stroke="#484C52"
+      stroke="currentColor"
       strokeWidth={1.861}
     />
   </svg>
 );
+
 export default SVGComponent;
