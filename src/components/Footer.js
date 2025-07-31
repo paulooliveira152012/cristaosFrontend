@@ -20,6 +20,7 @@ import {
 } from "./functions/footerFunctions";
 
 import { useUser } from "../context/UserContext";
+import socket from "../socket.js";
 
 const Footer = () => {
   const navigate = useNavigate();
@@ -35,6 +36,25 @@ const Footer = () => {
       window.alert("Por favor fazer login para acessar o chat principal");
     }
   };
+
+  useEffect(() => {
+    console.log("buscando notificaçøes via socket...")
+    if (!currentUser) return;
+
+    // Entra na sala pessoal do usuário
+    socket.emit("setup", currentUser._id);
+
+    const handleNewNotification = () => {
+      console.log("🟢🟣⚪️ a new notification has arrived!")
+      setNotifications(true);
+    };
+
+    socket.on("newNotification", handleNewNotification);
+
+    return () => {
+      socket.off("newNotification", handleNewNotification);
+    };
+  }, [currentUser]);
 
   useEffect(() => {
     if (!currentUser) return;
