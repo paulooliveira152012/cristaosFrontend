@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useNotification } from "../context/NotificationContext.js";
+
 import "../styles/style.css";
 
 import MessageIcon from "../assets/icons/messageIcon";
@@ -26,7 +28,8 @@ const Footer = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser } = useUser();
-  const [notifications, setNotifications] = useState(false);
+  // const [notifications, setNotifications] = useState(false);
+  const { notifications, setNotifications } = useNotification();
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
   const navigateToMainChat = () => {

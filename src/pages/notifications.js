@@ -9,21 +9,21 @@ import {
   rejectDmRequest,
 } from "./functions/functions/notificationsFunctions.js";
 import "../styles/notifications.css";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
-
+import { Link, useNavigate } from "react-router-dom";
+import { useNotification } from "../context/NotificationContext.js";
 import {
   markAllNotificationsAsRead,
   checkForNewNotifications,
 } from "../components/functions/footerFunctions.js";
 
-export const Notifications = ({ setNotifications }) => {
+export const Notifications = () => {
   const { currentUser } = useUser();
+  const { setNotifications } = useNotification();
   const [friendRequests, setFriendRequests] = useState([]);
   const [dmRequests, setDmRequests] = useState([]);
   const [otherNotifications, setOtherNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [processingId, setProcessingId] = useState(null); // para evitar cliques múltiplos
+  const [processingId, setProcessingId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,22 +33,25 @@ export const Notifications = ({ setNotifications }) => {
       try {
         const allNotifs = await fetchNotifications();
 
-        // Ordenar por data (mais recentes primeiro)
         const sorted = allNotifs.sort(
           (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         );
 
-        // Separar pedidos de amizade das outras notificações
         const requests = sorted.filter(
           (n) => n.type === "friend_request" && n.fromUser !== null
         );
 
         const dm = sorted.filter(
-          (n) => n.type === "chat_request" || n.type === "chat_reinvite" && n.fromUser !== null
+          (n) =>
+            (n.type === "chat_request" || n.type === "chat_reinvite") &&
+            n.fromUser !== null
         );
 
         const others = sorted.filter(
-          (n) => n.type !== "friend_request" && n.type !== "chat_request"
+          (n) =>
+            n.type !== "friend_request" &&
+            n.type !== "chat_request" &&
+            n.type !== "chat_reinvite"
         );
 
         setFriendRequests(requests);
@@ -66,17 +69,15 @@ export const Notifications = ({ setNotifications }) => {
 
   useEffect(() => {
     if (!currentUser) return;
-    // Assim que abrir a página, marcar todas como lidas
+
     markAllNotificationsAsRead().then(() => {
-      // 2. Atualizar o Footer (só chamar check novamente)
-      checkForNewNotifications(setNotifications);
+      checkForNewNotifications(setNotifications); // limpa o estado global
     });
-  }, []);
+  }, [currentUser, setNotifications]);
 
   const handleAccept = async (requesterId) => {
     setProcessingId(requesterId);
     await acceptFriendRequest(requesterId);
-
     setFriendRequests((prev) =>
       prev.filter((r) => r.fromUser._id !== requesterId)
     );
@@ -95,18 +96,14 @@ export const Notifications = ({ setNotifications }) => {
   const handleAcceptDm = async (request) => {
     setProcessingId(request._id);
     await acceptDmRequest(request.fromUser._id, currentUser._id, request._id);
-
     setDmRequests((prev) => prev.filter((r) => r._id !== request._id));
-
     setProcessingId(null);
   };
 
   const handleRejectDm = async (request) => {
     setProcessingId(request._id);
     await rejectDmRequest(request.fromUser._id, currentUser._id, request._id);
-
     setDmRequests((prev) => prev.filter((r) => r._id !== request._id));
-
     setProcessingId(null);
   };
 
@@ -134,24 +131,6 @@ export const Notifications = ({ setNotifications }) => {
   };
 
   if (loading) return <p>Carregando notificações...</p>;
-
-  console.log(otherNotifications);
-
-  const generateNotificationLink = (notif) => {
-    switch (notif.type) {
-      case "like":
-      case "comment":
-        return `/openListing/${notif.listingId}`;
-      case "reply":
-        return `/openListing/${notif.listingId}?commentId=${notif.commentId}`;
-      case "friend_request":
-        return `/friends`;
-      default:
-        return "/";
-    }
-  };
-
-  console.log("friendRequests", friendRequests);
 
   return (
     <div className="notificationsContainer">
@@ -185,14 +164,13 @@ export const Notifications = ({ setNotifications }) => {
         </div>
       )}
 
-      {/* chatRequests */}
       {dmRequests.length > 0 && (
         <div className="dmRequests">
-          <h3>Solicitaçoes de conversa</h3>
+          <h3>Solicitações de conversa</h3>
           <ul>
             {dmRequests.map((request) => (
-              <div className="chatRequestDecision">
-                <li key={request._id}>
+              <div className="chatRequestDecision" key={request._id}>
+                <li>
                   {request.content}
                   <button
                     onClick={() => handleAcceptDm(request)}
@@ -214,7 +192,6 @@ export const Notifications = ({ setNotifications }) => {
       )}
 
       <div className="generalNotifications">
-        <br></br>
         <h3>Outras notificações</h3>
         {otherNotifications.length > 0 ? (
           <ul>
@@ -234,7 +211,7 @@ export const Notifications = ({ setNotifications }) => {
             ))}
           </ul>
         ) : (
-          <p></p>
+          <p>Nenhuma notificação.</p>
         )}
       </div>
     </div>

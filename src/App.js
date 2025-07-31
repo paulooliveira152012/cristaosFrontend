@@ -38,6 +38,7 @@ import { RoomProvider, useRoom } from "./context/RoomContext";
 import { AudioProvider } from "./context/AudioContext";
 import { SocketProvider } from "./context/SocketContext.js";
 import { DarkModeProvider } from "./context/DarkModeContext.js"; // ✅ novo
+import { NotificationProvider } from "./context/NotificationContext.js";
 
 import "./styles/style.css";
 import SideMenuFullScreen from "./components/SideMenuFullScreen.js";
@@ -97,6 +98,7 @@ const AppWithLocation = () => {
     <UserProvider>
       <RoomProvider>
         <AudioProvider>
+          <NotificationProvider>
           <div className="mainParentContainer">
             <div className="sideMenuContainerWideScreen">
               {/* COLOCAR O MENU AQUI */}
@@ -180,6 +182,7 @@ const AppWithLocation = () => {
 
             <div className="sideMenuContainerWideScreen"></div>
           </div>
+          </NotificationProvider>
         </AudioProvider>
       </RoomProvider>
     </UserProvider>
