@@ -154,7 +154,8 @@ const Profile = () => {
   };
 
   return (
-    <div>
+    <div className="profilePage">
+      <div className="profilePageContentContainer">
       <Header showProfileImage={false} navigate={navigate} />
       <div
         className="ProfileProfileImage"
@@ -167,19 +168,7 @@ const Profile = () => {
         <h2 className="profile-username">{user.username}</h2>
       </div>
       {currentTab && currentTab === null}{" "}
-      {
-        <div className="profile-container">
-          {/* 
-        container para opcoes de:
-          firends, 
-          mural (onde outras pessoas podem escrever coisas), 
-          adicionar amigo / remover amigo, 
-          mandar mensage,
-          bloquear,
-          reportar,
-        */}
-
-          <div className="profileOptions">
+      <div className="profileOptions">
             <ul>
               <li onClick={() => setCurrentTab("")}>Listagens</li>
               <li onClick={() => setCurrentTab("userFriends")}>Amigos</li>
@@ -206,6 +195,19 @@ const Profile = () => {
               )} */}
             </ul>
           </div>
+
+        <div className="profile-container">
+          {/* 
+        container para opcoes de:
+          firends, 
+          mural (onde outras pessoas podem escrever coisas), 
+          adicionar amigo / remover amigo, 
+          mandar mensage,
+          bloquear,
+          reportar,
+        */}
+
+     
 
           {currentTab === "" && (
             <div className="profile-listings">
@@ -247,9 +249,9 @@ const Profile = () => {
                             {listing.blogContent
                               ? listing.blogContent.split(" ").length > 100
                                 ? listing.blogContent
-                                    .split(" ")
-                                    .slice(0, 100)
-                                    .join(" ") + "..."
+                                  .split(" ")
+                                  .slice(0, 100)
+                                  .join(" ") + "..."
                                 : listing.blogContent
                               : "No content available."}
                           </p>
@@ -341,9 +343,10 @@ const Profile = () => {
             </div>
           )}
         </div>
-      }
+      
       {currentTab === "userFriends" && <ProfileUserFriends user={user} />}
       {/* {currentTab === "settings" && <SettingsMenu />} */}
+      </div>
     </div>
   );
 };

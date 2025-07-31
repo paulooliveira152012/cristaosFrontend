@@ -3,14 +3,29 @@
     color: inherit; /* Inherit text color */
 }
 
+.profilePage {
+    height: 100dvh;
+    background-color: red;
+}
+
+.profilePageContentContainer {
+    background-color: blue;
+    height: 100%;
+    overflow-y: auto;
+}
+
+
+
 /* Profile page container */
 .profile-container {
     max-width: 900px;
     margin: 0 auto;
     padding: 20px;
     background-color: #f9f9f9;
+    background-color: purple;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 50px;
 }
 
 .ProfileProfileImage {
@@ -58,6 +73,7 @@
     padding: 20px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     text-align: center;
+    background-color: green;
 }
 
 /* Listing title */
