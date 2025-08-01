@@ -22,6 +22,7 @@ const Listings = () => {
   const [items, setItems] = useState([]); // Store the listings
   const [loading, setLoading] = useState(true); // Track loading state
   const [comment, setComments] = useState([]);
+  const [votedPolls, setVotedPolls] = useState({});
   // listingId when creating new comment to be available when liking new comments
   const [newCommentId, setNewCommentId] = useState("");
   const [openLeaderMenuId, setOpenLeaderMenuId] = useState(null);
@@ -61,7 +62,7 @@ const Listings = () => {
         }
 
         const data = await response.json();
-        console.log("Items received:", data);
+        console.log("✅ Items received:", data);
 
         // Sort listings by creation date
         const sortedListings = (data.listings || []).sort(
@@ -69,6 +70,25 @@ const Listings = () => {
         );
 
         setItems(sortedListings);
+
+        if (currentUser) {
+          const initialVotes = {};
+          sortedListings.forEach((listing) => {
+            if (listing.type === "poll" && listing.poll?.votes?.length > 0) {
+              const vote = listing.poll.votes.find(
+                (v) =>
+                  (typeof v.userId === "object"
+                    ? v.userId._id.toString()
+                    : v.userId.toString()) === currentUser._id.toString()
+              );
+
+              if (vote) {
+                initialVotes[listing._id] = vote.optionIndex;
+              }
+            }
+          });
+          setVotedPolls(initialVotes);
+        }
       } catch (error) {
         console.error("Error fetching items:", error);
       } finally {
@@ -76,8 +96,10 @@ const Listings = () => {
       }
     };
 
-    fetchListings();
-  }, []); // Empty dependency array to run only once after the component mounts
+    if (currentUser !== undefined) {
+      fetchListings();
+    }
+  }, [currentUser]); // Empty dependency array to run only once after the component mounts
 
   // Use handleFetchComments, passing in setItems to manage comments
   const fetchCommentsForListing = (listingId) => {
@@ -262,6 +284,47 @@ const Listings = () => {
     return match && match[2].length === 11 ? match[2] : null;
   };
 
+  const handleVote = async (listingId, optionIndex) => {
+    if (!currentUser) {
+      alert("Você precisa estar logado para votar.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${baseURL}/api/listings/${listingId}/vote`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          userId: currentUser._id,
+          optionIndex,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || "Erro ao votar.");
+
+      // Atualiza o estado local com o novo resultado da enquete
+      setItems((prevItems) =>
+        prevItems.map((item) =>
+          item._id === listingId ? { ...item, poll: data.updatedPoll } : item
+        )
+      );
+
+      // Marca que o usuário votou
+      setVotedPolls((prev) => ({
+        ...prev,
+        [listingId]: optionIndex,
+      }));
+    } catch (err) {
+      console.error("Erro ao votar:", err);
+      alert(err.message || "Erro ao votar");
+    }
+  };
+
   return (
     <div className="landingListingsContainer">
       {loading ? (
@@ -396,9 +459,80 @@ const Listings = () => {
               <div className="poll-container">
                 <h2>{listing.poll.question}</h2>
                 <ul>
-                  {listing.poll.options.map((option, index) => (
-                    <li key={index}>{option}</li>
-                  ))}
+                  {listing.poll.options.map((option, index) => {
+                    const totalVotes = listing.poll.votes?.length || 0;
+                    const optionVotes =
+                      listing.poll.votes?.filter((v) => {
+                        return v.optionIndex === index;
+                      }).length || 0;
+
+                    const votedOption = votedPolls[listing._id];
+                    const percentage =
+                      totalVotes > 0
+                        ? ((optionVotes / totalVotes) * 100).toFixed(1)
+                        : 0;
+
+                    const voters =
+                      listing.poll.votes?.filter(
+                        (v) => v.optionIndex === index
+                      ) || [];
+
+                    return (
+                      <div key={index} style={{ marginBottom: "20px" }}>
+                        {/* Bloco de votação */}
+                        <li
+                          onClick={() =>
+                            votedOption === undefined &&
+                            handleVote(listing._id, index)
+                          }
+                          style={{
+                            cursor:
+                              votedOption === undefined ? "pointer" : "default",
+                            background:
+                              votedOption !== undefined
+                                ? `linear-gradient(to right, #4caf50 ${percentage}%, #eee ${percentage}%)`
+                                : "#f9f9f9",
+                            padding: "10px",
+                            borderRadius: "5px",
+                            border: "1px solid #ccc",
+                            listStyleType: "none",
+                          }}
+                        >
+                          <strong>{option}</strong>
+                          {votedOption !== undefined && (
+                            <span style={{ float: "right" }}>
+                              {percentage}%
+                            </span>
+                          )}
+                        </li>
+
+                        {/* Avatares fora da caixa */}
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "6px",
+                            marginTop: "6px",
+                            paddingLeft: "10px",
+                          }}
+                        >
+                          {voters.map((v, idx) => (
+                            <img
+                              key={idx}
+                              src={v.userId?.profileImage || profileplaceholder}
+                              alt="voter"
+                              title={v.userId?.username}
+                              style={{
+                                width: "22px",
+                                height: "22px",
+                                borderRadius: "50%",
+                                objectFit: "cover",
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </ul>
               </div>
             )}
@@ -407,21 +541,21 @@ const Listings = () => {
               <div className="listing-link">
                 {isYouTubeLink(listing.link) ? (
                   <div>
-                  <iframe
-                    width="100%"
-                    height="220"
-                    src={`https://www.youtube.com/embed/${getYouTubeVideoId(
-                      listing.link
-                    )}`}
-                    title="YouTube preview"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    style={{ borderRadius: "8px", marginBottom: "10px" }}
-                  />
-                  <div>
-                    <p>{listing.linkDescription}</p>
-                  </div>
+                    <iframe
+                      width="100%"
+                      height="220"
+                      src={`https://www.youtube.com/embed/${getYouTubeVideoId(
+                        listing.link
+                      )}`}
+                      title="YouTube preview"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      style={{ borderRadius: "8px", marginBottom: "10px" }}
+                    />
+                    <div>
+                      <p>{listing.linkDescription}</p>
+                    </div>
                   </div>
                 ) : (
                   <a

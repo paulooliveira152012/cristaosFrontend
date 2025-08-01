@@ -277,9 +277,66 @@ const Profile = () => {
                       <div className="poll-container">
                         <h2>{listing.poll.question}</h2>
                         <ul>
-                          {listing.poll.options.map((option, index) => (
-                            <li key={index}>{option}</li>
-                          ))}
+                          {listing.poll.options.map((option, index) => {
+                            const totalVotes = listing.poll.votes?.length || 0;
+                            const optionVotes =
+                              listing.poll.votes?.filter(
+                                (v) => v.optionIndex === index
+                              ).length || 0;
+                            const percentage =
+                              totalVotes > 0
+                                ? ((optionVotes / totalVotes) * 100).toFixed(1)
+                                : 0;
+
+                            const voters =
+                              listing.poll.votes
+                                ?.filter((v) => v.optionIndex === index)
+                                .map((v) => v.userId) || [];
+
+                            return (
+                              <div key={index} style={{ marginBottom: "16px" }}>
+                                <li
+                                  style={{
+                                    listStyle: "none",
+                                    background: `linear-gradient(to right, #4caf50 ${percentage}%, #eee ${percentage}%)`,
+                                    padding: "10px",
+                                    borderRadius: "5px",
+                                    border: "1px solid #ccc",
+                                    fontWeight: "bold",
+                                  }}
+                                >
+                                  {option}
+                                  <span style={{ float: "right" }}>
+                                    {percentage}%
+                                  </span>
+                                </li>
+
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    gap: "6px",
+                                    marginTop: "4px",
+                                    marginLeft: "4px",
+                                  }}
+                                >
+                                  {voters.map((v, idx) => (
+                                    <img
+                                      key={idx}
+                                      src={v?.profileImage || imagePlaceholder}
+                                      alt="voter"
+                                      style={{
+                                        width: "24px",
+                                        height: "24px",
+                                        borderRadius: "50%",
+                                        objectFit: "cover",
+                                        border: "1px solid #ccc",
+                                      }}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </ul>
                       </div>
                     )}
