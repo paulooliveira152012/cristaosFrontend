@@ -1,18 +1,5 @@
-// primeira pagina do aplicativo
-/*
-contem:
-    Salas de live abertas
-    Pessoas online
-    listagens publicas de usuarios 
-    footer com icone de menu, chat de texto, foto de usuario
-    (nao tendo usuario, tera botao de fazer login)
-*/
-
-// importar estilo css devido aos seletores globais
 import "../styles/style.css";
-// importar capacidade de navegacao
-import { useNavigate, Link } from "react-router-dom";
-// import components
+import { useNavigate } from "react-router-dom";
 import Salas from "../components/Salas";
 import Liveusers from "../components/Liveusers";
 import Footer from "../components/Footer";
@@ -20,31 +7,35 @@ import Listings from "../components/Listings";
 import Header from "../components/Header";
 import { useRoom } from "../context/RoomContext";
 import SupportUs from "../components/SupportUs";
-import NewListing from "../components/Listing";
+import PullToRefresh from "react-pull-to-refresh";
 
-
-// declarar o componente
 const Landing = () => {
   const navigate = useNavigate();
-  const { minimizedRoom } = useRoom(); // Access the minimized room from context
+  const { minimizedRoom } = useRoom();
+
+  const handleRefresh = () => {
+    window.location.reload(); // ou chame fetchListings se tiver separado
+  };
 
   return (
-    // container que engloba todo o componente
-<div className="landingContainer">
-      <Header 
-        showBackButton={false} 
-        showBackArrow={false} 
-        showLeaveButton={false} 
-        showCloseIcon={false}
-        navigate={navigate}
+    <div className="landingContainer">
+      <PullToRefresh onRefresh={handleRefresh}>
+        <Header
+          showBackButton={false}
+          showBackArrow={false}
+          showLeaveButton={false}
+          showCloseIcon={false}
+          navigate={navigate}
         />
       <SupportUs />
+      </PullToRefresh>
       <Salas />
       <Liveusers />
       <Listings />
+
+      <Footer />
     </div>
   );
 };
 
-// exportar o componente
 export default Landing;
