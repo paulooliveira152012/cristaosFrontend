@@ -5,7 +5,7 @@ import { uploadImageToS3 } from "../utils/s3Upload"; // Assuming you have a func
 import { useUser } from "../context/UserContext";
 import { useNavigate } from "react-router-dom";
 
-const baseUrl = process.env.REACT_APP_API_BASE_URL
+const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 const NewListing = () => {
   const navigate = useNavigate();
@@ -17,6 +17,8 @@ const NewListing = () => {
   const [blogContent, setBlogContent] = useState("");
   const [image, setImage] = useState(null);
   const [link, setLink] = useState("");
+  const [linkDescription, setLinkDescription] = useState("");
+
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState(["", ""]);
   const [tags, setTags] = useState("");
@@ -88,6 +90,7 @@ const NewListing = () => {
         blogContent,
         imageUrl,
         link,
+        linkDescription,
         poll: {
           question: pollQuestion,
           options: pollOptions.filter((option) => option.trim()), // Filter out empty options
@@ -127,6 +130,16 @@ const NewListing = () => {
     setPollQuestion("");
     setPollOptions(["", ""]);
     setTags("");
+  };
+
+  const isYouTubeLink = (url) => {
+    return url.includes("youtube.com/watch") || url.includes("youtu.be/");
+  };
+
+  const getYouTubeVideoId = (url) => {
+    const youtubeRegex = /(?:youtube\.com.*(?:\?|&)v=|youtu\.be\/)([^&#?\n]+)/;
+    const match = url.match(youtubeRegex);
+    return match ? match[1] : null;
   };
 
   return (
@@ -218,7 +231,44 @@ const NewListing = () => {
                     type="text"
                     value={link}
                     onChange={(e) => setLink(e.target.value)}
-                    placeholder="Paste a link here..."
+                    placeholder="Cole o link do vídeo (YouTube, etc)..."
+                  />
+
+                  {/* Se for YouTube, mostra preview */}
+                  {isYouTubeLink(link) && getYouTubeVideoId(link) && (
+                    <div style={{ marginTop: "15px" }}>
+                      <iframe
+                        width="100%"
+                        height="220"
+                        src={`https://www.youtube.com/embed/${getYouTubeVideoId(
+                          link
+                        )}`}
+                        title="YouTube preview"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        style={{
+                          borderRadius: "8px",
+                          marginBottom: "10px",
+                          maxWidth: "100%",
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Campo opcional de texto para o usuário comentar sobre o vídeo */}
+                  <textarea
+                    value={linkDescription}
+                    onChange={(e) => setLinkDescription(e.target.value)}
+                    placeholder="Escreva algo sobre esse vídeo (opcional)..."
+                    rows="4"
+                    style={{
+                      width: "100%",
+                      marginTop: "10px",
+                      padding: "8px",
+                      borderRadius: "5px",
+                      border: "1px solid #ccc",
+                    }}
                   />
                 </div>
               )}
@@ -262,4 +312,3 @@ const NewListing = () => {
 };
 
 export default NewListing;
-

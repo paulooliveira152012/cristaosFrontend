@@ -252,6 +252,16 @@ const Listings = () => {
     }
   };
 
+  const isYouTubeLink = (url) =>
+    url.includes("youtube.com") || url.includes("youtu.be");
+
+  const getYouTubeVideoId = (url) => {
+    const regExp =
+      /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+  };
+
   return (
     <div className="landingListingsContainer">
       {loading ? (
@@ -372,11 +382,11 @@ const Listings = () => {
                     alt={`Listing image ${listing._id}`}
                     className="listingImage"
                     style={{
-                        width: "100%",
-                        maxWidth: "100%",
-                        height: "auto",
-                        // backgroundColor: "red",
-                      }}
+                      width: "100%",
+                      maxWidth: "100%",
+                      height: "auto",
+                      // backgroundColor: "red",
+                    }}
                   />
                 </Link>
               </div>
@@ -395,13 +405,34 @@ const Listings = () => {
 
             {listing.type === "link" && (
               <div className="listing-link">
-                <a
-                  href={listing.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {listing.link}
-                </a>
+                {isYouTubeLink(listing.link) ? (
+                  <div>
+                  <iframe
+                    width="100%"
+                    height="220"
+                    src={`https://www.youtube.com/embed/${getYouTubeVideoId(
+                      listing.link
+                    )}`}
+                    title="YouTube preview"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    style={{ borderRadius: "8px", marginBottom: "10px" }}
+                  />
+                  <div>
+                    <p>{listing.linkDescription}</p>
+                  </div>
+                  </div>
+                ) : (
+                  <a
+                    href={listing.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: "#2A68D8", textDecoration: "underline" }}
+                  >
+                    {listing.link}
+                  </a>
+                )}
               </div>
             )}
 
