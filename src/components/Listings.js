@@ -10,7 +10,7 @@ import {
 import "../styles/listings.css";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import profileplaceholder from "../assets/images/profileplaceholder.png"
+import profileplaceholder from "../assets/images/profileplaceholder.png";
 // importando o componente de interação
 import ListingInteractionBox from "./ListingInteractionBox";
 import { useUser } from "../context/UserContext";
@@ -315,20 +315,27 @@ const Listings = () => {
             {listing.type === "blog" && (
               <Link
                 to={`openListing/${listing._id}`}
-                style={{ textDecoration: "none" }}
+                style={{
+                  textDecoration: "none",
+                  margin: "0px",
+                  backgroundColor: "green",
+                }}
               >
                 <div className="listing-content">
-                  <h2>{listing.blogTitle || "Untitled Blog"}</h2>
-                  <p style={{ textDecoration: "none", textAlign: "justify" }}>
-                    {listing.blogContent
-                      ? listing.blogContent.split(" ").length > 100
-                        ? listing.blogContent
-                            .split(" ")
-                            .slice(0, 100)
-                            .join(" ") + "..."
-                        : listing.blogContent
-                      : "No content available."}
-                  </p>
+                  <div className="heading">
+                    <h2>{listing.blogTitle || "Untitled Blog"}</h2>
+
+                    <p style={{ textDecoration: "none", textAlign: "justify" }}>
+                      {listing.blogContent
+                        ? listing.blogContent.split(" ").length > 100
+                          ? listing.blogContent
+                              .split(" ")
+                              .slice(0, 100)
+                              .join(" ") + "..."
+                          : listing.blogContent
+                        : "No content available."}
+                    </p>
+                  </div>
                   {/*  */}
 
                   {listing.imageUrl && (
@@ -364,7 +371,12 @@ const Listings = () => {
                     src={listing.imageUrl}
                     alt={`Listing image ${listing._id}`}
                     className="listingImage"
-                    style={{ maxWidth: "100%", height: "60vh", margin: "auto" }}
+                    style={{
+                        width: "100%",
+                        maxWidth: "100%",
+                        height: "auto",
+                        // backgroundColor: "red",
+                      }}
                   />
                 </Link>
               </div>
@@ -381,7 +393,7 @@ const Listings = () => {
               </div>
             )}
 
-            {listing.link && (
+            {listing.type === "link" && (
               <div className="listing-link">
                 <a
                   href={listing.link}
@@ -428,14 +440,12 @@ const Listings = () => {
               handleLike={likeListing}
               // using function to share listing
               handleShare={shareListing}
-              // pass sharedListings 
+              // pass sharedListings
               sharedListings={sharedListings}
               // using function to like comments or replies
               handleCommentLike={likeCommentOrReply}
               // setItems
               setItems={setItems}
-               
-  
             />
           </div>
         ))

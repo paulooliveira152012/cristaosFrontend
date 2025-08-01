@@ -1,109 +1,108 @@
 .landingListingsContainer {
-    flex-grow: 1;
-    /* Ocupar o espaço disponível */
-    width: 100%;
-    /* background-color: #ff0000; */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 50px;
+  flex-grow: 1;
+  /* Ocupar o espaço disponível */
+  width: 100%;
+  /* background-color: #ff0000; */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 50px;
 }
 
 body.dark-mode .landingListingsContainer {
-    background-color: #1A1A1A;
-    color: #F1F1F1;
+  background-color: #1a1a1a;
+  color: #f1f1f1;
 }
-
 
 .landingListingContainer {
-    width: 100%;
-    /* background-color: #9f3939; */
-    
-    margin: 20px 20px 0 20px; /* top: 20px, right: 20px, bottom: 0, left: 20px */
-    padding: 20px;
-  
-    position: relative;
-    /* border-top: 1px solid lightgray; */
-    border-bottom: 0.5px solid lightgray;
-  }
+  width: 100%;
+  /* background-color: #9f3939; */
 
-  body.dark-mode .landingListingContainer {
-    border-bottom: 0.5px solid rgb(86, 86, 86);
-  }
+  margin: 20px 20px 0 20px;
+  /* padding: 20px; */
 
-  body.dark-mode .landingListingContainer
-    .userInfo, .userName  {
-    color: rgb(255, 255, 255);
-    /* background-color: blueviolet; */
-    font-weight: 600;
-   
-  }
-
-  .landingListingContainer .header {
-    /* background-color: blueviolet; */
-   
-  }
-  
-
-@media screen and (max-width: 500px) {
-    .landingListingContainer {
-        padding: 0;
-    }
-}
-
-.userInfo {
-    width: 100%;
-    display: flex;
-    text-align: center;
-    align-items: center;
-    /* background-color: aquamarine; */
-    
-  }
-
-.userName {
-    margin-left: 10px;
-    color: black;
-}
-
-body.dark-mode .userName {
-    margin-left: 10px;
-    color: #E0E0E0;
-}
-.iteractionContainer {
-    height: 50px;
-    /* background-color: green; */
-}
-
-.interactionIcon {
-    width: 100px;
-    background-color: red;
+  position: relative;
+  /* border-top: 1px solid lightgray; */
+  border-bottom: 0.5px solid lightgray;
 }
 
 .listing-content {
-    color: black;
-    text-decoration: none;
-    padding-bottom: 0;
+  /* background-color: pink; */
+  width: 100%;
+
+  color: black;
+  text-decoration: none;
+  padding: 0;
+  margin: 0;
+}
+
+body.dark-mode .landingListingContainer {
+  border-bottom: 0.5px solid rgb(86, 86, 86);
+}
+
+body.dark-mode .landingListingContainer .userInfo,
+.userName {
+  color: rgb(255, 255, 255);
+  /* background-color: blueviolet; */
+  font-weight: 600;
+}
+
+.landingListingContainer .header {
+  /* background-color: purple; */
+}
+
+@media screen and (max-width: 500px) {
+  .landingListingContainer {
+    padding: 0;
+  }
+}
+
+.userInfo {
+  width: 100%;
+  display: flex;
+  text-align: center;
+  align-items: center;
+  /* background-color: aquamarine; */
+}
+
+.userName {
+  margin-left: 10px;
+  color: black;
+}
+
+body.dark-mode .userName {
+  margin-left: 10px;
+  color: #e0e0e0;
+}
+.iteractionContainer {
+  height: 50px;
+  /* background-color: green; */
+}
+
+.interactionIcon {
+  width: 100px;
+  background-color: red;
 }
 
 body.dark-mode .listing-content {
-    /* background-color: aqua; */
-    color: #E0E0E0;
-
+  /* background-color: aqua; */
+  color: #e0e0e0;
 }
 
 .adminListingMenu {
-    /* background-color: green; */
-    position: absolute;
-    right: 0;
-    width: 50%;
-    height: 20%;
-    margin-right: 5px;
+  /* background-color: green; */
+  position: absolute;
+  right: 0;
+  width: 50%;
+  height: 20%;
+  margin-right: 5px;
 }
 
 .adminListingMenu ul li {
-    list-style: none;
-    font-size: large;
-    /* padding: 10px; */
+  list-style: none;
+  font-size: large;
+  /* padding: 10px; */
 }
 
-.adminListingMenu ul li button {}
+.adminListingMenu ul li button {
+}
