@@ -10,7 +10,7 @@ import {
 import "../styles/listings.css";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import image from "../assets/images/terraplanismo.png";
+import profileplaceholder from "../assets/images/profileplaceholder.png"
 // importando o componente de interação
 import ListingInteractionBox from "./ListingInteractionBox";
 import { useUser } from "../context/UserContext";
@@ -272,7 +272,7 @@ const Listings = () => {
                           width: "45px",
                           borderRadius: "50%",
                           backgroundImage: `url(${
-                            listing.userId.profileImage || image
+                            listing.userId.profileImage || profileplaceholder
                           })`,
                           backgroundSize: "cover",
                           backgroundPosition: "center",

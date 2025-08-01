@@ -22,6 +22,7 @@ import {
   handleDeleteMessageUtil,
   handleToggleMicrophoneUtil,
 } from "./functions/chatComponentFunctions";
+import profilePlaceholder from "../assets/images/profileplaceholder.png"
 
 const ChatComponent = ({ roomId }) => {
   const { currentUser } = useUser();
@@ -93,7 +94,7 @@ const ChatComponent = ({ roomId }) => {
                         style={{
                           width: "40px",
                           height: "40px",
-                          backgroundImage: `url(${msg.profileImage || ""})`,
+                          backgroundImage: `url(${msg.profileImage || profilePlaceholder})`,
                           backgroundSize: "cover",
                           backgroundPosition: "center",
                           backgroundColor: "#ddd",

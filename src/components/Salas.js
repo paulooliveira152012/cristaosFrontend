@@ -5,15 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { uploadImageToS3 } from "../utils/s3Upload"; // Importing your S3 upload utility
 import { useUser } from "../context/UserContext";
 
-// Import placeholder images
-import luaFoto from "../assets/images/preta.png";
-import terraplanismoFoto from "../assets/images/terraplanismo.png";
 import NewChat from "../assets/icons/newchatIcon";
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL
-
-const lua = luaFoto;
-const terraplanismo = terraplanismoFoto;
 
 const Salas = () => {
   const { currentUser } = useUser();

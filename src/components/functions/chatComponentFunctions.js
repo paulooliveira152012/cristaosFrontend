@@ -87,7 +87,7 @@ export const sendMessageUtil = ({ currentUser, message, roomId, setMessage, scro
   const newMessage = {
     userId: currentUser._id,
     username: currentUser.username,
-    profileImage: currentUser.profileImage,
+    profileImage: currentUser.profileImage || "",
     message,
     roomId,
     timestamp: new Date(),

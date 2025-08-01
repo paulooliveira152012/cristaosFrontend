@@ -23,9 +23,6 @@ import SupportUs from "../components/SupportUs";
 import NewListing from "../components/Listing";
 
 
-import luaFoto from "../assets/images/preta.png";
-const lua = luaFoto;
-
 // declarar o componente
 const Landing = () => {
   const navigate = useNavigate();
