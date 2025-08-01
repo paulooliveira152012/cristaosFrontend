@@ -41,14 +41,14 @@ const Footer = () => {
   };
 
   useEffect(() => {
-    console.log("buscando notificaçøes via socket...")
+    console.log("buscando notificaçøes via socket...");
     if (!currentUser) return;
 
     // Entra na sala pessoal do usuário
     socket.emit("setup", currentUser._id);
 
     const handleNewNotification = () => {
-      console.log("🟢🟣⚪️ a new notification has arrived!")
+      console.log("🟢🟣⚪️ a new notification has arrived!");
       setNotifications(true);
     };
 
@@ -68,7 +68,46 @@ const Footer = () => {
     }, 1000);
 
     return () => clearTimeout(timeout);
+  }, [currentUser, location.pathname]);
+
+  // listen for new messages on mainChat
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const handleNewMessage = ({ roomId, message }) => {
+      console.log("📩 Nova mensagem recebida via socket");
+
+      // Só notifica se não estiver na página do chat
+      if (location.pathname !== "/chat") {
+        setUnreadMessagesCount((prev) => prev + 1);
+      }
+    };
+
+    socket.on("newMessage", handleNewMessage);
+
+    return () => {
+      socket.off("newMessage", handleNewMessage);
+    };
   }, [currentUser]);
+
+  // listen for new messages on private chat
+  useEffect(() => {
+  if (!currentUser) return;
+
+  const handleNewPrivateMessage = ({ conversationId }) => {
+    // Se o usuário não estiver vendo essa conversa no momento
+    if (!location.pathname.includes(conversationId)) {
+      setUnreadMessagesCount((prev) => prev + 1);
+    }
+  };
+
+  socket.on("newPrivateMessage", handleNewPrivateMessage);
+
+  return () => {
+    socket.off("newPrivateMessage", handleNewPrivateMessage);
+  };
+}, [currentUser, location.pathname]);
+
 
   return (
     <div className="footerContainer">

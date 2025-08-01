@@ -26,6 +26,7 @@ const Chat = () => {
         }
       );
       const data = await res.json();
+      console.log("👀 privateChats:", data); // aqui
       setPrivateChats(data);
     } catch (err) {
       console.error("Erro ao buscar conversas privadas:", err);
@@ -101,6 +102,24 @@ const Chat = () => {
     setUnreadMainChatCount(0);
     navigate("/mainChat");
   };
+
+  useEffect(() => {
+  if (!currentUser) return;
+
+  const handleNewMainMessage = ({ roomId }) => {
+    // Se for para o mainChatRoom e o usuário não estiver nele agora...
+    if (roomId === "mainChatRoom" && location.pathname !== "/mainChat") {
+      setUnreadMainChatCount((prev) => prev + 1);
+    }
+  };
+
+  socket.on("newMessage", handleNewMainMessage);
+
+  return () => {
+    socket.off("newMessage", handleNewMainMessage);
+  };
+}, [currentUser, location.pathname]);
+
 
   return (
     <div className="chatPageWrapper">
