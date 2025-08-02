@@ -69,7 +69,9 @@ const SettingsMenu = () => {
   console.log("currentUser:", currentUser);
 
   return (
-    <div>
+    <div className="screenWrapper">
+      <div className="scrollable">
+
       {displayModal && (
       <div className="modal">
         <div className="modal-content">
@@ -219,6 +221,7 @@ const SettingsMenu = () => {
         )}
 
         {message && <p style={{ marginTop: "10px" }}>{message}</p>}
+      </div>
       </div>
     </div>
   );

@@ -182,7 +182,7 @@ const PrivateChat = () => {
   }, [conversationId]);
 
   return (
-    <div className="chatPageWrapper">
+    <div className="screenWrapper">
       <Header
         showProfileImage={false}
         navigate={navigate}

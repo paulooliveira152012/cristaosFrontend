@@ -36,14 +36,6 @@ body.dark-mode .chat-icon-button {
   color: inherit;
 }
 
-.profilePage {
-  height: 100dvh;
-}
-
-.profilePageContentContainer {
-  height: 100%;
-  overflow-y: auto;
-}
 
 .profilePageBasicInfoContainer {
   height: 50dvh;

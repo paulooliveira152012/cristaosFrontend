@@ -44,58 +44,33 @@ const ResendVerification = () => {
   };
 
   return (
-    <>
+    <div className="screenWrapper">
       <Header
         showBackArrow={true}
+        showProfileImage={false}
         onBack={() => {
           handleBack(navigate);
         }}
       />
-      <div style={styles.container}>
+      <div className="container">
         <h2>Reenviar verificação</h2>
-        <form onSubmit={handleResend} style={styles.form}>
+        <form onSubmit={handleResend} className="form">
           <input
             type="email"
             placeholder="Digite seu email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            style={styles.input}
+            className="input"
           />
-          <button type="submit" style={styles.button} disabled={isLoading}>
+          <button type="submit" className="button" disabled={isLoading}>
             {isLoading ? "Enviando..." : "Reenviar"}
           </button>
-          {message && <p style={{ marginTop: 15 }}>{message}</p>}
+          {message && <p className="marginTop15">{message}</p>}
         </form>
       </div>
-    </>
+    </div>
   );
-};
-
-const styles = {
-  container: {
-    maxWidth: "400px",
-    margin: "50px auto",
-    textAlign: "center",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-  },
-  input: {
-    padding: "10px",
-    fontSize: "16px",
-  },
-  button: {
-    padding: "10px",
-    fontSize: "16px",
-    backgroundColor: "#28a745",
-    color: "#fff",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-  },
 };
 
 export default ResendVerification;

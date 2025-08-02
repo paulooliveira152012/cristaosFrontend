@@ -36,12 +36,10 @@ button {
     transition: background-color 0.3s ease;
 }
 
-/* .container {
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-} */
+.container {
+    background-color: red;
+    margin: 20px;
+}
 
 
 

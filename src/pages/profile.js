@@ -126,8 +126,8 @@ const Profile = () => {
   };
 
   return (
-    <div className="profilePage">
-      <div className="profilePageContentContainer">
+    <div className="screenWrapper">
+      <div className="scrollable">
         <div className="profilePageBasicInfoContainer">
           <Header showProfileImage={false} navigate={navigate} />
           <div className="profilePageHeaderParentSection">
@@ -176,8 +176,22 @@ const Profile = () => {
             {currentUser._id === user._id && (
               <li onClick={() => navigate("/settingsMenu")}>Configurações</li>
             )}
+            {currentUser._id !== user._id && (
+                <ul>
+                  {/* <li onClick={() => requestChat(currentUser?._id, user?._id)}>
+                    Iniciar conversa
+                  </li> */}
+                  <li>Bloquear</li>
+                  <li>Reportar</li>
+                </ul> 
+             )}
           </ul>
         </div>
+
+
+             
+             
+               
 
         <div className="profile-container">
           {currentTab === "" && (
@@ -365,6 +379,7 @@ const Profile = () => {
         </div>
 
         {currentTab === "userFriends" && <ProfileUserFriends user={user} />}
+      
       </div>
     </div>
   );
