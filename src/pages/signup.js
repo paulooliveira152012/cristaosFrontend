@@ -5,6 +5,7 @@ import { useUser } from "../context/UserContext";
 import { motion } from "framer-motion";
 import { json, useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid"; // For generating unique file names
+import "../styles/signUp.css"
 
 // import { response } from "express";
 
@@ -190,196 +191,130 @@ const Signup = () => {
   };
 
   return (
-    <div>
-      <Header showProfileImage={false} navigate={navigate} />
-      <div style={styles.signupContainer}>
-        <h2 style={{ color: "gray", marginBottom: 20, fontStyle: "italic" }}>
-          Signup
-        </h2>
-        <form onSubmit={handleSignup} style={styles.form}>
-          {/* Image selection */}
-          <div style={styles.formGroup}>
-            <div
-              style={{
-                ...styles.imageContainer,
-                backgroundImage: profileImage
-                  ? `url(${profileImage})`
-                  : `url('https://via.placeholder.com/150x150?text=Upload+Image')`, // Default or selected image
-              }}
-              onClick={handleImagePicker}
-            />
-          </div>
+    <div className="screenWrapper">
+      <div className="scrollable">
+  <Header showProfileImage={false} navigate={navigate} />
 
-          {/* Username input */}
-          <div style={styles.formGroup}>
-            <label htmlFor="username" style={styles.label}>
-              Username:
-            </label>
-            <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              style={styles.input}
-            />
-          </div>
+  <div className="signupContainer">
+    <h2 className="signupTitle">Signup</h2>
 
-          {/* Email input */}
-          <div style={styles.formGroup}>
-            <label htmlFor="email" style={styles.label}>
-              Email:
-            </label>
-            <input
-              type="text"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={styles.input}
-            />
-          </div>
-
-          {/* phone input */}
-          <div style={styles.formGroup}>
-            <label htmlFor="phone" style={styles.label}>
-              Phone:
-            </label>
-            <input
-              type="text"
-              id="phone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-              style={styles.input}
-            />
-          </div>
-
-          {/* Password input */}
-          <div style={styles.formGroup}>
-            <label htmlFor="password" style={styles.label}>
-              Password:
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={styles.input}
-            />
-          </div>
-
-          {/* Submit button */}
-          <button type="submit" style={styles.button} disabled={isLoading}>
-            {isLoading ? "Criando conta..." : "Signup"}
-          </button>
-        </form>
-
-        {/* Display error message */}
-        {error && <p style={styles.error}>{error}</p>}
+    <form onSubmit={handleSignup} className="form">
+      {/* Image selection */}
+      <div className="formGroup">
+        <div
+          className="imageContainer"
+          style={{
+            backgroundImage: profileImage
+              ? `url(${profileImage})`
+              : `url('https://via.placeholder.com/150x150?text=Upload+Image')`,
+          }}
+          onClick={handleImagePicker}
+        />
       </div>
 
-      {showModal && (
-        <div className="modal">
-          <div className="modal-content">
-            <h2>Conta criada com sucesso!</h2>
+      {/* Username input */}
+      <div className="formGroup">
+        <label htmlFor="username" className="label">
+          Username:
+        </label>
+        <input
+          type="text"
+          id="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+          className="input"
+        />
+      </div>
 
-            {isLoading && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1, rotate: 360 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                style={{
-                  margin: "20px auto",
-                  width: "50px",
-                  height: "50px",
-                  border: "5px solid #ccc",
-                  borderTop: "5px solid #28a745",
-                  borderRadius: "50%",
-                }}
-              />
-            )}
+      {/* Email input */}
+      <div className="formGroup">
+        <label htmlFor="email" className="label">
+          Email:
+        </label>
+        <input
+          type="text"
+          id="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="input"
+        />
+      </div>
 
-            <p>por favor verificar conta para ter acesso.</p>
+      {/* Phone input */}
+      <div className="formGroup">
+        <label htmlFor="phone" className="label">
+          Phone:
+        </label>
+        <input
+          type="text"
+          id="phone"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          required
+          className="input"
+        />
+      </div>
 
-            <button onClick={verifyByEmail}>Verificar por email</button>
-            <button
-              onClick={verifyByPhone}
-              disabled
-              style={{
-                cursor: "no-drop",
-                backgroundColor: "grey",
-                // color: "lightgrey",
-                opacity: 0.5,
-              }}
-            >
-              Verificar por telefone
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Password input */}
+      <div className="formGroup">
+        <label htmlFor="password" className="label">
+          Password:
+        </label>
+        <input
+          type="password"
+          id="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          className="input"
+        />
+      </div>
+
+      {/* Submit button */}
+      <button type="submit" className="button" disabled={isLoading}>
+        {isLoading ? "Criando conta..." : "Signup"}
+      </button>
+    </form>
+
+    {/* Display error message */}
+    {error && <p className="error">{error}</p>}
+  </div>
+
+  {showModal && (
+    <div className="modal">
+      <div className="modal-content">
+        <h2>Conta criada com sucesso!</h2>
+
+        {isLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, rotate: 360 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="loadingSpinner"
+          />
+        )}
+
+        <p>por favor verificar conta para ter acesso.</p>
+
+        <button onClick={verifyByEmail}>Verificar por email</button>
+        <button
+          onClick={verifyByPhone}
+          disabled
+          className="disabledButton"
+        >
+          Verificar por telefone
+        </button>
+      </div>
     </div>
+  )}
+  </div>
+</div>
+
   );
 };
 
-// Basic styles
-const styles = {
-  signupContainer: {
-    maxWidth: "400px",
-    margin: "50px auto",
-    padding: "20px",
-    backgroundColor: "#f9f9f9",
-    borderRadius: "8px",
-    boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
-    textAlign: "center",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-  },
-  formGroup: {
-    marginBottom: "15px",
-  },
-  label: {
-    display: "block",
-    marginBottom: "5px",
-    fontSize: "16px",
-    color: "#333",
-  },
-  input: {
-    padding: "10px",
-    fontSize: "16px",
-    borderRadius: "4px",
-    border: "1px solid #ccc",
-    width: "100%",
-    boxSizing: "border-box",
-  },
-  button: {
-    padding: "10px",
-    fontSize: "16px",
-    backgroundColor: "#28a745",
-    color: "#fff",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-    marginTop: "10px",
-  },
-  error: {
-    color: "red",
-    marginTop: "15px",
-  },
-  imageContainer: {
-    width: "150px",
-    height: "150px",
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundColor: "#ddd",
-    borderRadius: "50%",
-    cursor: "pointer",
-    margin: "0 auto",
-  },
-};
 
 export default Signup;

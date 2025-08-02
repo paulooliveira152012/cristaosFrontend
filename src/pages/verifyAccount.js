@@ -113,7 +113,8 @@ const VerifyAccount = () => {
   };
 
   return (
-    <div className="verifyAccountPage">
+    <div className="screenWrapper">
+      <div className="scrollablle">
       <h2>{message}</h2>
 
       {expired && (
@@ -134,6 +135,7 @@ const VerifyAccount = () => {
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 };
