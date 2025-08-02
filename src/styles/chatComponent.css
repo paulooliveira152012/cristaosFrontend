@@ -21,11 +21,9 @@ html, body {
 
 
 .chatContainerWrapper {
-  height: 10vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  flex: 0.75;
   /* background-color: pink; */
 }
 
@@ -40,10 +38,6 @@ html, body {
   flex-direction: column;
   padding: 10px;
   /* background-color: yellow; */
-  /* padding-bottom: 80px; */
-  /* height: auto; */
-  /* height: 100%; */
-  /* margin-bottom: 50px; */
 }
 
 .messageItem {
