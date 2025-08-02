@@ -18,7 +18,8 @@ const Landing = () => {
   };
 
   return (
-    <div className="landingContainer">
+    <div className="screenWrapper">
+      <div className="scrollable">
       <PullToRefresh onRefresh={handleRefresh}>
         <Header
           showBackButton={false}
@@ -34,6 +35,7 @@ const Landing = () => {
       <Listings />
 
       <Footer />
+      </div>
     </div>
   );
 };

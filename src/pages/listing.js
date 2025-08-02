@@ -162,77 +162,79 @@ const ListingPage = () => {
   const listing = items[0];
 
   return (
-    <div>
-      <Header showProfileImage={false} navigate={navigate} />
-      <div style={{ paddingBottom: "70px" }}>
-        <div className="listing-page-container">
-          <div className="listing-header">
-            <h1>{listing.blogTitle || ""}</h1>
-          </div>
+    <div className="screenWrapper">
+      <div className="scrollable">
+        <Header showProfileImage={false} navigate={navigate} />
+        <div>
+          <div className="listing-page-container">
+            <div className="listing-header">
+              <h1>{listing.blogTitle || ""}</h1>
+            </div>
 
-          {listing.type === "blog" && (
-            <div className="listing-content">
-              {listing.blogContent
-                ? listing.blogContent.split("\n").map((paragraph, index) => (
-                    <p key={index} className="blogContent">
-                      {paragraph}
-                    </p>
-                  ))
-                : "No content available for this blog."}
-              {listing.imageUrl && (
+            {listing.type === "blog" && (
+              <div className="listing-content">
+                {listing.blogContent
+                  ? listing.blogContent.split("\n").map((paragraph, index) => (
+                      <p key={index} className="blogContent">
+                        {paragraph}
+                      </p>
+                    ))
+                  : "No content available for this blog."}
+                {listing.imageUrl && (
+                  <img
+                    src={listing.imageUrl}
+                    alt={`Listing image ${listing._id}`}
+                    className="listingImage"
+                    style={{ width: "100%", maxWidth: "100%", height: "auto" }}
+                  />
+                )}
+              </div>
+            )}
+
+            {listing.type === "image" && listing.imageUrl && (
+              <div className="listing-image-container">
                 <img
                   src={listing.imageUrl}
                   alt={`Listing image ${listing._id}`}
                   className="listingImage"
                   style={{ width: "100%", maxWidth: "100%", height: "auto" }}
                 />
-              )}
-            </div>
-          )}
+              </div>
+            )}
 
-          {listing.type === "image" && listing.imageUrl && (
-            <div className="listing-image-container">
-              <img
-                src={listing.imageUrl}
-                alt={`Listing image ${listing._id}`}
-                className="listingImage"
-                style={{ width: "100%", maxWidth: "100%", height: "auto" }}
-              />
-            </div>
-          )}
-
-          <ListingInteractionBox
-            listingId={listing._id}
-            currentCommentId={newCommentId}
-            likesCount={listing.likes.length}
-            comments={listing.comments || []}
-            commentsCount={listing.comments ? listing.comments.length : 0}
-            isLiked={
-              currentUser ? listing.likes.includes(currentUser._id) : false
-            }
-            currentUser={currentUser}
-            isSingleListing={true}
-            commentLikesCount={(comment) =>
-              comment.likes ? comment.likes.length : 0
-            }
-            isCommentLiked={(comment) =>
-              comment.likes && Array.isArray(comment.likes)
-                ? comment.likes.includes(currentUser._id)
-                : false
-            }
-            commentCommentsCount={(comment) =>
-              comment.replies ? comment.replies.length : 0
-            }
-            handleFetchComments={fetchCommentsForListing}
-            handleCommentSubmit={submitCommentForListing}
-            handleReplySubmit={submitReplyForComment}
-            handleDeleteComment={deleteCommentForListing}
-            handleLike={likeListing}
-            handleShare={shareListing}
-            handleCommentLike={likeCommentOrReply}
-            setItems={setItems}
-            updateListing={updateListing}
-          />
+            <ListingInteractionBox
+              listingId={listing._id}
+              currentCommentId={newCommentId}
+              likesCount={listing.likes.length}
+              comments={listing.comments || []}
+              commentsCount={listing.comments ? listing.comments.length : 0}
+              isLiked={
+                currentUser ? listing.likes.includes(currentUser._id) : false
+              }
+              currentUser={currentUser}
+              isSingleListing={true}
+              commentLikesCount={(comment) =>
+                comment.likes ? comment.likes.length : 0
+              }
+              isCommentLiked={(comment) =>
+                comment.likes && Array.isArray(comment.likes)
+                  ? comment.likes.includes(currentUser._id)
+                  : false
+              }
+              commentCommentsCount={(comment) =>
+                comment.replies ? comment.replies.length : 0
+              }
+              handleFetchComments={fetchCommentsForListing}
+              handleCommentSubmit={submitCommentForListing}
+              handleReplySubmit={submitReplyForComment}
+              handleDeleteComment={deleteCommentForListing}
+              handleLike={likeListing}
+              handleShare={shareListing}
+              handleCommentLike={likeCommentOrReply}
+              setItems={setItems}
+              updateListing={updateListing}
+            />
+          </div>
         </div>
       </div>
     </div>

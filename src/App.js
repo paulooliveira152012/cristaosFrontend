@@ -16,6 +16,7 @@ import PasswordReset from "./pages/PasswordReset.js";
 import VerifyAccount from "./pages/verifyAccount.js";
 import VerifyEmailUpdate from "./pages/verifyEmailUpdate.js";
 import AllUsersPage from "./pages/allUsers.js";
+import Diretrizes from "./pages/diretrizes.js"
 
 // páginas do menu
 import BibleStudiesByBook from "./pages/menuPages/BibleStudiesByBook.js";
@@ -173,6 +174,9 @@ const AppWithLocation = () => {
                   <Route path="/allUsers" element={<AllUsersPage />} />
                   <Route path="/mainChat" element={<MainChat />} />
                   <Route path="/privateChat/:id" element={<PrivateChat />} />
+                  <Route path="/diretrizes" element={<Diretrizes />} />
+                  
+                  
                 </Routes>
                 <MinimizedStatus />
               </div>

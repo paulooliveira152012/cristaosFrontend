@@ -4,20 +4,13 @@ html, body {
   height: 100%;
 }
 
-.liveRoomWrapper {
-  height: 100vh;
-  overflow: hidden; /* evita scroll duplicado */
-  display: flex;
-  flex-direction: column;
-  
-  /* background-color: blue; */
-}
 
 .liveRoomContent {
   flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  background-color: red;
 }
 
 .topo {

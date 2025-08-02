@@ -5,6 +5,7 @@ import { useUsers } from "../context/UserContext";
 import Header from "../components/Header";
 import { handleBack } from "../components/functions/headerFunctions";
 import { useNavigate } from "react-router-dom";
+import "../styles/style.css"
 
 const AllUsersPage = () => {
   const { onlineUsers } = useUsers();
@@ -24,7 +25,8 @@ const AllUsersPage = () => {
   );
 
   return (
-    <div>
+    <div className="screenWrapper">
+      <div className="scrollable">
         <Header 
             showProfileImage={false}
             onBack={() => 
@@ -71,6 +73,7 @@ const AllUsersPage = () => {
             </div>
           </Link>
         ))}
+      </div>
       </div>
     </div>
   );

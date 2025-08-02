@@ -84,7 +84,7 @@ const LiveRoom = () => {
 
   return (
     // 100vh
-    <div className="liveRoomWrapper">
+    <div className="screenWrapper">
       <div className="liveRoomContent">
         <Header
           showProfileImage={false}

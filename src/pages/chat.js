@@ -122,7 +122,8 @@ const Chat = () => {
 
 
   return (
-    <div className="chatPageWrapper">
+    <div className="screenWrapper">
+      <div className="scrollable">
       <Header showProfileImage={false} navigate={navigate} />
 
       <div className="chatSidebar">
@@ -161,6 +162,7 @@ const Chat = () => {
             );
           })}
         </ul>
+      </div>
       </div>
     </div>
   );
