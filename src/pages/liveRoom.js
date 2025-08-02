@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useContext } from "react";
+import React, { useState, useRef, useContext } from "react";
 import { useLocation, useNavigate, useParams, Link } from "react-router-dom";
 import { useUser } from "../context/UserContext.js";
 import { useRoom } from "../context/RoomContext.js";
@@ -16,7 +16,10 @@ import {
   useDebugCurrentUsersEffect,
 } from "./functions/liveFuncitons.js";
 import "../styles/style.css";
-import "../styles/liveRoom.css"
+import "../styles/liveRoom.css";
+import Speakers from "../components/liveRoom/SpeakersComponent.js";
+import Listeners from "../components/liveRoom/ListenersComponent.js";
+import RoomMenuModal from "../components/liveRoom/RoomMenuModal.js";
 import VoiceComponent from "../components/VoiceComponent.js";
 import { handleBack } from "../components/functions/headerFunctions.js";
 import AudioContext from "../context/AudioContext.js";
@@ -42,7 +45,7 @@ const LiveRoom = () => {
     removeSpeaker,
     currentUsers, // ✅ já incluído aqui
     handleJoinRoom,
-    roomReady
+    roomReady,
   } = useRoom();
 
   const { leaveChannel } = useContext(AudioContext);
@@ -60,7 +63,7 @@ const LiveRoom = () => {
   const [isCreator, setIsCreator] = useState(false);
   const isRejoiningRef = useRef(false);
 
-  const { handleLeaveRoom } = useRoom(); // ✅ CERTA  
+  const { handleLeaveRoom } = useRoom(); // ✅ CERTA
 
   useJoinRoomEffect(roomId, currentUser, handleJoinRoom, baseUrl);
   useFetchRoomDataEffect(
@@ -84,14 +87,12 @@ const LiveRoom = () => {
   if (!sala && !roomId) return <p>Error: Room information is missing!</p>;
 
   if (!roomReady) {
-  return (
-    <div className="loadingContainer">
-      <p>Entrando na sala...</p>
-    </div>
-  );
-}
-
-  
+    return (
+      <div className="loadingContainer">
+        <p>Entrando na sala...</p>
+      </div>
+    );
+  }
 
   return (
     // 100vh
@@ -127,7 +128,6 @@ const LiveRoom = () => {
           }
           showBackArrow={true}
         />
-
         <p
           style={{
             textAlign: "center",
@@ -137,111 +137,24 @@ const LiveRoom = () => {
         >
           {roomTheme}
         </p>
-
-        {/* min to max height 150px, 35vh */}
-        <div className="liveInRoomMembersContainer">
-          {currentUsersSpeaking.length > 0 ? (
-            currentUsersSpeaking.map((member, index) => (
-              <div key={index} className="liveMemberParentContainer">
-                <div className="liveMemberContainer">
-                  <div className="liveMemberContent">
-                    <Link to={`/profile/${member._id}`}>
-                      <div
-                        className="liveMemberProfileImage"
-                        style={{
-                          backgroundImage: `url(${member.profileImage || ""})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                          backgroundColor: "#ddd",
-                          borderRadius: "40%",
-                          cursor: "pointer",
-                        }}
-                      />
-                    </Link>
-                    <p className="liveRoomUsername">
-                      {member.username || "Anonymous"}
-                    </p>
-                  </div>
-                </div>
-                {member.micOpen ? (
-                  <span role="img">🎤</span>
-                ) : (
-                  <span role="img">🔇</span>
-                )}
-              </div>
-            ))
-          ) : (
-            <p>Nenhum membro no palco.</p>
-          )}
-        </div>
-
-        <div className="inRoomUsers">
-          {currentUsers && currentUsers.length > 0 ? (
-            currentUsers
-            .filter(
-              (listener) =>
-                !currentUsersSpeaking.some((speaker) => speaker._id === listener._id)
-            )
-            .map((member, index) => (
-              <div key={member._id} className="inRoomMembersParentContainer">
-                <div className="inRoomLiveMemberContainer">
-                  <div className="liveMemberContent">
-                    <Link to={`/profile/${member._id}`}>
-                      <div
-                        className="liveMemberProfileImage"
-                        style={{
-                          backgroundImage: `url(${member.profileImage || ""})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                          backgroundColor: "#ddd",
-                          borderRadius: "50%",
-                          cursor: "pointer",
-                        }}
-                      />
-                    </Link>
-                    <p className="liveRoomUsername">
-                      {member.username || "Anonymous"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <p>Nenhum membro na sala.</p>
-          )}
-        </div>
-
+        <Speakers />
+        <Listeners />
         <VoiceComponent
           microphoneOn={microphoneOn}
           roomId={roomId}
           keepAlive={true}
           setCurrentUsersSpeaking={setCurrentUsersSpeaking}
         />
-
         <ChatComponent roomId={roomId} />
-        {/* <ChatComponent2 roomId={roomId} /> */}
       </div>
 
       {showSettingsModal && (
-        <div
-          className="modal-overlay"
-          onClick={() => setShowSettingsModal(false)}
-        >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>Room Settings</h2>
-            <label htmlFor="newRoomTitle">Novo Titulo</label>
-            <input
-              type="text"
-              id="newRoomTitle"
-              value={newRoomTitle}
-              onChange={(e) => setNewRoomTitle(e.target.value)}
-              placeholder="Enter new room title"
-            />
-            <button onClick={handleUpdateRoomTitle}>Edit Room Title</button>
-            <button onClick={handleDeleteRoom}>Delete Room</button>
-            <button onClick={() => setShowSettingsModal(false)}>Close</button>
-          </div>
-        </div>
+        <RoomMenuModal 
+          setShowSettingsModal={setShowSettingsModal}
+          setNewRoomTitle={setNewRoomTitle}
+          handleUpdateRoomTitle={handleUpdateRoomTitle}
+          handleDeleteRoom={handleDeleteRoom}
+        />
       )}
     </div>
   );
