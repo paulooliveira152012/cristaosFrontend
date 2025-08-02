@@ -1,37 +1,41 @@
 import { useEffect, useState } from "react";
-import { useUsers } from "../context/UserContext"; // Access the context for online users
-import "../styles/style.css";
+import { getAllUsers } from "../components/functions/liveUsersComponent";
 import { Link } from "react-router-dom";
-import { getAllUsers } from "./functions/liveUsersComponent";
+import { useUsers } from "../context/UserContext";
+import Header from "../components/Header";
+import { handleBack } from "../components/functions/headerFunctions";
 import { useNavigate } from "react-router-dom";
 
-const LiveUsers = () => {
-  const { onlineUsers } = useUsers(); // Get the online users from context
+const AllUsersPage = () => {
+  const { onlineUsers } = useUsers();
   const [allUsers, setAllUsers] = useState([]);
   const navigate = useNavigate()
 
-  // buscar imediatamente os usuarios
   useEffect(() => {
     getAllUsers(setAllUsers);
-
-    console.log("allUsers in Component:", allUsers);
   }, []);
 
   const handleUserClick = (user) => {
     console.log(`Ativando interação com ${user.username}`);
   };
 
-  console.log("Usuarios online no componente Liveusers: ", onlineUsers);
-
   const offlineUsers = allUsers.filter(
     (user) => !onlineUsers.some((onlineUser) => onlineUser._id === user._id)
   );
 
   return (
-    <div className="landingOnlineMembersContainer">
-      <div className="landingOnlineMembersContainer">
-        {/* <p>Usuarios online:</p> */}
-        {/* Dynamically create divs for users who are online at the moment */}
+    <div>
+        <Header 
+            showProfileImage={false}
+            onBack={() => 
+                handleBack(
+                    navigate
+                )
+            }
+        />
+      <h2>all Users</h2>
+
+      <div className="allembersContainer">
         {onlineUsers.map((user) => (
           <Link key={user._id} to={`/profile/${user._id}`}>
             <div className="landingOnlineUserContainer">
@@ -45,7 +49,7 @@ const LiveUsers = () => {
                 <span className="onlineStatus"></span>{" "}
                 {/* Add the green ball */}
               </div>
-              {/* <p className="OnlineUserUsernameDisplay">{user.username}</p> */}
+              <p className="OnlineUserUsernameDisplay">{user.username}</p>
             </div>
           </Link>
         ))}
@@ -63,20 +67,13 @@ const LiveUsers = () => {
                   backgroundImage: `url(${user.profileImage})`,
                 }}
               ></div>
-              {/* <p className="OnlineUserUsernameDisplay">{user.username}</p> */}
+              <p className="OnlineUserUsernameDisplay">{user.username}</p>
             </div>
           </Link>
         ))}
       </div>
-
-      <button 
-        className="verTodosBtn"
-        onClick={() => navigate('/allUsers')}
-      >
-        ver todos
-      </button>
     </div>
   );
 };
 
-export default LiveUsers;
+export default AllUsersPage;

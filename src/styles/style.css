@@ -135,6 +135,15 @@ body.dark-mode .roomTitleText {
     color: #F1F1F1;
 }
 
+.allembersContainer {
+    height: auto; /* Define a altura fixa */
+    width: 100%;
+    /* background-color: orange; */
+    display: flex;
+    gap: 15px; /* Define um espaço razoável entre os itens */
+    padding: 10px 0;
+}
+
 .landingOnlineMembersContainer {
     height: auto; /* Define a altura fixa */
     width: 100%;
