@@ -133,7 +133,8 @@ export const Notifications = () => {
   if (loading) return <p>Carregando notificações...</p>;
 
   return (
-    <div className="notificationsContainer">
+    <div className="screenWrapper">
+      <div className="scrollable">
       <h2>Notificações</h2>
 
       {friendRequests.length > 0 && (
@@ -213,6 +214,7 @@ export const Notifications = () => {
         ) : (
           <p>Nenhuma notificação.</p>
         )}
+      </div>
       </div>
     </div>
   );

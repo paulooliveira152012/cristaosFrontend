@@ -8,10 +8,7 @@
   background-color: rgb(255, 255, 255);
 }
 
-body.dark-mode .chatPageWrapper {
-  background-color: #1E1E1E;
-  color: #F1F1F1;
-}
+
 
 .chatPageContainer {
   flex: 1;

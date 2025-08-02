@@ -1,14 +1,4 @@
-/* General Styles */
-.container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-}
 
-.newListingContentContainer {
-    /* background-color: green; */
-    width: 100%;
-}
 
 h2 {
     text-align: center;
@@ -101,17 +91,7 @@ h2 {
 }
 
 /* Button Styles */
-.newListingContentContainer button {
-    margin-top: 20px;
-    padding: 12px 20px;
-    background-color: #28a745;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 100%;
-    transition: background-color 0.3s ease;
-}
+ 
 
 
 /* Poll Container Styles */

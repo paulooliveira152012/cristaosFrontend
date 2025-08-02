@@ -3,6 +3,7 @@ import Header from "../components/Header";
 import { useUser } from "../context/UserContext";
 import { useNavigate, Link } from "react-router-dom";
 import socket from "../socket";
+import "../styles/Login.css";
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
@@ -26,12 +27,12 @@ const Login = () => {
   useEffect(() => {
     socket.connect();
 
-  /* Inicializar o botão de login do Google */
-  if (window.google) {
-    window.google.accounts.id.initialize({
-      client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-      callback: handleGoogleCallback,
-    });
+    /* Inicializar o botão de login do Google */
+    if (window.google) {
+      window.google.accounts.id.initialize({
+        client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+        callback: handleGoogleCallback,
+      });
 
       window.google.accounts.id.renderButton(
         document.getElementById("googleSignInDiv"),
@@ -114,18 +115,19 @@ const Login = () => {
   };
 
   return (
-    <div>
+    <div className="screenWrapper">
       <Header
         showLoginButton={false}
         showProfileImage={false}
         navigate={navigate}
       />
-      <div style={styles.loginContainer}>
-        <h2>Logi</h2>
-        <form onSubmit={handleLogin} style={styles.form}>
+      <div className="loginContainer">
+        <h2 className="title">Logi</h2>
+
+        <form onSubmit={handleLogin} className="form">
           {/* Email input */}
-          <div style={styles.formGroup}>
-            <label htmlFor="identifier" style={styles.label}>
+          <div className="formGroup">
+            <label htmlFor="identifier" className="label">
               Email:
             </label>
             <input
@@ -134,13 +136,13 @@ const Login = () => {
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               required
-              style={styles.input}
+              className="input"
             />
           </div>
 
           {/* Password input */}
-          <div style={styles.formGroup}>
-            <label htmlFor="password" style={styles.label}>
+          <div className="formGroup">
+            <label htmlFor="password" className="label">
               Password:
             </label>
             <input
@@ -149,12 +151,12 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              style={styles.input}
+              className="input"
             />
           </div>
 
           {/* Submit button */}
-          <button type="submit" style={styles.button}>
+          <button type="submit" className="button">
             Login
           </button>
 
@@ -163,15 +165,15 @@ const Login = () => {
 
         <p style={{ marginTop: 20 }}>
           Esqueceu a Senha?{" "}
-          <Link style={{ textDecoration: "none" }} to={"/passwordResetLink"}>
+          <Link className="link" to="/passwordResetLink">
             redefinir aqui
           </Link>
         </p>
 
         {/* Signup Link */}
-        <div style={styles.signupSection}>
+        <div className="signupSection">
           <p>Não é um membro ainda?</p>
-          <Link to="/signup" style={styles.link}>
+          <Link to="/signup" className="link">
             Criar conta
           </Link>
         </div>
@@ -179,12 +181,12 @@ const Login = () => {
         {/* Display error message */}
         {error && (
           <div>
-            <p style={styles.error}>{error}</p>
+            <p className="error">{error}</p>
 
             {error === "Verifique sua conta antes de fazer login." && (
               <p style={{ marginTop: 10 }}>
                 Não recebeu o email de verificação?{" "}
-                <Link to="/resend-verification" style={styles.link}>
+                <Link to="/resend-verification" className="link">
                   Reenviar agora
                 </Link>
               </p>
@@ -194,64 +196,6 @@ const Login = () => {
       </div>
     </div>
   );
-};
-
-// Basic styles
-const styles = {
-  loginContainer: {
-    maxWidth: "400px",
-    margin: "50px auto",
-    padding: "20px",
-    backgroundColor: "#f9f9f9",
-    borderRadius: "8px",
-    boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
-    textAlign: "center",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-  },
-  formGroup: {
-    marginBottom: "15px",
-  },
-  label: {
-    display: "block",
-    marginBottom: "5px",
-    fontSize: "16px",
-    color: "#333",
-  },
-  input: {
-    padding: "10px",
-    fontSize: "16px",
-    borderRadius: "4px",
-    border: "1px solid #ccc",
-    width: "100%",
-    boxSizing: "border-box",
-  },
-  button: {
-    padding: "10px",
-    fontSize: "16px",
-    backgroundColor: "#007bff",
-    color: "#fff",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-    marginTop: "10px",
-  },
-  buttonHover: {
-    backgroundColor: "#0056b3",
-  },
-  signupSection: {
-    marginTop: "20px",
-  },
-  link: {
-    color: "#007bff",
-    textDecoration: "none",
-  },
-  error: {
-    color: "red",
-    marginTop: "15px",
-  },
 };
 
 export default Login;

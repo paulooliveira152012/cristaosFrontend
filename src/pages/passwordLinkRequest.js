@@ -42,8 +42,11 @@ const PasswordResetLink = () => {
   };
 
   return (
-    <div>
-      <Header navigate={navigate} />
+    <div className="screenWrapper">
+      <Header 
+        navigate={navigate} 
+        showProfileImage={false}
+      />
       <div style={styles.formContainer}>
         <p>Insira seu email para receber um link para redefinir sua senha</p>
         <form style={styles.form} onSubmit={requestResetLink}>

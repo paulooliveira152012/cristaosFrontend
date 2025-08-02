@@ -103,7 +103,7 @@ const MainChat = () => {
   console.log("messages in chat.js", messages);
 
   return (
-    <div className="chatPageWrapper">
+    <div className="screenWrapper">
       <Header showProfileImage={false} navigate={navigate} />
       <div className="messagesContainer">
         <div

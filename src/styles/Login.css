@@ -1,85 +1,63 @@
-/* Login.css */
+.loginContainer {
+  max-width: 400px;
+  margin: 50px auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
 
-.page-wrapper {
-    background-color: #2A68D8;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 40px 20px;
-  }
-  
-  .login-container {
-    max-width: 400px;
-    width: 100%;
-    background-color: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    padding: 30px;
-    text-align: center;
-  }
-  
-  .login-container h2 {
-    margin-bottom: 24px;
-    color: #333;
-  }
-  
-  .form-group {
-    text-align: left;
-    margin-bottom: 16px;
-  }
-  
-  .form-group label {
-    font-size: 14px;
-    font-weight: bold;
-    color: #333;
-    display: block;
-    margin-bottom: 6px;
-  }
-  
-  .form-group input {
-    padding: 12px;
-    font-size: 15px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  
-  button.login-button {
-    padding: 12px;
-    font-size: 16px;
-    background-color: #2A68D8;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    width: 100%;
-    margin-top: 10px;
-  }
-  
-  button.login-button:hover {
-    background-color: #1d4fb2;
-  }
-  
-  .google-signin {
-    margin-top: 20px;
-  }
-  
-  .error-message {
-    color: red;
-    margin-top: 16px;
-    font-size: 14px;
-  }
-  
-  .signup-section {
-    margin-top: 24px;
-  }
-  
-  .signup-section a {
-    color: #2A68D8;
-    font-weight: bold;
-    text-decoration: none;
-  }
-  
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+.formGroup {
+  margin-bottom: 15px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 16px;
+  color: #333;
+}
+
+.input {
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.button {
+  padding: 10px;
+  font-size: 16px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.button:hover {
+  background-color: #0056b3;
+}
+
+.signupSection {
+  margin-top: 20px;
+}
+
+.link {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.error {
+  color: red;
+  margin-top: 15px;
+}

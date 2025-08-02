@@ -57,8 +57,11 @@ const PasswordReset = () => {
   };
 
   return (
-    <div>
-      <Header navigate={navigate} />
+    <div className="screenWrapper">
+      <Header 
+        navigate={navigate} 
+        showProfileImage={false}
+      />
       <div style={styles.formContainer}>
         <form style={styles.form} onSubmit={updatePassword}>
           <label style={styles.label}>Email</label>
