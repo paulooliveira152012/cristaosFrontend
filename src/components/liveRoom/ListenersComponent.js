@@ -2,11 +2,7 @@ import { useRoom } from "../../context/RoomContext";
 import { Link } from "react-router-dom";
 
 const Listeners = () => {
-
-  const {
-    currentUsers,
-    currentUsersSpeaking
-  } = useRoom()
+  const { currentUsers, currentUsersSpeaking } = useRoom();
 
   return (
     <div className="inRoomUsers">

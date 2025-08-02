@@ -1,11 +1,10 @@
-import React, { useState, useRef, useContext } from "react";
-import { useLocation, useNavigate, useParams, Link } from "react-router-dom";
+import { useState, useRef, useContext } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useUser } from "../context/UserContext.js";
 import { useRoom } from "../context/RoomContext.js";
 import { useSocket } from "../context/SocketContext.js";
 import Header from "../components/Header.js";
 import ChatComponent from "../components/ChatComponent.js";
-import ChatComponent2 from "../components/ChatComponent2.0.js";
 // todas as logicas importadas
 import {
   updateRoomTitle,
@@ -23,26 +22,15 @@ import RoomMenuModal from "../components/liveRoom/RoomMenuModal.js";
 import VoiceComponent from "../components/VoiceComponent.js";
 import { handleBack } from "../components/functions/headerFunctions.js";
 import AudioContext from "../context/AudioContext.js";
-// import { handleLeaveRoom } from "./functions/liveRoomFunctions.js";
-
-import {
-  addCurrentUserInRoom,
-  removeCurrentUserInRoom,
-  fetchCurrentRoomUsers,
-} from "./functions/liveRoomFunctions.js";
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 const LiveRoom = () => {
-  const socket = useSocket();
   const { currentUser } = useUser();
   const {
     minimizeRoom,
     joinRoomListeners,
-    emitLeaveRoom,
-    currentUsersSpeaking,
     setCurrentUsersSpeaking,
-    removeSpeaker,
     currentUsers, // ✅ já incluído aqui
     handleJoinRoom,
     roomReady,
