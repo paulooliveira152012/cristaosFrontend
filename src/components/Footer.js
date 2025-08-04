@@ -3,6 +3,7 @@ import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useNotification } from "../context/NotificationContext.js";
 
 import "../styles/style.css";
+import "../styles/footer.css";
 
 import MessageIcon from "../assets/icons/messageIcon";
 import MessageIconSolid from "../assets/icons/messageIconSolid.js";

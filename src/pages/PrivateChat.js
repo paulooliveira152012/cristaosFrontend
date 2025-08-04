@@ -23,22 +23,14 @@ const PrivateChat = () => {
   const baseURL = process.env.REACT_APP_API_BASE_URL;
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const debugListener = (data) => {
-      console.log("📡 [SOCKET DEBUG]", data);
-    };
-
-    socket.on("debugLog", debugListener);
-
-    return () => {
-      socket.off("debugLog", debugListener);
-    };
-  }, []);
 
   useEffect(() => {
-    handleFetchRoomMembers(conversationId, setIsOtherUserInChat);
-    console.log("isOtherUserInRoom:", isOtherUserInChat);
-  }, [conversationId]);
+     if (conversationId && currentUser) {
+       handleFetchRoomMembers(conversationId, currentUser, setIsOtherUserInChat);
+       console.log("isOtherUserInRoom:", isOtherUserInChat);
+
+     }
+  }, [conversationId, currentUser]);
 
   useEffect(() => {
     if (!conversationId || !currentUser) return;

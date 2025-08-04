@@ -44,6 +44,7 @@ import { NotificationProvider } from "./context/NotificationContext.js";
 
 import "./styles/style.css";
 import SideMenuFullScreen from "./components/SideMenuFullScreen.js";
+import SideAddSection from "./components/SideAddSection.js";
 import Footer from "./components/Footer.js";
 import "./styles/darkMode.css";
 
@@ -188,7 +189,9 @@ const AppWithLocation = () => {
               )}
             </div>
 
-            <div className="sideMenuContainerWideScreen"></div>
+            <div className="sideMenuContainerWideScreen">
+              {shouldShowSideMenu && <SideAddSection />}
+            </div>
           </div>
           </NotificationProvider>
         </AudioProvider>

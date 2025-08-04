@@ -1,0 +1,100 @@
+.sideAddSection {
+  padding: 20px;
+  background-color: #f9f9f9;
+}
+
+.adsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: flex-start;
+    /* Fade transition */
+  opacity: 1;
+  transition: opacity 0.5s ease-in-out;
+}
+
+
+.adItem {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 280px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+opacity: 1;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.adItem:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.adImage {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+}
+
+.adDetails {
+  padding: 12px 16px;
+}
+
+.adDetails h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.adDetails p {
+  margin: 8px 0;
+  font-size: 0.95rem;
+  color: #666;
+}
+
+.adDetails span {
+  display: block;
+  font-weight: bold;
+  color: #2a68d8;
+  margin-top: 4px;
+}
+
+.addSectionHeader {
+  margin-top: 32px;
+  padding-top: 12px;
+  border-top: 1px solid #ccc;
+}
+
+.addSectionHeader h2 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.addSectionHeader button {
+  background-color: #2a68d8;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.addSectionHeader button:hover {
+  background-color: #1a4fb5;
+}
+
+.adItem {
+  opacity: 1;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.adItem.fade-out {
+  opacity: 0;
+}

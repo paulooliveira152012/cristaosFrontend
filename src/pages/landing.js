@@ -34,7 +34,7 @@ const Landing = () => {
       <Liveusers />
       <Listings />
 
-      <Footer />
+      {/* <Footer /> */}
       </div>
     </div>
   );
