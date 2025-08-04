@@ -10,6 +10,7 @@ import Signup from "./pages/signup";
 import NewListing from "./pages/newListing";
 import Profile from "./pages/profile";
 import { Notifications } from "./pages/notifications.js";
+import Reels from "./pages/reels.js";
 import Donate from "./pages/Donate";
 import PasswordResetLink from "./pages/passwordLinkRequest.js";
 import PasswordReset from "./pages/PasswordReset.js";
@@ -179,6 +180,7 @@ const AppWithLocation = () => {
                   <Route path="/privacyPolicy" element={<PrivacyPolicy />} />
                   <Route path="*" element={<h1>404 - Página não encontrada</h1>} />
                   <Route path="/termsOfUse" element={<TermsOfUse />} /> {/* Rota para a página de termos de uso */}
+                  <Route path="/reels" element={<Reels />} /> {/* Rota para a página de reels */}
                   
                 </Routes>
                 <MinimizedStatus />

@@ -151,6 +151,17 @@ const Footer = () => {
           {notifications && <span className="notificationStatus"></span>}
         </Link>
       </div>
+
+      <div className="reelsIcon">
+        <Link to="/reels">
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png"
+            alt="Reels Icon"
+            className="icon"
+            style={{ width: "24px", height: "24px" }}
+          />
+        </Link>
+      </div>
     </div>
   );
 };
