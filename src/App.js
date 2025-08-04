@@ -16,7 +16,6 @@ import PasswordReset from "./pages/PasswordReset.js";
 import VerifyAccount from "./pages/verifyAccount.js";
 import VerifyEmailUpdate from "./pages/verifyEmailUpdate.js";
 import AllUsersPage from "./pages/allUsers.js";
-import Diretrizes from "./pages/diretrizes.js"
 
 // páginas do menu
 import BibleStudiesByBook from "./pages/menuPages/BibleStudiesByBook.js";
@@ -33,6 +32,8 @@ import Suggestions from "./pages/menuPages/Suggestions.js";
 import SettingsMenu from "./pages/SettingsMenu.js";
 import ResendVerification from "./pages/resend-verification.js";
 import PrivateChat from "./pages/PrivateChat.js";
+import PrivacyPolicy from "./pages/menuPages/PrivacyPolicy.js";
+import TermsOfUse from "./pages/menuPages/TermsOfUse.js"; // Importar a página de termos de uso
 // Importar router, route e
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { UserProvider } from "./context/UserContext";
@@ -175,8 +176,9 @@ const AppWithLocation = () => {
                   <Route path="/allUsers" element={<AllUsersPage />} />
                   <Route path="/mainChat" element={<MainChat />} />
                   <Route path="/privateChat/:id" element={<PrivateChat />} />
-                  <Route path="/diretrizes" element={<Diretrizes />} />
-                  
+                  <Route path="/privacyPolicy" element={<PrivacyPolicy />} />
+                  <Route path="*" element={<h1>404 - Página não encontrada</h1>} />
+                  <Route path="/termsOfUse" element={<TermsOfUse />} /> {/* Rota para a página de termos de uso */}
                   
                 </Routes>
                 <MinimizedStatus />

@@ -63,8 +63,10 @@ const SideMenu = ({ closeMenu, isOpen }) => {
           {/* Divisor visual e segunda seção */}
           <ul className="secondaryMenuOptions">
             <li onClick={() => navigate("guidelines")}>Diretrizes da Plataforma</li>
+            <li onClick={() => navigate("privacyPolicy")}>Política de Privacidade</li>
             <li onClick={() => navigate("suggestions")}>Sugestões</li>
             <li onClick={() => navigate("contactUs")}>Fale Conosco</li>
+            <li onClick={() => navigate("termsOfUse")}>Termos de Uso</li>
           </ul>
 
           {/* Botão de logout */}
