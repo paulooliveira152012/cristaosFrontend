@@ -126,8 +126,7 @@ const Profile = () => {
   };
 
   return (
-    <div className="screenWrapper">
-      <div className="scrollable">
+      <>
         <div className="profilePageBasicInfoContainer">
           <Header showProfileImage={false} navigate={navigate} />
           <div className="profilePageHeaderParentSection">
@@ -380,8 +379,7 @@ const Profile = () => {
 
         {currentTab === "userFriends" && <ProfileUserFriends user={user} />}
       
-      </div>
-    </div>
+    </>
   );
 };
 

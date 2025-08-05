@@ -18,8 +18,8 @@ const Landing = () => {
   };
 
   return (
-    <div className="screenWrapper">
-      <div className="scrollable">
+    <div>
+      <div>
       <PullToRefresh onRefresh={handleRefresh}>
         <Header
           showBackButton={false}

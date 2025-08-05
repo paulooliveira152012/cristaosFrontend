@@ -50,7 +50,6 @@ import SideAddSection from "./components/SideAddSection.js";
 import Footer from "./components/Footer.js";
 import "./styles/darkMode.css";
 
-
 // Componente para exibir o ícone da sala minimizada globalmente
 const MinimizedStatus = () => {
   const location = useLocation();
@@ -58,8 +57,14 @@ const MinimizedStatus = () => {
   if (!minimizedRoom || location.pathname.includes("/liveRoom")) return null;
 
   return (
-    <div style={{ position: "fixed", bottom: "20px", right: "20px", zIndex: 1000 }}>
-      <Link to={`/liveRoom/${minimizedRoom._id}`} state={{ sala: minimizedRoom }} className="minimizedRoomLink">
+    <div
+      style={{ position: "fixed", bottom: "20px", right: "20px", zIndex: 1000 }}
+    >
+      <Link
+        to={`/liveRoom/${minimizedRoom._id}`}
+        state={{ sala: minimizedRoom }}
+        className="minimizedRoomLink"
+      >
         <div className="minimizedRoomIcon" style={styles.minimizedRoom}>
           <img
             src={minimizedRoom.roomImage || "defaultIcon.png"}
@@ -91,13 +96,10 @@ const AppWithLocation = () => {
   const location = useLocation();
 
   const shouldShowFooter =
-  
     !location.pathname.startsWith("/mainChat") &&
     !location.pathname.startsWith("/liveRoom") &&
-    !location.pathname.startsWith("/privateChat/:id") 
-    // ! location.pathname.startsWith("/mainChat")
-    ;
-
+    !location.pathname.startsWith("/privateChat/:id");
+  // ! location.pathname.startsWith("/mainChat")
   const hideSideMenu = ["/login"];
   const shouldShowSideMenu = !hideSideMenu.includes(location.pathname);
 
@@ -106,97 +108,129 @@ const AppWithLocation = () => {
       <RoomProvider>
         <AudioProvider>
           <NotificationProvider>
-          <div className="mainParentContainer">
-            <div className="sideMenuContainerWideScreen">
-              {/* COLOCAR O MENU AQUI */}
-              {shouldShowSideMenu && <SideMenuFullScreen />}
-            </div>
-
-            <div
-              style={{
-                flex: 2,
-                display: "flex",
-                flexDirection: "column",
-                position: "relative",
-                minHeight: "100vh",
-                overflowY: "auto",
-              }}
-              id="scrollableContainer"
-            >
-              <div
-                style={{
-                  flex: 1,
-                  margin: "0 auto",
-                  width: "100%",
-                  maxWidth: 800,
-                }}
-              >
-                <Routes>
-                  <Route path="/" element={<Landing />} />
-                  <Route path="/openListing/:id" element={<OpenListing />} />
-                  <Route path="/liveRoom/:roomId" element={<LiveRoom />} />
-                  <Route path="/chat" element={<Chat />} />
-                  <Route path="/login" element={<Login />} />
-
-                  <Route
-                    path="/resend-verification"
-                    element={<ResendVerification />}
-                  />
-                  <Route path="/signup" element={<Signup />} />
-                  <Route path="/verifyAccount" element={<VerifyAccount />} />
-
-                  <Route
-                    path="/confirm-email-update/:token"
-                    element={<VerifyEmailUpdate />}
-                  />
-
-                  <Route path="/newlisting" element={<NewListing />} />
-                  <Route path="/profile/:userId" element={<Profile />} />
-                  <Route path="/notifications" element={<Notifications />} />
-                  <Route path="/donate" element={<Donate />} />
-                  <Route path="/passwordResetLink" element={<PasswordResetLink />} />
-                  <Route path="/passwordReset" element={<PasswordReset />} />
-                  <Route path="/guidelines" element={<PlatformGuidelines />} />
-                  <Route
-                    path="/bibleStudies"
-                    element={<BibleStudiesByBook />}
-                  />
-                  <Route
-                    path="/bibleStudies"
-                    element={<BibleStudiesByTheme />}
-                  />
-                  <Route path="/privateRooms" element={<PrivateRooms />} />
-                  <Route path="/suggestions" element={<Suggestions />} />
-                  <Route path="/contactUs" element={<ContactUs />} />
-                  <Route path="/findGathering" element={<FindGathering />} />
-                  <Route path="/counselingSessions" element={<CounselingSessions />} />
-                  <Route path="/churchSupport" element={<ChurchSupport />} />
-                  <Route path="/promotions" element={<Promotions />} />
-                  <Route path="/communityForum" element={<CommunityForum />} />
-                  <Route path="/settingsMenu" element={<SettingsMenu />} />
-                  <Route path="/allUsers" element={<AllUsersPage />} />
-                  <Route path="/mainChat" element={<MainChat />} />
-                  <Route path="/privateChat/:id" element={<PrivateChat />} />
-                  <Route path="/privacyPolicy" element={<PrivacyPolicy />} />
-                  <Route path="*" element={<h1>404 - Página não encontrada</h1>} />
-                  <Route path="/termsOfUse" element={<TermsOfUse />} /> {/* Rota para a página de termos de uso */}
-                  <Route path="/reels" element={<Reels />} /> {/* Rota para a página de reels */}
-                  
-                </Routes>
-                <MinimizedStatus />
+            {/* 100dvh e 100% width */}
+            <div className="mainParentContainer">
+              <div className="sideMenuContainerWideScreen">
+                {/* COLOCAR O MENU AQUI */}
+                {shouldShowSideMenu && <SideMenuFullScreen />}
               </div>
 
-              {shouldShowFooter && (
-                <div style={{ position: "sticky", bottom: 0 }}>
-                  <Footer />
+              <div className="screenWrapper">
+                {/* pink container */}
+                <div className="scrollable">
+                  {/* yellow */}
+                  <div
+                    style={{
+                      flex: 1,
+                      margin: "0 auto",
+                      width: "100%",
+                      maxWidth: 800,
+                    }}
+                  >
+                    <Routes>
+                      <Route path="/" element={<Landing />} />
+                      <Route
+                        path="/openListing/:id"
+                        element={<OpenListing />}
+                      />
+                      <Route path="/liveRoom/:roomId" element={<LiveRoom />} />
+                      <Route path="/chat" element={<Chat />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route
+                        path="/resend-verification"
+                        element={<ResendVerification />}
+                      />
+                      <Route path="/signup" element={<Signup />} />
+                      <Route
+                        path="/verifyAccount"
+                        element={<VerifyAccount />}
+                      />
+                      <Route
+                        path="/confirm-email-update/:token"
+                        element={<VerifyEmailUpdate />}
+                      />
+                      <Route path="/newlisting" element={<NewListing />} />
+                      <Route path="/profile/:userId" element={<Profile />} />
+                      <Route
+                        path="/notifications"
+                        element={<Notifications />}
+                      />
+                      <Route path="/donate" element={<Donate />} />
+                      <Route
+                        path="/passwordResetLink"
+                        element={<PasswordResetLink />}
+                      />
+                      <Route
+                        path="/passwordReset"
+                        element={<PasswordReset />}
+                      />
+                      <Route
+                        path="/guidelines"
+                        element={<PlatformGuidelines />}
+                      />
+                      <Route
+                        path="/bibleStudies"
+                        element={<BibleStudiesByBook />}
+                      />
+                      <Route
+                        path="/bibleStudies"
+                        element={<BibleStudiesByTheme />}
+                      />
+                      <Route path="/privateRooms" element={<PrivateRooms />} />
+                      <Route path="/suggestions" element={<Suggestions />} />
+                      <Route path="/contactUs" element={<ContactUs />} />
+                      <Route
+                        path="/findGathering"
+                        element={<FindGathering />}
+                      />
+                      <Route
+                        path="/counselingSessions"
+                        element={<CounselingSessions />}
+                      />
+                      <Route
+                        path="/churchSupport"
+                        element={<ChurchSupport />}
+                      />
+                      <Route path="/promotions" element={<Promotions />} />
+                      <Route
+                        path="/communityForum"
+                        element={<CommunityForum />}
+                      />
+                      <Route path="/settingsMenu" element={<SettingsMenu />} />
+                      <Route path="/allUsers" element={<AllUsersPage />} />
+                      <Route path="/mainChat" element={<MainChat />} />
+                      <Route
+                        path="/privateChat/:id"
+                        element={<PrivateChat />}
+                      />
+                      <Route
+                        path="/privacyPolicy"
+                        element={<PrivacyPolicy />}
+                      />
+                      <Route
+                        path="*"
+                        element={<h1>404 - Página não encontrada</h1>}
+                      />
+                      <Route path="/termsOfUse" element={<TermsOfUse />} />{" "}
+                      {/* Rota para a página de termos de uso */}
+                      <Route path="/reels" element={<Reels />} />{" "}
+                      {/* Rota para a página de reels */}
+                    </Routes>
+                    <MinimizedStatus />
+                    {shouldShowFooter && (
+                      <div className="footerFixedWrapper">
+                        <div className="footerContainer">
+                          <Footer />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
+              </div>
+              <div className="sideMenuContainerWideScreen">
+                {shouldShowSideMenu && <SideAddSection />}
+              </div>
             </div>
-
-            <div className="sideMenuContainerWideScreen">
-              {shouldShowSideMenu && <SideAddSection />}
-            </div>
-          </div>
           </NotificationProvider>
         </AudioProvider>
       </RoomProvider>

@@ -1,14 +1,19 @@
 
-
-/* .chatPageWrapper {
+.mainChatPageWrapper {
   display: flex;
   flex-direction: column;
   height: 100dvh;
   overflow: hidden;
-  background-color: rgb(255, 255, 255);
-} */
+  background-color: #f0f0f0;
+}
 
-
+.chatPageWrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+  background-color: #c11818;
+}
 
 .chatPageContainer {
   flex: 1;
