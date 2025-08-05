@@ -16,6 +16,15 @@ const NewListing = () => {
   const [blogTitle, setBlogTitle] = useState("");
   const [blogContent, setBlogContent] = useState("");
   const [image, setImage] = useState(null);
+
+  // Reel related states
+  const [reelVideo, setReelVideo] = useState(null);
+  const [reelDescription, setReelDescription] = useState("");
+  const [reelTags, setReelTags] = useState("");
+  const [reelError, setReelError] = useState(null);
+  const [reelThumbnail, setReelThumbnail] = useState(null);
+
+  // Link related states
   const [link, setLink] = useState("");
   const [linkDescription, setLinkDescription] = useState("");
 
@@ -49,20 +58,24 @@ const NewListing = () => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("listing type", listingType);
 
     // Validation based on the selected listing type
     if (listingType === "blog" && !blogContent.trim()) {
       setError("Please provide blog content.");
+      console.log("error blog");
       return;
     }
 
     if (listingType === "image" && !image) {
       setError("Please select an image.");
+      console.log("error image");
       return;
     }
 
     if (listingType === "link" && !link.trim()) {
       setError("Please provide a valid link.");
+      console.log("error link");
       return;
     }
 
@@ -71,6 +84,18 @@ const NewListing = () => {
       (!pollQuestion.trim() || pollOptions.every((option) => !option.trim()))
     ) {
       setError("Please provide a poll question and at least one option.");
+      console.log("error poll");
+      return;
+    }
+
+    if (
+      listingType === "reel" && (!reelVideo || !reelDescription.trim())
+    ) {
+      console.log("reelVideo", reelVideo);
+      console.log("reelDescription", reelDescription);
+      console.log("reelThumbnail", reelThumbnail);
+      console.log("error reel");
+      setError("Por favor, envie vídeo, descrição e thumbnail para o reel.");
       return;
     }
 
@@ -82,6 +107,18 @@ const NewListing = () => {
         // Upload image to S3 and get the URL
         imageUrl = await uploadImageToS3(image);
       }
+      let reelVideoUrl = null;
+      if (reelVideo) {
+        // Upload reel video to S3 and get the URL
+        reelVideoUrl = await uploadImageToS3(reelVideo);
+      }
+      let reelThumbnailUrl = null;
+      if (reelThumbnail) {
+        // Upload reel thumbnail to S3 and get the URL
+        reelThumbnailUrl = await uploadImageToS3(reelThumbnail);
+      }
+
+      // Prepare listing data based on the type
 
       const listingData = {
         userId: currentUser._id,
@@ -97,6 +134,14 @@ const NewListing = () => {
         },
         tags: tags.split(",").map((tag) => tag.trim()), // Split tags by commas
       };
+
+      if (listingType === "reel") {
+        listingData.reel = {
+          videoUrl: reelVideoUrl,
+          description: reelDescription,
+          thumbnailUrl: reelThumbnailUrl,
+        };
+      }
 
       const response = await fetch(`${baseUrl}/api/listings/create`, {
         method: "POST",
@@ -147,163 +192,216 @@ const NewListing = () => {
       <div className="scrollable">
         <Header showProfileImage={false} navigate={navigate} />
 
-          <h2>Criar nova postagem</h2>
+        <h2>Criar nova postagem</h2>
 
-          <div className="listing-type-selection">
-            <label>Selecionar tipo da postagem: </label>
-            <select
-              value={listingType}
-              onChange={(e) => setListingType(e.target.value)}
-            >
-              <option value="blog">Blog</option>
-              <option value="image">Imagem</option>
-              <option value="link">Link</option>
-              <option value="poll">Enquete</option>
-            </select>
-          </div>
+        <div className="listing-type-selection">
+          <label>Selecionar tipo da postagem: </label>
+          <select
+            value={listingType}
+            onChange={(e) => setListingType(e.target.value)}
+          >
+            <option value="blog">Blog</option>
+            <option value="image">Imagem</option>
+            <option value="link">Link</option>
+            <option value="poll">Enquete</option>
+            <option value="reel">Reel</option>
+          </select>
+        </div>
 
-          <form onSubmit={handleSubmit}>
-            {/* Conditionally render inputs based on listingType */}
-            {/* a user should be able to add a section for either text, or an image, or an image to the left and text to the right and/or an image to the right and text to the left */}
-            {listingType === "blog" && (
-              // text area
-              <div className="blog-input">
-                {/* title */}
-                <input
-                  value={blogTitle}
-                  className="BlogTitle"
-                  placeholder="Titulo do blog"
-                  onChange={(e) => setBlogTitle(e.target.value)}
-                ></input>
-                {/* area do texto */}
-                <textarea
-                  value={blogContent}
-                  onChange={(e) => setBlogContent(e.target.value)}
-                  placeholder="Escreva Seu Blog Aqui..."
-                  rows="6"
-                ></textarea>
-                {/* Imagem */}
-                <div className="image-upload">
-                  <label htmlFor="blogImage">
-                    Adicionar uma imagem opcional ao final do blog:
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    id="blogImage"
-                    onChange={(e) => setImage(e.target.files[0])}
-                  />
-                  {image && (
-                    <div className="image-preview">
-                      <img
-                        src={URL.createObjectURL(image)}
-                        alt="Pré-visualização da imagem"
-                        style={{ maxWidth: "100%", marginTop: "10px" }}
-                      />
-                    </div>
-                  )}
-                </div>
-                {/* botao para adicionar  */}
-              </div>
-            )}
-
-            {listingType === "image" && (
+        <form onSubmit={handleSubmit}>
+          {/* Conditionally render inputs based on listingType */}
+          {/* a user should be able to add a section for either text, or an image, or an image to the left and text to the right and/or an image to the right and text to the left */}
+          {listingType === "blog" && (
+            // text area
+            <div className="blog-input">
+              {/* title */}
+              <input
+                value={blogTitle}
+                className="BlogTitle"
+                placeholder="Titulo do blog"
+                onChange={(e) => setBlogTitle(e.target.value)}
+              ></input>
+              {/* area do texto */}
+              <textarea
+                value={blogContent}
+                onChange={(e) => setBlogContent(e.target.value)}
+                placeholder="Escreva Seu Blog Aqui..."
+                rows="6"
+              ></textarea>
+              {/* Imagem */}
               <div className="image-upload">
+                <label htmlFor="blogImage">
+                  Adicionar uma imagem opcional ao final do blog:
+                </label>
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={handleImageUpload}
+                  id="blogImage"
+                  onChange={(e) => setImage(e.target.files[0])}
                 />
                 {image && (
-                  <img
-                    src={URL.createObjectURL(image)}
-                    alt="Preview"
-                    className="image-preview"
-                  />
-                )}
-              </div>
-            )}
-
-            {listingType === "link" && (
-              <div className="link-input">
-                <input
-                  type="text"
-                  value={link}
-                  onChange={(e) => setLink(e.target.value)}
-                  placeholder="Cole o link do vídeo (YouTube, etc)..."
-                />
-
-                {/* Se for YouTube, mostra preview */}
-                {isYouTubeLink(link) && getYouTubeVideoId(link) && (
-                  <div style={{ marginTop: "15px" }}>
-                    <iframe
-                      width="100%"
-                      height="220"
-                      src={`https://www.youtube.com/embed/${getYouTubeVideoId(
-                        link
-                      )}`}
-                      title="YouTube preview"
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      style={{
-                        borderRadius: "8px",
-                        marginBottom: "10px",
-                        maxWidth: "100%",
-                      }}
+                  <div className="image-preview">
+                    <img
+                      src={URL.createObjectURL(image)}
+                      alt="Pré-visualização da imagem"
+                      style={{ maxWidth: "100%", marginTop: "10px" }}
                     />
                   </div>
                 )}
-
-                {/* Campo opcional de texto para o usuário comentar sobre o vídeo */}
-                <textarea
-                  value={linkDescription}
-                  onChange={(e) => setLinkDescription(e.target.value)}
-                  placeholder="Escreva algo sobre esse vídeo (opcional)..."
-                  rows="4"
-                  style={{
-                    width: "100%",
-                    marginTop: "10px",
-                    padding: "8px",
-                    borderRadius: "5px",
-                    border: "1px solid #ccc",
-                  }}
-                />
               </div>
-            )}
+              {/* botao para adicionar  */}
+            </div>
+          )}
 
-            {listingType === "poll" && (
-              <div className="poll-input">
-                <input
-                  type="text"
-                  value={pollQuestion}
-                  onChange={(e) => setPollQuestion(e.target.value)}
-                  placeholder="Poll question"
+          {listingType === "image" && (
+            <div className="image-upload">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+              />
+              {image && (
+                <img
+                  src={URL.createObjectURL(image)}
+                  alt="Preview"
+                  className="image-preview"
                 />
-                {pollOptions.map((option, index) => (
-                  <input
-                    key={index}
-                    type="text"
-                    value={option}
-                    onChange={(e) =>
-                      handlePollOptionChange(index, e.target.value)
-                    }
-                    placeholder={`Option ${index + 1}`}
+              )}
+            </div>
+          )}
+
+          {listingType === "link" && (
+            <div className="link-input">
+              <input
+                type="text"
+                value={link}
+                onChange={(e) => setLink(e.target.value)}
+                placeholder="Cole o link do vídeo (YouTube, etc)..."
+              />
+
+              {/* Se for YouTube, mostra preview */}
+              {isYouTubeLink(link) && getYouTubeVideoId(link) && (
+                <div style={{ marginTop: "15px" }}>
+                  <iframe
+                    width="100%"
+                    height="220"
+                    src={`https://www.youtube.com/embed/${getYouTubeVideoId(
+                      link
+                    )}`}
+                    title="YouTube preview"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    style={{
+                      borderRadius: "8px",
+                      marginBottom: "10px",
+                      maxWidth: "100%",
+                    }}
                   />
-                ))}
-                <button type="button" onClick={addPollOption}>
-                  Add another option
-                </button>
-              </div>
-            )}
+                </div>
+              )}
 
-            {error && <p className="error">{error}</p>}
+              {/* Campo opcional de texto para o usuário comentar sobre o vídeo */}
+              <textarea
+                value={linkDescription}
+                onChange={(e) => setLinkDescription(e.target.value)}
+                placeholder="Escreva algo sobre esse vídeo (opcional)..."
+                rows="4"
+                style={{
+                  width: "100%",
+                  marginTop: "10px",
+                  padding: "8px",
+                  borderRadius: "5px",
+                  border: "1px solid #ccc",
+                }}
+              />
+            </div>
+          )}
 
-            <button type="submit" className="submit-button">
-              Submit Listing
-            </button>
-          </form>
-        
+          {listingType === "poll" && (
+            <div className="poll-input">
+              <input
+                type="text"
+                value={pollQuestion}
+                onChange={(e) => setPollQuestion(e.target.value)}
+                placeholder="Poll question"
+              />
+              {pollOptions.map((option, index) => (
+                <input
+                  key={index}
+                  type="text"
+                  value={option}
+                  onChange={(e) =>
+                    handlePollOptionChange(index, e.target.value)
+                  }
+                  placeholder={`Option ${index + 1}`}
+                />
+              ))}
+              <button type="button" onClick={addPollOption}>
+                Add another option
+              </button>
+            </div>
+          )}
+
+          {/* Reel related inputs */}
+          {listingType === "reel" && (
+            <div className="reel-input">
+              <p>Reel Video</p>
+              <input
+                type="file"
+                accept="video/*"
+                onChange={(e) => setReelVideo(e.target.files[0])}
+              />
+              {reelVideo && (
+                <video
+                  controls
+                  src={URL.createObjectURL(reelVideo)}
+                  style={{ width: "100%", marginTop: "10px" }}
+                />
+              )}
+              <textarea
+                value={reelDescription}
+                onChange={(e) => setReelDescription(e.target.value)}
+                placeholder="Reel description..."
+                rows="4"
+              ></textarea>
+              <p>Thumbnail</p>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setReelThumbnail(e.target.files[0])}
+              />
+              {reelThumbnail && (
+                <img
+                  src={URL.createObjectURL(reelThumbnail)}
+                  alt="Reel Thumbnail"
+                  style={{ maxWidth: "100%", marginTop: "10px" }}
+                />
+              )}
+
+              {reelError && <p className="error">{reelError}</p>}
+            </div>
+          )}
+
+          {/* Tags input */}
+          <div className="tags-input">
+            <label>Tags (separated by commas):</label>
+            <input
+              type="text"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="tag1, tag2, tag3"
+            />
+          </div>
+
+          {/* Error message */}
+
+          {error && <p className="error">{error}</p>}
+
+          <button type="submit" className="submit-button">
+            Submit Listing
+          </button>
+        </form>
       </div>
     </div>
   );

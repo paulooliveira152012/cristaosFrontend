@@ -1,0 +1,66 @@
+.reelsWrapper {
+  height: 100dvh;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+}
+
+.reelContainer {
+  width: 100%;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.reelItem {
+  height: 100dvh;
+  width: 100%;
+  scroll-snap-align: start;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.reelVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reelDescription {
+  position: absolute;
+  bottom: 80px;
+  left: 20px;
+  color: white;
+  text-shadow: 0 0 10px black;
+  font-size: 18px;
+  font-weight: bold;
+  z-index: 2;
+}
+
+.reelActions {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  gap: 15px;
+  z-index: 2;
+}
+
+.reelActionButton {
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  color: white;
+  font-size: 22px;
+  padding: 10px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.reelActionButton:hover {
+  transform: scale(1.1);
+}

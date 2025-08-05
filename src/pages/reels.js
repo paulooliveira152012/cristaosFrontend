@@ -1,43 +1,88 @@
-// reels page
-import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-
-
+import React, { useEffect, useRef, useState } from "react";
+import "../styles/reels.css";
 
 const Reels = () => {
   const [reels, setReels] = useState([]);
-  const location = useLocation();
+  const videoRefs = useRef([]);
 
   useEffect(() => {
-    // Fetch reels from the server
     const fetchReels = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/reels`);
+        const response = await fetch(
+          `${process.env.REACT_APP_API_BASE_URL}/api/listings/allreels`
+        );
         const data = await response.json();
-        setReels(data);
+        console.log("Fetched reels:", data);
+
+        if (Array.isArray(data.reels)) {
+          setReels(data.reels);
+        } else {
+          console.error("API didn't return an array:", data);
+          setReels([]);
+        }
       } catch (error) {
         console.error("Error fetching reels:", error);
+        setReels([]);
       }
     };
 
     fetchReels();
   }, []);
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const video = entry.target;
+          if (entry.isIntersecting) {
+            video.play().catch(() => {});
+          } else {
+            video.pause();
+          }
+        });
+      },
+      { threshold: 0.9 }
+    );
+
+    videoRefs.current.forEach((video) => {
+      if (video) observer.observe(video);
+    });
+
+    return () => {
+      videoRefs.current.forEach((video) => {
+        if (video) observer.unobserve(video);
+      });
+    };
+  }, [reels]);
+
   return (
-    <div className="reels-container">
-      <h1>Reels</h1>
-      <div className="reels-list">
-        {reels.map((reel) => (
-          <div key={reel._id} className="reel-item">
-            <Link to={`/reel/${reel._id}`}>
-              <img src={reel.thumbnail} alt={reel.title} />
-              <h2>{reel.title}</h2>
-            </Link>
+    <div className="reelsWrapper">
+      {reels.map((reel, index) => (
+        <div className="reelContainer" key={reel._id}>
+          <div className="reelItem">
+            <video
+              ref={(el) => (videoRefs.current[index] = el)}
+              src={reel.videoUrl}
+              loop
+              playsInline
+              preload="auto"
+              className="reelVideo"
+            />
+            <div className="reelDescription">
+              {reel.description || "Sem descrição"}
+            </div>
+
+            <div className="reelActions">
+              <button className="reelActionButton">❤️</button>
+              <button className="reelActionButton">💬</button>
+              <button className="reelActionButton">🔖</button>
+              <button className="reelActionButton">🔗</button>
+            </div>
           </div>
-        ))}
-      </div>
-      </div>
+        </div>
+      ))}
+    </div>
   );
-}
+};
 
 export default Reels;
