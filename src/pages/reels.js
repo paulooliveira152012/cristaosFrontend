@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import Header from "../components/Header";
 import "../styles/reels.css";
 
 const Reels = () => {
@@ -68,6 +69,7 @@ const Reels = () => {
               src={reel.videoUrl}
               loop
               playsInline
+              // controls={true}
               preload="auto"
               className="reelVideo"
             />
@@ -75,12 +77,12 @@ const Reels = () => {
               {reel.description || "Sem descrição"}
             </div>
 
-            <div className="reelActions">
+            {/* <div className="reelActions">
               <button className="reelActionButton">❤️</button>
               <button className="reelActionButton">💬</button>
               <button className="reelActionButton">🔖</button>
               <button className="reelActionButton">🔗</button>
-            </div>
+            </div> */}
           </div>
         </div>
       ))}
