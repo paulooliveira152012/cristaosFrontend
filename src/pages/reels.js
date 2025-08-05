@@ -4,12 +4,15 @@ import "../styles/reels.css";
 const Reels = () => {
   const [reels, setReels] = useState([]);
   const videoRefs = useRef([]);
+  
 
   useEffect(() => {
     const fetchReels = async () => {
+      const url = `${process.env.REACT_APP_API_BASE_URL}`;
+      console.log("Fetching reels from:", url);
       try {
         const response = await fetch(
-          `${process.env.REACT_APP_API_BASE_URL}/api/listings/allreels`
+          `${url}/api/listings/allreels`
         );
         const data = await response.json();
         console.log("Fetched reels:", data);
