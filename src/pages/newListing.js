@@ -4,6 +4,7 @@ import Header from "../components/Header";
 import { uploadImageToS3 } from "../utils/s3Upload"; // Assuming you have a function to handle S3 upload
 import { useUser } from "../context/UserContext";
 import { useNavigate } from "react-router-dom";
+import { uploadReelToBackend } from "./functions/newListingFunctions"; // Import the function to handle reel uploads
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
@@ -55,117 +56,118 @@ const NewListing = () => {
     setPollOptions(newOptions);
   };
 
-  // Handle form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    console.log("listing type", listingType);
+  // ...outros hooks e estados...
 
-    // Validation based on the selected listing type
-    if (listingType === "blog" && !blogContent.trim()) {
-      setError("Please provide blog content.");
-      console.log("error blog");
-      return;
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError(null);
+
+  // Validação
+  if (listingType === "blog" && !blogContent.trim()) {
+    setError("Please provide blog content.");
+    return;
+  }
+  if (listingType === "image" && !image) {
+    setError("Please select an image.");
+    return;
+  }
+  if (listingType === "link" && !link.trim()) {
+    setError("Please provide a valid link.");
+    return;
+  }
+  if (
+    listingType === "poll" &&
+    (!pollQuestion.trim() || pollOptions.every((option) => !option.trim()))
+  ) {
+    setError("Please provide a poll question and at least one option.");
+    return;
+  }
+  if (listingType === "reel" && (!reelVideo || !reelDescription.trim())) {
+    console.log("listingType", listingType);
+    setError("Por favor, envie vídeo, descrição e thumbnail para o reel.");
+    return;
+  }
+
+  try {
+    let imageUrl = null;
+    if (listingType === "image" && image) {
+      imageUrl = await uploadImageToS3(image);
     }
 
-    if (listingType === "image" && !image) {
-      setError("Please select an image.");
-      console.log("error image");
-      return;
-    }
+    let reelVideoUrl = null;
+    let reelThumbnailUrl = null;
 
-    if (listingType === "link" && !link.trim()) {
-      setError("Please provide a valid link.");
-      console.log("error link");
-      return;
-    }
+    // 1. Upload do vídeo e thumbnail se for reel
+    if (listingType === "reel" && reelVideo && reelThumbnail) {
+      const formData = new FormData();
+      formData.append("video", reelVideo);
+      formData.append("thumbnail", reelThumbnail);
+      formData.append("description", reelDescription);
+      formData.append("userId", currentUser._id);
 
-    if (
-      listingType === "poll" &&
-      (!pollQuestion.trim() || pollOptions.every((option) => !option.trim()))
-    ) {
-      setError("Please provide a poll question and at least one option.");
-      console.log("error poll");
-      return;
-    }
-
-    if (
-      listingType === "reel" && (!reelVideo || !reelDescription.trim())
-    ) {
-      console.log("reelVideo", reelVideo);
-      console.log("reelDescription", reelDescription);
-      console.log("reelThumbnail", reelThumbnail);
-      console.log("error reel");
-      setError("Por favor, envie vídeo, descrição e thumbnail para o reel.");
-      return;
-    }
-
-    setError(null); // Clear any previous errors if validation passes
-
-    try {
-      let imageUrl = null;
-      if (image) {
-        // Upload image to S3 and get the URL
-        imageUrl = await uploadImageToS3(image);
-      }
-      let reelVideoUrl = null;
-      if (reelVideo) {
-        // Upload reel video to S3 and get the URL
-        reelVideoUrl = await uploadImageToS3(reelVideo);
-      }
-      let reelThumbnailUrl = null;
-      if (reelThumbnail) {
-        // Upload reel thumbnail to S3 and get the URL
-        reelThumbnailUrl = await uploadImageToS3(reelThumbnail);
-      }
-
-      // Prepare listing data based on the type
-
-      const listingData = {
-        userId: currentUser._id,
-        type: listingType,
-        blogTitle,
-        blogContent,
-        imageUrl,
-        link,
-        linkDescription,
-        poll: {
-          question: pollQuestion,
-          options: pollOptions.filter((option) => option.trim()), // Filter out empty options
-        },
-        tags: tags.split(",").map((tag) => tag.trim()), // Split tags by commas
-      };
-
-      if (listingType === "reel") {
-        listingData.reel = {
-          videoUrl: reelVideoUrl,
-          description: reelDescription,
-          thumbnailUrl: reelThumbnailUrl,
-        };
-      }
-
-      const response = await fetch(`${baseUrl}/api/listings/create`, {
+      const uploadRes = await fetch(`${baseUrl}/api/reels/upload-reel`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(listingData),
+        body: formData,
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        console.log("Listing created successfully!", data);
-        // Clear form after submission or navigate to another page
-        resetForm();
-        navigate("/");
-      } else {
-        setError(data.message || "Failed to create listing");
+      if (!uploadRes.ok) {
+        const errorData = await uploadRes.json();
+        setReelError(errorData.message || "Erro ao fazer upload do reel.");
+        return;
       }
-    } catch (err) {
-      console.error("Error creating listing:", err);
-      setError("Something went wrong. Please try again.");
+
+      const uploadVideo = await uploadRes.json();
+      reelVideoUrl = uploadVideo.videoUrl;
+      reelThumbnailUrl = uploadVideo.thumbnailUrl;
     }
-  };
+
+    // 2. Criar objeto final para o listing
+    const listingData = {
+      userId: currentUser._id,
+      type: listingType,
+      blogTitle,
+      blogContent,
+      imageUrl,
+      link,
+      linkDescription,
+      tags: tags.split(",").map((t) => t.trim()),
+    };
+
+    if (listingType === "poll") {
+      listingData.poll = {
+        question: pollQuestion,
+        options: pollOptions.filter((option) => option.trim()),
+      };
+    }
+
+    if (listingType === "reel") {
+      listingData.reel = {
+        videoUrl: reelVideoUrl,
+        thumbnailUrl: reelThumbnailUrl,
+        description: reelDescription,
+      };
+    }
+
+    // 3. Enviar para a rota de criação de listing
+    const response = await fetch(`${baseUrl}/api/listings/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(listingData),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      resetForm();
+      // navigate("/reels") ou navigate("/") conforme seu fluxo
+    } else {
+      setError(data.message || "Failed to create listing");
+    }
+  } catch (err) {
+    console.error("Error creating listing:", err);
+    setError("Something went wrong. Please try again.");
+  }
+};
 
   // Reset form fields after successful submission
   const resetForm = () => {
