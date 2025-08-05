@@ -1,6 +1,10 @@
 .sideAddSection {
   padding: 20px;
-  background-color: #f9f9f9;
+  /* background-color: #d11f1f; */
+  padding: 20px;
+  padding-bottom: 80px; /* espaço para o footer fixo */
+  /* background-color: #d11f1f; */
+  height: 100%;
 }
 
 .adsContainer {
