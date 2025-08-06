@@ -224,7 +224,7 @@ const NewListing = () => {
   };
 
   return (
-    <div className="screenWrapper">
+    <div className="screenWrapper" style={{ marginBottom: "60px" }}>
       <div className="scrollable">
         <Header showProfileImage={false} navigate={navigate} />
 

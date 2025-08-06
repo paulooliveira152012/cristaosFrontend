@@ -5,16 +5,13 @@ import "../styles/reels.css";
 const Reels = () => {
   const [reels, setReels] = useState([]);
   const videoRefs = useRef([]);
-  
 
   useEffect(() => {
     const fetchReels = async () => {
       const url = `${process.env.REACT_APP_API_BASE_URL}`;
       console.log("Fetching reels from:", url);
       try {
-        const response = await fetch(
-          `${url}/api/listings/allreels`
-        );
+        const response = await fetch(`${url}/api/listings/allreels`);
         const data = await response.json();
         console.log("Fetched reels:", data);
 
@@ -48,9 +45,12 @@ const Reels = () => {
       { threshold: 0.9 }
     );
 
-    videoRefs.current.forEach((video) => {
-      if (video) observer.observe(video);
-    });
+    videoRefs.current.forEach(
+      (video) => {
+        if (video) observer.observe(video);
+      },
+      [reels]
+    );
 
     return () => {
       videoRefs.current.forEach((video) => {
@@ -63,26 +63,31 @@ const Reels = () => {
     <div className="reelsWrapper">
       {reels.map((reel, index) => (
         <div className="reelContainer" key={reel._id}>
-          <div className="reelItem">
-            <video
+          
+          <div className="reelItemWrap">
+            <div
+              className="reelItem"
+              >
+              <video
               ref={(el) => (videoRefs.current[index] = el)}
-              src={reel.videoUrl}
-              loop
-              playsInline
-              // controls={true}
-              preload="auto"
-              className="reelVideo"
-            />
-            <div className="reelDescription">
-              {reel.description || "Sem descrição"}
-            </div>
+                src={reel.videoUrl}
+                loop
+                playsInline
+                // controls={true}
+                preload="auto"
+                className="reelVideo"
+              />
+              <div className="reelDescription">
+                {reel.description || "Sem descrição"}
+              </div>
 
-            {/* <div className="reelActions">
+              {/* <div className="reelActions">
               <button className="reelActionButton">❤️</button>
               <button className="reelActionButton">💬</button>
               <button className="reelActionButton">🔖</button>
               <button className="reelActionButton">🔗</button>
             </div> */}
+            </div>
           </div>
         </div>
       ))}
