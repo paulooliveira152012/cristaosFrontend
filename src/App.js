@@ -110,11 +110,13 @@ const AppWithLocation = () => {
           <NotificationProvider>
             {/* 100dvh e 100% width */}
             <div className="mainParentContainer">
+              {/* 1st side menu */}
               <div className="sideMenuContainerWideScreen">
                 {/* COLOCAR O MENU AQUI */}
                 {shouldShowSideMenu && <SideMenuFullScreen />}
               </div>
 
+              {/* 2nd main content */}
               <div className="screenWrapper">
                 {/* pink container */}
                 <div className="scrollable">
@@ -125,6 +127,8 @@ const AppWithLocation = () => {
                       margin: "0 auto",
                       width: "100%",
                       maxWidth: 800,
+                      position: "relative",
+                      height: "100vh",
                     }}
                   >
                     <Routes>
@@ -217,16 +221,18 @@ const AppWithLocation = () => {
                       {/* Rota para a página de reels */}
                     </Routes>
                     <MinimizedStatus />
-                    {shouldShowFooter && (
-                      <div className="footerFixedWrapper">
-                        <div className="footerContainer">
-                          <Footer />
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
+                {/* footer aqui */}
+                {shouldShowFooter && (
+                  <div className="footerFixedWrapper">
+                    <div className="footerContainer">
+                      <Footer />
+                    </div>
+                  </div>
+                )}
               </div>
+              {/* 3rd ads container */}
               <div className="sideMenuContainerWideScreen">
                 {shouldShowSideMenu && <SideAddSection />}
               </div>
