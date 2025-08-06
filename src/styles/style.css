@@ -10,7 +10,7 @@
     background-color: white;
     display: flex;
     flex-direction: column;
-    /* background-color: green; */
+    background-color: green;
     flex: 2;
 }
 
@@ -22,8 +22,8 @@ body.dark-mode .screenWrapper {
 .scrollable {
     height: 100%;
     overflow-y: scroll;
-    
-    /* background-color: pink; */
+    background-color: orange;
+    position: relative; /* Necessário para o footer fixo */
 }
 
 button {
