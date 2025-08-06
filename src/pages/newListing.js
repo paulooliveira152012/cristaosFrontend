@@ -1,4 +1,5 @@
 import "../styles/newlisting.css";
+import { motion } from "framer-motion";
 import { useState } from "react";
 import Header from "../components/Header";
 import { uploadImageToS3 } from "../utils/s3Upload"; // Assuming you have a function to handle S3 upload
@@ -12,6 +13,7 @@ const baseUrl = process.env.REACT_APP_API_BASE_URL;
 const NewListing = () => {
   const navigate = useNavigate();
   const { currentUser } = useUser();
+  const [isLoading, setIsLoading] = useState(false);
   const [listingType, setListingType] = useState("blog");
   const [sections, setSections] = useState([]);
 
@@ -60,8 +62,10 @@ const NewListing = () => {
   // ...outros hooks e estados...
 
   const handleSubmit = async (e) => {
-    console.log("submitting listing");
     e.preventDefault();
+    console.log("submitting listing");
+    setIsLoading(true);
+    console.log("isLoading", isLoading);
     setError(null);
 
     // Validação
@@ -85,6 +89,7 @@ const NewListing = () => {
       return;
     }
     if (listingType === "reel" && (!reelVideo || !reelDescription.trim())) {
+      setIsLoading(false);
       setError("Por favor, envie vídeo, descrição e thumbnail para o reel.");
       return;
     }
@@ -150,6 +155,7 @@ const NewListing = () => {
 
         if (response.ok) {
           resetForm();
+          setIsLoading(false);
           navigate("/"); // ou /reels
         } else {
           console.error("Error creating reel listing:", data);
@@ -193,6 +199,7 @@ const NewListing = () => {
 
       if (response.ok) {
         resetForm();
+        setIsLoading(false);
         navigate("/");
       } else {
         setError(data.message || "Erro ao criar publicação.");
@@ -225,10 +232,22 @@ const NewListing = () => {
 
   return (
     <div className="screenWrapper" style={{ marginBottom: "60px" }}>
+        {isLoading && (
+          <div className="modal">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, rotate: 360 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="loadingSpinner"
+          />
+          </div>
+        )}
       <div className="scrollable">
         <Header showProfileImage={false} navigate={navigate} />
 
         <h2>Criar nova postagem</h2>
+
 
         <div className="listing-type-selection">
           <label>Selecionar tipo da postagem: </label>
@@ -437,6 +456,7 @@ const NewListing = () => {
           <button type="submit" className="submit-button">
             Submit Listing
           </button>
+
         </form>
       </div>
     </div>
