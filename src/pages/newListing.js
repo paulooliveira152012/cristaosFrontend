@@ -128,22 +128,35 @@ const NewListing = () => {
           setError(errorData.message || "Erro ao fazer upload do reel.");
           return;
         }
-
         console.log("Upload successful");
-        const { videoUrl, thumbnailUrl } = await uploadRes.json();
+        setIsLoading(false);
+        navigate("/");
+        return; // parar aqui se for reel
+      } else {
+        // Se for outro tipo (blog, image, link, poll)
+        let imageUrl = null;
+        if (listingType === "image" && image) {
+          imageUrl = await uploadImageToS3(image);
+        }
 
         const listingData = {
           userId: currentUser._id,
-          type: "reel",
+          type: listingType,
+          blogTitle,
+          blogContent,
+          imageUrl,
+          link,
+          linkDescription,
           tags: tags.split(",").map((t) => t.trim()),
-          reel: {
-            videoUrl,
-            thumbnailUrl,
-            description: reelDescription,
-          },
         };
 
-        console.log("listingData", listingData);
+        if (listingType === "poll") {
+          listingData.poll = {
+            question: pollQuestion,
+            options: pollOptions.filter((option) => option.trim()),
+          };
+        }
+
         const response = await fetch(`${baseUrl}/api/listings/create`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -151,59 +164,15 @@ const NewListing = () => {
         });
 
         const data = await response.json();
-        console.log("response", response);
 
         if (response.ok) {
           resetForm();
-          setIsLoading(false);
-          navigate("/"); // ou /reels
         } else {
-          console.error("Error creating reel listing:", data);
-          setError(data.message || "Erro ao criar reel.");
+          setError(data.message || "Erro ao criar publicação.");
         }
-
-        return; // parar aqui se for reel
       }
-
-      // Se for outro tipo (blog, image, link, poll)
-      let imageUrl = null;
-      if (listingType === "image" && image) {
-        imageUrl = await uploadImageToS3(image);
-      }
-
-      const listingData = {
-        userId: currentUser._id,
-        type: listingType,
-        blogTitle,
-        blogContent,
-        imageUrl,
-        link,
-        linkDescription,
-        tags: tags.split(",").map((t) => t.trim()),
-      };
-
-      if (listingType === "poll") {
-        listingData.poll = {
-          question: pollQuestion,
-          options: pollOptions.filter((option) => option.trim()),
-        };
-      }
-
-      const response = await fetch(`${baseUrl}/api/listings/create`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(listingData),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        resetForm();
-        setIsLoading(false);
-        navigate("/");
-      } else {
-        setError(data.message || "Erro ao criar publicação.");
-      }
+      setIsLoading(false);
+      navigate("/");
     } catch (err) {
       console.error("Erro ao criar publicação:", err);
       setError("Algo deu errado. Tente novamente.", err);
@@ -232,8 +201,8 @@ const NewListing = () => {
 
   return (
     <div className="screenWrapper" style={{ marginBottom: "60px" }}>
-        {isLoading && (
-          <div className="modal">
+      {isLoading && (
+        <div className="modal">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1, rotate: 360 }}
@@ -241,13 +210,12 @@ const NewListing = () => {
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
             className="loadingSpinner"
           />
-          </div>
-        )}
+        </div>
+      )}
       <div className="scrollable">
         <Header showProfileImage={false} navigate={navigate} />
 
         <h2>Criar nova postagem</h2>
-
 
         <div className="listing-type-selection">
           <label>Selecionar tipo da postagem: </label>
@@ -456,7 +424,6 @@ const NewListing = () => {
           <button type="submit" className="submit-button">
             Submit Listing
           </button>
-
         </form>
       </div>
     </div>
