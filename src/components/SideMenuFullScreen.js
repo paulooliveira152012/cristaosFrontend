@@ -48,6 +48,7 @@ const SideMenuFullScreen = () => {
           )}
         </ul>
 
+        <div className="themeToggleBtnFullScreenContainer">
         <button
           onClick={() => setDarkMode(!darkMode)}
           className="themeToggleBtnFullScreen"
@@ -55,6 +56,8 @@ const SideMenuFullScreen = () => {
         >
           {darkMode ? <SunIcon /> : <MoonIcon />}
         </button>
+        </div>
+
       </div>
     </div>
   );

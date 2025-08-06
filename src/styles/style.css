@@ -22,12 +22,12 @@ body.dark-mode .screenWrapper {
 .scrollable {
     height: 100%;
     overflow-y: scroll;
-    
-    /* background-color: pink; */
+    /* background-color: tomato;  */
+    /* position: relative; */
+    /* min-height: 100dvh;    */
 }
 
 button {
-    margin-top: 20px;
     padding: 12px 20px;
     background-color: #28a745;
     color: white;
@@ -91,7 +91,7 @@ body.dark-mode {
     
 }
 
-@media screen and (max-width: 1500px) {
+@media screen and (max-width: 1024px) {
     .sideMenuContainerWideScreen {
         display: none;
     }
