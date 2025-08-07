@@ -17,6 +17,11 @@ import PasswordReset from "./pages/PasswordReset.js";
 import VerifyAccount from "./pages/verifyAccount.js";
 import VerifyEmailUpdate from "./pages/verifyEmailUpdate.js";
 import AllUsersPage from "./pages/allUsers.js";
+import AdManagement from "./pages/adManagement.js";
+import AddAd from "./pages/AddAd.js";
+import EditAd from "./pages/EditAd.js";
+import DeleteAd from "./pages/DeleteAd.js";
+import ViewAds from "./pages/ViewAds.js";
 
 // páginas do menu
 import BibleStudiesByBook from "./pages/menuPages/BibleStudiesByBook.js";
@@ -49,6 +54,8 @@ import SideMenuFullScreen from "./components/SideMenuFullScreen.js";
 import SideAddSection from "./components/SideAddSection.js";
 import Footer from "./components/Footer.js";
 import "./styles/darkMode.css";
+
+import ProtectedRoute from "./components/ProtectedRoutes.js"; // Importar o componente de rota protegida
 
 // Componente para exibir o ícone da sala minimizada globalmente
 const MinimizedStatus = () => {
@@ -219,6 +226,46 @@ const AppWithLocation = () => {
                       {/* Rota para a página de termos de uso */}
                       <Route path="/reels" element={<Reels />} />{" "}
                       {/* Rota para a página de reels */}
+                      <Route
+                        path="/addManagement"
+                        element={
+                          <ProtectedRoute requiredRole="lider">
+                            <AdManagement />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/ads/add"
+                        element={
+                          <ProtectedRoute requiredRole="lider">
+                            <AddAd />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/ads/edit"
+                        element={
+                          <ProtectedRoute requiredRole="lider">
+                            <EditAd />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/ads/delete"
+                        element={
+                          <ProtectedRoute requiredRole="lider">
+                            <DeleteAd />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/ads/view"
+                        element={
+                          <ProtectedRoute requiredRole="lider">
+                            <ViewAds />
+                          </ProtectedRoute>
+                        }
+                      />
                     </Routes>
                     <MinimizedStatus />
                   </div>

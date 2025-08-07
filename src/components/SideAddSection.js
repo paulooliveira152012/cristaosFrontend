@@ -3,18 +3,28 @@ import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext.js";
 import { fetchAllAds } from "./functions/addComponentFuncitons.js";
 import "../styles/sideAddSection.css";
+import socket from "../socket.js";
 
 const SideAdSection = () => {
   const [adds, setAdds] = useState([]);
   const [currentIndexes, setCurrentIndexes] = useState([0, 1]); // Exibe 2 anúncios
-  const [isHovered, setIsHovered] = useState([false, false]);   // Hover individual
-  const [fadeClass, setFadeClass] = useState([false, false]);   // Fade individual
+  const [isHovered, setIsHovered] = useState([false, false]); // Hover individual
+  const [fadeClass, setFadeClass] = useState([false, false]); // Fade individual
   const timeoutRefs = useRef([]);
   const { currentUser } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchAllAds(setAdds);
+
+    socket.on("newAdCreated", (ad) => {
+      console.log("Novo anúncio recebido via socket:", ad);
+      setAdds((prevAds) => [ad, ...prevAds]); // adiciona no topo da lista
+    });
+
+    return () => {
+      socket.off("newAdCreated");
+    };
   }, []);
 
   useEffect(() => {
@@ -114,8 +124,8 @@ const SideAdSection = () => {
 
       {currentUser?.leader && (
         <div className="addSectionHeader">
-          <h2>Adicionar Seção</h2>
-          <button onClick={() => navigate("/addSection")}>Adicionar</button>
+          <h2>Gerenciar Anuncios</h2>
+          <button onClick={() => navigate("/addManagement")}>Gerenciar</button>
         </div>
       )}
     </div>
