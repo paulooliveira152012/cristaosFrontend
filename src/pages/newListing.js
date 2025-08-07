@@ -1,4 +1,5 @@
 import "../styles/newlisting.css";
+import { motion } from "framer-motion";
 import { useState } from "react";
 import Header from "../components/Header";
 import { uploadImageToS3 } from "../utils/s3Upload"; // Assuming you have a function to handle S3 upload
@@ -12,6 +13,7 @@ const baseUrl = process.env.REACT_APP_API_BASE_URL;
 const NewListing = () => {
   const navigate = useNavigate();
   const { currentUser } = useUser();
+  const [isLoading, setIsLoading] = useState(false);
   const [listingType, setListingType] = useState("blog");
   const [sections, setSections] = useState([]);
 
@@ -60,8 +62,10 @@ const NewListing = () => {
   // ...outros hooks e estados...
 
   const handleSubmit = async (e) => {
-    console.log("submitting listing");
     e.preventDefault();
+    console.log("submitting listing");
+    setIsLoading(true);
+    console.log("isLoading", isLoading);
     setError(null);
 
     // Validação
@@ -85,6 +89,7 @@ const NewListing = () => {
       return;
     }
     if (listingType === "reel" && (!reelVideo || !reelDescription.trim())) {
+      setIsLoading(false);
       setError("Por favor, envie vídeo, descrição e thumbnail para o reel.");
       return;
     }
@@ -123,22 +128,35 @@ const NewListing = () => {
           setError(errorData.message || "Erro ao fazer upload do reel.");
           return;
         }
-
         console.log("Upload successful");
-        const { videoUrl, thumbnailUrl } = await uploadRes.json();
+        setIsLoading(false);
+        navigate("/");
+        return; // parar aqui se for reel
+      } else {
+        // Se for outro tipo (blog, image, link, poll)
+        let imageUrl = null;
+        if (listingType === "image" && image) {
+          imageUrl = await uploadImageToS3(image);
+        }
 
         const listingData = {
           userId: currentUser._id,
-          type: "reel",
+          type: listingType,
+          blogTitle,
+          blogContent,
+          imageUrl,
+          link,
+          linkDescription,
           tags: tags.split(",").map((t) => t.trim()),
-          reel: {
-            videoUrl,
-            thumbnailUrl,
-            description: reelDescription,
-          },
         };
 
-        console.log("listingData", listingData);
+        if (listingType === "poll") {
+          listingData.poll = {
+            question: pollQuestion,
+            options: pollOptions.filter((option) => option.trim()),
+          };
+        }
+
         const response = await fetch(`${baseUrl}/api/listings/create`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -146,57 +164,15 @@ const NewListing = () => {
         });
 
         const data = await response.json();
-        console.log("response", response);
 
         if (response.ok) {
           resetForm();
-          navigate("/"); // ou /reels
         } else {
-          console.error("Error creating reel listing:", data);
-          setError(data.message || "Erro ao criar reel.");
+          setError(data.message || "Erro ao criar publicação.");
         }
-
-        return; // parar aqui se for reel
       }
-
-      // Se for outro tipo (blog, image, link, poll)
-      let imageUrl = null;
-      if (listingType === "image" && image) {
-        imageUrl = await uploadImageToS3(image);
-      }
-
-      const listingData = {
-        userId: currentUser._id,
-        type: listingType,
-        blogTitle,
-        blogContent,
-        imageUrl,
-        link,
-        linkDescription,
-        tags: tags.split(",").map((t) => t.trim()),
-      };
-
-      if (listingType === "poll") {
-        listingData.poll = {
-          question: pollQuestion,
-          options: pollOptions.filter((option) => option.trim()),
-        };
-      }
-
-      const response = await fetch(`${baseUrl}/api/listings/create`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(listingData),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        resetForm();
-        navigate("/");
-      } else {
-        setError(data.message || "Erro ao criar publicação.");
-      }
+      setIsLoading(false);
+      navigate("/");
     } catch (err) {
       console.error("Erro ao criar publicação:", err);
       setError("Algo deu errado. Tente novamente.", err);
@@ -225,6 +201,17 @@ const NewListing = () => {
 
   return (
     <div className="screenWrapper" style={{ marginBottom: "60px" }}>
+      {isLoading && (
+        <div className="modal">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, rotate: 360 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="loadingSpinner"
+          />
+        </div>
+      )}
       <div className="scrollable">
         <Header showProfileImage={false} navigate={navigate} />
 
