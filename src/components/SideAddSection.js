@@ -5,41 +5,46 @@ import { fetchAllAds } from "./functions/addComponentFuncitons.js";
 import { useSocket } from "../context/SocketContext.js";
 import "../styles/sideAddSection.css";
 
-const advanceIndex = (current, other, total) => {
-  if (total <= 2) return current;
-  let next = (current + 1) % total;
-  if (next === other) next = (next + 1) % total; // evita colisão com o outro slot
-  return next;
-};
+// ===== CONFIG =====
+const SLOTS = 3; // quantos anúncios simultâneos exibir
 
-// helper pra garantir dois índices válidos e distintos
-const normalizeIndexes = (len, i0, i1) => {
+// Garante N índices válidos e distintos
+const normalizeIndexesMany = (len, idxs) => {
   if (len <= 0) return [];
   if (len === 1) return [0];
 
-  let a = Math.max(0, Math.min(i0 ?? 0, len - 1));
-  let b = Math.max(0, Math.min(i1 ?? 1, len - 1));
-
-  if (a === b) b = (a + 1) % len; // garante distintos
-  return [a, b];
+  const out = [];
+  for (let i = 0; i < Math.min(SLOTS, len); i++) {
+    let base = idxs?.[i] ?? i;
+    let cand = Math.max(0, Math.min(base, len - 1));
+    let tries = 0;
+    while (out.includes(cand) && tries < len) {
+      cand = (cand + 1) % len;
+      tries++;
+    }
+    out.push(cand);
+  }
+  return out;
 };
 
 const SideAdSection = () => {
   const [ads, setAds] = useState([]);
-  const [currentIndexes, setCurrentIndexes] = useState([0, 1]); // mostra 2 anúncios
-  const [isHovered, setIsHovered] = useState([false, false]);
-  const [fadeClass, setFadeClass] = useState([false, false]);
+  const [currentIndexes, setCurrentIndexes] = useState(
+    Array.from({ length: SLOTS }, (_, i) => i)
+  );
+  const [isHovered, setIsHovered] = useState(Array(SLOTS).fill(false));
+  const [fadeClass, setFadeClass] = useState(Array(SLOTS).fill(false));
   const timeoutRefs = useRef([]);
   const { currentUser } = useUser();
   const navigate = useNavigate();
-  const socket = useSocket(); // <<< usa o socket do contexto
+  const socket = useSocket();
 
   // fetch inicial
   useEffect(() => {
     fetchAllAds(setAds);
   }, []);
 
-  // listeners de socket (monta/ desmonta certinho)
+  // listeners de socket
   useEffect(() => {
     if (!socket) return;
 
@@ -50,15 +55,20 @@ const SideAdSection = () => {
         return [ad, ...dedup];
       });
       // força mostrar o novo ad no slot 0
-      setCurrentIndexes(([a, b]) => [0, b === 0 ? a : b ?? 1]);
+      setCurrentIndexes((prev) => {
+        const next = [...prev];
+        next[0] = 0; // como o novo entrou no início, índice 0 aponta pra ele
+        return normalizeIndexesMany(Math.max(ads.length + 1, 1), next);
+      });
     };
 
     const onDeleted = (payload) => {
       const _id = payload?._id || payload;
       setAds((prev) => {
         const next = prev.filter((ad) => String(ad._id) !== String(_id));
-
-        setCurrentIndexes(([i0, i1]) => normalizeIndexes(next.length, i0, i1));
+        setCurrentIndexes((prevIdxs) =>
+          normalizeIndexesMany(next.length, prevIdxs)
+        );
         return next;
       });
     };
@@ -74,8 +84,8 @@ const SideAdSection = () => {
     };
 
     socket.on("newAdCreated", onNew);
-    socket.on("adDeleted", onDeleted); // recomendado padronizar esse nome no back
-    socket.on("addDeleted", onDeleted); // fallback se o back ainda estiver usando esse
+    socket.on("adDeleted", onDeleted);
+    socket.on("addDeleted", onDeleted); // fallback
     socket.on("updatedAd", onUpdated);
 
     return () => {
@@ -84,19 +94,19 @@ const SideAdSection = () => {
       socket.off("addDeleted", onDeleted);
       socket.off("updatedAd", onUpdated);
     };
-  }, [socket]);
+  }, [socket, ads.length]);
 
-  // ajusta slots quando o tamanho muda
+  // quando mudar o tamanho da lista, normalize os índices
   useEffect(() => {
-    setCurrentIndexes(([i0, i1]) => normalizeIndexes(ads.length, i0, i1));
+    setCurrentIndexes((prev) => normalizeIndexesMany(ads.length, prev));
   }, [ads.length]);
 
-  // rotação com fade (determinística e sem colisão)
+  // rotação com fade (sem colisão entre slots)
   useEffect(() => {
-    if (ads.length <= 2) return;
+    if (ads.length <= SLOTS) return;
 
     const scheduleChange = (slot) => {
-      const delay = Math.floor(Math.random() * 2000) + 3000; // 3s–5s
+      const delay = Math.floor(Math.random() * 2000) + 3000; // 3–5s
       timeoutRefs.current[slot] = setTimeout(() => {
         if (isHovered[slot]) return scheduleChange(slot);
 
@@ -108,13 +118,15 @@ const SideAdSection = () => {
 
         setTimeout(() => {
           setCurrentIndexes((prev) => {
-            const other = slot === 0 ? 1 : 0;
+            const used = new Set(prev.filter((_, i) => i !== slot));
+            let cand = ((prev[slot] ?? 0) + 1) % ads.length;
+            let tries = 0;
+            while (used.has(cand) && tries < ads.length) {
+              cand = (cand + 1) % ads.length;
+              tries++;
+            }
             const next = [...prev];
-            next[slot] = advanceIndex(
-              prev[slot] ?? 0,
-              prev[other] ?? 1,
-              ads.length
-            );
+            next[slot] = cand;
             return next;
           });
 
@@ -125,17 +137,15 @@ const SideAdSection = () => {
           });
 
           scheduleChange(slot);
-        }, 500); // duração do fade
+        }, 500);
       }, delay);
     };
 
-    scheduleChange(0);
-    scheduleChange(1);
-
-    return () => {
-      timeoutRefs.current.forEach(clearTimeout);
-    };
-  }, [ads.length, isHovered, ads]); // inclui ads pra refletir novos itens
+    for (let s = 0; s < Math.min(SLOTS, ads.length); s++) {
+      scheduleChange(s);
+    }
+    return () => timeoutRefs.current.forEach(clearTimeout);
+  }, [ads, isHovered]);
 
   return (
     <div className="sideAddSection">
@@ -146,7 +156,7 @@ const SideAdSection = () => {
 
           return (
             <div
-              key={ad._id}
+              key={`${ad._id}-${i}`} // chave por slot pra evitar reuse estranho durante rotação
               className={`adItem ${fadeClass[i] ? "fade-out" : ""}`}
               onMouseEnter={() =>
                 setIsHovered((prev) => {
@@ -179,14 +189,15 @@ const SideAdSection = () => {
             </div>
           );
         })}
+        {currentUser?.leader && (
+          <div className="addSectionHeader">
+            <h2>Gerenciar Anúncios</h2>
+            <button onClick={() => navigate("/addManagement")}>
+              Gerenciar
+            </button>
+          </div>
+        )}
       </div>
-
-      {currentUser?.leader && (
-        <div className="addSectionHeader">
-          <h2>Gerenciar Anúncios</h2>
-          <button onClick={() => navigate("/addManagement")}>Gerenciar</button>
-        </div>
-      )}
     </div>
   );
 };

@@ -74,6 +74,9 @@
   margin-top: 18px;
 }
 
+
+
+
 .adInput {
   padding: 8px 12px;
   border-radius: 6px;
@@ -85,28 +88,10 @@
 .adList {
   margin-top: 18px;
 }
-.sideAddSection {
-  width: 100%;
-  padding: 16px 0;
-  background: #f7f7f7;
-}
 
-.adsContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
 
-.adItem {
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
-  transition: box-shadow 0.2s, transform 0.2s;
-  cursor: pointer;
-  overflow: hidden;
-  position: relative;
-  opacity: 1;
-}
+
+
 
 .adItem.fade-out {
   opacity: 0;
@@ -118,13 +103,7 @@
   transition: opacity 0.5s;
 }
 
-.adLink {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-  color: inherit;
-  padding: 12px;
-}
+
 
 .adImage {
   width: 80px;
