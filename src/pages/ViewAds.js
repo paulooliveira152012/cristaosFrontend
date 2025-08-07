@@ -4,12 +4,30 @@ import "../styles/adManagement.css";
 import Header from "../components/Header";
 import { getAds } from "../components/functions/addManagementFuncitons";
 import { useNavigate } from "react-router-dom";
+import socket from "../socket";
 
 const ViewAds = () => {
   const navigate = useNavigate();
   const [ads, setAds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    socket.on("newAdCreated", (ad) => {
+      console.log("Novo anúncio recebido via socket:", ad);
+      setAds((prevAds) => [ad, ...prevAds]); // adiciona no topo da lista
+    });
+
+    socket.on("addDeleted", (deletedAd) => {
+      console.log("Ad deleted");
+      setAds((prevAds) => prevAds.filter((ad) => ad._id !== deletedAd._id));
+    });
+
+    return () => {
+      socket.off("newAdCreated");
+      socket.off("addDeleted");
+    };
+  });
 
   useEffect(() => {
     getAds()

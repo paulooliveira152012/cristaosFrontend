@@ -6,7 +6,7 @@ import "../styles/sideAddSection.css";
 import socket from "../socket.js";
 
 const SideAdSection = () => {
-  const [adds, setAdds] = useState([]);
+  const [ads, setAds] = useState([]);
   const [currentIndexes, setCurrentIndexes] = useState([0, 1]); // Exibe 2 anúncios
   const [isHovered, setIsHovered] = useState([false, false]); // Hover individual
   const [fadeClass, setFadeClass] = useState([false, false]); // Fade individual
@@ -15,20 +15,26 @@ const SideAdSection = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchAllAds(setAdds);
+    fetchAllAds(setAds);
 
     socket.on("newAdCreated", (ad) => {
       console.log("Novo anúncio recebido via socket:", ad);
-      setAdds((prevAds) => [ad, ...prevAds]); // adiciona no topo da lista
+      setAds((prevAds) => [ad, ...prevAds]); // adiciona no topo da lista
     });
+
+    socket.on("addDeleted", (deletedAd) => {
+      console.log("Ad deleted")
+      setAds((prevAds) => prevAds.filter(ad => ad._id !== deletedAd._id))
+    })
 
     return () => {
       socket.off("newAdCreated");
+      socket.off("addDeleted");
     };
   }, []);
 
   useEffect(() => {
-    if (adds.length <= 2) return;
+    if (ads.length <= 2) return;
 
     const scheduleChange = (slot) => {
       const delay = Math.floor(Math.random() * 5000) + 5000; // 5s a 10s
@@ -52,7 +58,7 @@ const SideAdSection = () => {
             const next = [...prev];
             let newIndex;
             do {
-              newIndex = Math.floor(Math.random() * adds.length);
+              newIndex = Math.floor(Math.random() * ads.length);
             } while (next.includes(newIndex));
             next[slot] = newIndex;
             return next;
@@ -76,13 +82,13 @@ const SideAdSection = () => {
     return () => {
       timeoutRefs.current.forEach(clearTimeout);
     };
-  }, [adds, isHovered]); // importante para refletir mudanças de hover
+  }, [ads, isHovered]); // importante para refletir mudanças de hover
 
   return (
     <div className="sideAddSection">
       <div className="adsContainer">
         {currentIndexes.map((index, i) => {
-          const ad = adds[index];
+          const ad = ads[index];
           if (!ad) return null;
 
           return (

@@ -105,6 +105,39 @@ const EditAd = () => {
           </button>
           {error && <p className="errorMsg">{error}</p>}
         </form>
+
+        {/* Exibe o anúncio atual selecionado */}
+        {selectedId &&
+          (() => {
+            const ad = ads.find((a) => a._id === selectedId);
+            if (!ad) return null;
+            return (
+              <div className="adList" style={{ marginTop: 20 }}>
+                <ul>
+                  <li>
+                    <strong>{ad.title}</strong> - {ad.description} <br />
+                    {ad.link && (
+                      <a
+                        href={ad.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {ad.link}
+                      </a>
+                    )}
+                    <br />
+                    {ad.imageUrl && (
+                      <img
+                        src={ad.imageUrl}
+                        alt={ad.title}
+                        style={{ maxWidth: 200 }}
+                      />
+                    )}
+                  </li>
+                </ul>
+              </div>
+            );
+          })()}
       </div>
     </>
   );

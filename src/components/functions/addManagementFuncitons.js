@@ -1,7 +1,6 @@
 // Funções para gerenciamento de anúncios (Add, Edit, Delete, View)
 import axios from "axios";
 
-
 const API_URL = process.env.REACT_APP_API_BASE_URL;
 
 // Adicionar anúncio
@@ -16,7 +15,6 @@ export const addAd = async ({ adData }) => {
       formData.append(key, value);
     }
   });
-
 
   // Agora sim: log completo
   for (let [key, value] of formData.entries()) {
@@ -38,7 +36,6 @@ export const addAd = async ({ adData }) => {
   }
 };
 
-
 // Editar anúncio
 export const editAd = async (adId, adData) => {
   const formData = new FormData();
@@ -58,6 +55,10 @@ export const editAd = async (adId, adData) => {
 
 // Excluir anúncio
 export const deleteAd = async (adId) => {
+  console.log("Excluindo anúncio com ID:", adId);
+  if (!adId) {
+    throw new Error("ID do anúncio é necessário para exclusão.");
+  }
   const res = await axios.delete(`${API_URL}/api/adManagement/delete/${adId}`, {
     withCredentials: true,
   });
