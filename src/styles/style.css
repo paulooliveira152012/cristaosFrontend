@@ -4,6 +4,16 @@
     box-sizing: border-box; /* Garante que padding seja incluído no cálculo da largura e altura */
 }
 
+.mainParentContainer {
+    /* background-color: orange; */
+    display: flex;
+    flex-direction: row;
+    width: 100vw;
+    height: 100dvh;
+    justify-content: space-evenly;  
+    overflow: hidden;  
+}
+
 .screenWrapper {
     width: 100%;
     height: 100dvh; /* Garante que o container ocupe pelo menos a altura total da tela */
@@ -22,12 +32,13 @@ body.dark-mode .screenWrapper {
 .scrollable {
     height: 100%;
     overflow-y: scroll;
-    /* background-color: tomato;  */
+    /* background-color: orange; */
     /* position: relative; */
-    /* min-height: 100dvh;    */
+
 }
 
 button {
+
     padding: 12px 20px;
     background-color: #28a745;
     color: white;
@@ -70,15 +81,7 @@ body.dark-mode {
 
 }
 
-.mainParentContainer {
-    /* background-color: orange; */
-    display: flex;
-    flex-direction: row;
-    width: 100vw;
-    height: 100dvh;
-    justify-content: space-evenly;  
-    overflow: hidden;  
-}
+
 
 
 .sideMenuContainerWideScreen {

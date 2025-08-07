@@ -61,36 +61,29 @@ const Reels = () => {
 
   return (
     <div className="reelsWrapper">
-      {reels.map((reel, index) => (
-        <div className="reelContainer" key={reel._id}>
-          
-          <div className="reelItemWrap">
-            <div
-              className="reelItem"
-              >
-              <video
-              ref={(el) => (videoRefs.current[index] = el)}
-                src={reel.videoUrl}
-                loop
-                playsInline
-                // controls={true}
-                preload="auto"
-                className="reelVideo"
-              />
-              <div className="reelDescription">
-                {reel.description || "Sem descrição"}
+      {reels.length === 0 ? (
+        <div className="noReelsMessage">Nenhum reel disponível no momento.</div>
+      ) : (
+        reels.map((reel, index) => (
+          <div className="reelContainer" key={reel._id}>
+            <div className="reelItemWrap">
+              <div className="reelItem">
+                <video
+                  ref={(el) => (videoRefs.current[index] = el)}
+                  src={reel.videoUrl}
+                  loop
+                  playsInline
+                  preload="auto"
+                  className="reelVideo"
+                />
+                <div className="reelDescription">
+                  {reel.description || "Sem descrição"}
+                </div>
               </div>
-
-              {/* <div className="reelActions">
-              <button className="reelActionButton">❤️</button>
-              <button className="reelActionButton">💬</button>
-              <button className="reelActionButton">🔖</button>
-              <button className="reelActionButton">🔗</button>
-            </div> */}
             </div>
           </div>
-        </div>
-      ))}
+        ))
+      )}
     </div>
   );
 };

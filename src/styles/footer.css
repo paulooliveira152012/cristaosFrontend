@@ -2,19 +2,19 @@
   position: sticky;
   bottom: 0;
   left: 0;
-  width: 100%; 
+  width: 100%; /* Garante largura total da tela */
   z-index: 100;
   display: flex;
   justify-content: center;
   pointer-events: none; /* Permite que cliques passem por fora do container */
   background: transparent;
-  /* background-color: blue; */
+  background-color: blue; 
 }
 
 .footerContainer {
   pointer-events: all;
-  width: 100%;
-  max-width: 800px; /*igual ao container amarelo*/
+  width: 100% ;
+  max-width: 800px; /* igual ao container amarelo */
   margin: 0 auto; /* centraliza */
   height: 50px;
   background-color: rgba(255, 255, 255, 0.2);
@@ -26,7 +26,7 @@
   font-weight: bold;
   bottom: 0;
   z-index: 10;
-  background-color: rgb(124, 11, 190);
+  /* background-color: red; */
 }
 
 
