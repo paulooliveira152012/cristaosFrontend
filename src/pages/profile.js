@@ -1,3 +1,5 @@
+// Atualizando layout e organização do perfil com base nas instruções da Gabi
+
 import { useEffect, useState } from "react";
 import { useUser } from "../context/UserContext";
 import { useParams, Link, useNavigate } from "react-router-dom";
@@ -16,6 +18,7 @@ import {
 } from "./functions/profilePageFunctions";
 import { useProfileLogic } from "./functions/useProfileLogic";
 import FiMessageCircle from "../assets/icons/FiMessageCircle.js";
+import { FiMoreVertical } from "react-icons/fi";
 
 const imagePlaceholder = require("../assets/images/profileplaceholder.png");
 
@@ -29,6 +32,10 @@ const Profile = () => {
   const navigate = useNavigate();
   const [currentTab, setCurrentTab] = useState("");
   const [sharedListings, setSharedListings] = useState([]);
+  const [showOptions, setShowOptions] = useState(false);
+
+  const [muralMessages, setMuralMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
 
   const {
     handleCommentSubmit,
@@ -60,22 +67,6 @@ const Profile = () => {
     };
     if (userId) getData();
   }, [userId]);
-
-  const handleFetchComments = async (listingId) => {
-    try {
-      const comments = await fetchListingComments(listingId);
-      setUserListings((prevItems) =>
-        prevItems.map((item) =>
-          item._id === listingId ? { ...item, comments } : item
-        )
-      );
-    } catch (error) {
-      console.error("Error fetching comments:", error);
-    }
-  };
-
-  if (loading) return <p className="profile-loading">Loading profile...</p>;
-  if (error) return <p className="profile-error">{error}</p>;
 
   const handleSendRequest = async () => {
     const profileUserId = user._id;
@@ -109,276 +100,220 @@ const Profile = () => {
     const hasReceivedRequest = currentUser.friendRequests?.includes(user._id);
 
     if (isFriend) {
-      return (
-        <li onClick={() => handleRemoveFriend(user._id)}>✅ Amigo (Remover)</li>
-      );
+      return <span onClick={() => handleRemoveFriend(user._id)}>✅ Amigo</span>;
     }
     if (hasReceivedRequest) {
       return (
         <>
-          <li onClick={() => handleAcceptFriend(user._id)}>✅ Aceitar amizade</li>
-          <li onClick={() => handleRejectFriend(user._id)}>❌ Recusar</li>
+          <span onClick={() => handleAcceptFriend(user._id)}>✅ Aceitar</span>
+          <span onClick={() => handleRejectFriend(user._id)}>❌ Recusar</span>
         </>
       );
     }
-    if (hasSentRequest) return <li>⏳ Pedido enviado</li>;
-    return <li onClick={handleSendRequest}>➕ Adicionar como amigo</li>;
+    if (hasSentRequest) return <span>⏳ Pedido enviado</span>;
+    return <span onClick={handleSendRequest}>➕ Adicionar</span>;
   };
 
+  const renderMoreMenu = () => (
+    <div className="more-options">
+      <ul>
+        {currentUser._id === user._id ? (
+          <li onClick={() => navigate("/settingsMenu")}>⚙️ Configurações</li>
+        ) : (
+          <>
+            <li>🚫 Bloquear</li>
+            <li>⚠️ Reportar</li>
+          </>
+        )}
+      </ul>
+    </div>
+  );
+
+  const handleAddMuralMessage = () => {
+    if (!newMessage.trim()) return;
+    const fakeMessage = {
+      _id: Date.now(),
+      sender: currentUser,
+      text: newMessage,
+      createdAt: new Date(),
+    };
+    setMuralMessages([fakeMessage, ...muralMessages]);
+    setNewMessage("");
+  };
+
+  if (loading) return <p className="profile-loading">Carregando perfil...</p>;
+  if (error) return <p className="profile-error">{error}</p>;
+
   return (
-      <>
-        <div className="profilePageBasicInfoContainer">
-          <Header showProfileImage={false} navigate={navigate} />
-          <div className="profilePageHeaderParentSection">
-            <div className="top"></div>
-            <div className="bottom">
-              <div className="imageAndnameContainer">
-                <div className="imageWrapper">
-                  <div
-                    className="ProfileProfileImage"
-                    style={{
-                      backgroundImage: `url(${user?.profileImage || imagePlaceholder})`,
-                      backgroundPosition: "center",
-                    }}
-                  ></div>
-                </div>
-                <div className="infoWrapper">
-                  <div className="topInfo">
-                    <h2 className="profile-username">{user.username}</h2>
-                    <span>@EtBilu</span>
-                  </div>
-                </div>
-                {currentUser._id !== user._id && (
-                  <div className="interactionButtons">
-                    <button
-                      className="chat-icon-button"
-                      onClick={() => requestChat(currentUser?._id, user?._id)}
-                    >
-                      <FiMessageCircle size={20} />
-                    </button>
-                  </div>
-                )}
+    <>
+      <div className="profilePageBasicInfoContainer">
+        <Header showProfileImage={false} navigate={navigate} />
+        <div className="profilePageHeaderParentSection">
+          <div className="top"></div>
+          <div className="bottom">
+            <div className="imageAndnameContainer">
+              <div className="imageWrapper">
+                <div
+                  className="ProfileProfileImage"
+                  style={{
+                    backgroundImage: `url(${user?.profileImage || imagePlaceholder})`,
+                    backgroundPosition: "center",
+                  }}
+                ></div>
               </div>
-              <div className="locationInfo">
-                <p>Sao Paulo</p>
+              <div className="infoWrapper">
+                <div className="topInfo">
+                  <h2 className="profile-username">{user.username}</h2>
+                  <span>@EtBilu</span>
+                </div>
+                <div className="locationInfo">
+                  <p>Sao Paulo</p>
+                  {renderFriendAction()}
+                  <span
+                    onClick={() => navigate(`/profile/${user._id}/friends`)}
+                    style={{ cursor: "pointer", marginLeft: "10px", textDecoration: "underline" }}
+                  >
+                    Amigos
+                  </span>
+                </div>
+              </div>
+              <div className="interactionButtons">
+                {(currentUser._id !== user._id || currentUser._id === user._id) && (
+                  <>
+                    {currentUser._id !== user._id && (
+                      <button
+                        className="chat-icon-button"
+                        onClick={() => requestChat(currentUser?._id, user?._id)}
+                      >
+                        <FiMessageCircle size={20} />
+                      </button>
+                    )}
+                    <button
+                      className="more-icon-button"
+                      onClick={() => setShowOptions(!showOptions)}
+                    >
+                      <FiMoreVertical size={20} />
+                    </button>
+                  </>
+                )}
+                {showOptions && renderMoreMenu()}
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="profileOptions">
-          <ul>
-            <li onClick={() => setCurrentTab("")}>Listagens</li>
-            <li onClick={() => setCurrentTab("userFriends")}>Amigos</li>
-            <li onClick={() => setCurrentTab("mural")}>Mural</li>
-            <li>{renderFriendAction()}</li>
-            {currentUser._id === user._id && (
-              <li onClick={() => navigate("/settingsMenu")}>Configurações</li>
-            )}
-            {currentUser._id !== user._id && (
-                <ul>
-                  {/* <li onClick={() => requestChat(currentUser?._id, user?._id)}>
-                    Iniciar conversa
-                  </li> */}
-                  <li>Bloquear</li>
-                  <li>Reportar</li>
-                </ul> 
-             )}
-          </ul>
-        </div>
+      <div className="profileOptions">
+        <ul>
+          <li onClick={() => setCurrentTab("")}>Listagens</li>
+          <li onClick={() => setCurrentTab("mural")}>Mural</li>
+        </ul>
+      </div>
 
-
-             
-             
-               
-
-        <div className="profile-container">
-          {currentTab === "" && (
-            <div className="profile-listings">
-              {userListings.length > 0 ? (
-                userListings.map((listing) => (
-                  <div key={listing._id} className="profile-listing-item">
-                    {/* check listing type and render appropriately */}
-
-                    {/* if listing is an image */}
-                    {listing.type === "image" && listing.imageUrl && (
-                      <Link
-                        to={`/openListing/${listing._id}`}
-                        className="profile-listing-link"
-                      >
-                        {listing.imageUrl && (
-                          <img
-                            src={listing.imageUrl}
-                            alt="Listing"
-                            className="profile-listing-image"
-                          />
-                        )}
-                      </Link>
-                    )}
-
-                    {/* if listing is a blog */}
-                    {listing.type === "blog" && (
-                      <Link
-                        to={`/openListing/${listing._id}`}
-                        style={{ textDecoration: "none" }}
-                      >
-                        <div className="listing-content">
-                          <h2>{listing.blogTitle || "Untitled Blog"}</h2>
-                          <p
-                            style={{
-                              textDecoration: "none",
-                              textAlign: "justify",
-                            }}
-                          >
-                            {listing.blogContent
-                              ? listing.blogContent.split(" ").length > 100
-                                ? listing.blogContent
-                                    .split(" ")
-                                    .slice(0, 100)
-                                    .join(" ") + "..."
-                                : listing.blogContent
-                              : "No content available."}
-                          </p>
-                          {/*  */}
-
-                          {listing.image && (
-                            <img
-                              src={listing.imageUrl}
-                              alt={`Listing image ${listing._id}`}
-                              className="listingImage"
-                              style={{
-                                width: "100%",
-                                maxWidth: "100%",
-                                height: "auto",
-                                backgroundColor: "red",
-                              }}
-                            />
-                          )}
-                        </div>
-                      </Link>
-                    )}
-
-                    {/* if listing is a poll */}
-                    {listing.type === "poll" && listing.poll && (
-                      <div className="poll-container">
-                        <h2>{listing.poll.question}</h2>
-                        <ul>
-                          {listing.poll.options.map((option, index) => {
-                            const totalVotes = listing.poll.votes?.length || 0;
-                            const optionVotes =
-                              listing.poll.votes?.filter(
-                                (v) => v.optionIndex === index
-                              ).length || 0;
-                            const percentage =
-                              totalVotes > 0
-                                ? ((optionVotes / totalVotes) * 100).toFixed(1)
-                                : 0;
-
-                            const voters =
-                              listing.poll.votes
-                                ?.filter((v) => v.optionIndex === index)
-                                .map((v) => v.userId) || [];
-
-                            return (
-                              <div key={index} style={{ marginBottom: "16px" }}>
-                                <li
-                                  style={{
-                                    listStyle: "none",
-                                    background: `linear-gradient(to right, #4caf50 ${percentage}%, #eee ${percentage}%)`,
-                                    padding: "10px",
-                                    borderRadius: "5px",
-                                    border: "1px solid #ccc",
-                                    fontWeight: "bold",
-                                  }}
-                                >
-                                  {option}
-                                  <span style={{ float: "right" }}>
-                                    {percentage}%
-                                  </span>
-                                </li>
-
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    gap: "6px",
-                                    marginTop: "4px",
-                                    marginLeft: "4px",
-                                  }}
-                                >
-                                  {voters.map((v, idx) => (
-                                    <img
-                                      key={idx}
-                                      src={v?.profileImage || imagePlaceholder}
-                                      alt="voter"
-                                      style={{
-                                        width: "24px",
-                                        height: "24px",
-                                        borderRadius: "50%",
-                                        objectFit: "cover",
-                                        border: "1px solid #ccc",
-                                      }}
-                                    />
-                                  ))}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </ul>
-                      </div>
-                    )}
-
-                    <div className="listing-link">
-                      <a
-                        href={listing.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {listing.link}
-                      </a>
-                    </div>
-
-                    <ListingInteractionBox
-                      listingId={listing._id}
-                      handleLike={() => handleLike(listing._id)}
-                      likesCount={listing.likes.length}
-                      comments={listing.comments || []}
-                      commentsCount={listing.comments ? listing.comments.length : 0}
-                      isLiked={currentUser ? listing.likes.includes(currentUser._id) : false}
-                      handleCommentSubmit={handleCommentSubmit}
-                      handleReplySubmit={handleReplySubmit}
-                      handleDeleteComment={handleDeleteComment}
-                      handleDeleteListing={handleDeleteListing}
-                      currentUser={currentUser}
-                      commentLikesCount={(comment) => (comment.likes ? comment.likes.length : 0)}
-                      isCommentLiked={(comment) =>
-                        comment.likes && Array.isArray(comment.likes)
-                          ? comment.likes.includes(currentUser._id)
-                          : false
-                      }
-                      commentCommentsCount={(comment) =>
-                        comment.replies ? comment.replies.length : 0
-                      }
-                      handleFetchComments={handleFetchComments}
-                      setItems={setUserListings}
-                      handleCommentLike={handleCommentLike}
-                      showDeleteButton={true}
-                      handleShare={handleShare}
-                      sharedListings={sharedListings}
-                      userId={userId}
+      <div className="profile-container">
+        {(currentTab === "" || currentTab === "mural") && (
+          <div className="profile-listings">
+            {currentTab === "mural" ? (
+              <div className="mural-section">
+                {currentUser && currentUser._id !== user._id && (
+                  <div className="mural-input">
+                    <textarea
+                      placeholder="Deixe uma mensagem no mural..."
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      rows={3}
                     />
+                    <button onClick={handleAddMuralMessage}>Enviar</button>
                   </div>
-                ))
-              ) : (
-                <p className="profile-no-listings">
-                  No listings available for {user.username}.
-                </p>
-              )}
-            </div>
-          )}
-        </div>
+                )}
 
-        {currentTab === "userFriends" && <ProfileUserFriends user={user} />}
-      
+                <div className="mural-messages">
+                  {muralMessages.length === 0 ? (
+                    <p>Este mural ainda não tem mensagens.</p>
+                  ) : (
+                    muralMessages.map((msg) => (
+                      <div key={msg._id} className="mural-message">
+                        <div className="sender-info">
+                          <img
+                            src={msg.sender?.profileImage || imagePlaceholder}
+                            alt="sender"
+                            style={{ width: 30, height: 30, borderRadius: "50%" }}
+                          />
+                          <strong style={{ marginLeft: 8 }}>{msg.sender?.username}</strong>
+                        </div>
+                        <p style={{ marginLeft: 38 }}>{msg.text}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            ) : (
+              userListings.map((listing) => (
+                <div key={listing._id} className="profile-listing-item">
+                  {listing.type === "image" && listing.imageUrl && (
+                    <img src={listing.imageUrl} alt="Listing" className="profile-listing-image" />
+                  )}
+
+                  {listing.type === "blog" && (
+                    <div className="listing-content">
+                      <h2>{listing.blogTitle || "Untitled Blog"}</h2>
+                      <p>{listing.blogContent?.slice(0, 150) || "No content."}</p>
+                      {listing.imageUrl && (
+                        <img
+                          src={listing.imageUrl}
+                          alt="blog-img"
+                          style={{ width: "100%", borderRadius: "8px" }}
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  {listing.type === "poll" && listing.poll && (
+                    <div className="poll-container">
+                      <h3>{listing.poll.question}</h3>
+                      <ul>
+                        {listing.poll.options.map((option, i) => (
+                          <li key={i}>{option}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <ListingInteractionBox
+                    listingId={listing._id}
+                    handleLike={() => handleLike(listing._id)}
+                    likesCount={listing.likes.length}
+                    comments={listing.comments || []}
+                    commentsCount={listing.comments ? listing.comments.length : 0}
+                    isLiked={currentUser ? listing.likes.includes(currentUser._id) : false}
+                    handleCommentSubmit={handleCommentSubmit}
+                    handleReplySubmit={handleReplySubmit}
+                    handleDeleteComment={handleDeleteComment}
+                    handleDeleteListing={handleDeleteListing}
+                    currentUser={currentUser}
+                    commentLikesCount={(comment) => (comment.likes ? comment.likes.length : 0)}
+                    isCommentLiked={(comment) =>
+                      comment.likes && Array.isArray(comment.likes)
+                        ? comment.likes.includes(currentUser._id)
+                        : false
+                    }
+                    commentCommentsCount={(comment) =>
+                      comment.replies ? comment.replies.length : 0
+                    }
+                    handleFetchComments={fetchListingComments}
+                    setItems={setUserListings}
+                    handleCommentLike={handleCommentLike}
+                    showDeleteButton={true}
+                    handleShare={handleShare}
+                    sharedListings={sharedListings}
+                    userId={userId}
+                  />
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
     </>
   );
 };
