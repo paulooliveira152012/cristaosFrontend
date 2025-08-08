@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import "../styles/reels.css";
 import ReelInteractionComponent from "../components/ReelInteractionComponent";
 import { useUser } from "../context/UserContext";
-import { handleSubmitComment } from "./functions/reelsFunctions";
+import { handleSubmitComment, handleLike } from "./functions/reelsFunctions";
 import { Link } from "react-router-dom";
 
 const Reels = () => {
@@ -14,6 +14,7 @@ const Reels = () => {
   const [newComment, setNewComment] = useState("");
   // drafts de comentário por reelId
   const [drafts, setDrafts] = useState({}); // { [reelId]: "texto" }
+  const [liking, setLiking] = useState({}); // { [reelId]: boolean }
 
   console.log("currentUser:", currentUser);
   console.log("currentUser._id:", currentUser?._id);
@@ -93,6 +94,39 @@ const Reels = () => {
     }
   };
 
+  const toggleLike = async (reelId) => {
+    if (!currentUser?._id || liking[reelId]) return;
+    setLiking((m) => ({ ...m, [reelId]: true }));
+    try {
+      const res = await handleLike({ reelId, userId: currentUser._id });
+      // res: { liked: boolean, likesCount: number }
+      setReels((prev) =>
+        prev.map((r) => {
+          if (r._id !== reelId) return r;
+          let nextLikes = Array.isArray(r.likes) ? [...r.likes] : [];
+          const me = String(currentUser._id);
+          const idx = nextLikes.findIndex((id) => String(id) === me);
+
+          if (res?.liked && idx === -1) nextLikes.push(currentUser._id);
+          if (!res?.liked && idx !== -1) nextLikes.splice(idx, 1);
+
+          // opcional: confiar no likesCount vindo da API
+          if (typeof res?.likesCount === "number") {
+            // só garante o length coerente, mas mantém ids se possível
+            if (res.likesCount !== nextLikes.length) {
+              // fallback: não força; ou poderia cortar/adicionar placeholders
+            }
+          }
+          return { ...r, likes: nextLikes };
+        })
+      );
+    } catch (e) {
+      console.error("like failed:", e);
+    } finally {
+      setLiking((m) => ({ ...m, [reelId]: false }));
+    }
+  };
+
   return (
     <div className={`reelsWrapper ${isAnyOpen ? "locked" : ""}`}>
       {reels.length === 0 ? (
@@ -118,9 +152,9 @@ const Reels = () => {
                   <div className="actionBar">
                     <button
                       className="actionBtn"
-                      onClick={() => {
-                        /* like logic */
-                      }}
+                      onClick={() => toggleLike(reel._id)}
+                      disabled={!!liking[reel._id]}
+                      style={{ opacity: liking[reel._id] ? 0.6 : 1 }}
                     >
                       <span>❤️</span>
                       <small>
@@ -161,14 +195,14 @@ const Reels = () => {
                   {/* Gradiente + legenda/autor */}
                   <div className="reelOverlay">
                     <div className="reelAuthor">
-                      <Link to={`/profile/${reel.userId?._id}`}> 
-                      <img
-                        src={
-                          reel.userId?.profileImage ||
-                          "/images/default-avatar.png"
-                        }
-                        alt={reel.userId?.username || "user"}
-                      />
+                      <Link to={`/profile/${reel.userId?._id}`}>
+                        <img
+                          src={
+                            reel.userId?.profileImage ||
+                            "/images/default-avatar.png"
+                          }
+                          alt={reel.userId?.username || "user"}
+                        />
                       </Link>
                       <span>@{reel.userId?.username || "user"}</span>
                     </div>
@@ -203,12 +237,12 @@ const Reels = () => {
                             "/images/default-avatar.png";
                           return (
                             <div key={idx} className="commentItem">
-                              <Link to={`/profile/${reel.userId?._id}`}> 
-                              <img
-                                className="commentAvatar"
-                                src={avatar}
-                                alt={username}
-                              />
+                              <Link to={`/profile/${reel.userId?._id}`}>
+                                <img
+                                  className="commentAvatar"
+                                  src={avatar}
+                                  alt={username}
+                                />
                               </Link>
                               <div className="commentBody">
                                 <div className="commentHeader">
