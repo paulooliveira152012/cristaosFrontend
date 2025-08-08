@@ -49,24 +49,22 @@ export const UserProvider = ({ children }) => {
     console.log("📡 Emitindo login para socket:", user.username);
   };
 
-const wakeServerAndConnectSocket = async (user) => {
-  try {
-    console.log("⏰ Acordando servidor...");
-    await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/users/ping`);
-    console.log("☀️ Servidor acordado. Conectando socket...");
+  const wakeServerAndConnectSocket = async (user) => {
+    try {
+      console.log("⏰ Acordando servidor...");
+      await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/users/ping`);
+      console.log("☀️ Servidor acordado. Conectando socket...");
 
-    if (!socket.connected) {
-      socket.connect();
+      if (!socket.connected) {
+        socket.connect();
+      }
+
+      // Sempre emitir login, independente de ser a primeira vez ou reconexão
+      emitLogin(user);
+    } catch (err) {
+      console.error("❌ Erro ao acordar servidor:", err);
     }
-
-    // Sempre emitir login, independente de ser a primeira vez ou reconexão
-    emitLogin(user);
-
-  } catch (err) {
-    console.error("❌ Erro ao acordar servidor:", err);
-  }
-};
-
+  };
 
   useEffect(() => {
     // Restaurar usuário ao carregar
@@ -227,16 +225,15 @@ const wakeServerAndConnectSocket = async (user) => {
 
   return (
     <UserContext.Provider
-  value={{
-    currentUser,
-    setCurrentUser,
-    login,
-    logout,
-    darkMode,       // ✅ novo
-    setDarkMode,    // ✅ novo
-  }}
->
-
+      value={{
+        currentUser,
+        setCurrentUser,
+        login,
+        logout,
+        darkMode, // ✅ novo
+        setDarkMode, // ✅ novo
+      }}
+    >
       <UsersContext.Provider value={{ onlineUsers }}>
         {children}
       </UsersContext.Provider>
