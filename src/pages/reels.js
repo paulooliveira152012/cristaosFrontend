@@ -103,41 +103,51 @@ const Reels = () => {
             <div className="reelContainer" key={reel._id}>
               <div className="reelItemWrap">
                 <div className="reelItem">
-                  <video
-                    ref={(el) => (videoRefs.current[index] = el)}
-                    src={reel.videoUrl}
-                    loop
-                    playsInline
-                    muted
-                    preload="auto"
-                    className="reelVideo"
-                  />
-                  <ReelInteractionComponent
-                    onOpen={() => setOpenId(reel._id)}
-                    reelId={reel._id}
-                    currentUserId={currentUser?._id || null} // or however you have the user
-                    likes={
-                      Array.isArray(reel.likes) && currentUser?._id
-                        ? reel.likes.some(
-                            (id) => String(id) === String(currentUser._id)
-                          )
-                        : false
-                    }
-                    likesCount={
-                      Array.isArray(reel.likes) ? reel.likes.length : 0
-                    }
-                    saved={
-                      Array.isArray(reel.savedBy) && currentUser?._id
-                        ? reel.savedBy.some(
-                            (id) => String(id) === String(currentUser._id)
-                          )
-                        : false
-                    }
-                  />
-                  <div className="reelDescription">
-                    {reel.description || "Sem descrição"}
-                  </div>
-                </div>
+  <video
+    ref={(el) => (videoRefs.current[index] = el)}
+    src={reel.videoUrl}
+    loop
+    playsInline
+    muted
+    preload="auto"
+    className="reelVideo"
+  />
+
+  {/* Ações na direita */}
+  <div className="actionBar">
+    <button className="actionBtn" onClick={() => {/* like logic */}}>
+      <span>❤️</span>
+      <small>{Array.isArray(reel.likes) ? reel.likes.length : 0}</small>
+    </button>
+    <button className="actionBtn" onClick={() => setOpenId(reel._id)}>
+      <span>💬</span>
+      <small>{Array.isArray(reel.comments) ? reel.comments.length : 0}</small>
+    </button>
+    <button className="actionBtn" onClick={() => {/* share */}}>
+      <span>↗</span>
+      <small>Share</small>
+    </button>
+    <button className="actionBtn" onClick={() => {/* save */}}>
+      <span>🔖</span>
+      <small>Save</small>
+    </button>
+  </div>
+
+  {/* Gradiente + legenda/autor */}
+  <div className="reelOverlay">
+    <div className="reelAuthor">
+      <img
+        src={reel.userId?.profileImage || "/images/default-avatar.png"}
+        alt={reel.userId?.username || "user"}
+      />
+      <span>@{reel.userId?.username || "user"}</span>
+    </div>
+    <div className="reelCaption">
+      {reel.description || "Sem descrição"}
+    </div>
+  </div>
+</div>
+
 
                 {/* Modal deste listing */}
                 <div
@@ -146,63 +156,42 @@ const Reels = () => {
                   role="dialog"
                   aria-modal="true"
                 >
-                  <div
-                    className={`commentSection ${isOpen ? "open" : ""}`}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {/* Lista de comentários */}
-                    <div className="commentsList">
-                      {Array.isArray(reel.comments) &&
-                      reel.comments.length > 0 ? (
-                        reel.comments.map((comment, idx) => {
-                          const username =
-                            typeof comment.userId === "object"
-                              ? comment.userId?.username
-                              : comment.username;
-                          return (
-                            <div key={idx} className="commentItem">
-                              <img
-                                src={
-                                  comment.userId?.profileImage || 
-                                  currentUser.profileImage // fallback caso não tenha imagem
-                                }
-                                alt={username || "Usuário"}
-                                className="commentProfileImage"
-                              />
-                              <div className="commentContent">
-                                <strong>{username || "Usuário"}:</strong>{" "}
-                                {comment.text}
-                              </div>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <div className="noComments">
-                          Nenhum comentário ainda.
-                        </div>
-                      )}
-                    </div>
+                  <div className={`commentSection ${isOpen ? "open" : ""}`} onClick={(e) => e.stopPropagation()}>
+  <div className="sheetHandle" />
+  <div className="commentsList">
+    {Array.isArray(reel.comments) && reel.comments.length > 0 ? (
+      reel.comments.map((comment, idx) => {
+        const username = comment?.userId?.username ?? comment?.username ?? "Usuário";
+        const avatar = comment?.userId?.profileImage ?? "/images/default-avatar.png";
+        return (
+          <div key={idx} className="commentItem">
+            <img className="commentAvatar" src={avatar} alt={username} />
+            <div className="commentBody">
+              <div className="commentHeader">
+                <strong>{username}</strong>
+                {/* <time>há 2h</time> se quiser formatar depois */}
+              </div>
+              <p className="commentText">{comment.text}</p>
+            </div>
+          </div>
+        );
+      })
+    ) : (
+      <div className="noComments">Nenhum comentário ainda.</div>
+    )}
+  </div>
 
-                    {/* Campo de novo comentário */}
-                    <div className="commentInputWrapper">
-                      <input
-                        type="text"
-                        placeholder="Escreva um comentário..."
-                        className="commentInput"
-                        value={drafts[reel._id] || ""}
-                        onChange={(e) =>
-                          onDraftChange(reel._id, e.target.value)
-                        }
-                      />
-                      <button
-                        className="commentSendBtn"
-                        onClick={submitComment(reel._id)}
-                        // futuramente: onClick={handleSendComment}
-                      >
-                        Enviar
-                      </button>
-                    </div>
-                  </div>
+  <div className="commentComposer">
+    <input
+      type="text"
+      placeholder="Escreva um comentário..."
+      value={drafts[reel._id] || ""}
+      onChange={(e) => onDraftChange(reel._id, e.target.value)}
+    />
+    <button onClick={submitComment(reel._id)}>Enviar</button>
+  </div>
+</div>
+
                 </div>
               </div>
             </div>
