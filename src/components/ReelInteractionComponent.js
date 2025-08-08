@@ -109,7 +109,7 @@ const ReelInteractionComponent = ({
           comment
         </li>
 
-        <li
+        {/* <li
           role="button"
           tabIndex={0}
           onClick={handleShare}
@@ -117,7 +117,7 @@ const ReelInteractionComponent = ({
           title={!canInteract ? "Faça login para compartilhar" : undefined}
         >
           share
-        </li>
+        </li> */}
       </ul>
 
       <li
