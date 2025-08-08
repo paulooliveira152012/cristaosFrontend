@@ -10,7 +10,7 @@ import Signup from "./pages/signup";
 import NewListing from "./pages/newListing";
 import Profile from "./pages/profile";
 import { Notifications } from "./pages/notifications.js";
-import Reels from "./pages/reels.js";
+import Reels from "./pages/Reels.js";
 import Donate from "./pages/Donate";
 import PasswordResetLink from "./pages/passwordLinkRequest.js";
 import PasswordReset from "./pages/PasswordReset.js";

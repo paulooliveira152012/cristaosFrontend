@@ -25,7 +25,7 @@
 }
 
 .reelItem {
-  height: 100dvh;
+  height: 80dvh;
   width: 100%;
   scroll-snap-align: start;
   position: relative;
@@ -39,7 +39,7 @@
 .reelVideo {
   width: 100%;
   height: 100%;
-  object-fit: fit;
+  object-fit: contain;
 }
 
 .reelDescription {
@@ -76,3 +76,319 @@
 .reelActionButton:hover {
   transform: scale(1.1);
 }
+
+.ReelInteractionComponentWrapper {
+  width: 100%;
+  background-color: blue;
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+.ReelInteractionComponentWrapper ul {
+  top: 0;
+  width: 30%;
+  display: flex;
+  justify-content: space-between;
+}
+
+.ReelInteractionComponentWrapper li {
+  list-style: none;
+  cursor: pointer;
+}
+
+/* bottom sheet: fechado fora da tela (em baixo) */
+.commentSection {
+  width: 100%; max-width: 800px;
+  background: #fff; color: #111;
+  border-top-left-radius: 16px; border-top-right-radius: 16px;
+  height: 70vh;
+  position: absolute;
+  bottom: 0; 
+    /* efeito inicial escondido */
+  transform: translateY(100%);
+  transition: transform .3s cubic-bezier(.2,.8,.2,1);
+  will-change: transform;
+  margin-bottom: 0;
+}
+
+
+
+/* overlay por listing – fechado por padrão */
+.modalClear {
+    height: 100vh; /* O modal ocupa toda a altura da viewport */
+    width: 100vw;  /* O modal ocupa toda a largura da viewport */
+    background-color: transparent;
+    
+    left: 0;
+    top: 0;
+    transition: opacity .3s ease-in-out;
+    z-index: 10;
+    display: flex;
+    justify-content: center; /* Centraliza verticalmente */
+    align-items: center;     /* Centraliza horizontalmente */
+    position: fixed; /* fara com que a scrolagem nao aconteça quando modal estiver aberto */
+    /* pointer-events: none; */
+}
+
+
+
+/* aberto = sobe (igual SideMenu que traduz a X, aqui a Y) */
+.commentSection.open { transform: translateY(0); }
+
+
+/* quando o listing está aberto */
+.modalClear.visible {
+  background: rgba(0,0,0,.35);
+  pointer-events: auto;
+}
+
+
+
+
+body.dark-mode .commentSection { background:#1e1e1e;color:#f1f1f1; }
+
+.commentsList {
+  width: 100%;
+  overflow-y: auto;
+  gap: 12;
+
+}
+
+.commentItem {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background-color: #fff; /* ou transparente se usar dark mode */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+/* efeito ao passar o mouse */
+.commentItem:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+
+/* --- Container dos reels --- */
+.reelsWrapper {
+  height: 100dvh;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  background: #000;
+}
+
+.reelContainer {
+  scroll-snap-align: start;
+  width: 100%;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* remove bordas de debug */
+}
+
+.reelItemWrap {
+  height: 100%;
+  width: 100%;
+  display: flex;
+}
+
+.reelItem {
+  height: 100%;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  background: #000;
+}
+
+/* Vídeo full-bleed */
+.reelVideo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* cobre a tela como no Instagram */
+  /* object-fit: cover;  */
+}
+
+/* Barra de ações na direita */
+.actionBar {
+  position: absolute;
+  right: 12px;
+  bottom: 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 3;
+}
+
+.actionBtn {
+  appearance: none;
+  border: none;
+  background: rgba(0,0,0,.35);
+  color: #fff;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: transform .15s ease, background .15s ease;
+}
+.actionBtn:hover { transform: translateY(-2px) scale(1.03); }
+.actionBtn small {
+  display: block;
+  text-align: center;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #fff;
+}
+
+/* Gradiente + legenda/autor em baixo */
+.reelOverlay {
+  position: absolute;
+  inset: 0;
+  /* pointer-events: none;  */
+  background: linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,.55) 85%, rgba(0,0,0,.85) 100%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 16px;
+  gap: 8px;
+}
+
+.reelAuthor {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  font-weight: 600;
+}
+.reelAuthor img {
+  width: 28px; height: 28px; border-radius: 50%; object-fit: cover;
+}
+
+.reelCaption {
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.35;
+  max-width: 80%;
+  text-wrap: balance;
+}
+
+/* --- Comment modal (overlay + bottom sheet) --- */
+.modalClear {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transition: background .18s ease;
+  z-index: 1000;
+  pointer-events: none;
+}
+.modalClear.visible {
+  background: rgba(0,0,0,.35);
+  pointer-events: auto;
+}
+
+/* Bottom sheet */
+.commentSection {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  background: #fff;
+  color: #111;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  max-height: 82dvh;
+  min-height: 48dvh;
+  transform: translateY(100%);
+  transition: transform .28s cubic-bezier(.2,.8,.2,1);
+  will-change: transform;
+  display: flex;
+  flex-direction: column;
+}
+.commentSection.open { transform: translateY(0); }
+
+.sheetHandle {
+  width: 42px; height: 4px; border-radius: 999px; background: #ddd;
+  margin: 10px auto;
+}
+
+/* Lista */
+.commentsList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 14px 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Item de comentário */
+.commentItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background-color: #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,.08);
+  transition: box-shadow .2s ease, transform .2s ease;
+}
+.commentItem:hover { box-shadow: 0 4px 16px rgba(0,0,0,.12); transform: translateY(-1px); }
+
+.commentAvatar {
+  width: 32px; height: 32px; border-radius: 50%; object-fit: cover;
+}
+.commentBody { display: flex; flex-direction: column; gap: 4px; }
+.commentHeader { display: flex; align-items: baseline; gap: 8px; }
+.commentHeader strong { font-size: 13.5px; color: #111; }
+.commentText { margin: 0; font-size: 14px; color: #222; }
+
+/* Composer */
+.commentComposer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid #eee;
+}
+.commentComposer input {
+  flex: 1;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  padding: 0 14px;
+  font-size: 14px;
+  outline: none;
+}
+.commentComposer input:focus { border-color: #2A68D8; box-shadow: 0 0 0 3px rgba(42,104,216,.12); }
+.commentComposer button {
+  height: 40px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 999px;
+  background: #2A68D8;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+.commentComposer button:hover { filter: brightness(1.05); }
+
+/* Dark mode (básico) */
+body.dark-mode .commentSection { background:#1e1e1e; color:#f1f1f1; }
+body.dark-mode .commentItem { background:#222; box-shadow: 0 2px 10px rgba(0,0,0,.3); }
+body.dark-mode .commentText { color:#f1f1f1; }
+body.dark-mode .commentComposer { border-top: 1px solid #333; }
+body.dark-mode .commentComposer input { background:#151515; color:#eee; border-color:#333; }
