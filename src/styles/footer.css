@@ -17,7 +17,7 @@
   max-width: 800px; /* igual ao container amarelo */
   margin: 0 auto; /* centraliza */
   height: 50px;
-  background-color: rgba(255, 255, 255, 0.7);
+  background-color: rgba(255, 255, 255, 0.2);
   color: black;
   backdrop-filter: blur(6px);
   display: flex;
@@ -31,14 +31,11 @@
 
 
 body.dark-mode .footerContainer {
-    background-color: rgba(26, 26, 26, 0.1); /* #1A1A1A com 90% opacidade */
+    background-color: rgba(26, 26, 26, 0.2); /* #1A1A1A com 90% opacidade */
     color: white;
     backdrop-filter: blur(6px); /* opcional: dá um efeito de vidro fosco */
   }
   
-
-
-
 
 /* Make all items in the footer have a cursor pointer */
 .footerContainer > * {

@@ -25,6 +25,7 @@
   height: 100dvh;
   background-color: white;
   z-index: 1000 ;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   transform: translateX(-100%);
