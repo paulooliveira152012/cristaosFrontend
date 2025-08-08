@@ -128,7 +128,7 @@
     justify-content: center; /* Centraliza verticalmente */
     align-items: center;     /* Centraliza horizontalmente */
     position: fixed; /* fara com que a scrolagem nao aconteça quando modal estiver aberto */
-    pointer-events: none;
+    /* pointer-events: none; */
 }
 
 
@@ -255,7 +255,7 @@ body.dark-mode .commentSection { background:#1e1e1e;color:#f1f1f1; }
 .reelOverlay {
   position: absolute;
   inset: 0;
-  pointer-events: none; /* deixa cliques passarem se precisar */
+  /* pointer-events: none;  */
   background: linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,.55) 85%, rgba(0,0,0,.85) 100%);
   z-index: 2;
   display: flex;

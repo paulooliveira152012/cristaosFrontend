@@ -3,6 +3,7 @@ import "../styles/reels.css";
 import ReelInteractionComponent from "../components/ReelInteractionComponent";
 import { useUser } from "../context/UserContext";
 import { handleSubmitComment } from "./functions/reelsFunctions";
+import { Link } from "react-router-dom";
 
 const Reels = () => {
   const [reels, setReels] = useState([]);
@@ -103,51 +104,79 @@ const Reels = () => {
             <div className="reelContainer" key={reel._id}>
               <div className="reelItemWrap">
                 <div className="reelItem">
-  <video
-    ref={(el) => (videoRefs.current[index] = el)}
-    src={reel.videoUrl}
-    loop
-    playsInline
-    muted
-    preload="auto"
-    className="reelVideo"
-  />
+                  <video
+                    ref={(el) => (videoRefs.current[index] = el)}
+                    src={reel.videoUrl}
+                    loop
+                    playsInline
+                    muted
+                    preload="auto"
+                    className="reelVideo"
+                  />
 
-  {/* Ações na direita */}
-  <div className="actionBar">
-    <button className="actionBtn" onClick={() => {/* like logic */}}>
-      <span>❤️</span>
-      <small>{Array.isArray(reel.likes) ? reel.likes.length : 0}</small>
-    </button>
-    <button className="actionBtn" onClick={() => setOpenId(reel._id)}>
-      <span>💬</span>
-      <small>{Array.isArray(reel.comments) ? reel.comments.length : 0}</small>
-    </button>
-    <button className="actionBtn" onClick={() => {/* share */}}>
-      <span>↗</span>
-      <small>Share</small>
-    </button>
-    <button className="actionBtn" onClick={() => {/* save */}}>
-      <span>🔖</span>
-      <small>Save</small>
-    </button>
-  </div>
+                  {/* Ações na direita */}
+                  <div className="actionBar">
+                    <button
+                      className="actionBtn"
+                      onClick={() => {
+                        /* like logic */
+                      }}
+                    >
+                      <span>❤️</span>
+                      <small>
+                        {Array.isArray(reel.likes) ? reel.likes.length : 0}
+                      </small>
+                    </button>
+                    <button
+                      className="actionBtn"
+                      onClick={() => setOpenId(reel._id)}
+                    >
+                      <span>💬</span>
+                      <small>
+                        {Array.isArray(reel.comments)
+                          ? reel.comments.length
+                          : 0}
+                      </small>
+                    </button>
+                    <button
+                      className="actionBtn"
+                      onClick={() => {
+                        /* share */
+                      }}
+                    >
+                      <span>↗</span>
+                      <small>Share</small>
+                    </button>
+                    <button
+                      className="actionBtn"
+                      onClick={() => {
+                        /* save */
+                      }}
+                    >
+                      <span>🔖</span>
+                      <small>Save</small>
+                    </button>
+                  </div>
 
-  {/* Gradiente + legenda/autor */}
-  <div className="reelOverlay">
-    <div className="reelAuthor">
-      <img
-        src={reel.userId?.profileImage || "/images/default-avatar.png"}
-        alt={reel.userId?.username || "user"}
-      />
-      <span>@{reel.userId?.username || "user"}</span>
-    </div>
-    <div className="reelCaption">
-      {reel.description || "Sem descrição"}
-    </div>
-  </div>
-</div>
-
+                  {/* Gradiente + legenda/autor */}
+                  <div className="reelOverlay">
+                    <div className="reelAuthor">
+                      <Link to={`/profile/${reel.userId?._id}`}> 
+                      <img
+                        src={
+                          reel.userId?.profileImage ||
+                          "/images/default-avatar.png"
+                        }
+                        alt={reel.userId?.username || "user"}
+                      />
+                      </Link>
+                      <span>@{reel.userId?.username || "user"}</span>
+                    </div>
+                    <div className="reelCaption">
+                      {reel.description || "Sem descrição"}
+                    </div>
+                  </div>
+                </div>
 
                 {/* Modal deste listing */}
                 <div
@@ -156,42 +185,60 @@ const Reels = () => {
                   role="dialog"
                   aria-modal="true"
                 >
-                  <div className={`commentSection ${isOpen ? "open" : ""}`} onClick={(e) => e.stopPropagation()}>
-  <div className="sheetHandle" />
-  <div className="commentsList">
-    {Array.isArray(reel.comments) && reel.comments.length > 0 ? (
-      reel.comments.map((comment, idx) => {
-        const username = comment?.userId?.username ?? comment?.username ?? "Usuário";
-        const avatar = comment?.userId?.profileImage ?? "/images/default-avatar.png";
-        return (
-          <div key={idx} className="commentItem">
-            <img className="commentAvatar" src={avatar} alt={username} />
-            <div className="commentBody">
-              <div className="commentHeader">
-                <strong>{username}</strong>
-                {/* <time>há 2h</time> se quiser formatar depois */}
-              </div>
-              <p className="commentText">{comment.text}</p>
-            </div>
-          </div>
-        );
-      })
-    ) : (
-      <div className="noComments">Nenhum comentário ainda.</div>
-    )}
-  </div>
+                  <div
+                    className={`commentSection ${isOpen ? "open" : ""}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="sheetHandle" />
+                    <div className="commentsList">
+                      {Array.isArray(reel.comments) &&
+                      reel.comments.length > 0 ? (
+                        reel.comments.map((comment, idx) => {
+                          const username =
+                            comment?.userId?.username ??
+                            comment?.username ??
+                            "Usuário";
+                          const avatar =
+                            comment?.userId?.profileImage ??
+                            "/images/default-avatar.png";
+                          return (
+                            <div key={idx} className="commentItem">
+                              <Link to={`/profile/${reel.userId?._id}`}> 
+                              <img
+                                className="commentAvatar"
+                                src={avatar}
+                                alt={username}
+                              />
+                              </Link>
+                              <div className="commentBody">
+                                <div className="commentHeader">
+                                  <strong>{username}</strong>
+                                  {/* <time>há 2h</time> se quiser formatar depois */}
+                                </div>
+                                <p className="commentText">{comment.text}</p>
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="noComments">
+                          Nenhum comentário ainda.
+                        </div>
+                      )}
+                    </div>
 
-  <div className="commentComposer">
-    <input
-      type="text"
-      placeholder="Escreva um comentário..."
-      value={drafts[reel._id] || ""}
-      onChange={(e) => onDraftChange(reel._id, e.target.value)}
-    />
-    <button onClick={submitComment(reel._id)}>Enviar</button>
-  </div>
-</div>
-
+                    <div className="commentComposer">
+                      <input
+                        type="text"
+                        placeholder="Escreva um comentário..."
+                        value={drafts[reel._id] || ""}
+                        onChange={(e) =>
+                          onDraftChange(reel._id, e.target.value)
+                        }
+                      />
+                      <button onClick={submitComment(reel._id)}>Enviar</button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
