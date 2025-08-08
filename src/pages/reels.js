@@ -1,145 +1,89 @@
 import React, { useEffect, useRef, useState } from "react";
-import Header from "../components/Header";
 import "../styles/reels.css";
 import ReelInteractionComponent from "../components/ReelInteractionComponent";
 
 const Reels = () => {
   const [reels, setReels] = useState([]);
   const videoRefs = useRef([]);
-  const [showMessages, setShowMessages] = useState(false);
-  const modalRef = useRef(null);
+  const [openId, setOpenId] = useState(null); // <- qual reel está com comentários abertos
+  const isAnyOpen = openId !== null;
 
   useEffect(() => {
-    const fetchReels = async () => {
-      const url = `${process.env.REACT_APP_API_BASE_URL}`;
-      console.log("Fetching reels from:", url);
+    const url = `${process.env.REACT_APP_API_BASE_URL}`;
+    (async () => {
       try {
-        const response = await fetch(`${url}/api/listings/allreels`);
-        const data = await response.json();
-        console.log("Fetched reels:", data);
-
-        if (Array.isArray(data.reels)) {
-          setReels(data.reels);
-        } else {
-          console.error("API didn't return an array:", data);
-          setReels([]);
-        }
-      } catch (error) {
-        console.error("Error fetching reels:", error);
+        const r = await fetch(`${url}/api/listings/allreels`);
+        const d = await r.json();
+        setReels(Array.isArray(d.reels) ? d.reels : []);
+      } catch {
         setReels([]);
       }
-    };
-
-    fetchReels();
+    })();
   }, []);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const video = entry.target;
-          if (entry.isIntersecting) {
-            video.play().catch(() => {});
-          } else {
-            video.pause();
-          }
-        });
-      },
+    const obs = new IntersectionObserver(
+      entries => entries.forEach(({ isIntersecting, target }) =>
+        isIntersecting ? target.play().catch(()=>{}) : target.pause()
+      ),
       { threshold: 0.9 }
     );
-
-    videoRefs.current.forEach(
-      (video) => {
-        if (video) observer.observe(video);
-      },
-      [reels]
-    );
-
-    return () => {
-      videoRefs.current.forEach((video) => {
-        if (video) observer.unobserve(video);
-      });
-    };
+    videoRefs.current.forEach(v => v && obs.observe(v));
+    return () => obs.disconnect();
   }, [reels]);
 
-  const toggleShowMessages = () => {
-    console.log("toggling show comments");
-    setShowMessages((prev) => !prev);
-  };
-
-  // Bloqueia scroll e teclas quando modal aberto
+  // trava scroll do body quando QUALQUER modal está aberto
   useEffect(() => {
-    if (showMessages) {
-      document.body.style.overflow = "hidden";
-
-      const blockKeys = (e) => {
-        const keys = ["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " "];
-        if (keys.includes(e.key)) {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-      };
-
-      const blockScroll = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-      };
-
-      window.addEventListener("keydown", blockKeys, { capture: true });
-      window.addEventListener("wheel", blockScroll, { passive: false });
-      window.addEventListener("touchmove", blockScroll, { passive: false });
-
-      return () => {
-        document.body.style.overflow = "";
-        window.removeEventListener("keydown", blockKeys, { capture: true });
-        window.removeEventListener("wheel", blockScroll);
-        window.removeEventListener("touchmove", blockScroll);
-      };
-    } else {
-      document.body.style.overflow = "";
-    }
-  }, [showMessages]);
+    document.body.style.overflow = isAnyOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [isAnyOpen]);
 
   return (
-    <div className={`reelsWrapper ${showMessages ? "locked" : ""}`}>
+    <div className={`reelsWrapper ${isAnyOpen ? "locked" : ""}`}>
       {reels.length === 0 ? (
         <div className="noReelsMessage">Nenhum reel disponível no momento.</div>
       ) : (
-        reels.map((reel, index) => (
-          <div className="reelContainer" key={reel._id}>
-            <div className="reelItemWrap">
-              <div className="reelItem">
-                <video
-                  ref={(el) => (videoRefs.current[index] = el)}
-                  src={reel.videoUrl}
-                  loop
-                  playsInline
-                  preload="auto"
-                  className="reelVideo"
-                />
-                <ReelInteractionComponent toggleShowMessages={toggleShowMessages} />
-                <div className="reelDescription">
-                  {reel.description || "Sem descrição"}
+        reels.map((reel, index) => {
+          const isOpen = openId === reel._id;
+          return (
+            <div className="reelContainer" key={reel._id}>
+              <div className="reelItemWrap">
+                <div className="reelItem">
+                  <video
+                    ref={(el) => (videoRefs.current[index] = el)}
+                    src={reel.videoUrl}
+                    loop
+                    playsInline
+                    muted
+                    preload="auto"
+                    className="reelVideo"
+                  />
+                  <ReelInteractionComponent
+                    onOpen={() => setOpenId(reel._id)}
+                  />
+                  <div className="reelDescription">
+                    {reel.description || "Sem descrição"}
+                  </div>
                 </div>
-              </div>
-              {showMessages && (
+
+                {/* Modal deste listing */}
                 <div
-                  className="modalClear"
-                  onClick={toggleShowMessages}
+                  className={`modalClear ${isOpen ? "visible" : ""}`}
+                  onClick={() => setOpenId(null)}
                   role="dialog"
                   aria-modal="true"
-                  tabIndex={-1}
-                  ref={modalRef}
                 >
                   <div
-                    className={`commentSection ${showMessages ? "show" : ""}`}
+                    className={`commentSection ${isOpen ? "open" : ""}`}
                     onClick={(e) => e.stopPropagation()}
-                  ></div>
+                  >
+                    {/* seu conteúdo de comentários aqui */}
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
-          </div>
-        ))
+          );
+        })
       )}
     </div>
   );

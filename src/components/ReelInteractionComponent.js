@@ -1,24 +1,16 @@
 import React from "react";
 import "../styles/reels.css";
 
-const ReelInteractionComponent = ({ toggleShowMessages }) => {
-    
-
+const ReelInteractionComponent = ({ onOpen }) => {
   return (
-    <>
     <div className="ReelInteractionComponentWrapper">
-      
-        <ul>
-          <li>like</li>
-          <li onClick={toggleShowMessages}>comment</li>
-          <li>share</li>
-        </ul>
-
-        <li>save</li>
+      <ul>
+        <li>like</li>
+        <li onClick={onOpen}>comment</li>
+        <li>share</li>
+      </ul>
+      <li>save</li>
     </div>
-
-    
-    </>
   );
 };
 
