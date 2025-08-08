@@ -39,7 +39,7 @@
 .reelVideo {
   width: 100%;
   height: 100%;
-  object-fit: fit;
+  object-fit: contain;
 }
 
 .reelDescription {
@@ -97,22 +97,28 @@
   cursor: pointer;
 }
 
+/* bottom sheet: fechado fora da tela (em baixo) */
 .commentSection {
-  width: 100%;
+  width: 100%; max-width: 800px;
+  background: #fff; color: #111;
+  border-top-left-radius: 16px; border-top-right-radius: 16px;
   height: 70vh;
-  background-color: green;
   position: absolute;
   bottom: 0; 
     /* efeito inicial escondido */
   transform: translateY(100%);
-  transition: transform 0.3s ease-in-out;
+  transition: transform .3s cubic-bezier(.2,.8,.2,1);
+  will-change: transform;
 }
 
+
+
+/* overlay por listing – fechado por padrão */
 .modalClear {
     height: 100vh; /* O modal ocupa toda a altura da viewport */
     width: 100vw;  /* O modal ocupa toda a largura da viewport */
     background-color: transparent;
-    position: absolute; /* Usar fixed para garantir que o modal cubra a tela */
+    
     left: 0;
     top: 0;
     transition: opacity .3s ease-in-out;
@@ -121,49 +127,22 @@
     justify-content: center; /* Centraliza verticalmente */
     align-items: center;     /* Centraliza horizontalmente */
     position: fixed; /* fara com que a scrolagem nao aconteça quando modal estiver aberto */
-}
-
-.modalClear.open {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* quando ativo, aparece subindo */
-.commentSection.show {
-  transform: translateY(0);
+    pointer-events: none;
 }
 
 
-/* base */
+
+/* aberto = sobe (igual SideMenu que traduz a X, aqui a Y) */
+.commentSection.open { transform: translateY(0); }
 
 
-/* overlay por listing – fechado por padrão */
-.modalClear {
-  position: fixed; inset: 0;
-  display: flex; align-items: flex-end; justify-content: center;
-  background: rgba(0,0,0,0);
-  pointer-events: none;
-  transition: background .18s ease-out;
-  z-index: 2000;
-}
 /* quando o listing está aberto */
 .modalClear.visible {
   background: rgba(0,0,0,.35);
   pointer-events: auto;
 }
 
-/* bottom sheet: fechado fora da tela (em baixo) */
-.commentSection {
-  width: 100%; max-width: 800px;
-  background: #fff; color: #111;
-  border-top-left-radius: 16px; border-top-right-radius: 16px;
-  max-height: 80dvh; min-height: 45dvh; overflow: auto;
 
-  transform: translateY(100%);
-  transition: transform .3s cubic-bezier(.2,.8,.2,1);
-  will-change: transform;
-}
-/* aberto = sobe (igual SideMenu que traduz a X, aqui a Y) */
-.commentSection.open { transform: translateY(0); }
+
 
 body.dark-mode .commentSection { background:#1e1e1e;color:#f1f1f1; }
