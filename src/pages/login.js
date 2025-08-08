@@ -74,6 +74,9 @@ const Login = () => {
           profileImage: data.profileImage || "https://via.placeholder.com/50",
         });
 
+        // depois de logar/deslogar:
+        localStorage.setItem("auth: event", String (Date.now()))
+
         navigate("/"); // Redirect to home page on successful login
       } else {
         setError(data.message || "Login failed");
