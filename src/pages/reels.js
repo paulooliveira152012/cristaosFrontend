@@ -161,8 +161,18 @@ const Reels = () => {
                               : comment.username;
                           return (
                             <div key={idx} className="commentItem">
-                              <strong>{username || "Usuário"}:</strong>{" "}
-                              {comment.text}
+                              <img
+                                src={
+                                  comment.userId?.profileImage || 
+                                  currentUser.profileImage // fallback caso não tenha imagem
+                                }
+                                alt={username || "Usuário"}
+                                className="commentProfileImage"
+                              />
+                              <div className="commentContent">
+                                <strong>{username || "Usuário"}:</strong>{" "}
+                                {comment.text}
+                              </div>
                             </div>
                           );
                         })
