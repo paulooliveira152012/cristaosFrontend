@@ -42,6 +42,7 @@ import PrivateChat from "./pages/PrivateChat.js";
 import PrivacyPolicy from "./pages/menuPages/PrivacyPolicy.js";
 import TermsOfUse from "./pages/menuPages/TermsOfUse.js"; // Importar a página de termos de uso
 import Church from "./pages/Church.js";
+import Admin from "./pages/Admin.js";
 // Importar router, route e
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { UserProvider } from "./context/UserContext";
@@ -268,16 +269,14 @@ const AppWithLocation = () => {
                           </ProtectedRoute>
                         }
                       />
+                      <Route path="/globe" element={<GlobeChurches />} />
+                      <Route path="/church/:id" element={<Church />} />
                       <Route
-                        path="/globe"
+                        path="/admin"
                         element={
-                            <GlobeChurches />
-                        }
-                      />
-                      <Route 
-                        path="/church/:id"
-                        element={
-                          <Church />
+                          <ProtectedRoute requiredRole="lider">
+                            <Admin />
+                          </ProtectedRoute>
                         }
                       />
                     </Routes>
