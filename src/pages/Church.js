@@ -1,7 +1,10 @@
 // src/pages/Church.jsx
 import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
+import Header from "../components/Header";
 import "../styles/church.css"; // estilos simples (abaixo)
+import { handleBack } from "../components/functions/headerFunctions";
+import { useNavigate } from "react-router-dom";
 
 const mockChurch = {
   id: "zion-santo-amaro",
@@ -86,8 +89,15 @@ function Section({ title, children, actions }) {
 const Church = () => {
   // se vier um id na URL depois você troca mockChurch por dados do backend
   const church = useMemo(() => mockChurch, []);
+  const navigate = useNavigate()
 
   return (
+    <>
+        <Header 
+            showProfileImage={false}
+            onBack={() => navigate(-1)}
+            className="headerChurch"
+        />
     <div className="ch-container">
       {/* Hero */}
       <div className="ch-hero">
@@ -263,6 +273,7 @@ const Church = () => {
         )}
       </Section>
     </div>
+    </>
   );
 }
 
