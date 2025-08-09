@@ -1,34 +1,29 @@
-[
-  {
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "title": "ZionChurch",
-        "description": "Igreja Neo Pentecostal"
-      },
-      "geometry": {
-        "coordinates": [-87.637596, 41.940403],
-        "type": "Point"
-      }
-    }
-  ],
-  "type": "FeatureCollection"
-},
 {
+  "type": "FeatureCollection",
   "features": [
     {
       "type": "Feature",
       "properties": {
         "title": "ZionChurch",
-        "description": "Igreja Neo Pentecostal"
+        "description": "Igreja Neo Pentecostal",
+        "url": "/church/zion-church"
       },
       "geometry": {
-        "coordinates": [-23.774420386736626, -46.675686933109624],
-        "type": "Point"
+        "type": "Point",
+        "coordinates": [-46.71978311751937, -23.638104644806944]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "title": "Igreja de Cristo",
+        "description": "Igreja Pentecostal",
+        "url": "/church/igreja-de-cristo"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-46.68996021544934, -23.762662505517795]
       }
     }
-  ],
-  "type": "FeatureCollection"
+  ]
 }
-]
