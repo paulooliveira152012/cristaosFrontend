@@ -7,12 +7,17 @@ const Admin = () => {
   const [tab, setTab] = useState("churches");
 
   return (
-    <div className="min-h-screen w-full p-4 md:p-6" style={{ maxWidth: 1100, margin: "0 auto" }}>
+    <div
+      className="min-h-screen w-full p-4 md:p-6"
+      style={{ maxWidth: 1100, margin: "0 auto" }}
+    >
       <header className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Admin</h1>
         <nav className="flex gap-2">
           <button
-            className={`px-3 py-2 rounded ${tab === "churches" ? "bg-black text-white" : "bg-gray-200"}`}
+            className={`px-3 py-2 rounded ${
+              tab === "churches" ? "bg-black text-white" : "bg-gray-200"
+            }`}
             onClick={() => setTab("churches")}
           >
             Igrejas
@@ -24,7 +29,7 @@ const Admin = () => {
       {tab === "churches" && <ChurchesAdmin />}
     </div>
   );
-}
+};
 
 function ChurchesAdmin() {
   const [list, setList] = useState([]);
@@ -33,26 +38,53 @@ function ChurchesAdmin() {
   const [selected, setSelected] = useState(null); // igreja selecionada p/ editar/membros
 
   // form de criação/edição
-  const empty = useMemo(() => ({
-    name: "",
-    summary: "",
-    website: "",
-    address: "",
-    denomination: "",
-    meetingTimes: "",
-    imageUrl: "",
-    lng: "",
-    lat: "",
-  }), []);
+  const empty = useMemo(
+    () => ({
+      // básicos
+      name: "",
+      summary: "",
+      website: "",
+      address: "",
+      denomination: "",
+      meetingTimes: "",
+      imageUrl: "",
+      lng: "",
+      lat: "",
+      // Church page extra
+      vision: "",
+      mission: "",
+      statementPdf: "",
+      photos: [], // galeria
+      // contatos
+      phone: "",
+      whatsapp: "",
+      email: "",
+      instagram: "",
+      youtube: "",
+      // doações
+      giving_pix: "",
+      giving_bank_bank: "",
+      giving_bank_agency: "",
+      giving_bank_account: "",
+      giving_bank_type: "",
+      // listas
+      ministries: "", // "Kids|Ministério infantil; Youth|Encontros"
+      leadership: "", // "Pastor Principal|Fulano; Pastora|Ciclana"
+    }),
+    []
+  );
 
   const [form, setForm] = useState(empty);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const fetchList = async () => {
     try {
       setLoading(true);
       setError("");
-      const res = await fetch(`${API}/api/churches`, { credentials: "include" });
+      const res = await fetch(`${API}/api/churches`, {
+        credentials: "include",
+      });
       if (!res.ok) throw new Error(`Erro ${res.status}`);
       const data = await res.json();
       setList(data);
@@ -63,9 +95,12 @@ function ChurchesAdmin() {
     }
   };
 
-  useEffect(() => { fetchList(); }, []);
+  useEffect(() => {
+    fetchList();
+  }, []);
 
-  const onChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  const onChange = (e) =>
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
   const startCreate = () => {
     setSelected(null);
@@ -84,13 +119,82 @@ function ChurchesAdmin() {
       imageUrl: c.imageUrl || "",
       lng: c.location?.coordinates?.[0] ?? "",
       lat: c.location?.coordinates?.[1] ?? "",
+      vision: c.vision || "",
+      mission: c.mission || "",
+      statementPdf: c.statementPdf || "",
+      photos: c.photos || [],
+      phone: c.phone || "",
+      whatsapp: c.whatsapp || "",
+      email: c.email || "",
+      instagram: c.instagram || "",
+      youtube: c.youtube || "",
+      giving_pix: c.giving?.pix || "",
+      giving_bank_bank: c.giving?.bank?.bank || "",
+      giving_bank_agency: c.giving?.bank?.agency || "",
+      giving_bank_account: c.giving?.bank?.account || "",
+      giving_bank_type: c.giving?.bank?.type || "",
+      ministries: (c.ministries || [])
+        .map((m) => (m.desc ? `${m.name}|${m.desc}` : m.name))
+        .join("; "),
+      leadership: (c.leadership || [])
+        .map((p) => (p.role ? `${p.role}|${p.name}` : p.name))
+        .join("; "),
     });
   };
 
+  // ---------- Upload helpers ----------
+  async function uploadFile(file) {
+    const fd = new FormData();
+    fd.append("file", file);
+    setUploading(true);
+    try {
+      const res = await fetch(`${API}/api/upload`, {
+        method: "POST",
+        body: fd,
+        credentials: "include", // se a rota exigir auth; senão pode remover
+      });
+      if (!res.ok) throw new Error(`Upload falhou (${res.status})`);
+      const out = await res.json(); // { url: "https://..." }
+      if (!out?.url) throw new Error("Resposta de upload sem URL");
+      return out.url;
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleUploadImage(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await uploadFile(file);
+    setForm((f) => ({ ...f, imageUrl: url }));
+  }
+
+  async function handleUploadPdf(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await uploadFile(file);
+    setForm((f) => ({ ...f, statementPdf: url }));
+  }
+
+  async function handleUploadPhotoToGallery(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await uploadFile(file);
+    setForm((f) => ({ ...f, photos: [...(f.photos || []), url] }));
+  }
+
+  const removePhoto = (url) =>
+    setForm((f) => ({
+      ...f,
+      photos: (f.photos || []).filter((u) => u !== url),
+    }));
+
+    // ---------- Submit ----------
   const submit = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
+      // monta corpo
       const body = {
         name: form.name,
         summary: form.summary || undefined,
@@ -101,7 +205,42 @@ function ChurchesAdmin() {
           ? form.meetingTimes.split(",").map((s) => s.trim()).filter(Boolean)
           : [],
         imageUrl: form.imageUrl || undefined,
+        vision: form.vision || undefined,
+        mission: form.mission || undefined,
+        statementPdf: form.statementPdf || undefined,
+        photos: Array.isArray(form.photos) ? form.photos : [],
+        phone: form.phone || undefined,
+        whatsapp: form.whatsapp || undefined,
+        email: form.email || undefined,
+        instagram: form.instagram || undefined,
+        youtube: form.youtube || undefined,
+        giving: (form.giving_pix || form.giving_bank_bank)
+          ? {
+              pix: form.giving_pix || undefined,
+              bank: (form.giving_bank_bank || form.giving_bank_account)
+                ? {
+                    bank: form.giving_bank_bank || undefined,
+                    agency: form.giving_bank_agency || undefined,
+                    account: form.giving_bank_account || undefined,
+                    type: form.giving_bank_type || undefined,
+                  }
+                : undefined,
+            }
+          : undefined,
+        ministries: form.ministries
+          ? form.ministries.split(";").map(s => s.trim()).filter(Boolean).map((pair) => {
+              const [name, desc] = pair.split("|").map(x => x?.trim());
+              return desc ? { name, desc } : { name };
+            })
+          : [],
+        leadership: form.leadership
+          ? form.leadership.split(";").map(s => s.trim()).filter(Boolean).map((pair) => {
+              const [role, name] = pair.split("|").map(x => x?.trim());
+              return role ? { role, name } : { name };
+            })
+          : [],
       };
+
       if (form.lng !== "" && form.lat !== "") {
         body.lng = Number(form.lng);
         body.lat = Number(form.lat);
@@ -129,6 +268,7 @@ function ChurchesAdmin() {
     }
   };
 
+
   const removeChurch = async (id) => {
     if (!window.confirm("Excluir igreja e seus vínculos?")) return;
     try {
@@ -144,7 +284,7 @@ function ChurchesAdmin() {
     }
   };
 
-  return (
+    return (
     <div className="grid md:grid-cols-2 gap-4">
       {/* Coluna formulário */}
       <div className="p-4 rounded-xl border border-gray-200">
@@ -158,14 +298,106 @@ function ChurchesAdmin() {
         </div>
 
         <form className="grid gap-2" onSubmit={submit}>
+          {/* Básicos */}
           <input name="name" placeholder="Nome *" value={form.name} onChange={onChange} required className="border p-2 rounded" />
           <input name="summary" placeholder="Resumo" value={form.summary} onChange={onChange} className="border p-2 rounded" />
           <input name="website" placeholder="Website" value={form.website} onChange={onChange} className="border p-2 rounded" />
           <input name="address" placeholder="Endereço" value={form.address} onChange={onChange} className="border p-2 rounded" />
           <input name="denomination" placeholder="Denominação" value={form.denomination} onChange={onChange} className="border p-2 rounded" />
           <input name="meetingTimes" placeholder="Horários (separe por vírgula)" value={form.meetingTimes} onChange={onChange} className="border p-2 rounded" />
-          <input name="imageUrl" placeholder="Imagem (URL)" value={form.imageUrl} onChange={onChange} className="border p-2 rounded" />
 
+          {/* Upload capa */}
+          <div className="grid gap-2">
+            <label className="text-sm font-medium">Imagem de capa (URL ou upload)</label>
+            <div className="flex gap-2">
+              <input name="imageUrl" placeholder="https://..." value={form.imageUrl} onChange={onChange} className="border p-2 rounded flex-1" />
+              <label className="px-3 py-2 rounded bg-gray-200 cursor-pointer">
+                {uploading ? "Enviando..." : "Upload"}
+                <input type="file" accept="image/*" onChange={handleUploadImage} className="hidden" />
+              </label>
+            </div>
+            {form.imageUrl && <img src={form.imageUrl} alt="capa" style={{ maxWidth: 240, borderRadius: 8 }} />}
+          </div>
+
+          {/* Galeria */}
+          <div className="grid gap-2">
+            <label className="text-sm font-medium">Galeria de fotos</label>
+            <div className="flex items-center gap-2">
+              <label className="px-3 py-2 rounded bg-gray-200 cursor-pointer">
+                {uploading ? "Enviando..." : "Adicionar foto"}
+                <input type="file" accept="image/*" onChange={handleUploadPhotoToGallery} className="hidden" />
+              </label>
+            </div>
+            {!!form.photos?.length && (
+              <div className="flex flex-wrap gap-2">
+                {form.photos.map((u) => (
+                  <div key={u} className="relative">
+                    <img src={u} alt="" style={{ width: 88, height: 88, objectFit: "cover", borderRadius: 6, border: "1px solid #eee" }} />
+                    <button type="button" className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6"
+                      onClick={() => removePhoto(u)}>×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Statement / Estatuto */}
+          <div className="grid gap-2">
+            <label className="text-sm font-medium">Estatuto/Statement (PDF)</label>
+            <div className="flex gap-2">
+              <input name="statementPdf" placeholder="https://..." value={form.statementPdf} onChange={onChange} className="border p-2 rounded flex-1" />
+              <label className="px-3 py-2 rounded bg-gray-200 cursor-pointer">
+                {uploading ? "Enviando..." : "Upload PDF"}
+                <input type="file" accept="application/pdf" onChange={handleUploadPdf} className="hidden" />
+              </label>
+            </div>
+            {form.statementPdf && <a href={form.statementPdf} target="_blank" rel="noreferrer" className="underline text-sm">ver PDF</a>}
+          </div>
+
+          {/* Visão / Missão */}
+          <textarea name="vision" placeholder="Visão" value={form.vision} onChange={onChange} className="border p-2 rounded" rows={2} />
+          <textarea name="mission" placeholder="Missão" value={form.mission} onChange={onChange} className="border p-2 rounded" rows={2} />
+
+          {/* Contatos */}
+          <div className="grid grid-cols-2 gap-2">
+            <input name="phone" placeholder="Telefone" value={form.phone} onChange={onChange} className="border p-2 rounded" />
+            <input name="whatsapp" placeholder="WhatsApp" value={form.whatsapp} onChange={onChange} className="border p-2 rounded" />
+            <input name="email" placeholder="E-mail" value={form.email} onChange={onChange} className="border p-2 rounded" />
+            <input name="instagram" placeholder="Instagram (URL)" value={form.instagram} onChange={onChange} className="border p-2 rounded" />
+            <input name="youtube" placeholder="YouTube (URL)" value={form.youtube} onChange={onChange} className="border p-2 rounded" />
+          </div>
+
+          {/* Doações */}
+          <div className="grid gap-2">
+            <label className="text-sm font-medium">Ofertas & Doações</label>
+            <input name="giving_pix" placeholder="PIX" value={form.giving_pix} onChange={onChange} className="border p-2 rounded" />
+            <div className="grid grid-cols-4 gap-2">
+              <input name="giving_bank_bank" placeholder="Banco" value={form.giving_bank_bank} onChange={onChange} className="border p-2 rounded" />
+              <input name="giving_bank_agency" placeholder="Agência" value={form.giving_bank_agency} onChange={onChange} className="border p-2 rounded" />
+              <input name="giving_bank_account" placeholder="Conta" value={form.giving_bank_account} onChange={onChange} className="border p-2 rounded" />
+              <input name="giving_bank_type" placeholder="Tipo (CC/CP)" value={form.giving_bank_type} onChange={onChange} className="border p-2 rounded" />
+            </div>
+          </div>
+
+          {/* Ministérios / Liderança */}
+          <textarea
+            name="ministries"
+            placeholder='Ministérios (ex: "Kids|Ministério infantil; Youth|Encontros")'
+            value={form.ministries}
+            onChange={onChange}
+            className="border p-2 rounded"
+            rows={2}
+          />
+          <textarea
+            name="leadership"
+            placeholder='Liderança (ex: "Pastor Principal|Fulano; Pastora|Ciclana")'
+            value={form.leadership}
+            onChange={onChange}
+            className="border p-2 rounded"
+            rows={2}
+          />
+
+          {/* Coordenadas */}
           <div className="grid grid-cols-2 gap-2">
             <input name="lng" placeholder="Longitude (ex: -46.63)" value={form.lng} onChange={onChange} className="border p-2 rounded" />
             <input name="lat" placeholder="Latitude (ex: -23.55)" value={form.lat} onChange={onChange} className="border p-2 rounded" />
@@ -181,7 +413,14 @@ function ChurchesAdmin() {
       <div className="p-4 rounded-xl border border-gray-200">
         <div className="flex items-center justify-between mb-2">
           <h2 className="font-semibold text-lg">Igrejas registradas</h2>
-          <a className="text-sm underline" href={`${API}/api/churches/geojson`} target="_blank" rel="noreferrer">ver GeoJSON</a>
+          <a
+            className="text-sm underline"
+            href={`${API}/api/churches/geojson`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            ver GeoJSON
+          </a>
         </div>
 
         {loading && <p>Carregando...</p>}
@@ -206,16 +445,33 @@ function ChurchesAdmin() {
                     <td className="p-2">{c.membersCount ?? 0}</td>
                     <td className="p-2">
                       <div className="flex gap-2">
-                        <button className="px-2 py-1 rounded bg-gray-200" onClick={() => startEdit(c)}>Editar</button>
-                        <button className="px-2 py-1 rounded bg-gray-200" onClick={() => setSelected({ ...c, _manage: true })}>Gerenciar membros</button>
-                        <button className="px-2 py-1 rounded bg-red-600 text-white" onClick={() => removeChurch(c._id)}>Excluir</button>
+                        <button
+                          className="px-2 py-1 rounded bg-gray-200"
+                          onClick={() => startEdit(c)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          className="px-2 py-1 rounded bg-gray-200"
+                          onClick={() => setSelected({ ...c, _manage: true })}
+                        >
+                          Gerenciar membros
+                        </button>
+                        <button
+                          className="px-2 py-1 rounded bg-red-600 text-white"
+                          onClick={() => removeChurch(c._id)}
+                        >
+                          Excluir
+                        </button>
                       </div>
                     </td>
                   </tr>
                 ))}
                 {!list.length && (
                   <tr>
-                    <td className="p-2" colSpan={4}>Nenhuma igreja cadastrada ainda.</td>
+                    <td className="p-2" colSpan={4}>
+                      Nenhuma igreja cadastrada ainda.
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -240,7 +496,9 @@ function MembersManager({ church, onClose }) {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/api/churches/${church._id}/members`, { credentials: "include" });
+      const res = await fetch(`${API}/api/churches/${church._id}/members`, {
+        credentials: "include",
+      });
       const data = await res.json();
       setMembers(data);
     } finally {
@@ -248,7 +506,9 @@ function MembersManager({ church, onClose }) {
     }
   };
 
-  useEffect(() => { load(); }, [church._id]);
+  useEffect(() => {
+    load();
+  }, [church._id]);
 
   const add = async (e) => {
     e.preventDefault();
@@ -256,7 +516,7 @@ function MembersManager({ church, onClose }) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ userId, role })
+      body: JSON.stringify({ userId, role }),
     });
     if (!res.ok) return alert("Falha ao adicionar");
     setUserId("");
@@ -278,7 +538,9 @@ function MembersManager({ church, onClose }) {
     <div className="mt-4 p-4 rounded-xl border border-gray-300 bg-white shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-semibold text-lg">Membros — {church.name}</h3>
-        <button className="text-sm underline" onClick={onClose}>fechar</button>
+        <button className="text-sm underline" onClick={onClose}>
+          fechar
+        </button>
       </div>
 
       <form onSubmit={add} className="flex flex-wrap gap-2 mb-3">
@@ -289,13 +551,19 @@ function MembersManager({ church, onClose }) {
           onChange={(e) => setUserId(e.target.value)}
           required
         />
-        <select className="border p-2 rounded" value={role} onChange={(e) => setRole(e.target.value)}>
+        <select
+          className="border p-2 rounded"
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+        >
           <option value="member">member</option>
           <option value="leader">leader</option>
           <option value="pastor">pastor</option>
           <option value="admin">admin</option>
         </select>
-        <button className="px-4 py-2 rounded bg-black text-white">Adicionar</button>
+        <button className="px-4 py-2 rounded bg-black text-white">
+          Adicionar
+        </button>
       </form>
 
       {loading ? (
@@ -314,11 +582,20 @@ function MembersManager({ church, onClose }) {
             <tbody>
               {members.map((m) => (
                 <tr key={m._id} className="border-b">
-                  <td className="p-2">{m.user?.username || m.user?.name || m.user?._id}</td>
-                  <td className="p-2">{m.role}</td>
-                  <td className="p-2">{m.joinedAt ? new Date(m.joinedAt).toLocaleDateString() : "-"}</td>
                   <td className="p-2">
-                    <button className="px-2 py-1 rounded bg-red-600 text-white" onClick={() => remove(m._id)}>
+                    {m.user?.username || m.user?.name || m.user?._id}
+                  </td>
+                  <td className="p-2">{m.role}</td>
+                  <td className="p-2">
+                    {m.joinedAt
+                      ? new Date(m.joinedAt).toLocaleDateString()
+                      : "-"}
+                  </td>
+                  <td className="p-2">
+                    <button
+                      className="px-2 py-1 rounded bg-red-600 text-white"
+                      onClick={() => remove(m._id)}
+                    >
                       Remover
                     </button>
                   </td>
@@ -326,7 +603,9 @@ function MembersManager({ church, onClose }) {
               ))}
               {!members.length && (
                 <tr>
-                  <td className="p-2" colSpan={4}>Nenhum membro.</td>
+                  <td className="p-2" colSpan={4}>
+                    Nenhum membro.
+                  </td>
                 </tr>
               )}
             </tbody>
@@ -337,4 +616,4 @@ function MembersManager({ church, onClose }) {
   );
 }
 
-export default Admin
+export default Admin;

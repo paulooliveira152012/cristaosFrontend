@@ -27,7 +27,9 @@ export default function ChurchGlobe() {
     map.on("error", (e) => console.error("Mapbox error:", e?.error || e));
 
     map.on("load", async () => {
-      try { map.setProjection("globe"); } catch {}
+      try {
+        map.setProjection("globe");
+      } catch {}
       map.setFog({
         color: "rgb(186, 210, 235)",
         "high-color": "rgb(36, 92, 223)",
@@ -36,9 +38,15 @@ export default function ChurchGlobe() {
         "star-intensity": 0.15,
       });
 
-      map.addControl(new mapboxgl.NavigationControl({ showCompass: true }), "top-right");
+      map.addControl(
+        new mapboxgl.NavigationControl({ showCompass: true }),
+        "top-right"
+      );
       map.addControl(new mapboxgl.FullscreenControl(), "top-right");
-      const geo = new mapboxgl.GeolocateControl({ trackUserLocation: false, showUserHeading: true });
+      const geo = new mapboxgl.GeolocateControl({
+        trackUserLocation: false,
+        showUserHeading: true,
+      });
       map.addControl(geo, "top-right");
 
       map.setMinZoom(0.8);
@@ -47,7 +55,9 @@ export default function ChurchGlobe() {
       // 👉 Busca do backend
       let data;
       try {
-        const res = await fetch(`${API}/api/admChurch/geojson`, { credentials: "include" });
+        const res = await fetch(`${API}/api/admChurch/geojson`, {
+          credentials: "include",
+        });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         data = await res.json();
       } catch (err) {
@@ -60,11 +70,15 @@ export default function ChurchGlobe() {
       }
 
       // 🔎 DEBUG: logar coords e checar inversão
-      const pts = (data.features || []).map(f => f?.geometry?.coordinates);
+      const pts = (data.features || []).map((f) => f?.geometry?.coordinates);
       console.table(pts);
-      const hasProbablySwapped = pts.some(([x,y]) => Math.abs(x) < Math.abs(y)); // em SP, |lon|≈46 > |lat|≈23
+      const hasProbablySwapped = pts.some(
+        ([x, y]) => Math.abs(x) < Math.abs(y)
+      ); // em SP, |lon|≈46 > |lat|≈23
       if (hasProbablySwapped) {
-        console.warn("Possível coordenada invertida [lat,lng]. Esperado [lng,lat].");
+        console.warn(
+          "Possível coordenada invertida [lat,lng]. Esperado [lng,lat]."
+        );
       }
 
       // Source
@@ -80,11 +94,17 @@ export default function ChurchGlobe() {
         source: "igrejas",
         paint: {
           "circle-radius": [
-            "interpolate", ["linear"], ["zoom"],
-            3, 6,   // antes era 4
-            10, 10, // antes era 7/10/12
-            16, 14,
-            22, 16
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            3,
+            6, // antes era 4
+            10,
+            10, // antes era 7/10/12
+            16,
+            14,
+            22,
+            16,
           ],
           "circle-color": "#FFD700",
           "circle-stroke-width": 1.5,
@@ -105,12 +125,12 @@ export default function ChurchGlobe() {
           "text-size": 12,
           "text-offset": [0, 1.4],
           "text-anchor": "top",
-          "text-allow-overlap": false
+          "text-allow-overlap": false,
         },
         paint: {
           "text-halo-color": "#fff",
-          "text-halo-width": 1
-        }
+          "text-halo-width": 1,
+        },
       });
 
       // Popup
@@ -118,32 +138,52 @@ export default function ChurchGlobe() {
         const f = e.features?.[0];
         if (!f) return;
         const p = f.properties || {};
+
         const title = p.title || "Igreja";
-        const desc  = p.description || "";
-        const url   = p.url || "#";
+        const desc = p.description || "";
+        const churchId = p.id || p._id || ""; // <- pega o id correto
+        const url = churchId ? `/church/${churchId}` : "#";
 
         popupRef.current?.remove();
-        popupRef.current = new mapboxgl.Popup({ closeButton: true, closeOnClick: true })
+        popupRef.current = new mapboxgl.Popup({
+          closeButton: true,
+          closeOnClick: true,
+        })
           .setLngLat(f.geometry.coordinates)
-          .setHTML(`
-            <div style="width:240px">
-              <h4 style="margin:0 0 6px 0;">${title}</h4>
-              <p style="margin:0 0 8px 0;color:#444">${desc}</p>
-              <a href="${url}" style="color:#2A68D8;text-decoration:underline;">Ver página da igreja</a>
-            </div>
-          `)
+          .setHTML(
+            `
+      <div style="width:240px">
+        <h4 style="margin:0 0 6px 0;">${title}</h4>
+        <p style="margin:0 0 8px 0;color:#444">${desc}</p>
+        <a href="${url}" style="color:#2A68D8;text-decoration:underline;">
+          Ver página da igreja
+        </a>
+      </div>
+    `
+          )
           .addTo(map);
       });
 
-      map.on("mouseenter", "igrejas-layer", () => (map.getCanvas().style.cursor = "pointer"));
-      map.on("mouseleave", "igrejas-layer", () => (map.getCanvas().style.cursor = ""));
+      map.on(
+        "mouseenter",
+        "igrejas-layer",
+        () => (map.getCanvas().style.cursor = "pointer")
+      );
+      map.on(
+        "mouseleave",
+        "igrejas-layer",
+        () => (map.getCanvas().style.cursor = "")
+      );
 
       // Fit bounds (garante ver todas)
-      const lons = pts.map(c => c?.[0]).filter(v => typeof v === "number");
-      const lats = pts.map(c => c?.[1]).filter(v => typeof v === "number");
+      const lons = pts.map((c) => c?.[0]).filter((v) => typeof v === "number");
+      const lats = pts.map((c) => c?.[1]).filter((v) => typeof v === "number");
       if (lons.length && lats.length) {
         map.fitBounds(
-          [[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]],
+          [
+            [Math.min(...lons), Math.min(...lats)],
+            [Math.max(...lons), Math.max(...lats)],
+          ],
           { padding: 80, duration: 800 }
         );
       }
@@ -151,12 +191,20 @@ export default function ChurchGlobe() {
       // geolocalização opcional
       geo.on("geolocate", (pos) => {
         const { longitude, latitude } = pos.coords;
-        map.easeTo({ center: [longitude, latitude], zoom: 10, pitch: 45, duration: 1200 });
+        map.easeTo({
+          center: [longitude, latitude],
+          zoom: 10,
+          pitch: 45,
+          duration: 1200,
+        });
       });
     });
 
     return () => {
-      try { popupRef.current?.remove(); map.remove(); } catch {}
+      try {
+        popupRef.current?.remove();
+        map.remove();
+      } catch {}
       mapRef.current = null;
     };
   }, []);
