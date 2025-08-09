@@ -1,11 +1,12 @@
 import { useEffect, useRef } from "react";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
+import mapboxgl from "mapbox-gl"; // pacote do globo
+import "mapbox-gl/dist/mapbox-gl.css"; // css pronto do globo
+const igrejas = require ("../utils/igrejas.geojson")
 
 mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_TOKEN;
 
 export default function ChurchGlobe() {
-  const mapRef = useRef(null);
+  const mapRef = useRef(null); //
   const containerRef = useRef(null);
   const popupRef = useRef(null);
 
@@ -15,16 +16,20 @@ export default function ChurchGlobe() {
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: "mapbox://styles/mapbox/light-v11",
+      renderWorldCopies: false,
       center: [0, 20],
       zoom: 1.3,
       pitch: 40,
       antialias: true,
     });
+    
     mapRef.current = map;
 
     map.on("load", () => {
       // Globo + atmosfera
-      try { map.setProjection("globe"); } catch {}
+      try {
+        map.setProjection("globe");
+      } catch {}
       map.setFog({
         color: "rgb(186, 210, 235)",
         "high-color": "rgb(36, 92, 223)",
@@ -34,9 +39,15 @@ export default function ChurchGlobe() {
       });
 
       // Controles
-      map.addControl(new mapboxgl.NavigationControl({ showCompass: true }), "top-right");
+      map.addControl(
+        new mapboxgl.NavigationControl({ showCompass: true }),
+        "top-right"
+      );
       map.addControl(new mapboxgl.FullscreenControl(), "top-right");
-      const geo = new mapboxgl.GeolocateControl({ trackUserLocation: false, showUserHeading: true });
+      const geo = new mapboxgl.GeolocateControl({
+        trackUserLocation: false,
+        showUserHeading: true,
+      });
       map.addControl(geo, "top-right");
 
       map.setMinZoom(0.8);
@@ -48,18 +59,41 @@ export default function ChurchGlobe() {
         url: "mapbox://paulooliveira152012.cme3kgdc921j21pqqlzuyprso-3ana2", // seu Tileset ID
       });
 
+    // map.addSource("igrejas", {
+    //     type: "vector",
+    //     data: igrejas
+    //   });
+
       map.addLayer({
         id: "igrejas-layer",
         type: "circle",
         source: "igrejas",
         // ATENÇÃO: 'source-layer' é o nome do layer dentro do tileset (aparece na esquerda no Studio).
         "source-layer": "igrejas",
+        minzoom: 0,
+        maxzoom: 24,
         paint: {
-          "circle-radius": 7,
+          // raio cresce com o zoom (evita “sumir” por ficar pequeno demais)
+          "circle-radius": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            3,
+            4,
+            12,
+            7,
+            18,
+            10,
+            22,
+            12,
+          ],
           "circle-color": "#FFD700",
           "circle-stroke-width": 1.5,
-          "circle-stroke-color": "#ffffff",
+          "circle-stroke-color": "#fff",
+          "circle-opacity": 1,
         },
+        // garante que estamos pegando só pontos, caso exista outro tipo no tileset
+        filter: ["==", ["geometry-type"], "Point"],
       });
 
       // Popup ao clicar
@@ -71,29 +105,48 @@ export default function ChurchGlobe() {
         const id = props.mapbox_id || "";
 
         popupRef.current?.remove();
-        popupRef.current = new mapboxgl.Popup({ closeButton: true, closeOnClick: true })
+        popupRef.current = new mapboxgl.Popup({
+          closeButton: true,
+          closeOnClick: true,
+        })
           .setLngLat(e.lngLat)
-          .setHTML(`
+          .setHTML(
+            `
             <div style="width:220px">
               <h4 style="margin:0 0 6px 0;">${place}</h4>
-              <a href="/church/${id || ""}" style="color:#2A68D8;text-decoration:underline;">Ver página</a>
+              <a href="/church/${
+                id || ""
+              }" style="color:#2A68D8;text-decoration:underline;">Ver página</a>
             </div>
-          `)
+          `
+          )
           .addTo(map);
       });
 
-      map.on("mouseenter", "igrejas-layer", () => { map.getCanvas().style.cursor = "pointer"; });
-      map.on("mouseleave", "igrejas-layer", () => { map.getCanvas().style.cursor = ""; });
+      map.on("mouseenter", "igrejas-layer", () => {
+        map.getCanvas().style.cursor = "pointer";
+      });
+      map.on("mouseleave", "igrejas-layer", () => {
+        map.getCanvas().style.cursor = "";
+      });
 
       // (Opcional) ao geolocalizar, dar um zoom nível 10 no local do usuário
       geo.on("geolocate", (pos) => {
         const { longitude, latitude } = pos.coords;
-        map.easeTo({ center: [longitude, latitude], zoom: 10, pitch: 45, duration: 1200 });
+        map.easeTo({
+          center: [longitude, latitude],
+          zoom: 10,
+          pitch: 45,
+          duration: 1200,
+        });
       });
     });
 
     return () => {
-      try { popupRef.current?.remove(); map.remove(); } catch {}
+      try {
+        popupRef.current?.remove();
+        map.remove();
+      } catch {}
       mapRef.current = null;
     };
   }, []);
