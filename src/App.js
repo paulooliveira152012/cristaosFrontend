@@ -22,6 +22,7 @@ import AddAd from "./pages/AddAd.js";
 import EditAd from "./pages/EditAd.js";
 import DeleteAd from "./pages/DeleteAd.js";
 import ViewAds from "./pages/ViewAds.js";
+import GlobeChurches from "./pages/Globo.js";
 
 // páginas do menu
 import BibleStudiesByBook from "./pages/menuPages/BibleStudiesByBook.js";
@@ -264,6 +265,12 @@ const AppWithLocation = () => {
                           <ProtectedRoute requiredRole="lider">
                             <ViewAds />
                           </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/globe"
+                        element={
+                            <GlobeChurches />
                         }
                       />
                     </Routes>
