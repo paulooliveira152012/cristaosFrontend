@@ -275,12 +275,12 @@ export default function ChurchGlobe() {
 
   // Legendinha + container do mapa
   return (
-    <div style={{ height: "100vh", width: "100vw", position: "relative" }}>
+    <div style={{ height: "100dvh", width: "100vw", position: "relative" }}>
       <div ref={containerRef} style={{ height: "100%", width: "100%" }} />
       <div
         style={{
           position: "absolute",
-          bottom: 12,
+          bottom: 100,
           left: 12,
           background: "rgba(255,255,255,.9)",
           borderRadius: 8,
