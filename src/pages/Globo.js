@@ -35,7 +35,7 @@ export default function ChurchGlobe() {
         "high-color": "rgb(36, 92, 223)",
         "horizon-blend": 0.2,
         "space-color": "#000",
-        "star-intensity": 0.15,
+        "star-intensity": 1,
       });
 
       map.addControl(
@@ -186,6 +186,7 @@ export default function ChurchGlobe() {
         const title = p.title || (tipo === "church" ? "Igreja" : "Reunião");
         const desc = p.description || "";
         const id = p.id || p._id || "";
+        const address = p.address || "";
         const href =
           p.url ||
           (tipo === "church" ? `/church/${id}` : `/intermeeting/${id}`);
@@ -206,6 +207,17 @@ export default function ChurchGlobe() {
               ${
                 desc ? `<p style="margin:0 0 8px 0;color:#444">${desc}</p>` : ""
               }
+              <p>
+                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                  address
+                )}" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style="color:#2A68D8;text-decoration:underline;">
+                    ${address}
+                </a>
+                </p>
+
               <a href="${href}" style="color:#2A68D8;text-decoration:underline;">Ver página</a>
             </div>
           `
