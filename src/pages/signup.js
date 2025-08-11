@@ -8,6 +8,11 @@ import { v4 as uuidv4 } from "uuid"; // For generating unique file names
 import "../styles/signUp.css";
 import { fetchAllChurches } from "./functions/signupFunctions";
 
+const CHURCH_NON_DENOM = "__NON_DENOM__";
+const CHURCH_NONE = "__NO_CHURCH__";
+
+const isValidObjectId = (v) => /^[0-9a-fA-F]{24}$/.test(v);
+
 // import { response } from "express";
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
@@ -54,12 +59,18 @@ const Signup = () => {
   // State to manage input fields
   const [profileImage, setProfileImage] = useState(null);
   const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [churches, setChurches] = useState([]);
   const [church, setChurch] = useState("");
+
+  // state to handle page activity
+  const [churches, setChurches] = useState([]);
   const [error, setError] = useState("");
   const [file, setFile] = useState(null); // Store file for S3 upload
 
@@ -90,17 +101,37 @@ const Signup = () => {
   // Handle form submission for signup
   const handleSignup = async (e) => {
     e.preventDefault();
-
     console.log("signing up...");
+    setError("");
+    setIsLoading(true);
 
     // Validate that required fields are provided
-    if (!username || !email || !password) {
-      setError("All fields are required.");
+    if (!username || !email || !password || !church) {
+      setError("username, email, senha e igreja sao necessarios.");
+      setIsLoading(false);
+      return;
+    }
+
+    // igreja deve ser um ObjectId válido OU uma das sentinelas
+    if (
+      !isValidObjectId(church) &&
+      church !== CHURCH_NON_DENOM &&
+      church !== CHURCH_NONE
+    ) {
+      setError("Selecione uma igreja válida.");
+      setIsLoading(false);
       return;
     }
 
     if (password.length < 6) {
       setError("The password must be at least 6 characters long.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match!");
+      setIsLoading(false);
       return;
     }
 
@@ -111,19 +142,40 @@ const Signup = () => {
         imageUrl = await uploadImageToS3(file);
       }
 
+      const payload = {
+      firstName,
+      lastName,
+      city,
+      state,
+      phone,
+      password,
+      username,
+      email,
+      profileImage: imageUrl,
+      church: null,
+      churchAffiliation: null
+    };
+
+    // Interpreta a seleção da igreja
+    if (church === CHURCH_NON_DENOM) {
+      payload.church = null; // não envia ObjectId
+      payload.churchAffiliation = "non_denom";
+    } else if (church === CHURCH_NONE) {
+      payload.church = null;
+      payload.churchAffiliation = "none";
+    } else {
+      payload.church = church; // ObjectId
+      payload.churchAffiliation = "member"; // opcional, mas útil
+    }
+
       const response = await fetch(`${baseUrl}/api/users/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          username,
-          email,
-          phone,
-          password,
-          profileImage: imageUrl, // Include S3 URL in the request, if applicable
-          church,
-        }),
+        body: JSON.stringify(
+          payload
+        ),
       });
 
       console.log("rota encontrada");
@@ -143,6 +195,8 @@ const Signup = () => {
     } catch (err) {
       console.error("Error during signup:", err);
       setError("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -225,6 +279,51 @@ const Signup = () => {
               />
             </div>
 
+            {/* firstName input */}
+            <div className="formGroup">
+              <label htmlFor="firstName" className="label">Primeiro nome</label>
+              <input
+                type="text"
+                id="firstName"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="input"
+              />
+            </div>
+            {/* lastName input */}
+            <div className="formGroup">
+              <label htmlFor="lastName" className="label">Sobrenome</label>
+              <input
+                type="text"
+                id="lastName"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="input"
+              />
+            </div>
+            {/* city input */}
+            <div className="formGroup">
+              <label htmlFor="city" className="label">Cidade</label>
+              <input
+                type="text"
+                id="city"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                className="input"
+              />
+            </div>
+            {/* state input */}
+            <div className="formGroup">
+              <label htmlFor="state" className="label">Estado</label>
+              <input
+                type="text"
+                id="state"
+                value={state}
+                onChange={(e) => setState(e.target.value)}
+                className="input"
+              />
+            </div>
+
             {/* Username input */}
             <div className="formGroup">
               <label htmlFor="username" className="label">
@@ -246,7 +345,7 @@ const Signup = () => {
                 Email:
               </label>
               <input
-                type="text"
+                type="email"
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -261,7 +360,7 @@ const Signup = () => {
                 Phone:
               </label>
               <input
-                type="text"
+                type="tel"
                 id="phone"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
@@ -286,12 +385,12 @@ const Signup = () => {
             </div>
 
             <div className="formGroup">
-              <label htmlFor="password" className="label">
+              <label htmlFor="confirmPassword" className="label">
                 Confirm Password:
               </label>
               <input
                 type="password"
-                id="password"
+                id="confirmPassword"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
@@ -299,18 +398,27 @@ const Signup = () => {
               />
             </div>
 
-            <select 
-              value={church} 
+            <select
+              value={church}
               onChange={(e) => setChurch(e.target.value)}
               required
             >
-               <option value="">Selecione uma igreja</option>
+              <option value="">Selecione uma igreja</option>
 
-              {churches.map((c) => (
-                <option key={c._id} value={c._id}>
-                  {c.name}
+              <optgroup label="Outras opções">
+                <option value={CHURCH_NON_DENOM}>Não denominacional</option>
+                <option value={CHURCH_NONE}>
+                  Não frequento nenhuma igreja
                 </option>
-              ))}
+              </optgroup>
+
+              <optgroup label="Igrejas">
+                {churches.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name}
+                  </option>
+                ))}
+              </optgroup>
             </select>
 
             {/* Submit button */}

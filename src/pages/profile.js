@@ -164,7 +164,7 @@ const Profile = () => {
               <div className="infoWrapper">
                 <div className="topInfo">
                   <h2 className="profile-username">{user.username}</h2>
-                  <span>@EtBilu</span>
+                  <span>@{user.username}</span>
                 </div>
                 <div className="locationInfo">
                   <p>Sao Paulo</p>
