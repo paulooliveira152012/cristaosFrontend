@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"; // Use the browser-friendly AWS SDK
 import Header from "../components/Header";
 import { useUser } from "../context/UserContext";
 import { motion } from "framer-motion";
 import { json, useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid"; // For generating unique file names
-import "../styles/signUp.css"
+import "../styles/signUp.css";
+import { fetchAllChurches } from "./functions/signupFunctions";
 
 // import { response } from "express";
 
@@ -26,7 +27,7 @@ const uploadImageToS3 = async (file) => {
   const res = await fetch(`${baseUrl}/api/upload-url`);
   const { uploadURL, key } = await res.json();
 
-  console.log(`uploadURL: ${uploadURL}, key: ${key}`)
+  console.log(`uploadURL: ${uploadURL}, key: ${key}`);
 
   // Step 2: Upload directly to S3 using the URL
   const upload = await fetch(uploadURL, {
@@ -51,17 +52,24 @@ const Signup = () => {
   const navigate = useNavigate();
 
   // State to manage input fields
+  const [profileImage, setProfileImage] = useState(null);
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [churches, setChurches] = useState([]);
+  const [church, setChurch] = useState("");
   const [error, setError] = useState("");
-  const [profileImage, setProfileImage] = useState(null);
   const [file, setFile] = useState(null); // Store file for S3 upload
 
   const [newUserId, setNewUserId] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    fetchAllChurches(setChurches);
+  }, []);
 
   // Handle image selection
   const handleImagePicker = () => {
@@ -82,6 +90,8 @@ const Signup = () => {
   // Handle form submission for signup
   const handleSignup = async (e) => {
     e.preventDefault();
+
+    console.log("signing up...");
 
     // Validate that required fields are provided
     if (!username || !email || !password) {
@@ -112,8 +122,11 @@ const Signup = () => {
           phone,
           password,
           profileImage: imageUrl, // Include S3 URL in the request, if applicable
+          church,
         }),
       });
+
+      console.log("rota encontrada");
 
       const data = await response.json();
 
@@ -136,7 +149,7 @@ const Signup = () => {
   const verifyByEmail = async () => {
     console.log(`verificando conta por e-mail ${newUserId}`);
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
       const response = await fetch(
@@ -159,7 +172,7 @@ const Signup = () => {
     } catch (error) {
       console.log("Erro ao enviar email:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
       navigate("/login");
     }
   };
@@ -193,128 +206,154 @@ const Signup = () => {
   return (
     <div className="screenWrapper">
       <div className="scrollable">
-  <Header showProfileImage={false} navigate={navigate} />
+        <Header showProfileImage={false} navigate={navigate} />
 
-  <div className="signupContainer">
-    <h2 className="signupTitle">Signup</h2>
+        <div className="signupContainer">
+          <h2 className="signupTitle">Signup</h2>
 
-    <form onSubmit={handleSignup} className="form">
-      {/* Image selection */}
-      <div className="formGroup">
-        <div
-          className="imageContainer"
-          style={{
-            backgroundImage: profileImage
-              ? `url(${profileImage})`
-              : `url('https://via.placeholder.com/150x150?text=Upload+Image')`,
-          }}
-          onClick={handleImagePicker}
-        />
-      </div>
+          <form onSubmit={handleSignup} className="form">
+            {/* Image selection */}
+            <div className="formGroup">
+              <div
+                className="imageContainer"
+                style={{
+                  backgroundImage: profileImage
+                    ? `url(${profileImage})`
+                    : `url('https://via.placeholder.com/150x150?text=Upload+Image')`,
+                }}
+                onClick={handleImagePicker}
+              />
+            </div>
 
-      {/* Username input */}
-      <div className="formGroup">
-        <label htmlFor="username" className="label">
-          Username:
-        </label>
-        <input
-          type="text"
-          id="username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-          className="input"
-        />
-      </div>
+            {/* Username input */}
+            <div className="formGroup">
+              <label htmlFor="username" className="label">
+                Username:
+              </label>
+              <input
+                type="text"
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                className="input"
+              />
+            </div>
 
-      {/* Email input */}
-      <div className="formGroup">
-        <label htmlFor="email" className="label">
-          Email:
-        </label>
-        <input
-          type="text"
-          id="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="input"
-        />
-      </div>
+            {/* Email input */}
+            <div className="formGroup">
+              <label htmlFor="email" className="label">
+                Email:
+              </label>
+              <input
+                type="text"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="input"
+              />
+            </div>
 
-      {/* Phone input */}
-      <div className="formGroup">
-        <label htmlFor="phone" className="label">
-          Phone:
-        </label>
-        <input
-          type="text"
-          id="phone"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          required
-          className="input"
-        />
-      </div>
+            {/* Phone input */}
+            <div className="formGroup">
+              <label htmlFor="phone" className="label">
+                Phone:
+              </label>
+              <input
+                type="text"
+                id="phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+                className="input"
+              />
+            </div>
 
-      {/* Password input */}
-      <div className="formGroup">
-        <label htmlFor="password" className="label">
-          Password:
-        </label>
-        <input
-          type="password"
-          id="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="input"
-        />
-      </div>
+            {/* Password input */}
+            <div className="formGroup">
+              <label htmlFor="password" className="label">
+                Password:
+              </label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="input"
+              />
+            </div>
 
-      {/* Submit button */}
-      <button type="submit" className="button" disabled={isLoading}>
-        {isLoading ? "Criando conta..." : "Signup"}
-      </button>
-    </form>
+            <div className="formGroup">
+              <label htmlFor="password" className="label">
+                Confirm Password:
+              </label>
+              <input
+                type="password"
+                id="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="input"
+              />
+            </div>
 
-    {/* Display error message */}
-    {error && <p className="error">{error}</p>}
-  </div>
+            <select 
+              value={church} 
+              onChange={(e) => setChurch(e.target.value)}
+              required
+            >
+               <option value="">Selecione uma igreja</option>
 
-  {showModal && (
-    <div className="modal">
-      <div className="modal-content">
-        <h2>Conta criada com sucesso!</h2>
+              {churches.map((c) => (
+                <option key={c._id} value={c._id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
 
-        {isLoading && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, rotate: 360 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="loadingSpinner"
-          />
+            {/* Submit button */}
+            <button type="submit" className="button" disabled={isLoading}>
+              {isLoading ? "Criando conta..." : "Signup"}
+            </button>
+          </form>
+
+          {/* Display error message */}
+          {error && <p className="error">{error}</p>}
+        </div>
+
+        {showModal && (
+          <div className="modal">
+            <div className="modal-content">
+              <h2>Conta criada com sucesso!</h2>
+
+              {isLoading && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, rotate: 360 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="loadingSpinner"
+                />
+              )}
+
+              <p>por favor verificar conta para ter acesso.</p>
+
+              <button onClick={verifyByEmail}>Verificar por email</button>
+              <button
+                onClick={verifyByPhone}
+                disabled
+                className="disabledButton"
+              >
+                Verificar por telefone
+              </button>
+            </div>
+          </div>
         )}
-
-        <p>por favor verificar conta para ter acesso.</p>
-
-        <button onClick={verifyByEmail}>Verificar por email</button>
-        <button
-          onClick={verifyByPhone}
-          disabled
-          className="disabledButton"
-        >
-          Verificar por telefone
-        </button>
       </div>
     </div>
-  )}
-  </div>
-</div>
-
   );
 };
-
 
 export default Signup;

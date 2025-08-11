@@ -3,7 +3,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import Header from "../components/Header";
 import "../styles/church.css";
-import { fetchChurchInfo } from "./functions/churchFunctions";
+import {
+  fetchChurchInfo,
+  fetchChurchMembers,
+} from "./functions/churchFunctions";
 
 // Componente de seção reutilizável (mantém o estilo do mock)
 function Section({ title, children, actions }) {
@@ -39,8 +42,13 @@ const Church = () => {
   const [church, setChurch] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [members, setMembers] = useState([]);
   const [showMembers, setShowMembers] = useState(false);
+  const [members, setMembers] = useState([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [membersError, setMembersError] = useState("");
+  const [membersPage, setMembersPage] = useState(1);
+  const [membersTotal, setMembersTotal] = useState(0);
+  const membersLimit = 50;
 
   useEffect(() => {
     let cancelled = false;
@@ -129,7 +137,35 @@ const Church = () => {
       </div>
     );
 
-  const toggleShowChurchMembers = () => setShowMembers((prev) => !prev);
+  // const toggleShowChurchMembers = () => setShowMembers((prev) => !prev);
+
+  const toggleShowChurchMembers = () =>
+    setShowMembers((prev) => {
+      const next = !prev;
+      if (next && members.length === 0) {
+        loadMembers(1);
+      }
+      return next;
+    });
+
+  const loadMembers = async (page = 1) => {
+    setMembersLoading(true);
+    setMembersError("");
+    try {
+      const { members: list, total } = await fetchChurchMembers(id, {
+        page,
+        limit: membersLimit,
+        status: "active",
+      });
+      setMembers((prev) => (page === 1 ? list : [...prev, ...list]));
+      setMembersTotal(total || 0);
+      setMembersPage(page);
+    } catch (e) {
+      setMembersError(e.message || "Falha ao carregar membros");
+    } finally {
+      setMembersLoading(false);
+    }
+  };
 
   return (
     <>
@@ -189,6 +225,13 @@ const Church = () => {
                   <h3>Membros ativos</h3>
                 </div>
 
+                {membersLoading && !members.length && (
+                  <p>Carregando membros...</p>
+                )}
+                {membersError && (
+                  <p style={{ color: "#c00" }}>{membersError}</p>
+                )}
+
                 {members.length ? (
                   <ul className="member-list">
                     {members.map((m) => (
@@ -201,6 +244,18 @@ const Church = () => {
                 ) : (
                   <p>Nenhum membro por enquanto.</p>
                 )}
+
+                {members.length > 0 &&
+                  members.length < membersTotal &&
+                  !membersLoading && (
+                    <button
+                      className="ch-btn"
+                      onClick={() => loadMembers(membersPage + 1)}
+                    >
+                      Carregar mais
+                    </button>
+                  )}
+                {membersLoading && members.length > 0 && <p>Carregando…</p>}
               </div>
             </div>
           )}
