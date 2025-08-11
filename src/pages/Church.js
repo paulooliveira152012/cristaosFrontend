@@ -20,7 +20,11 @@ function Section({ title, children, actions }) {
 
 // helpers
 const normalizeWebsite = (w) =>
-  !w ? "" : w.startsWith("http://") || w.startsWith("https://") ? w : `https://${w}`;
+  !w
+    ? ""
+    : w.startsWith("http://") || w.startsWith("https://")
+    ? w
+    : `https://${w}`;
 
 const buildMapsUrl = (coords) => {
   if (!Array.isArray(coords) || coords.length !== 2) return "";
@@ -34,7 +38,9 @@ const Church = () => {
 
   const [church, setChurch] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError]   = useState("");
+  const [error, setError] = useState("");
+  const [members, setMembers] = useState([]);
+  const [showMembers, setShowMembers] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -50,7 +56,9 @@ const Church = () => {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   // Mapeia os dados reais para a estrutura da UI
@@ -58,7 +66,7 @@ const Church = () => {
     if (!church) return null;
 
     const website = normalizeWebsite(church.website || "");
-    const coords  = church.location?.coordinates; // [lng, lat]
+    const coords = church.location?.coordinates; // [lng, lat]
     const mapsUrl = buildMapsUrl(coords);
 
     return {
@@ -74,7 +82,11 @@ const Church = () => {
       },
       address: {
         street: church.address || "Endereço não informado",
-        district: "", city: "", state: "", zipcode: "", country: "",
+        district: "",
+        city: "",
+        state: "",
+        zipcode: "",
+        country: "",
         lat: Array.isArray(coords) ? coords[1] : undefined,
         lng: Array.isArray(coords) ? coords[0] : undefined,
         mapsUrl,
@@ -92,15 +104,32 @@ const Church = () => {
         : [],
       ministries: church.ministries || [],
       leadership: church.leadership || [], // se usar ChurchMembers/roles, você pode popular depois
-      giving: church.giving || null,       // mapeie se tiver no schema
+      giving: church.giving || null, // mapeie se tiver no schema
       denomination: church.denomination || "",
       coords,
     };
   }, [church]);
 
-  if (loading) return <div className="page"><p>Carregando igreja...</p></div>;
-  if (error)   return <div className="page"><p style={{color:"#c00"}}>{error}</p></div>;
-  if (!view)   return <div className="page"><p>Igreja não encontrada.</p></div>;
+  if (loading)
+    return (
+      <div className="page">
+        <p>Carregando igreja...</p>
+      </div>
+    );
+  if (error)
+    return (
+      <div className="page">
+        <p style={{ color: "#c00" }}>{error}</p>
+      </div>
+    );
+  if (!view)
+    return (
+      <div className="page">
+        <p>Igreja não encontrada.</p>
+      </div>
+    );
+
+  const toggleShowChurchMembers = () => setShowMembers((prev) => !prev);
 
   return (
     <>
@@ -124,23 +153,57 @@ const Church = () => {
               <p>{view.about.shortDescription}</p>
             )}
             <div className="ch-hero__cta">
-              {view.contact.website && (
-                <a
+              <div>
+                {view.contact.website && (
+                  <a
                     className="ch-btn"
                     href={view.contact.website}
                     target="_blank"
                     rel="noreferrer"
-                >
-                  Site oficial
-                </a>
-              )}
-              {view.address.mapsUrl && (
-                <a className="ch-btn ch-btn--ghost" href="#como-chegar">
-                  Como chegar
-                </a>
-              )}
+                  >
+                    Site oficial
+                  </a>
+                )}
+                {view.address.mapsUrl && (
+                  <a className="ch-btn ch-btn--ghost" href="#como-chegar">
+                    Como chegar
+                  </a>
+                )}
+              </div>
+              <a
+                className="ch-btn ch-btn--ghost"
+                onClick={() => toggleShowChurchMembers()}
+              >
+                Membros ativos
+              </a>
             </div>
           </div>
+
+          {showMembers && (
+            <div className="modal" onClick={toggleShowChurchMembers}>
+              <div
+                className="modal-content"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="modal-header">
+                  <h3>Membros ativos</h3>
+                </div>
+
+                {members.length ? (
+                  <ul className="member-list">
+                    {members.map((m) => (
+                      <li key={m._id || m.id}>
+                        {m.user?.username || m.name || "Usuário"} —{" "}
+                        {m.role || "member"}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>Nenhum membro por enquanto.</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Imagem de capa opcional */}
@@ -158,7 +221,11 @@ const Church = () => {
           actions={
             <>
               {view.contact.instagram && (
-                <a href={view.contact.instagram} target="_blank" rel="noreferrer">
+                <a
+                  href={view.contact.instagram}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   Instagram
                 </a>
               )}
@@ -178,7 +245,8 @@ const Church = () => {
                 {(view.address.city || view.address.state) && (
                   <>
                     <br />
-                    {view.address.city} {view.address.state && `– ${view.address.state}`}
+                    {view.address.city}{" "}
+                    {view.address.state && `– ${view.address.state}`}
                   </>
                 )}
                 {view.address.zipcode && (
@@ -190,7 +258,12 @@ const Church = () => {
               </p>
               <div className="ch-links">
                 {view.address.mapsUrl && (
-                  <a id="como-chegar" href={view.address.mapsUrl} target="_blank" rel="noreferrer">
+                  <a
+                    id="como-chegar"
+                    href={view.address.mapsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     Ver no mapa
                   </a>
                 )}
@@ -205,12 +278,18 @@ const Church = () => {
               <h3>Contato</h3>
               <ul className="ch-list">
                 {view.contact.phone && <li>Telefone: {view.contact.phone}</li>}
-                {view.contact.whatsapp && <li>WhatsApp: {view.contact.whatsapp}</li>}
+                {view.contact.whatsapp && (
+                  <li>WhatsApp: {view.contact.whatsapp}</li>
+                )}
                 {view.contact.email && <li>E-mail: {view.contact.email}</li>}
                 {view.contact.website && (
                   <li>
                     Site:{" "}
-                    <a href={view.contact.website} target="_blank" rel="noreferrer">
+                    <a
+                      href={view.contact.website}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       {view.contact.website.replace(/^https?:\/\//, "")}
                     </a>
                   </li>
@@ -231,7 +310,12 @@ const Church = () => {
             </div>
             <div>
               {view.about.statementPdf ? (
-                <a className="ch-btn" href={view.about.statementPdf} target="_blank" rel="noreferrer">
+                <a
+                  className="ch-btn"
+                  href={view.about.statementPdf}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   Estatuto / Statement
                 </a>
               ) : (
@@ -309,13 +393,15 @@ const Church = () => {
               {view.giving.pix && <li>PIX: {view.giving.pix}</li>}
               {view.giving.bank && (
                 <li>
-                  Banco: {view.giving.bank.bank} · Ag. {view.giving.bank.agency} · Conta{" "}
-                  {view.giving.bank.account} ({view.giving.bank.type})
+                  Banco: {view.giving.bank.bank} · Ag. {view.giving.bank.agency}{" "}
+                  · Conta {view.giving.bank.account} ({view.giving.bank.type})
                 </li>
               )}
             </ul>
           ) : (
-            <div className="ch-note">Informações de doação não disponíveis.</div>
+            <div className="ch-note">
+              Informações de doação não disponíveis.
+            </div>
           )}
         </Section>
       </div>

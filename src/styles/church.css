@@ -51,6 +51,8 @@ img{ max-width:100%; display:block }
   display: flex;
   align-items: flex-end;
   margin-bottom: 22px;
+  width: 100%;
+  background-color: green;
 }
 .ch-hero__overlay{
   position:absolute; inset:0;
@@ -60,6 +62,7 @@ img{ max-width:100%; display:block }
   position:relative; z-index:1;
   padding: 18px 18px 20px;
   color:#fff;
+  width: 100%;
 }
 .ch-hero__content h1{
   margin: 0 0 6px 0;
@@ -74,6 +77,13 @@ img{ max-width:100%; display:block }
 }
 .ch-hero__cta{
   display:flex; gap:10px; margin-top:12px;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.ch-hero__cta div {
+  display: flex;
+  gap: 20px;
 }
 
 /* ---------- BUTTONS ---------- */
