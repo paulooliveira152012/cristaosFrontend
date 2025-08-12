@@ -6,6 +6,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import ListingInteractionBox from "../components/ListingInteractionBox";
 import "../styles/profile.css";
+import coverPlaceholder from "../assets/coverPlaceholder.jpg"
 import { ProfileUserFriends } from "./profileComponents/friends";
 import {
   fetchUserData,
@@ -172,7 +173,19 @@ const Profile = () => {
       <div className="profilePageBasicInfoContainer">
         <Header showProfileImage={false} navigate={navigate} />
         <div className="profilePageHeaderParentSection">
-          <div className="top"></div>
+          <div
+            className="top"
+            style={{
+              backgroundImage: `url(${
+                user?.profileBackgroundCover || coverPlaceholder
+              })`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+              height: 220, // sem isso, pode não aparecer
+              
+            }}
+          />
           <div className="bottom">
             <div className="imageAndnameContainer">
               <div className="imageWrapper">
@@ -320,7 +333,6 @@ const Profile = () => {
                           >
                             edit
                           </li>
-                          <li>delete</li>
                         </ul>
                       </div>
                     )}
