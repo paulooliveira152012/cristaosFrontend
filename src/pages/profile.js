@@ -52,6 +52,10 @@ const Profile = () => {
     setSharedListings,
   });
 
+  console.log("currentUser no perfil:", currentUser);
+
+  console.log("user:", user);
+
   useEffect(() => {
     const getData = async () => {
       setLoading(true);
@@ -144,6 +148,14 @@ const Profile = () => {
   if (loading) return <p className="profile-loading">Carregando perfil...</p>;
   if (error) return <p className="profile-error">{error}</p>;
 
+  const churchId =
+    typeof user?.church === "string" ? user.church : user?.church?._id;
+
+    const churchName =
+  typeof user?.church === "object"
+    ? user.church.name
+    : (user?.churchName || "Ver igreja"); // opcional, caso você guarde o nome separado
+
   return (
     <>
       <div className="profilePageBasicInfoContainer">
@@ -156,29 +168,45 @@ const Profile = () => {
                 <div
                   className="ProfileProfileImage"
                   style={{
-                    backgroundImage: `url(${user?.profileImage || imagePlaceholder})`,
+                    backgroundImage: `url(${
+                      user?.profileImage || imagePlaceholder
+                    })`,
                     backgroundPosition: "center",
                   }}
                 ></div>
               </div>
               <div className="infoWrapper">
                 <div className="topInfo">
-                  <h2 className="profile-username">{user.username}</h2>
+                  <h2 className="profile-username">
+                    {user.firstName || ""} {user.lastName || ""}
+                  </h2>
                   <span>@{user.username}</span>
+                  <span>
+                    Denominação:{" "}
+                    {churchId ? (
+                      <Link to={`/church/${encodeURIComponent(churchId)}`}>
+                        {churchName || "Ver igreja"}
+                      </Link>
+                    ) : (
+                      "—"
+                    )}
+                  </span>
                 </div>
                 <div className="locationInfo">
-                  <p>Sao Paulo</p>
+                  <p>{user.city || ""}</p>
+                  <p>{user.state || ""}</p>
                   {renderFriendAction()}
                   <span
                     onClick={() => navigate(`/profile/${user._id}/friends`)}
-                    style={{ cursor: "pointer", marginLeft: "10px", textDecoration: "underline" }}
+                    style={{ cursor: "pointer", textDecoration: "underline" }}
                   >
                     Amigos
                   </span>
                 </div>
               </div>
               <div className="interactionButtons">
-                {(currentUser._id !== user._id || currentUser._id === user._id) && (
+                {(currentUser._id !== user._id ||
+                  currentUser._id === user._id) && (
                   <>
                     {currentUser._id !== user._id && (
                       <button
@@ -237,9 +265,15 @@ const Profile = () => {
                           <img
                             src={msg.sender?.profileImage || imagePlaceholder}
                             alt="sender"
-                            style={{ width: 30, height: 30, borderRadius: "50%" }}
+                            style={{
+                              width: 30,
+                              height: 30,
+                              borderRadius: "50%",
+                            }}
                           />
-                          <strong style={{ marginLeft: 8 }}>{msg.sender?.username}</strong>
+                          <strong style={{ marginLeft: 8 }}>
+                            {msg.sender?.username}
+                          </strong>
                         </div>
                         <p style={{ marginLeft: 38 }}>{msg.text}</p>
                       </div>
@@ -251,13 +285,19 @@ const Profile = () => {
               userListings.map((listing) => (
                 <div key={listing._id} className="profile-listing-item">
                   {listing.type === "image" && listing.imageUrl && (
-                    <img src={listing.imageUrl} alt="Listing" className="profile-listing-image" />
+                    <img
+                      src={listing.imageUrl}
+                      alt="Listing"
+                      className="profile-listing-image"
+                    />
                   )}
 
                   {listing.type === "blog" && (
                     <div className="listing-content">
                       <h2>{listing.blogTitle || "Untitled Blog"}</h2>
-                      <p>{listing.blogContent?.slice(0, 150) || "No content."}</p>
+                      <p>
+                        {listing.blogContent?.slice(0, 150) || "No content."}
+                      </p>
                       {listing.imageUrl && (
                         <img
                           src={listing.imageUrl}
@@ -284,14 +324,22 @@ const Profile = () => {
                     handleLike={() => handleLike(listing._id)}
                     likesCount={listing.likes.length}
                     comments={listing.comments || []}
-                    commentsCount={listing.comments ? listing.comments.length : 0}
-                    isLiked={currentUser ? listing.likes.includes(currentUser._id) : false}
+                    commentsCount={
+                      listing.comments ? listing.comments.length : 0
+                    }
+                    isLiked={
+                      currentUser
+                        ? listing.likes.includes(currentUser._id)
+                        : false
+                    }
                     handleCommentSubmit={handleCommentSubmit}
                     handleReplySubmit={handleReplySubmit}
                     handleDeleteComment={handleDeleteComment}
                     handleDeleteListing={handleDeleteListing}
                     currentUser={currentUser}
-                    commentLikesCount={(comment) => (comment.likes ? comment.likes.length : 0)}
+                    commentLikesCount={(comment) =>
+                      comment.likes ? comment.likes.length : 0
+                    }
                     isCommentLiked={(comment) =>
                       comment.likes && Array.isArray(comment.likes)
                         ? comment.likes.includes(currentUser._id)
