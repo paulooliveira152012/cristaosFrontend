@@ -15,6 +15,9 @@ import {
   rejectFriendRequest,
   removeFriend,
   requestChat,
+  openEditor,
+  saveEdit,
+  cancelEdit,
 } from "./functions/profilePageFunctions";
 import { useProfileLogic } from "./functions/useProfileLogic";
 import FiMessageCircle from "../assets/icons/FiMessageCircle.js";
@@ -34,6 +37,9 @@ const Profile = () => {
   const [sharedListings, setSharedListings] = useState([]);
   const [showOptions, setShowOptions] = useState(false);
   const [showListingMenu, setShowListingMenu] = useState(null);
+  // abaixo dos outros useState
+  const [editingId, setEditingId] = useState(null); // id da listagem em edição
+  const [draft, setDraft] = useState({}); // rascunho da listagem atual
 
   const [muralMessages, setMuralMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
@@ -292,15 +298,28 @@ const Profile = () => {
 
                 return (
                   <div key={listing._id} className="profile-listing-item">
-                    <div className="listingUpdateBox">
-                      <p onClick={() => toggleListingMenu(listing._id)}>
-                        {isOpen ? "x" : "menu"}
-                      </p>
-                    </div>
+                    {currentUser._id === user._id && (
+                      <div className="listingUpdateBox">
+                        <p onClick={() => toggleListingMenu(listing._id)}>
+                          {isOpen ? "x" : "menu"}
+                        </p>
+                      </div>
+                    )}
                     {showListingMenu === listing._id && (
                       <div className="listingEditMenu">
                         <ul>
-                          <li>edit</li>
+                          <li
+                            onClick={() =>
+                              openEditor(
+                                listing,
+                                setEditingId,
+                                setDraft,
+                                setShowListingMenu
+                              )
+                            }
+                          >
+                            edit
+                          </li>
                           <li>delete</li>
                         </ul>
                       </div>
@@ -337,6 +356,135 @@ const Profile = () => {
                             <li key={i}>{option}</li>
                           ))}
                         </ul>
+                      </div>
+                    )}
+
+                    {editingId === listing._id && (
+                      <div className="listing-edit-form" /* ...estilos... */>
+                        {draft.type === "blog" && (
+                          <>
+                            <label>Título</label>
+                            <input
+                              value={draft.blogTitle}
+                              onChange={(e) =>
+                                setDraft((d) => ({
+                                  ...d,
+                                  blogTitle: e.target.value,
+                                }))
+                              }
+                            />
+
+                            <label>Conteúdo</label>
+                            <textarea
+                              rows={6}
+                              value={draft.blogContent}
+                              onChange={(e) =>
+                                setDraft((d) => ({
+                                  ...d,
+                                  blogContent: e.target.value,
+                                }))
+                              }
+                            />
+
+                            <label>Imagem (URL)</label>
+                            <input
+                              value={draft.imageUrl}
+                              onChange={(e) =>
+                                setDraft((d) => ({
+                                  ...d,
+                                  imageUrl: e.target.value,
+                                }))
+                              }
+                            />
+                          </>
+                        )}
+
+                        {draft.type === "image" && (
+                          <>
+                            <label>Imagem (URL)</label>
+                            <input
+                              value={draft.imageUrl}
+                              onChange={(e) =>
+                                setDraft((d) => ({
+                                  ...d,
+                                  imageUrl: e.target.value,
+                                }))
+                              }
+                            />
+                            <label>Legenda</label>
+                            <input
+                              value={draft.caption || ""}
+                              onChange={(e) =>
+                                setDraft((d) => ({
+                                  ...d,
+                                  caption: e.target.value,
+                                }))
+                              }
+                            />
+                          </>
+                        )}
+
+                        {draft.type === "poll" && (
+                          <>
+                            <label>Pergunta</label>
+                            <input
+                              value={draft.question}
+                              onChange={(e) =>
+                                setDraft((d) => ({
+                                  ...d,
+                                  question: e.target.value,
+                                }))
+                              }
+                            />
+                            <label>Opções</label>
+                            {draft.options?.map((opt, i) => (
+                              <input
+                                key={i}
+                                value={opt}
+                                onChange={(e) => {
+                                  const arr = [...draft.options];
+                                  arr[i] = e.target.value;
+                                  setDraft((d) => ({ ...d, options: arr }));
+                                }}
+                              />
+                            ))}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setDraft((d) => ({
+                                  ...d,
+                                  options: [...(d.options || []), ""],
+                                }))
+                              }
+                            >
+                              + adicionar opção
+                            </button>
+                          </>
+                        )}
+
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button
+                            onClick={() =>
+                              saveEdit(
+                                listing._id,
+                                draft,
+                                setUserListings,
+                                setEditingId,
+                                setDraft,
+                                setShowListingMenu
+                              )
+                            }
+                          >
+                            Salvar
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => cancelEdit(setEditingId, setDraft)}
+                          >
+                            Cancelar
+                          </button>
+                        </div>
                       </div>
                     )}
 
