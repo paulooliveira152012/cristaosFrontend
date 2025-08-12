@@ -339,3 +339,7 @@ export const requestChat = async (requester, requested) => {
       console.log(error)
     }
 }
+
+export const toggleListingMenu = (setShowListingMenu) => {
+  setShowListingMenu((prev) => !prev)
+}

@@ -3,30 +3,7 @@
    File: src/pages/church.css
    =========================== */
 
-:root{
-  --bg:#f7f9fc;
-  --card:#ffffff;
-  --text:#0f172a;
-  --muted:#6b7280;
-  --brand:#2A68D8;
-  --brand-ghost:#e6efff;
-  --border:#e5e7eb;
-  --ring: 0 10px 30px rgba(42,104,216,.15);
-  --radius:16px;
-}
 
-@media (prefers-color-scheme: dark){
-  :root{
-    --bg:#0b1220;
-    --card:#0f172a;
-    --text:#e5e7eb;
-    --muted:#9aa3af;
-    --brand:#5A8BFF;
-    --brand-ghost:#1c2742;
-    --border:#1f2a44;
-    --ring: 0 10px 30px rgba(90,139,255,.18);
-  }
-}
 
 *{ box-sizing:border-box }
 img{ max-width:100%; display:block }
