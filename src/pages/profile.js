@@ -6,7 +6,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import ListingInteractionBox from "../components/ListingInteractionBox";
 import "../styles/profile.css";
-import coverPlaceholder from "../assets/coverPlaceholder.jpg"
+import coverPlaceholder from "../assets/coverPlaceholder.jpg";
 import { ProfileUserFriends } from "./profileComponents/friends";
 import {
   fetchUserData,
@@ -183,7 +183,6 @@ const Profile = () => {
               backgroundPosition: "center",
               backgroundRepeat: "no-repeat",
               height: 220, // sem isso, pode não aparecer
-              
             }}
           />
           <div className="bottom">
@@ -372,130 +371,124 @@ const Profile = () => {
                     )}
 
                     {editingId === listing._id && (
-                      <div className="listing-edit-form" /* ...estilos... */>
-                        {draft.type === "blog" && (
-                          <>
-                            <label>Título</label>
-                            <input
-                              value={draft.blogTitle}
-                              onChange={(e) =>
-                                setDraft((d) => ({
-                                  ...d,
-                                  blogTitle: e.target.value,
-                                }))
-                              }
-                            />
-
-                            <label>Conteúdo</label>
-                            <textarea
-                              rows={6}
-                              value={draft.blogContent}
-                              onChange={(e) =>
-                                setDraft((d) => ({
-                                  ...d,
-                                  blogContent: e.target.value,
-                                }))
-                              }
-                            />
-
-                            <label>Imagem (URL)</label>
-                            <input
-                              value={draft.imageUrl}
-                              onChange={(e) =>
-                                setDraft((d) => ({
-                                  ...d,
-                                  imageUrl: e.target.value,
-                                }))
-                              }
-                            />
-                          </>
-                        )}
-
-                        {draft.type === "image" && (
-                          <>
-                            <label>Imagem (URL)</label>
-                            <input
-                              value={draft.imageUrl}
-                              onChange={(e) =>
-                                setDraft((d) => ({
-                                  ...d,
-                                  imageUrl: e.target.value,
-                                }))
-                              }
-                            />
-                            <label>Legenda</label>
-                            <input
-                              value={draft.caption || ""}
-                              onChange={(e) =>
-                                setDraft((d) => ({
-                                  ...d,
-                                  caption: e.target.value,
-                                }))
-                              }
-                            />
-                          </>
-                        )}
-
-                        {draft.type === "poll" && (
-                          <>
-                            <label>Pergunta</label>
-                            <input
-                              value={draft.question}
-                              onChange={(e) =>
-                                setDraft((d) => ({
-                                  ...d,
-                                  question: e.target.value,
-                                }))
-                              }
-                            />
-                            <label>Opções</label>
-                            {draft.options?.map((opt, i) => (
+                      <div className="modal">
+                        <div className="modal-content">
+                        <div className="listing-edit-form" /* ...estilos... */>
+                          {draft.type === "blog" && (
+                            <>
+                              <label>Título</label>
                               <input
-                                key={i}
-                                value={opt}
-                                onChange={(e) => {
-                                  const arr = [...draft.options];
-                                  arr[i] = e.target.value;
-                                  setDraft((d) => ({ ...d, options: arr }));
-                                }}
+                                value={draft.blogTitle}
+                                onChange={(e) =>
+                                  setDraft((d) => ({
+                                    ...d,
+                                    blogTitle: e.target.value,
+                                  }))
+                                }
                               />
-                            ))}
+
+                              <label>Conteúdo</label>
+                              <textarea
+                                rows={6}
+                                value={draft.blogContent}
+                                onChange={(e) =>
+                                  setDraft((d) => ({
+                                    ...d,
+                                    blogContent: e.target.value,
+                                  }))
+                                }
+                              />
+
+                              <label>Imagem (URL)</label>
+                              <input
+                                value={draft.imageUrl}
+                                onChange={(e) =>
+                                  setDraft((d) => ({
+                                    ...d,
+                                    imageUrl: e.target.value,
+                                  }))
+                                }
+                              />
+                            </>
+                          )}
+
+                          {draft.type === "image" && (
+                            <>
+                              <label>Legenda</label>
+                              <input
+                                value={draft.caption || ""}
+                                onChange={(e) =>
+                                  setDraft((d) => ({
+                                    ...d,
+                                    caption: e.target.value,
+                                  }))
+                                }
+                              />
+                            </>
+                          )}
+
+                          {draft.type === "poll" && (
+                            <>
+                              <label>Pergunta</label>
+                              <input
+                                value={draft.question}
+                                onChange={(e) =>
+                                  setDraft((d) => ({
+                                    ...d,
+                                    question: e.target.value,
+                                  }))
+                                }
+                              />
+                              <label>Opções</label>
+                              {draft.options?.map((opt, i) => (
+                                <input
+                                  key={i}
+                                  value={opt}
+                                  onChange={(e) => {
+                                    const arr = [...draft.options];
+                                    arr[i] = e.target.value;
+                                    setDraft((d) => ({ ...d, options: arr }));
+                                  }}
+                                />
+                              ))}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setDraft((d) => ({
+                                    ...d,
+                                    options: [...(d.options || []), ""],
+                                  }))
+                                }
+                              >
+                                + adicionar opção
+                              </button>
+                            </>
+                          )}
+
+                          <div style={{ display: "flex", gap: 8 }}>
                             <button
-                              type="button"
                               onClick={() =>
-                                setDraft((d) => ({
-                                  ...d,
-                                  options: [...(d.options || []), ""],
-                                }))
+                                saveEdit(
+                                  listing._id,
+                                  draft,
+                                  setUserListings,
+                                  setEditingId,
+                                  setDraft,
+                                  setShowListingMenu
+                                )
                               }
                             >
-                              + adicionar opção
+                              Salvar
                             </button>
-                          </>
-                        )}
 
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <button
-                            onClick={() =>
-                              saveEdit(
-                                listing._id,
-                                draft,
-                                setUserListings,
-                                setEditingId,
-                                setDraft,
-                                setShowListingMenu
-                              )
-                            }
-                          >
-                            Salvar
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => cancelEdit(setEditingId, setDraft)}
-                          >
-                            Cancelar
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => cancelEdit(setEditingId, setDraft)}
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </div>
                         </div>
                       </div>
                     )}
