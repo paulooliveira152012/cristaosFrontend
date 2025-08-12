@@ -22,6 +22,7 @@ import AddAd from "./pages/AddAd.js";
 import EditAd from "./pages/EditAd.js";
 import DeleteAd from "./pages/DeleteAd.js";
 import ViewAds from "./pages/ViewAds.js";
+import GlobeChurches from "./pages/Globo.js";
 
 // páginas do menu
 import BibleStudiesByBook from "./pages/menuPages/BibleStudiesByBook.js";
@@ -40,6 +41,8 @@ import ResendVerification from "./pages/resend-verification.js";
 import PrivateChat from "./pages/PrivateChat.js";
 import PrivacyPolicy from "./pages/menuPages/PrivacyPolicy.js";
 import TermsOfUse from "./pages/menuPages/TermsOfUse.js"; // Importar a página de termos de uso
+import Church from "./pages/Church.js";
+import Admin from "./pages/Admin.js";
 // Importar router, route e
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { UserProvider } from "./context/UserContext";
@@ -263,6 +266,16 @@ const AppWithLocation = () => {
                         element={
                           <ProtectedRoute requiredRole="lider">
                             <ViewAds />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route path="/globe" element={<GlobeChurches />} />
+                      <Route path="/church/:id" element={<Church />} />
+                      <Route
+                        path="/admin"
+                        element={
+                          <ProtectedRoute requiredRole="lider">
+                            <Admin />
                           </ProtectedRoute>
                         }
                       />

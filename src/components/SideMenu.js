@@ -67,6 +67,11 @@ const SideMenu = ({ closeMenu, isOpen }) => {
             <li onClick={() => navigate("suggestions")}>Sugestões</li>
             <li onClick={() => navigate("contactUs")}>Fale Conosco</li>
             <li onClick={() => navigate("termsOfUse")}>Termos de Uso</li>
+            <li onClick={() => navigate("globe")}>Igrejas Registradas</li>
+          </ul>
+
+          <ul className="secondaryMenuOptions">
+            <li onClick={() => navigate("admin")}>Administração</li>
           </ul>
 
           {/* Botão de logout */}

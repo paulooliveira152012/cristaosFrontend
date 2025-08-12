@@ -21,10 +21,13 @@ const SettingsMenu = () => {
     email: "",
     profileImage: "",
     newPassword: "",
+    confirmPassword: "",
+    church: "",
   });
 
   useEffect(() => {
     if (currentUser) {
+      console.log("currentUser:", currentUser)
       setFormData({
         username: currentUser.username || "",
         email: currentUser.email || "",
@@ -174,6 +177,16 @@ const SettingsMenu = () => {
               value={formData.username}
               onChange={handleChange}
             />
+
+            <label>Igreja</label>
+            <select></select>
+            <input 
+              type="text"
+              name="church"
+              value={formData.church}
+              onChange={handleChange}
+            />
+            
 
             <label>Imagem de perfil:</label>
             <div

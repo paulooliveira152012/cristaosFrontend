@@ -178,7 +178,7 @@ body.dark-mode .stickyHeader {
       }
   }
 
-  @media screen and (min-width: 1500px) {
+  @media screen and (min-width: 1024px) {
     .headerProfileImage {
       display: none;
     }
