@@ -22,6 +22,8 @@ const Reels = () => {
   const onDraftChange = (reelId, value) =>
     setDrafts((d) => ({ ...d, [reelId]: value }));
 
+  console.log("na pagina de rels...")
+
   useEffect(() => {
     const url = `${process.env.REACT_APP_API_BASE_URL}`;
     (async () => {

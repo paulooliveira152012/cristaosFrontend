@@ -5,6 +5,10 @@
   /* padding: 20%; */
 }
 
+.noReelsMessage {
+  color: white;
+}
+
 .reelContainer {
     scroll-snap-align: start;
   width: 100%;
