@@ -33,6 +33,7 @@ const Profile = () => {
   const [currentTab, setCurrentTab] = useState("");
   const [sharedListings, setSharedListings] = useState([]);
   const [showOptions, setShowOptions] = useState(false);
+  const [showListingMenu, setShowListingMenu] = useState(null);
 
   const [muralMessages, setMuralMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
@@ -151,10 +152,14 @@ const Profile = () => {
   const churchId =
     typeof user?.church === "string" ? user.church : user?.church?._id;
 
-    const churchName =
-  typeof user?.church === "object"
-    ? user.church?.name
-    : (user?.churchName || "Ver igreja"); // opcional, caso você guarde o nome separado
+  const churchName =
+    typeof user?.church === "object"
+      ? user.church?.name
+      : user?.churchName || "Ver igreja"; // opcional, caso você guarde o nome separado
+
+  const toggleListingMenu = (listingId) => {
+    setShowListingMenu((prev) => (prev === listingId ? null : listingId));
+  };
 
   return (
     <>
@@ -282,82 +287,99 @@ const Profile = () => {
                 </div>
               </div>
             ) : (
-              userListings.map((listing) => (
-                <div key={listing._id} className="profile-listing-item">
-                  {listing.type === "image" && listing.imageUrl && (
-                    <img
-                      src={listing.imageUrl}
-                      alt="Listing"
-                      className="profile-listing-image"
-                    />
-                  )}
+              userListings.map((listing) => {
+                const isOpen = showListingMenu === listing._id;
 
-                  {listing.type === "blog" && (
-                    <div className="listing-content">
-                      <h2>{listing.blogTitle || "Untitled Blog"}</h2>
-                      <p>
-                        {listing.blogContent?.slice(0, 150) || "No content."}
+                return (
+                  <div key={listing._id} className="profile-listing-item">
+                    <div className="listingUpdateBox">
+                      <p onClick={() => toggleListingMenu(listing._id)}>
+                        {isOpen ? "x" : "menu"}
                       </p>
-                      {listing.imageUrl && (
-                        <img
-                          src={listing.imageUrl}
-                          alt="blog-img"
-                          style={{ width: "100%", borderRadius: "8px" }}
-                        />
-                      )}
                     </div>
-                  )}
+                    {showListingMenu === listing._id && (
+                      <div className="listingEditMenu">
+                        <ul>
+                          <li>edit</li>
+                          <li>delete</li>
+                        </ul>
+                      </div>
+                    )}
+                    {listing.type === "image" && listing.imageUrl && (
+                      <img
+                        src={listing.imageUrl}
+                        alt="Listing"
+                        className="profile-listing-image"
+                      />
+                    )}
 
-                  {listing.type === "poll" && listing.poll && (
-                    <div className="poll-container">
-                      <h3>{listing.poll.question}</h3>
-                      <ul>
-                        {listing.poll.options.map((option, i) => (
-                          <li key={i}>{option}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                    {listing.type === "blog" && (
+                      <div className="listing-content">
+                        <h2>{listing.blogTitle || "Untitled Blog"}</h2>
+                        <p>
+                          {listing.blogContent?.slice(0, 150) || "No content."}
+                        </p>
+                        {listing.imageUrl && (
+                          <img
+                            src={listing.imageUrl}
+                            alt="blog-img"
+                            style={{ width: "100%", borderRadius: "8px" }}
+                          />
+                        )}
+                      </div>
+                    )}
 
-                  <ListingInteractionBox
-                    listingId={listing._id}
-                    handleLike={() => handleLike(listing._id)}
-                    likesCount={listing.likes.length}
-                    comments={listing.comments || []}
-                    commentsCount={
-                      listing.comments ? listing.comments.length : 0
-                    }
-                    isLiked={
-                      currentUser
-                        ? listing.likes.includes(currentUser._id)
-                        : false
-                    }
-                    handleCommentSubmit={handleCommentSubmit}
-                    handleReplySubmit={handleReplySubmit}
-                    handleDeleteComment={handleDeleteComment}
-                    handleDeleteListing={handleDeleteListing}
-                    currentUser={currentUser}
-                    commentLikesCount={(comment) =>
-                      comment.likes ? comment.likes.length : 0
-                    }
-                    isCommentLiked={(comment) =>
-                      comment.likes && Array.isArray(comment.likes)
-                        ? comment.likes.includes(currentUser._id)
-                        : false
-                    }
-                    commentCommentsCount={(comment) =>
-                      comment.replies ? comment.replies.length : 0
-                    }
-                    handleFetchComments={fetchListingComments}
-                    setItems={setUserListings}
-                    handleCommentLike={handleCommentLike}
-                    showDeleteButton={true}
-                    handleShare={handleShare}
-                    sharedListings={sharedListings}
-                    userId={userId}
-                  />
-                </div>
-              ))
+                    {listing.type === "poll" && listing.poll && (
+                      <div className="poll-container">
+                        <h3>{listing.poll.question}</h3>
+                        <ul>
+                          {listing.poll.options.map((option, i) => (
+                            <li key={i}>{option}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    <ListingInteractionBox
+                      listingId={listing._id}
+                      handleLike={() => handleLike(listing._id)}
+                      likesCount={listing.likes.length}
+                      comments={listing.comments || []}
+                      commentsCount={
+                        listing.comments ? listing.comments.length : 0
+                      }
+                      isLiked={
+                        currentUser
+                          ? listing.likes.includes(currentUser._id)
+                          : false
+                      }
+                      handleCommentSubmit={handleCommentSubmit}
+                      handleReplySubmit={handleReplySubmit}
+                      handleDeleteComment={handleDeleteComment}
+                      handleDeleteListing={handleDeleteListing}
+                      currentUser={currentUser}
+                      commentLikesCount={(comment) =>
+                        comment.likes ? comment.likes.length : 0
+                      }
+                      isCommentLiked={(comment) =>
+                        comment.likes && Array.isArray(comment.likes)
+                          ? comment.likes.includes(currentUser._id)
+                          : false
+                      }
+                      commentCommentsCount={(comment) =>
+                        comment.replies ? comment.replies.length : 0
+                      }
+                      handleFetchComments={fetchListingComments}
+                      setItems={setUserListings}
+                      handleCommentLike={handleCommentLike}
+                      showDeleteButton={true}
+                      handleShare={handleShare}
+                      sharedListings={sharedListings}
+                      userId={userId}
+                    />
+                  </div>
+                );
+              })
             )}
           </div>
         )}
