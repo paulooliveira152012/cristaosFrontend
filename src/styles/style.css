@@ -1,150 +1,164 @@
+:root {
+  --bg: #f7f9fc;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #6b7280;
+  --brand: #2a68d8;
+  --brand-ghost: #e6efff;
+  --border: #e5e7eb;
+  --ring: 0 10px 30px rgba(42, 104, 216, 0.15);
+  --radius: 16px;
+  --pollText-notVoted: #000; /* texto preto quando NÃO votado (fundo cinza) */
+  --pollText-voted: #fff; /* texto branco quando votado (fundo azul) */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root .dark-mode {
+    --bg: #0b1220;
+    --card: #0f172a;
+    --text: #e5e7eb;
+    --muted: #9aa3af;
+    --brand: #5a8bff;
+    --brand-ghost: #1c2742;
+    --border: #1f2a44;
+    --ring: 0 10px 30px rgba(90, 139, 255, 0.18);
+    --pollText-notVoted: #fff; /* ajuste se preferir */
+    --pollText-voted: #fff; /* ou outra cor de contraste */
+  }
+}
+
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box; /* Garante que padding seja incluído no cálculo da largura e altura */
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box; /* Garante que padding seja incluído no cálculo da largura e altura */
 }
 
 .mainParentContainer {
-    /* background-color: orange; */
-    display: flex;
-    flex-direction: row;
-    width: 100vw;
-    height: 100dvh;
-    justify-content: space-evenly;  
-    overflow: hidden;  
+  /* background-color: orange; */
+  display: flex;
+  flex-direction: row;
+  width: 100vw;
+  height: 100dvh;
+  justify-content: space-evenly;
+  overflow: hidden;
 }
 
 .screenWrapper {
-    width: 100%;
-    height: 100dvh; /* Garante que o container ocupe pelo menos a altura total da tela */
-    background-color: white;
-    display: flex;
-    flex-direction: column;
-    /* background-color: green; */
-    flex: 2;
+  width: 100%;
+  height: 100dvh; /* Garante que o container ocupe pelo menos a altura total da tela */
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  /* background-color: green; */
+  flex: 2;
 }
 
 body.dark-mode .screenWrapper {
-  background-color: #1E1E1E;
-  color: #F1F1F1;
+  background-color: #1e1e1e;
+  color: #f1f1f1;
 }
 
 .scrollable {
-    height: 100%;
-    overflow-y: scroll;
-    /* background-color: orange; */
-    /* position: relative; */
-
+  height: 100%;
+  overflow-y: scroll;
+  /* background-color: orange; */
+  /* position: relative; */
 }
 
 button {
-
-    padding: 12px 20px;
-    background-color: #28a745;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 100%;
-    transition: background-color 0.3s ease;
+  padding: 12px 20px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.3s ease;
 }
 
 .container {
-    background-color: red;
-    margin: 20px;
+  background-color: red;
+  margin: 20px;
 }
 
-
-
 .icon {
-    color: #222; /* ícone escuro no modo claro */
-  }
-  
-  body.dark-mode .icon {
-    color: white; /* ícone branco no modo escuro */
-  }
+  color: #222; /* ícone escuro no modo claro */
+}
 
-  
+body.dark-mode .icon {
+  color: white; /* ícone branco no modo escuro */
+}
+
 body {
-    overflow-x: hidden;
-    /* Define a altura total da tela */
-    height: 100vh; 
-    /* background-color: #1E1E1E;  */
-    background-color: white;
-    color: black; /* Cor do texto principal */
-    font-family: Arial, sans-serif; /* Fonte padrão */
+  overflow-x: hidden;
+  /* Define a altura total da tela */
+  height: 100vh;
+  /* background-color: #1E1E1E;  */
+  background-color: white;
+  color: black; /* Cor do texto principal */
+  font-family: Arial, sans-serif; /* Fonte padrão */
 }
 
 body.dark-mode {
-    background-color: #1A1A1A;
-    color: white;
-
+  background-color: #1a1a1a;
+  color: white;
 }
 
-
-
-
 .sideMenuContainerWideScreen {
-    /* height: 100; */
-    flex: 1;
-    /* position: absolute; */
-    z-index: 20;
-    /* background-color: #0093cb; */
-    /* background-color:#005acd; */
-    
+  /* height: 100; */
+  flex: 1;
+  /* position: absolute; */
+  z-index: 20;
+  /* background-color: #0093cb; */
+  /* background-color:#005acd; */
 }
 
 @media screen and (max-width: 1024px) {
-    .sideMenuContainerWideScreen {
-        display: none;
-    }
+  .sideMenuContainerWideScreen {
+    display: none;
+  }
 }
-
-
-
 
 .secondatyContainer {
-    width: 80%;
-    min-height: 80vh;
-    display: flex;
-    flex-direction: column;
-    /* margin: auto; */
-    /* justify-content: center; */
-    align-items: center;
-    /* background-color: blue; */
+  width: 80%;
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  /* margin: auto; */
+  /* justify-content: center; */
+  align-items: center;
+  /* background-color: blue; */
 }
 
-
 .landingContainer {
-    width: 100%;
-    min-height: 100vh; /* Garante que o container ocupe pelo menos a altura total da tela */
-    background-color: white;
-    /* background-color: rgb(126, 23, 23); */
-    /* color: white; */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between; /* Distribui o espaço de forma balanceada */
-    margin-bottom: 17vh;
+  width: 100%;
+  min-height: 100vh; /* Garante que o container ocupe pelo menos a altura total da tela */
+  background-color: white;
+  /* background-color: rgb(126, 23, 23); */
+  /* color: white; */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Distribui o espaço de forma balanceada */
+  margin-bottom: 17vh;
 }
 
 body.dark-mode .landingContainer {
-    background-color:  #1A1A1A;
+  background-color: #1a1a1a;
 }
 
 .blogContent {
-    white-space: pre-wrap; /* Preserves whitespace and line breaks */
-    word-wrap: break-word; /* Ensures long words break correctly */
-    text-align: justify;
-  }  
-
+  white-space: pre-wrap; /* Preserves whitespace and line breaks */
+  word-wrap: break-word; /* Ensures long words break correctly */
+  text-align: justify;
+}
 
 .landingLiveImage {
-    width: 100%;
-    aspect-ratio: 1;
-    background-size: cover;
-    background-position: center;
-    /* border-bottom: 2px solid #333333; Borda inferior para separar imagem do título */
-    border-radius: 50px;
+  width: 100%;
+  aspect-ratio: 1;
+  background-size: cover;
+  background-position: center;
+  /* border-bottom: 2px solid #333333; Borda inferior para separar imagem do título */
+  border-radius: 50px;
 }
 
 .landingLiveTitle {
@@ -157,82 +171,111 @@ body.dark-mode .landingContainer {
   /* background-color: #8c99b9; */
 }
 
-
-
 .roomTitleText {
   white-space: nowrap;
   overflow: hidden;
   /* adiciona automaticamente os ... se o texto excede o tamanho do container */
-  text-overflow: ellipsis; 
-  font-weight:bolder;
+  text-overflow: ellipsis;
+  font-weight: bolder;
   font-size: 16px;
   /* color: #005acd; */
 }
 
 body.dark-mode .roomTitleText {
-    color: #F1F1F1;
+  color: #f1f1f1;
 }
 
 .allembersContainer {
-    height: auto; /* Define a altura fixa */
-    width: 100%;
-    /* background-color: orange; */
-    display: flex;
-    gap: 15px; /* Define um espaço razoável entre os itens */
-    padding: 10px 0;
+  height: auto; /* Define a altura fixa */
+  width: 100%;
+  /* background-color: orange; */
+  display: flex;
+  gap: 15px; /* Define um espaço razoável entre os itens */
+  padding: 10px 0;
 }
 
 .landingOnlineMembersContainer {
-    height: auto; /* Define a altura fixa */
-    width: 100%;
-    /* background-color: orange; */
-    display: flex;
-    overflow-x: auto; /* Adiciona rolagem horizontal */
-    white-space: nowrap; /* Impede que os itens quebrem para a próxima linha */
-    gap: 15px; /* Define um espaço razoável entre os itens */
-    padding: 10px 0;
-    border-bottom: 1px  solid lightgray;;
-    border-top: 1px  solid lightgray;;
-    /* background-color: red; */
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid lightgray;
+  border-bottom: 1px solid lightgray;
+  padding: 10px 0;
 }
 
-body.dark-mode .landingOnlineMembersContainer {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background-color: #1A1A1A; /* opcional para destacar o fundo no dark */
+.landingOnlineMembersList {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 12px;
+  overflow-x: auto; /* rolagem horizontal */
+  padding-bottom: 6px;
+  flex: 1; /* ocupa o espaço disponível */
+  min-width: 0; /* permite o overflow-x funcionar */
 }
 
 .landingOnlineUserContainer {
-    /* background-color: rgb(160, 47, 47); */
-    /* height: 70px; */
-    text-align: center;
-    padding-left: 20px;
-    position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
 }
 
-
 .landingOnlineUserImage {
-    height: 50px;
-    aspect-ratio: 1;
-    background-size: cover;
-    border-radius: 50%; /* Imagens dos usuários em formato circular */
-    cursor: pointer;
-    background-position: center;
-    flex-shrink: 0; /* Evita que os itens encolham */
-    box-shadow: 0px 2px 5px 0px #8c99b9;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.onlineStatus {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2px solid #fff;
+}
+
+/* botão não encolhe e fica compactado */
+.verTodosBtn {
+  flex-shrink: 0;
+  background-color: #2a68d8;
+  color: #fff;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease,
+    background-color 0.2s ease;
+  box-shadow: 0 6px 18px rgba(42, 104, 216, 0.25);
+}
+.verTodosBtn:hover {
+  transform: translateY(-1px);
+}
+.verTodosBtn:active {
+  transform: translateY(0);
 }
 
 body.dark-mode .landingOnlineUserImage {
-    box-shadow: none;
+  box-shadow: none;
 }
 
 .OnlineUserUsernameDisplay {
-    margin-top: 5px;
-    font-weight: 600;
-    
+  margin-top: 5px;
+  font-weight: 600;
 }
-
-
 
 /* .landingListingContainer {
     flex-grow: 1; 
@@ -255,96 +298,87 @@ body.dark-mode .landingOnlineUserImage {
 } */
 
 .parentContainer {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    background-color: pink;
-    margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: pink;
+  margin-bottom: 20px;
 }
 
-
-
-
-
 .blogTitle {
-    /* color: red; */
-    margin-bottom: 15px;
+  /* color: red; */
+  margin-bottom: 15px;
 }
 
 /* In Room */
 
-
-
-.inRoomMembersParentContainer  {
-    /* background-color: #2A68D8; */
-    display: flex;
-    justify-content: center;
-    /* margin: auto; */
-    width: 20%;
-    max-width: 100px;
-    /* background-color: red; */
+.inRoomMembersParentContainer {
+  /* background-color: #2A68D8; */
+  display: flex;
+  justify-content: center;
+  /* margin: auto; */
+  width: 20%;
+  max-width: 100px;
+  /* background-color: red; */
 }
 
 .inRoomLiveMemberContainer {
-    /* width: fit-content; */
-    width: 50%;
-    /* height: 100px; */
-    /* background-color: green; */
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    flex-shrink: 0;  /* Evita que os itens encolham */
-    position: relative;
+  /* width: fit-content; */
+  width: 50%;
+  /* height: 100px; */
+  /* background-color: green; */
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-shrink: 0; /* Evita que os itens encolham */
+  position: relative;
 }
 
-
 .liveMemberParentContainer {
-    /* background-color: #2A68D8; */
-    display: flex;
-    justify-content: center;
-    margin: auto;
-    width: 20%;
-    max-width: 100px;
-    /* background-color: red; */
+  /* background-color: #2A68D8; */
+  display: flex;
+  justify-content: center;
+  margin: auto;
+  width: 20%;
+  max-width: 100px;
+  /* background-color: red; */
 }
 
 .liveMemberContainer {
-    /* width: fit-content; */
-    width: 100%;
-    /* height: 100px; */
-    /* background-color: green; */
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    flex-shrink: 0;  /* Evita que os itens encolham */
-    position: relative;
+  /* width: fit-content; */
+  width: 100%;
+  /* height: 100px; */
+  /* background-color: green; */
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-shrink: 0; /* Evita que os itens encolham */
+  position: relative;
 }
 
 .onlineStatus {
-    width: 15px;
-    height: 15px;
-    background-color: #3EB489;
-    border-radius: 50%; /* Make the green ball round */
-    position: absolute;
-    top: 30px; /* Adjust the position to the top-right */
-    right: -6px;
-    border: 1.8px solid white; /* Add a white border to separate it from the image */
-  }
-
-body.dark-mode .onlineStatus {
-    border: 1.8px solid #1A1A1A; 
-
+  width: 15px;
+  height: 15px;
+  background-color: #3eb489;
+  border-radius: 50%; /* Make the green ball round */
+  position: absolute;
+  top: 30px; /* Adjust the position to the top-right */
+  right: -6px;
+  border: 1.8px solid white; /* Add a white border to separate it from the image */
 }
 
+body.dark-mode .onlineStatus {
+  border: 1.8px solid #1a1a1a;
+}
 
-  .notificationIcon {
-    /* background-color: red; */
-    position: relative;
-  }
+.notificationIcon {
+  /* background-color: red; */
+  position: relative;
+}
 
-  .notificationCount {
+.notificationCount {
   position: absolute;
   top: -6px;
   right: -6px;
@@ -362,11 +396,10 @@ body.dark-mode .onlineStatus {
   z-index: 10;
 }
 
-
-  .notificationStatus {
-    width: 17px;
+.notificationStatus {
+  width: 17px;
   height: 17px;
-  background-color: #2A68D8;
+  background-color: #2a68d8;
   color: white;
   font-size: 11px;
   /* font-weight: bold; */
@@ -380,115 +413,136 @@ body.dark-mode .onlineStatus {
   line-height: 1;
   padding: 0;
   /* border: 1.5px solid #ffffff; */
-    
-  }
-
-  
-  /* inRoomUsers */
- .inRoomUsers {
-    /* background-color: purple; */
-    display: flex;
-    /* justify-content: left; */
-    /* justify-content: baseline; */
-    /* justify-content: space-between; */
-    width: 100%;
 }
-  
-  
 
+/* inRoomUsers */
+.inRoomUsers {
+  /* background-color: purple; */
+  display: flex;
+  /* justify-content: left; */
+  /* justify-content: baseline; */
+  /* justify-content: space-between; */
+  width: 100%;
+}
 
 .liveInRoomMembersContainer {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    padding: 0px 0px 0px;
-    gap: 20px; /* Espaço entre os membros */
-    background-color: #FBFBFB;
-    margin: 5px;
-    border-radius: 10px;
-    /* height: 40vh; */
-    height: 20vh;
-    overflow-y: auto;
-    border: solid lightgray .5px;
-    /* background-color: blue; */
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  padding: 0px 0px 0px;
+  gap: 20px; /* Espaço entre os membros */
+  background-color: #fbfbfb;
+  margin: 5px;
+  border-radius: 10px;
+  /* height: 40vh; */
+  height: 20vh;
+  overflow-y: auto;
+  border: solid lightgray 0.5px;
+  /* background-color: blue; */
 }
 
-
-  .liveRoomUsername {
-    /* background-color: green; */
-    font-weight: bold;
-  }
-
+.liveRoomUsername {
+  /* background-color: green; */
+  font-weight: bold;
+}
 
 .liveMemberProfileImage {
-    width: 100%;
-    aspect-ratio: 1;
-    border-radius: 0%;
-    /* background-color: purple; */
-    margin: auto;
-    /* margin-bottom: 10px; */
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 0%;
+  /* background-color: purple; */
+  margin: auto;
+  /* margin-bottom: 10px; */
 }
 
 .newListingContainer {
-    height: 100px;
-    background-color: lightblue;
-    display: flex;
+  height: 100px;
+  background-color: lightblue;
+  display: flex;
 }
 
 .newListingImage {
-    width: 100px;
-    height: 100px;
-    background-size: cover;
+  width: 100px;
+  height: 100px;
+  background-size: cover;
 }
 
 .newListingMainContainer {
-    /* background-color: pink; */
-    height: 100%;
-    width: 100%;
+  /* background-color: pink; */
+  height: 100%;
+  width: 100%;
 }
 
 /* openListingpage */
 .contentBlob {
-    height: 100%;
-    min-height: 85vh;
-    padding: 50px;
+  height: 100%;
+  min-height: 85vh;
+  padding: 50px;
 }
 
-
-
-
-
 .minimizedRoomLink {
-    position: fixed;
-    bottom: 100px; /* Adjust the position based on where you want the icon */
-    right: 20px;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-  }
-  
-  .minimizedRoomIcon {
-    display: flex;
-    align-items: center;
-    background-color: rgba(255, 255, 255, 0.9);
-    padding: 10px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  }
-  
-  .minimizedRoomIcon img {
-    margin-right: 10px;
-  }
-  
-  .minimizedRoomIcon p {
-    margin: 0;
-    color: #333;
-    font-size: 14px;
-  }
-  
-  /* Adicione isso ao seu CSS global */
+  position: fixed;
+  bottom: 100px; /* Adjust the position based on where you want the icon */
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.minimizedRoomIcon {
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.minimizedRoomIcon img {
+  margin-right: 10px;
+}
+
+.minimizedRoomIcon p {
+  margin: 0;
+  color: #333;
+  font-size: 14px;
+}
+
+/* Adicione isso ao seu CSS global */
 .no-scroll {
   overflow-y: hidden !important;
   height: 100vh !important;
+}
+
+.verTodosBtn {
+  background-color: #2a68d8;
+  color: #fff;
+  height: 28px; /* altura fixa */
+  width: auto; /* largura automática ao texto */
+  padding: 0 12px; /* só mexe nas laterais */
+  border-radius: 50px;
+  /* border: none; */
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  min-height: unset;
+  min-width: unset; /* remove largura mínima herdada */
+  display: inline-flex; /* evita ocupar linha inteira */
+  align-items: center; /* centraliza texto verticalmente */
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(42, 104, 216, 0.3);
+}
+
+.verTodosBtn:hover {
+  background-color: #1f54b6;
+  box-shadow: 0 6px 14px rgba(42, 104, 216, 0.4);
+  transform: translateY(-2px);
+}
+
+.verTodosBtn:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 8px rgba(42, 104, 216, 0.2);
 }

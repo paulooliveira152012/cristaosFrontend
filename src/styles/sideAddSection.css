@@ -2,7 +2,7 @@
   height: 100dvh;
   width: 100%;
   background: #f7f7f7;
-  background-color: blue;
+  /* background-color: blue; */
 }
 
 .adsContainer {
@@ -10,7 +10,7 @@
   display: flex;
   flex-wrap: wrap;
   flex-direction: column;
-  background-color: green;
+  /* background-color: green; */
   justify-content: center;
   align-items: center;
   opacity: 1;

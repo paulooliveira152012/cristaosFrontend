@@ -161,6 +161,30 @@ body.dark-mode .chat-icon-button {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
+.profile-listings .listingUpdateBox {
+  background-color: red;
+  width: 100%;
+  height: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.profile-listings .listingUpdateBox p {
+  background-color: green;
+}
+
+.profile-listings .listingEditMenu {
+  background-color: orange;
+  position: absolute;
+  width: auto;
+  right: 15px;
+}
+
+.profile-listings .listingEditMenu li {
+  list-style: none;
+}
+
+
 .mural-section .mural-input {
   display: flex;
   flex-direction: column;
