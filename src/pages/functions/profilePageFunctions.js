@@ -407,8 +407,9 @@ export const saveEdit = async (
   setShowListingMenu,
   baseURL = process.env.REACT_APP_API_BASE_URL
 ) => {
+  console.log("função para editar listagem alcançada")
   try {
-    const res = await fetch(`${baseURL}/api/listings/${listingId}`, {
+    const res = await fetch(`${baseURL}/api/listings/edit/${listingId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
