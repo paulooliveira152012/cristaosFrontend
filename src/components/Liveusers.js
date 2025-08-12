@@ -1,51 +1,49 @@
-import { useEffect, useState } from "react";
-import { useUsers } from "../context/UserContext"; // Access the context for online users
+import { useEffect, useMemo, useState } from "react";
+import { useUsers } from "../context/UserContext";
 import "../styles/style.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getAllUsers } from "./functions/liveUsersComponent";
-import { useNavigate } from "react-router-dom";
+
+const FALLBACK_AVATAR = "/images/avatar-placeholder.png";
 
 const LiveUsers = () => {
-  const { onlineUsers } = useUsers(); // Get the online users from context
+  const { onlineUsers } = useUsers();
   const [allUsers, setAllUsers] = useState([]);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
-  // buscar imediatamente os usuarios
   useEffect(() => {
     getAllUsers(setAllUsers);
-
-    console.log("allUsers in Component:", allUsers);
   }, []);
+
+  useEffect(() => {
+    console.log("allUsers in Component:", allUsers);
+  }, [allUsers]);
 
   const handleUserClick = (user) => {
     console.log(`Ativando interação com ${user.username}`);
   };
 
-  console.log("Usuarios online no componente Liveusers: ", onlineUsers);
-
-  const offlineUsers = allUsers.filter(
-    (user) => !onlineUsers.some((onlineUser) => onlineUser._id === user._id)
-  );
+  const offlineUsers = useMemo(() => {
+    return allUsers.filter(
+      (user) => !onlineUsers.some((u) => u._id === user._id)
+    );
+  }, [allUsers, onlineUsers]);
 
   return (
     <div className="landingOnlineMembersContainer">
-      <div className="landingOnlineMembersContainer">
-        {/* <p>Usuarios online:</p> */}
-        {/* Dynamically create divs for users who are online at the moment */}
+      <div className="landingOnlineMembersList">
         {onlineUsers.map((user) => (
           <Link key={user._id} to={`/profile/${user._id}`}>
-            <div className="landingOnlineUserContainer">
+            <div className="landingOnlineUserContainer" title={user.username}>
               <div
                 className="landingOnlineUserImage"
                 onClick={() => handleUserClick(user)}
                 style={{
-                  backgroundImage: `url(${user.profileImage})`,
+                  backgroundImage: `url(${user.profileImage || FALLBACK_AVATAR})`,
                 }}
               >
-                <span className="onlineStatus"></span>{" "}
-                {/* Add the green ball */}
+                <span className="onlineStatus" />
               </div>
-              {/* <p className="OnlineUserUsernameDisplay">{user.username}</p> */}
             </div>
           </Link>
         ))}
@@ -54,24 +52,25 @@ const LiveUsers = () => {
           <Link key={user._id} to={`/profile/${user._id}`}>
             <div
               className="landingOnlineUserContainer"
-              style={{ opacity: "0.5" }}
+              style={{ opacity: 0.5 }}
+              title={user.username}
             >
               <div
                 className="landingOnlineUserImage"
                 onClick={() => handleUserClick(user)}
                 style={{
-                  backgroundImage: `url(${user.profileImage})`,
+                  backgroundImage: `url(${user.profileImage || FALLBACK_AVATAR})`,
                 }}
-              ></div>
-              {/* <p className="OnlineUserUsernameDisplay">{user.username}</p> */}
+              />
             </div>
           </Link>
         ))}
       </div>
 
-      <button 
+      <button
         className="verTodosBtn"
-        onClick={() => navigate('/allUsers')}
+        onClick={() => navigate("/allUsers")}
+        aria-label="Ver todos os usuários"
       >
         ver todos
       </button>
