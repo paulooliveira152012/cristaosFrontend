@@ -26,10 +26,13 @@ export const fetchUserData = async (userId) => {
 // 🔹 Buscar comentários da listagem
 export const fetchListingComments = async (listingId) => {
   try {
-    const response = await fetch(`${baseUrl}/api/comments/listings/${listingId}/comments`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
+    const response = await fetch(
+      `${baseUrl}/api/comments/listings/${listingId}/comments`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      }
+    );
 
     if (!response.ok) throw new Error("Failed to fetch comments");
 
@@ -44,10 +47,13 @@ export const fetchListingComments = async (listingId) => {
 // 🔹 Deletar listagem
 export const deleteListing = async (listingId) => {
   try {
-    const response = await fetch(`${baseUrl}/api/listings/delete/${listingId}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-    });
+    const response = await fetch(
+      `${baseUrl}/api/listings/delete/${listingId}`,
+      {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      }
+    );
 
     if (!response.ok) throw new Error("Failed to delete listing.");
 
@@ -61,11 +67,14 @@ export const deleteListing = async (listingId) => {
 // 🔹 Enviar comentário
 export const submitComment = async (listingId, userId, commentText) => {
   try {
-    const response = await fetch(`${baseUrl}/api/comments/listings/${listingId}/comment`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, commentText }),
-    });
+    const response = await fetch(
+      `${baseUrl}/api/comments/listings/${listingId}/comment`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, commentText }),
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -83,11 +92,14 @@ export const submitComment = async (listingId, userId, commentText) => {
 // 🔹 Curtir/Descurtir listagem
 export const toggleListingLike = async (listingId, userId) => {
   try {
-    const response = await fetch(`${baseUrl}/api/listings/listingLike/${listingId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId }),
-    });
+    const response = await fetch(
+      `${baseUrl}/api/listings/listingLike/${listingId}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -127,7 +139,6 @@ export const deleteComment = async (commentId, parentCommentId = null) => {
   }
 };
 
-
 // 🔹 Enviar resposta para comentário
 export const submitReply = async (parentCommentId, userId, replyText) => {
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
@@ -156,7 +167,12 @@ export const submitReply = async (parentCommentId, userId, replyText) => {
 };
 
 // 🔹 Curtir ou descurtir comentário ou resposta
-export const toggleCommentLike = async ({ commentId, userId, isReply = false, parentCommentId = null }) => {
+export const toggleCommentLike = async ({
+  commentId,
+  userId,
+  isReply = false,
+  parentCommentId = null,
+}) => {
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
   const apiUrl = isReply
@@ -172,7 +188,9 @@ export const toggleCommentLike = async ({ commentId, userId, isReply = false, pa
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || "Erro ao curtir/descurtir comentário.");
+      throw new Error(
+        errorData.message || "Erro ao curtir/descurtir comentário."
+      );
     }
 
     const data = await response.json();
@@ -182,7 +200,6 @@ export const toggleCommentLike = async ({ commentId, userId, isReply = false, pa
     throw error;
   }
 };
-
 
 // 🔹 Compartilhar uma listagem
 export const shareListing = async (listingId, userId) => {
@@ -210,7 +227,6 @@ export const shareListing = async (listingId, userId) => {
   }
 };
 
-
 // 🔹 Buscar amigos do usuário
 export const fetchUserFriends = async (userId) => {
   try {
@@ -229,17 +245,19 @@ export const fetchUserFriends = async (userId) => {
   }
 };
 
-
 // 🔹 Enviar pedido de amizade
 export const sendFriendRequest = async (friendId) => {
-  console.log("sending friend request...")
-  
+  console.log("sending friend request...");
+
   try {
-    const response = await fetch(`${baseUrl}/api/users/friendRequest/${friendId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-    });
+    const response = await fetch(
+      `${baseUrl}/api/users/friendRequest/${friendId}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      }
+    );
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Erro ao enviar pedido.");
@@ -253,11 +271,14 @@ export const sendFriendRequest = async (friendId) => {
 // 🔹 Aceitar pedido de amizade
 export const acceptFriendRequest = async (requesterId) => {
   try {
-    const response = await fetch(`${baseUrl}/api/users/acceptFriend/${requesterId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-    });
+    const response = await fetch(
+      `${baseUrl}/api/users/acceptFriend/${requesterId}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      }
+    );
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Erro ao aceitar pedido.");
@@ -271,11 +292,14 @@ export const acceptFriendRequest = async (requesterId) => {
 // 🔹 Recusar pedido de amizade
 export const rejectFriendRequest = async (requesterId) => {
   try {
-    const response = await fetch(`${baseUrl}/api/users/rejectFriend/${requesterId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-    });
+    const response = await fetch(
+      `${baseUrl}/api/users/rejectFriend/${requesterId}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      }
+    );
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Erro ao recusar pedido.");
@@ -289,11 +313,14 @@ export const rejectFriendRequest = async (requesterId) => {
 // 🔹 Remover amigo
 export const removeFriend = async (friendId) => {
   try {
-    const response = await fetch(`${baseUrl}/api/users/removeFriend/${friendId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-    });
+    const response = await fetch(
+      `${baseUrl}/api/users/removeFriend/${friendId}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      }
+    );
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Erro ao remover amigo.");
@@ -321,25 +348,94 @@ export const fetchFriendRequests = async () => {
   }
 };
 
-
 // requesting chat
 export const requestChat = async (requester, requested) => {
-    console.log( requester, "requesting chat with", requested)
+  console.log(requester, "requesting chat with", requested);
 
-    try {
-      const response = await fetch(`${baseUrl}/api/dm/sendChatRequest`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requester, requested }),
-      })
+  try {
+    const response = await fetch(`${baseUrl}/api/dm/sendChatRequest`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requester, requested }),
+    });
 
-      console.log("response:", response)
-    } catch(error) {
-      console.log(error)
-    }
-}
+    console.log("response:", response);
+  } catch (error) {
+    console.log(error);
+  }
+};
 
-export const toggleListingMenu = (setShowListingMenu) => {
-  setShowListingMenu((prev) => !prev)
-}
+// profilePageFunctions.js
+
+export const openEditor = (listing, setEditingId, setDraft, setShowListingMenu) => {
+  setEditingId(listing._id);
+  // Fecha o menu ao abrir o editor (opcional)
+  if (setShowListingMenu) setShowListingMenu(null);
+
+  if (listing.type === "blog") {
+    setDraft({
+      type: "blog",
+      blogTitle: listing.blogTitle || "",
+      blogContent: listing.blogContent || "",
+      imageUrl: listing.imageUrl || "",
+    });
+  } else if (listing.type === "image") {
+    setDraft({
+      type: "image",
+      imageUrl: listing.imageUrl || "",
+      caption: listing.caption || "",
+    });
+  } else if (listing.type === "poll") {
+    setDraft({
+      type: "poll",
+      question: listing.poll?.question || "",
+      options: Array.isArray(listing.poll?.options) ? listing.poll.options : [],
+    });
+  } else {
+    // fallback genérico
+    setDraft({ type: listing.type || "unknown" });
+  }
+};
+
+export const saveEdit = async (
+  listingId,
+  draft,
+  setUserListings,
+  setEditingId,
+  setDraft,
+  setShowListingMenu,
+  baseURL = process.env.REACT_APP_API_BASE_URL
+) => {
+  try {
+    const res = await fetch(`${baseURL}/api/listings/${listingId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(draft),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Erro ao editar");
+
+    // Se sua API retorna { updatedListing }, mantenha:
+    const updated = data.updatedListing || data.listing || data; // cobre diferentes formatos
+
+    setUserListings(prev =>
+      prev.map(item => (item._id === listingId ? { ...item, ...updated } : item))
+    );
+
+    setEditingId(null);
+    setDraft({});
+    if (setShowListingMenu) setShowListingMenu(null);
+  } catch (err) {
+    console.error(err);
+    alert(err.message || "Erro ao editar");
+  }
+};
+
+export const cancelEdit = (setEditingId, setDraft) => {
+  setEditingId(null);
+  setDraft({});
+};
+
