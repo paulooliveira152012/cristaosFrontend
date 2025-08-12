@@ -1,9 +1,15 @@
 .sideAddSection {
   height: 100dvh;
   width: 100%;
-  background: #f7f7f7;
+  background: var(--bg);
   /* background-color: blue; */
 }
+
+body.dark-mode .sideAddSection {
+  background: #1A1A1A !important; /* Força o fundo para cinza escuro */
+}
+
+
 
 .adsContainer {
   height: 100dvh;

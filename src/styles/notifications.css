@@ -3,7 +3,7 @@
 ========================= */
 :root {
     --brand: #2A68D8;            /* acento (não em fundos no dark) */
-    --bg: #f7f8fa;
+    --bg: #FDFDFD;
     --card: #ffffff;
     --text: #1f242d;
     --muted: #6b7280;
@@ -23,7 +23,7 @@
   
   body.dark-mode {
     /* ——— Dark mode 100% em cinza ——— */
-    --card: #1E1E1E;             /* cartões/itens */
+    --card: #1A1A1A;             /* cartões/itens */
     --text: #EAEAEA;
     --muted: #B0B0B0;
     --border: #2A2A2A;           /* borda padrão */
@@ -36,7 +36,7 @@
   }
 
   .ntf-item {
-    background: #F7F8FA !important; 
+    background: #FDFDFD !important; 
     border: none !important;
 
 
@@ -44,11 +44,11 @@
   }
 
   body.dark-mode .ntf-screen {
-    background: #1E1E1E !important; /* Força o fundo para cinza escuro */
+    background: #1A1A1A !important; /* Força o fundo para cinza escuro */
   }
 
   body.dark-mode .ntf-item {
-    background: #1E1E1E !important; 
+    background: #1A1A1A !important; 
     border: #151515 !important;
 
 

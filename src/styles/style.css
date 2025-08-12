@@ -1,7 +1,7 @@
 :root {
-  --bg: #f7f9fc;
-  --card: #ffffff;
-  --text: #1E1E1E;
+  --bg: #FDFDFD;
+  --card: #FDFDFD;
+  --text: #1A1A1A;
   --muted: #6b7280;
   --brand: #2a68d8;
   --brand-ghost: #e6efff;
@@ -15,7 +15,7 @@
 @media (prefers-color-scheme: dark) {
   :root .dark-mode {
     --bg: #0b1220;
-    --card: #1E1E1E;
+    --card: #1A1A1A;
     --text: #e5e7eb;
     --muted: #9aa3af;
     --brand: #5a8bff;
@@ -54,7 +54,7 @@
 }
 
 body.dark-mode .screenWrapper {
-  background-color: #1e1e1e;
+  background-color: #1A1A1A;
   color: #f1f1f1;
 }
 
