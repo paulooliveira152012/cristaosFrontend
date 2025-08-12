@@ -17,6 +17,10 @@ import PlusIconSolid from "../assets/icons/plusIconSolid";
 import BellIcon from "../assets/icons/bellIcon";
 import BellIconSolid from "../assets/icons/bellIconSolid";
 
+import PlayIcon from "../assets/icons/playIcon.js";
+import PlayIconSolid from "../assets/icons/playIconSolid.js";
+
+
 import {
   checkForNewNotifications,
   checkForNewMessages,
@@ -152,7 +156,7 @@ const Footer = () => {
         </Link>
       </div>
 
-      <div className="reelsIcon">
+      {/* <div className="reelsIcon">
         <Link to="/reels">
           <img
             src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png"
@@ -160,8 +164,25 @@ const Footer = () => {
             className="icon"
             style={{ width: "24px", height: "24px" }}
           />
+        </Link> */}
+
+        <div className="reelsIcon">
+        <Link to="/reels">
+          {location.pathname === "/reels" ? (
+            <PlayIconSolid className="icon" />
+          ) : (
+            <PlayIcon className="icon" />
+          )}
+          {notifications && <span className="reelsIcon"></span>}
         </Link>
       </div>
+
+
+
+
+
+
+  
     </div>
   );
 };

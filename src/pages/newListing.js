@@ -1,11 +1,11 @@
 import "../styles/newlisting.css";
-import { motion } from "framer-motion";
-import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useMemo, useState } from "react";
 import Header from "../components/Header";
-import { uploadImageToS3 } from "../utils/s3Upload"; // Assuming you have a function to handle S3 upload
+import { uploadImageToS3 } from "../utils/s3Upload"; // mantém sua função
 import { useUser } from "../context/UserContext";
 import { useNavigate } from "react-router-dom";
-import { uploadReelToBackend } from "./functions/newListingFunctions"; // Import the function to handle reel uploads
+import { uploadReelToBackend } from "./functions/newListingFunctions"; // (se não usar diretamente, pode remover)
 import { convertToMp4 } from "../utils/convertToMp4";
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
@@ -13,109 +13,132 @@ const baseUrl = process.env.REACT_APP_API_BASE_URL;
 const NewListing = () => {
   const navigate = useNavigate();
   const { currentUser } = useUser();
+
   const [isLoading, setIsLoading] = useState(false);
   const [listingType, setListingType] = useState("blog");
-  const [sections, setSections] = useState([]);
 
   const [blogTitle, setBlogTitle] = useState("");
   const [blogContent, setBlogContent] = useState("");
   const [image, setImage] = useState(null);
 
-  // Reel related states
+  // Reel
   const [reelVideo, setReelVideo] = useState(null);
   const [reelDescription, setReelDescription] = useState("");
   const [reelTags, setReelTags] = useState("");
   const [reelError, setReelError] = useState(null);
   const [reelThumbnail, setReelThumbnail] = useState(null);
 
-  // Link related states
+  // Link
   const [link, setLink] = useState("");
   const [linkDescription, setLinkDescription] = useState("");
 
+  // Poll
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState(["", ""]);
+
+  // Tags gerais
   const [tags, setTags] = useState("");
+
   const [error, setError] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
 
-  console.log("in listing page");
-  console.log("current user in the listing page", currentUser);
+  // chips visuais (mantém envio como string para o backend)
+  const tagChips = useMemo(
+    () =>
+      tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
+    [tags]
+  );
 
-  // Handle file upload
   const handleImageUpload = (e) => {
-    // cria uma variavel para a foto, e atribua o valor selecionado a foto
-    const file = e.target.files[0];
-    setImage(file);
+    const file = e.target.files?.[0];
+    if (file) setImage(file);
   };
 
-  // Add a new option to the poll
-  const addPollOption = () => {
-    setPollOptions([...pollOptions, ""]);
-  };
+  const addPollOption = () => setPollOptions((prev) => [...prev, ""]);
 
-  // Handle change in poll options
   const handlePollOptionChange = (index, value) => {
-    const newOptions = [...pollOptions];
-    newOptions[index] = value;
-    setPollOptions(newOptions);
+    setPollOptions((opts) => {
+      const next = [...opts];
+      next[index] = value;
+      return next;
+    });
   };
 
-  // ...outros hooks e estados...
+  const onDropFile = (e, setter) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (file) setter(file);
+  };
+
+  const isYouTubeLink = (url) =>
+    url.includes("youtube.com/watch") || url.includes("youtu.be/");
+
+  const getYouTubeVideoId = (url) => {
+    const youtubeRegex = /(?:youtube\.com.*(?:\?|&)v=|youtu\.be\/)([^&#?\n]+)/;
+    const match = url.match(youtubeRegex);
+    return match ? match[1] : null;
+  };
+
+  const resetForm = () => {
+    setBlogTitle("");
+    setBlogContent("");
+    setImage(null);
+    setLink("");
+    setLinkDescription("");
+    setPollQuestion("");
+    setPollOptions(["", ""]);
+    setTags("");
+    setReelVideo(null);
+    setReelDescription("");
+    setReelThumbnail(null);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("submitting listing");
     setIsLoading(true);
-    console.log("isLoading", isLoading);
     setError(null);
 
     // Validação
     if (listingType === "blog" && !blogContent.trim()) {
-      setError("Please provide blog content.");
-      return;
+      setIsLoading(false);
+      return setError("Please provide blog content.");
     }
     if (listingType === "image" && !image) {
-      setError("Please select an image.");
-      return;
+      setIsLoading(false);
+      return setError("Please select an image.");
     }
     if (listingType === "link" && !link.trim()) {
-      setError("Please provide a valid link.");
-      return;
+      setIsLoading(false);
+      return setError("Please provide a valid link.");
     }
     if (
       listingType === "poll" &&
-      (!pollQuestion.trim() || pollOptions.every((option) => !option.trim()))
+      (!pollQuestion.trim() || pollOptions.every((o) => !o.trim()))
     ) {
-      setError("Please provide a poll question and at least one option.");
-      return;
+      setIsLoading(false);
+      return setError("Please provide a poll question and at least one option.");
     }
     if (listingType === "reel" && (!reelVideo || !reelDescription.trim())) {
       setIsLoading(false);
-      setError("Por favor, envie vídeo, descrição e thumbnail para o reel.");
-      return;
+      return setError("Por favor, envie vídeo, descrição e thumbnail para o reel.");
     }
 
-    console.log("listingType", listingType);
-
     try {
-      // Se for REEL → fazer upload do vídeo e depois criar o listing
       if (listingType === "reel") {
         let finalVideo = reelVideo;
-
-        // Converte para MP4 se não for
         if (reelVideo.type !== "video/mp4") {
           finalVideo = await convertToMp4(reelVideo);
-          console.log("Converted reel video to MP4");
         }
 
         const formData = new FormData();
         formData.append("video", finalVideo);
-        if (reelThumbnail) {
-          formData.append("thumbnail", reelThumbnail);
-        }
+        if (reelThumbnail) formData.append("thumbnail", reelThumbnail);
         formData.append("description", reelDescription);
         formData.append("userId", currentUser._id);
-
-        console.log("formData", formData);
 
         const uploadRes = await fetch(`${baseUrl}/api/reels/upload-reel`, {
           method: "POST",
@@ -124,307 +147,365 @@ const NewListing = () => {
 
         if (!uploadRes.ok) {
           const errorData = await uploadRes.json();
-          console.error("Upload error:", errorData);
-          setError(errorData.message || "Erro ao fazer upload do reel.");
-          return;
+          setIsLoading(false);
+          return setError(errorData.message || "Erro ao fazer upload do reel.");
         }
-        console.log("Upload successful");
+
         setIsLoading(false);
         navigate("/");
-        return; // parar aqui se for reel
-      } else {
-        // Se for outro tipo (blog, image, link, poll)
-        let imageUrl = null;
-        if (listingType === "image" && image) {
-          imageUrl = await uploadImageToS3(image);
-        }
-
-        const listingData = {
-          userId: currentUser._id,
-          type: listingType,
-          blogTitle,
-          blogContent,
-          imageUrl,
-          link,
-          linkDescription,
-          tags: tags.split(",").map((t) => t.trim()),
-        };
-
-        if (listingType === "poll") {
-          listingData.poll = {
-            question: pollQuestion,
-            options: pollOptions.filter((option) => option.trim()),
-          };
-        }
-
-        const response = await fetch(`${baseUrl}/api/listings/create`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(listingData),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          resetForm();
-        } else {
-          setError(data.message || "Erro ao criar publicação.");
-        }
+        return;
       }
-      setIsLoading(false);
-      navigate("/");
+
+      // Outros tipos
+      let imageUrl = null;
+      if (listingType === "image" && image) {
+        imageUrl = await uploadImageToS3(image);
+      }
+
+      const listingData = {
+        userId: currentUser._id,
+        type: listingType,
+        blogTitle,
+        blogContent,
+        imageUrl,
+        link,
+        linkDescription,
+        tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+      };
+
+      if (listingType === "poll") {
+        listingData.poll = {
+          question: pollQuestion,
+          options: pollOptions.filter((o) => o.trim()),
+        };
+      }
+
+      const response = await fetch(`${baseUrl}/api/listings/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(listingData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        resetForm();
+        setIsLoading(false);
+        navigate("/");
+      } else {
+        setIsLoading(false);
+        setError(data.message || "Erro ao criar publicação.");
+      }
     } catch (err) {
       console.error("Erro ao criar publicação:", err);
-      setError("Algo deu errado. Tente novamente.", err);
+      setIsLoading(false);
+      setError("Algo deu errado. Tente novamente.");
     }
   };
 
-  // Reset form fields after successful submission
-  const resetForm = () => {
-    setBlogContent("");
-    setImage(null);
-    setLink("");
-    setPollQuestion("");
-    setPollOptions(["", ""]);
-    setTags("");
-  };
-
-  const isYouTubeLink = (url) => {
-    return url.includes("youtube.com/watch") || url.includes("youtu.be/");
-  };
-
-  const getYouTubeVideoId = (url) => {
-    const youtubeRegex = /(?:youtube\.com.*(?:\?|&)v=|youtu\.be\/)([^&#?\n]+)/;
-    const match = url.match(youtubeRegex);
-    return match ? match[1] : null;
-  };
-
   return (
-    <div className="screenWrapper" style={{ marginBottom: "60px" }}>
-      {isLoading && (
-        <div className="modal">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, rotate: 360 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="loadingSpinner"
-          />
-        </div>
-      )}
+    <div className="screenWrapper" style={{ marginBottom: 60 }}>
+      <AnimatePresence>
+        {isLoading && (
+          <div className="modal modern-backdrop">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 240, damping: 20 }}
+              className="modern-card modern-loading"
+            >
+              <motion.div
+                className="spinnerRing"
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+              />
+              <p>Publicando…</p>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <div className="scrollable">
         <Header showProfileImage={false} navigate={navigate} />
 
-        <h2>Criar nova postagem</h2>
-
-        <div className="listing-type-selection">
-          <label>Selecionar tipo da postagem: </label>
-          <select
-            value={listingType}
-            onChange={(e) => setListingType(e.target.value)}
-          >
-            <option value="blog">Blog</option>
-            <option value="image">Imagem</option>
-            <option value="link">Link</option>
-            <option value="poll">Enquete</option>
-            <option value="reel">Reel</option>
-          </select>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          {/* Conditionally render inputs based on listingType */}
-          {/* a user should be able to add a section for either text, or an image, or an image to the left and text to the right and/or an image to the right and text to the left */}
-          {listingType === "blog" && (
-            // text area
-            <div className="blog-input">
-              {/* title */}
-              <input
-                value={blogTitle}
-                className="BlogTitle"
-                placeholder="Titulo do blog"
-                onChange={(e) => setBlogTitle(e.target.value)}
-              ></input>
-              {/* area do texto */}
-              <textarea
-                value={blogContent}
-                onChange={(e) => setBlogContent(e.target.value)}
-                placeholder="Escreva Seu Blog Aqui..."
-                rows="6"
-              ></textarea>
-              {/* Imagem */}
-              <div className="image-upload">
-                <label htmlFor="blogImage">
-                  Adicionar uma imagem opcional ao final do blog:
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  id="blogImage"
-                  onChange={(e) => setImage(e.target.files[0])}
-                />
-                {image && (
-                  <div className="image-preview">
-                    <img
-                      src={URL.createObjectURL(image)}
-                      alt="Pré-visualização da imagem"
-                      style={{ maxWidth: "100%", marginTop: "10px" }}
-                    />
-                  </div>
-                )}
-              </div>
-              {/* botao para adicionar  */}
-            </div>
-          )}
-
-          {listingType === "image" && (
-            <div className="image-upload">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-              />
-              {image && (
-                <img
-                  src={URL.createObjectURL(image)}
-                  alt="Preview"
-                  className="image-preview"
-                />
-              )}
-            </div>
-          )}
-
-          {listingType === "link" && (
-            <div className="link-input">
-              <input
-                type="text"
-                value={link}
-                onChange={(e) => setLink(e.target.value)}
-                placeholder="Cole o link do vídeo (YouTube, etc)..."
-              />
-
-              {/* Se for YouTube, mostra preview */}
-              {isYouTubeLink(link) && getYouTubeVideoId(link) && (
-                <div style={{ marginTop: "15px" }}>
-                  <iframe
-                    width="100%"
-                    height="220"
-                    src={`https://www.youtube.com/embed/${getYouTubeVideoId(
-                      link
-                    )}`}
-                    title="YouTube preview"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    style={{
-                      borderRadius: "8px",
-                      marginBottom: "10px",
-                      maxWidth: "100%",
-                    }}
-                  />
-                </div>
-              )}
-
-              {/* Campo opcional de texto para o usuário comentar sobre o vídeo */}
-              <textarea
-                value={linkDescription}
-                onChange={(e) => setLinkDescription(e.target.value)}
-                placeholder="Escreva algo sobre esse vídeo (opcional)..."
-                rows="4"
+        <div className="create-wrapper">
+          <div className="create-header">
+            <h2>Criar nova postagem</h2>
+            <div className="segmented">
+              {[
+                { v: "blog", label: "Blog" },
+                { v: "image", label: "Imagem" },
+                { v: "link", label: "Link" },
+                { v: "poll", label: "Enquete" },
+                { v: "reel", label: "Reel" },
+              ].map((opt, idx) => (
+                <button
+                  key={opt.v}
+                  type="button"
+                  className={`segmented-item ${listingType === opt.v ? "active" : ""}`}
+                  onClick={() => setListingType(opt.v)}
+                  style={{ width: `${100 / 5}%` }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+              <motion.span
+                className="segmented-thumb"
+                layout
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 style={{
-                  width: "100%",
-                  marginTop: "10px",
-                  padding: "8px",
-                  borderRadius: "5px",
-                  border: "1px solid #ccc",
+                  width: `${100 / 5}%`,
+                  left: `${["blog", "image", "link", "poll", "reel"].indexOf(listingType) * (100 / 5)}%`,
                 }}
               />
             </div>
-          )}
-
-          {listingType === "poll" && (
-            <div className="poll-input">
-              <input
-                type="text"
-                value={pollQuestion}
-                onChange={(e) => setPollQuestion(e.target.value)}
-                placeholder="Poll question"
-              />
-              {pollOptions.map((option, index) => (
-                <input
-                  key={index}
-                  type="text"
-                  value={option}
-                  onChange={(e) =>
-                    handlePollOptionChange(index, e.target.value)
-                  }
-                  placeholder={`Option ${index + 1}`}
-                />
-              ))}
-              <button type="button" onClick={addPollOption}>
-                Add another option
-              </button>
-            </div>
-          )}
-
-          {/* Reel related inputs */}
-          {listingType === "reel" && (
-            <div className="reel-input">
-              <p>Reel Video</p>
-              <input
-                type="file"
-                accept="video/*"
-                onChange={(e) => setReelVideo(e.target.files[0])}
-              />
-              {reelVideo && (
-                <video
-                  controls
-                  src={URL.createObjectURL(reelVideo)}
-                  style={{ width: "100%", marginTop: "10px" }}
-                />
-              )}
-              <textarea
-                value={reelDescription}
-                onChange={(e) => setReelDescription(e.target.value)}
-                placeholder="Reel description..."
-                rows="4"
-              ></textarea>
-              <p>Thumbnail</p>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setReelThumbnail(e.target.files[0])}
-              />
-              {reelThumbnail && (
-                <img
-                  src={URL.createObjectURL(reelThumbnail)}
-                  alt="Reel Thumbnail"
-                  style={{ maxWidth: "100%", marginTop: "10px" }}
-                />
-              )}
-
-              {reelError && <p className="error">{reelError}</p>}
-            </div>
-          )}
-
-          {/* Tags input */}
-          <div className="tags-input">
-            <label>Tags (separated by commas):</label>
-            <input
-              type="text"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="tag1, tag2, tag3"
-            />
           </div>
 
-          {/* Error message */}
+          <form onSubmit={handleSubmit} className="modern-card create-card">
+            {/* BLOG */}
+            {listingType === "blog" && (
+              <div className="form-grid">
+                <div className="field">
+                  <label>Título</label>
+                  <input
+                    value={blogTitle}
+                    onChange={(e) => setBlogTitle(e.target.value)}
+                    placeholder="Um título que chame atenção…"
+                    className="input"
+                  />
+                </div>
 
-          {error && <p className="error">{error}</p>}
+                <div className="field">
+                  <label>Conteúdo</label>
+                  <textarea
+                    value={blogContent}
+                    onChange={(e) => setBlogContent(e.target.value)}
+                    placeholder="Escreva seu texto aqui…"
+                    rows={8}
+                    className="textarea"
+                  />
+                </div>
 
-          <button type="submit" className="submit-button">
-            Submit Listing
-          </button>
-        </form>
+                <div className="field">
+                  <label>Imagem (opcional)</label>
+                  <div
+                    className={`dropzone ${isDragging ? "dragging" : ""}`}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragging(true);
+                    }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={(e) => onDropFile(e, setImage)}
+                  >
+                    <input
+                      id="blogImage"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setImage(e.target.files[0])}
+                    />
+                    <span>Arraste uma imagem aqui ou clique para selecionar</span>
+                  </div>
+
+                  {image && (
+                    <div className="preview">
+                      <img src={URL.createObjectURL(image)} alt="Pré-visualização" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* IMAGEM */}
+            {listingType === "image" && (
+              <div className="field">
+                <label>Imagem</label>
+                <div
+                  className={`dropzone ${isDragging ? "dragging" : ""}`}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => onDropFile(e, setImage)}
+                >
+                  <input type="file" accept="image/*" onChange={handleImageUpload} />
+                  <span>Arraste a imagem aqui ou clique para selecionar</span>
+                </div>
+
+                {image && (
+                  <div className="preview">
+                    <img src={URL.createObjectURL(image)} alt="Preview" />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* LINK */}
+            {listingType === "link" && (
+              <>
+                <div className="field">
+                  <label>URL</label>
+                  <input
+                    className="input"
+                    type="text"
+                    value={link}
+                    onChange={(e) => setLink(e.target.value)}
+                    placeholder="Cole o link (YouTube, etc.)"
+                  />
+                </div>
+
+                {isYouTubeLink(link) && getYouTubeVideoId(link) && (
+                  <div className="yt-preview">
+                    <iframe
+                      width="100%"
+                      height="320"
+                      src={`https://www.youtube.com/embed/${getYouTubeVideoId(link)}`}
+                      title="YouTube preview"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                )}
+
+                <div className="field">
+                  <label>Comentário (opcional)</label>
+                  <textarea
+                    className="textarea"
+                    value={linkDescription}
+                    onChange={(e) => setLinkDescription(e.target.value)}
+                    placeholder="O que você achou desse link/vídeo?"
+                    rows={4}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* ENQUETE */}
+            {listingType === "poll" && (
+              <div className="form-grid">
+                <div className="field">
+                  <label>Pergunta</label>
+                  <input
+                    className="input"
+                    type="text"
+                    value={pollQuestion}
+                    onChange={(e) => setPollQuestion(e.target.value)}
+                    placeholder="Qual é a sua opinião sobre…?"
+                  />
+                </div>
+
+                {pollOptions.map((option, idx) => (
+                  <div className="field" key={idx}>
+                    <label>Opção {idx + 1}</label>
+                    <input
+                      className="input"
+                      type="text"
+                      value={option}
+                      onChange={(e) => handlePollOptionChange(idx, e.target.value)}
+                      placeholder={`Digite a opção ${idx + 1}`}
+                    />
+                  </div>
+                ))}
+
+                <div className="actions-row">
+                  <button type="button" className="btn ghost" onClick={addPollOption}>
+                    + Adicionar opção
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* REEL */}
+            {listingType === "reel" && (
+              <div className="form-grid">
+                <div className="field">
+                  <label>Vídeo</label>
+                  <div
+                    className={`dropzone ${isDragging ? "dragging" : ""}`}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragging(true);
+                    }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={(e) => onDropFile(e, setReelVideo)}
+                  >
+                    <input type="file" accept="video/*" onChange={(e) => setReelVideo(e.target.files[0])} />
+                    <span>Arraste o vídeo aqui ou clique para selecionar</span>
+                  </div>
+                  {reelVideo && <video controls src={URL.createObjectURL(reelVideo)} className="video-preview" />}
+                </div>
+
+                <div className="field">
+                  <label>Descrição</label>
+                  <textarea
+                    className="textarea"
+                    value={reelDescription}
+                    onChange={(e) => setReelDescription(e.target.value)}
+                    placeholder="Descreva seu reel…"
+                    rows={4}
+                  />
+                </div>
+
+                <div className="field">
+                  <label>Thumbnail</label>
+                  <div
+                    className={`dropzone ${isDragging ? "dragging" : ""}`}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragging(true);
+                    }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={(e) => onDropFile(e, setReelThumbnail)}
+                  >
+                    <input type="file" accept="image/*" onChange={(e) => setReelThumbnail(e.target.files[0])} />
+                    <span>Arraste a imagem aqui ou clique para selecionar</span>
+                  </div>
+                  {reelThumbnail && (
+                    <div className="preview">
+                      <img src={URL.createObjectURL(reelThumbnail)} alt="Thumbnail" />
+                    </div>
+                  )}
+                  {reelError && <p className="error">{reelError}</p>}
+                </div>
+              </div>
+            )}
+
+            {/* TAGS */}
+            <div className="field">
+              <label>Tags (separadas por vírgula)</label>
+              <input
+                className="input"
+                type="text"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                placeholder="ex.: bíblia, jovens, estudo"
+              />
+              {!!tagChips.length && (
+                <div className="chips">
+                  {tagChips.map((t, i) => (
+                    <span key={i} className="chip">{t}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* ERROR */}
+            {error && (
+              <div className="error-box">
+                <p>{error}</p>
+              </div>
+            )}
+
+            <div className="actions-row">
+              <button type="submit" className="btn primary">Publicar</button>
+              <button type="button" className="btn ghost" onClick={resetForm}>
+                Limpar
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

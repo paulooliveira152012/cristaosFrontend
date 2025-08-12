@@ -153,7 +153,7 @@ const Profile = () => {
 
     const churchName =
   typeof user?.church === "object"
-    ? user.church.name
+    ? user.church?.name
     : (user?.churchName || "Ver igreja"); // opcional, caso você guarde o nome separado
 
   return (
