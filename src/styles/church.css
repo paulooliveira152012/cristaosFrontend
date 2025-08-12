@@ -1,0 +1,216 @@
+/* ===========================
+   Church page styles
+   File: src/pages/church.css
+   =========================== */
+
+:root{
+  --bg:#f7f9fc;
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#6b7280;
+  --brand:#2A68D8;
+  --brand-ghost:#e6efff;
+  --border:#e5e7eb;
+  --ring: 0 10px 30px rgba(42,104,216,.15);
+  --radius:16px;
+}
+
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b1220;
+    --card:#0f172a;
+    --text:#e5e7eb;
+    --muted:#9aa3af;
+    --brand:#5A8BFF;
+    --brand-ghost:#1c2742;
+    --border:#1f2a44;
+    --ring: 0 10px 30px rgba(90,139,255,.18);
+  }
+}
+
+*{ box-sizing:border-box }
+img{ max-width:100%; display:block }
+
+.ch-container{
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px 18px 64px;
+  color: var(--text);
+  background: var(--bg);
+}
+
+/* ---------- HERO ---------- */
+.ch-hero{
+  position: relative;
+  height: 40vh;
+  min-height: 260px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  /* background: url('/images/church/cover.jpg') center/cover no-repeat, var(--card); */
+  box-shadow: var(--ring);
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 22px;
+  width: 100%;
+  background-color: green;
+}
+.ch-hero__overlay{
+  position:absolute; inset:0;
+  background: linear-gradient(180deg, rgba(0,0,0,.0) 30%, rgba(0,0,0,.55) 100%);
+}
+.ch-hero__content{
+  position:relative; z-index:1;
+  padding: 18px 18px 20px;
+  color:#fff;
+  width: 100%;
+}
+.ch-hero__content h1{
+  margin: 0 0 6px 0;
+  font-size: clamp(22px, 3.8vw, 34px);
+  line-height: 1.1;
+  letter-spacing: .2px;
+}
+.ch-hero__content p{
+  margin: 0;
+  opacity: .92;
+  max-width: 70ch;
+}
+.ch-hero__cta{
+  display:flex; gap:10px; margin-top:12px;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.ch-hero__cta div {
+  display: flex;
+  gap: 20px;
+}
+
+/* ---------- BUTTONS ---------- */
+.ch-btn{
+  appearance:none;
+  border:none;
+  background: var(--brand);
+  color:#fff;
+  padding: 9px 14px;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  display:inline-flex; align-items:center; gap:8px;
+  box-shadow: 0 4px 16px rgba(42,104,216,.25);
+  transition: transform .08s ease, box-shadow .2s ease, background .2s ease;
+}
+.ch-btn:hover{ transform: translateY(-1px); box-shadow: 0 8px 24px rgba(42,104,216,.28); }
+.ch-btn:active{ transform: translateY(0); box-shadow: 0 4px 16px rgba(42,104,216,.22); }
+.ch-btn--ghost{
+  background: transparent;
+  color:#fff;
+  border: 1px solid rgba(255,255,255,.4);
+  box-shadow: none;
+}
+
+/* ---------- SECTION ---------- */
+.ch-section{ margin: 26px 0; }
+.ch-section__header{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; margin-bottom:12px;
+}
+.ch-section__header h2{
+  margin:0; font-size: clamp(18px, 2.6vw, 22px);
+}
+.ch-section__actions a{
+  color: var(--brand); text-decoration:none; font-weight:600;
+}
+.ch-section__content{
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: var(--ring);
+}
+
+/* ---------- LAYOUT HELPERS ---------- */
+.ch-grid2{
+  display:grid; gap:18px;
+  grid-template-columns: 1fr 1fr;
+}
+@media (max-width: 760px){
+  .ch-grid2{ grid-template-columns: 1fr; }
+}
+
+.ch-list{
+  margin: 0; padding-left: 18px;
+  display: grid; gap: 6px;
+  color: var(--text);
+}
+.ch-links a{
+  display:inline-flex; align-items:center; gap:8px;
+  padding: 8px 10px; border-radius:10px;
+  background: var(--brand-ghost); color: var(--brand);
+  text-decoration:none; font-weight:600;
+}
+
+/* ---------- PHOTOS ---------- */
+.ch-photos{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+.ch-photos img{
+  width: 180px; height: 110px; object-fit: cover;
+  border-radius: 12px; border:1px solid var(--border);
+}
+
+/* ---------- SCHEDULE ---------- */
+.ch-schedule{
+  list-style:none; padding:0; margin:0;
+  display:grid; gap:12px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+.ch-schedule li{
+  background: var(--card);
+  border:1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.ch-schedule li strong{ font-size: 14px; }
+.ch-schedule li span{
+  font-weight: 700; color: var(--brand);
+}
+.ch-schedule li em{
+  font-style: normal; color: var(--muted); font-size: 12px;
+}
+
+/* ---------- CARDS (Ministérios) ---------- */
+.ch-cards{
+  display:grid; gap:12px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+.ch-card{
+  background: var(--card); border:1px solid var(--border);
+  border-radius: 12px; padding: 14px;
+  transition: transform .08s ease, box-shadow .2s ease;
+}
+.ch-card:hover{ transform: translateY(-2px); box-shadow: var(--ring); }
+.ch-card h4{ margin:0 0 6px 0; }
+
+/* ---------- NOTES / EMPTY ---------- */
+.ch-note{
+  background: linear-gradient(180deg, rgba(99,102,241,.08), transparent);
+  border: 1px dashed var(--border);
+  color: var(--muted);
+  padding: 12px; border-radius: 12px;
+}
+
+/* ---------- SMALL UTILITIES ---------- */
+.ch-muted{ color: var(--muted); }
+.ch-pill{
+  padding: 2px 8px; border-radius:999px;
+  background: var(--brand-ghost); color: var(--brand);
+  font-size: 12px; font-weight:700;
+}
+
+/* ---------- Nice focus ---------- */
+:where(a, button, .ch-btn){ outline: none; }
+:where(a, button, .ch-btn):focus-visible{
+  box-shadow: 0 0 0 3px rgba(42,104,216,.35);
+  transition: box-shadow .08s ease;
+}

@@ -9,7 +9,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import socket from "../socket";
 
-const UserContext = createContext();                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+const UserContext = createContext();
 const UsersContext = createContext();
 
 export const useUser = () => useContext(UserContext);
@@ -115,7 +115,9 @@ export const UserProvider = ({ children }) => {
           if (socket.connected) emitLogin(verified);
           else socket.connect();
         } catch {
-          console.warn("⚠️ Cookie inválido/expirado. Mantendo user do localStorage.");
+          console.warn(
+            "⚠️ Cookie inválido/expirado. Mantendo user do localStorage."
+          );
           setCurrentUser(user);
         }
       }, 500);
@@ -130,6 +132,10 @@ export const UserProvider = ({ children }) => {
       if (busy) return;
       busy = true;
       setTimeout(() => (busy = false), 800);
+
+      // ✅ Só tenta reidratar se existir user salvo (estado logado)
+      const stored = localStorage.getItem("user");
+      if (!stored) return;
 
       try {
         const res = await fetch(`${API}/api/users/current`, {
@@ -194,32 +200,52 @@ export const UserProvider = ({ children }) => {
     );
   };
 
-  const logout = () => {
-    if (currentUser) {
-      const userId = currentUser._id;
+  const logout = async () => {
+    const userId = currentUser?._id;
+
+    // avisa o socket (se tivermos user)
+    if (userId) {
       socket.emit("userLoggedOut", {
         _id: userId,
         username: currentUser.username,
       });
+    }
 
-      setCurrentUser(null);
-      localStorage.removeItem("user");
-      localStorage.setItem("auth:event", String(Date.now())); // sync outras abas
+    // tenta limpar cookies/sessão no backend
+    try {
+      await fetch(`${API}/api/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (_) {
+      // ignora erro de rede aqui — ainda vamos limpar o client state
+    }
 
-      // tenta receber lista atualizada antes de sair
-      const handleUpdatedOnlineUsers = (users) => {
-        setOnlineUsers(users.filter((u) => u._id !== userId));
-        socket.off("onlineUsers", handleUpdatedOnlineUsers);
-        socket.disconnect();
-        navigate("/");
-      };
+    // limpa estado/localStorage e sincroniza com outras abas
+    setCurrentUser(null);
+    localStorage.removeItem("user");
+    localStorage.setItem("auth:event", String(Date.now()));
 
+    // tenta atualizar onlineUsers antes de desconectar
+    const handleUpdatedOnlineUsers = (users) => {
+      // remove este usuário da lista que chegou do servidor
+      setOnlineUsers(users.filter((u) => u._id !== userId));
+      socket.off("onlineUsers", handleUpdatedOnlineUsers);
+      socket.disconnect();
+      navigate("/");
+    };
+
+    if (socket.connected) {
       socket.once("onlineUsers", handleUpdatedOnlineUsers);
+      // garante que venha um "onlineUsers" agora
+      socket.emit("getOnlineUsers");
+
+      // fallback rápido caso o evento não chegue
       setTimeout(() => {
         socket.off("onlineUsers", handleUpdatedOnlineUsers);
         socket.disconnect();
         navigate("/");
-      }, 1000);
+      }, 800);
     } else {
       socket.disconnect();
       navigate("/");

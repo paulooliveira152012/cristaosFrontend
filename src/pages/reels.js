@@ -145,7 +145,6 @@ const Reels = () => {
                     src={reel.videoUrl}
                     loop
                     playsInline
-                    muted
                     preload="auto"
                     className="reelVideo"
                   />

@@ -2,5 +2,8 @@
 
 # REACT_APP_API_BASE_URL=http://localhost:5001
 
-para ver minha rede
-ipconfig getifaddr en0
+
+
+
+ferramentas:
+https://docs.mapbox.com/
