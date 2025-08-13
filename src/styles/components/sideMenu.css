@@ -1,0 +1,114 @@
+/* Overlay tela inteira (sem 100vw pra evitar scroll lateral) */
+.sideMenuOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0,0,0,0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .3s ease;
+  z-index: 4000;                    /* bem acima do header/footer */
+}
+.sideMenuOverlay.visible { opacity: 1; visibility: visible; }
+
+/* Drawer lateral (75% igual ao seu) */
+.sideMenu {
+  position: fixed;
+  top: 0; left: 0;
+  width: 75%;
+  height: 100dvh;
+  background-color: var(--card);
+  color: var(--text);
+  border-right: 1px solid var(--border);
+  z-index: 4001;                    /* acima do overlay e de todo resto */
+  overflow-y: auto;
+  display: flex; flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform .3s ease-in-out;
+}
+.sideMenu.open { transform: translateX(0); }
+
+body.dark-mode .sideMenu { background-color: #121212; color: #fff; }
+
+/* Topo */
+.top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px; gap: 12px; height: 220px;
+}
+.topRight {
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+  gap: 10px; width: 100%;
+}
+.profileImageContainer { display: flex; align-items: center; gap: 8px; }
+
+/* Avatar no menu */
+.sideMenu .headerProfileImage {
+  width: 110px; height: 110px; border-radius: 100%;
+  background-size: cover; background-position: center; cursor: pointer;
+}
+
+/* Botão “Ver Perfil” (mantido) */
+.viewProfileButton {
+  background: transparent;
+  border: 1px solid #2A68D8; color: #2A68D8;
+  border-radius: 8px; padding: 3px 10px; font-size: 15px;
+  cursor: pointer; height: fit-content; margin: 0; width: auto;
+}
+body.dark-mode .viewProfileButton { border: 1px solid #f1f1f1; color: #f1f1f1; }
+
+/* Conteúdo rolável */
+.scrollableMenuContent {
+  flex: 1; overflow-y: auto; display: flex; flex-direction: column;
+  gap: 12px; padding-bottom: 60px; /* espaço pro rodapé do menu */
+}
+
+/* Listas */
+.menuOptions, .secondaryMenuOptions {
+  list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column;
+}
+
+/* Itens principais */
+.menuOptions li {
+  width: 100%; box-sizing: border-box; padding: 16px 20px;
+  border-radius: 3px; transition: background-color .2s;
+  cursor: pointer; font-size: 17px; font-weight: bold; color: #1A1A1A;
+}
+body.dark-mode .menuOptions li { color: #F1F1F1; }
+.menuOptions li:hover { background-color: rgba(0,0,0,0.05); }
+body.dark-mode .menuOptions li:hover { background-color: rgba(255,255,255,0.05); }
+
+/* Secundários */
+.secondaryMenuOptions { margin-top: 8px; padding-top: 8px; }
+.secondaryMenuOptions li {
+  width: 100%; box-sizing: border-box; padding: 13px 20px;
+  border-radius: 3px; transition: background-color .2s; cursor: pointer;
+  font-size: 16px; font-weight: normal; color: #1A1A1A;
+}
+body.dark-mode .secondaryMenuOptions li { color: #F1F1F1; }
+.secondaryMenuOptions li:hover { background-color: rgba(0,0,0,0.05); }
+body.dark-mode .secondaryMenuOptions li:hover { background-color: rgba(255,255,255,0.05); }
+
+/* Logout */
+.logout-button {
+  padding: 16px 20px; background: transparent; color: #CE3B3D;
+  border: none; border-radius: 3px; cursor: pointer; font-weight: bold; font-size: 16px;
+  align-self: stretch; text-align: left; margin-top: 8px;
+}
+.logout-button:hover { opacity: .9; }
+
+/* Barra fixa inferior do menu (como estava) */
+.bottomFixedTheme {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  width: 100%; height: 50px; padding: 0 10px;
+  display: flex; align-items: center; justify-content: flex-start;
+  background-color: rgba(255,255,255,0.6);
+  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(8px);
+  /* border-top: 1px solid var(--border); */
+  z-index: 10; box-sizing: border-box;
+}
+body.dark-mode .bottomFixedTheme { background-color: rgba(18,18,18,0.7); }
+
+.themeToggleBtn {
+  background: transparent; border: none; border-radius: 8px; color: inherit; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; margin: 0;
+}
+.themeToggleBtn svg { width: 24px; height: 24px; }

@@ -1,4 +1,5 @@
-import "../styles/sideMenu.css";
+import "../styles/components/sideMenu.css";
+
 import { useUser } from "../context/UserContext";
 import { useDarkMode } from "../context/DarkModeContext";
 import imagePlaceholder from "../assets/images/profileplaceholder.png";

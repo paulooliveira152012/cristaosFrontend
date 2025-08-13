@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import "../styles/header.css";
+// ⬇️ novo caminho (dentro de styles/components)
+import "../styles/components/header.css";
 import { Link } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import imagePlaceholder from "../assets/images/profileplaceholder.png";
@@ -30,7 +31,7 @@ const Header = ({
   socket,
   navigate,
 }) => {
-  const { currentUser, logout } = useUser();
+  const { currentUser } = useUser();
   const [newRoomTitle, setNewRoomTitle] = useState(roomTitle);
   const [showSideMenu, setShowSideMenu] = useState(false);
   const [showPrivateMessagingSettings, setShowPrivateMessagingSettings] = useState(false);
@@ -39,9 +40,7 @@ const Header = ({
     setNewRoomTitle(roomTitle || "");
   }, [roomTitle]);
 
-  const toggleSideMenu = () => {
-    setShowSideMenu((prev) => !prev);
-  };
+  const toggleSideMenu = () => setShowSideMenu((prev) => !prev);
 
   useEffect(() => {
     const scrollEl = document.getElementById("scrollableContainer");
@@ -66,6 +65,7 @@ const Header = ({
               Voltar
             </button>
           )}
+
           {showBackArrow && (
             <BackArrow
               onClick={() => {
@@ -74,6 +74,7 @@ const Header = ({
               }}
             />
           )}
+
           {showProfileImage && (
             <div
               className="headerProfileImage"
@@ -81,7 +82,7 @@ const Header = ({
               style={{
                 backgroundImage: `url(${currentUser?.profileImage || imagePlaceholder})`,
               }}
-            ></div>
+            />
           )}
         </div>
 
@@ -112,6 +113,7 @@ const Header = ({
           {showLeavePrivateRoomButton && (
             <p onClick={() => setShowPrivateMessagingSettings(true)}>Menu</p>
           )}
+
           {showPrivateMessagingSettings && (
             <PrivateMessageSettings
               onClose={() => setShowPrivateMessagingSettings(false)}
