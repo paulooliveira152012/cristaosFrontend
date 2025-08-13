@@ -75,7 +75,7 @@ const Login = () => {
         });
 
         // depois de logar/deslogar:
-        localStorage.setItem("auth: event", String (Date.now()))
+        localStorage.setItem("auth: event", String(Date.now()));
 
         navigate("/"); // Redirect to home page on successful login
       } else {
@@ -91,26 +91,31 @@ const Login = () => {
     try {
       const res = await fetch(`${baseUrl}/api/users/google-login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ token: response.credential }),
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // necessário pra receber o cookie
+        body: JSON.stringify({
+          credential: response.credential, // << usar "credential"
+          // opcional:
+          // rememberMe: true,
+        }),
       });
 
       const data = await res.json();
 
-      if (res.ok) {
-        login(data);
-        socket.emit("userLoggedIn", {
-          _id: data._id,
-          email: data.email,
-          profileImage: data.profileImage || "https://via.placeholder.com/50",
-        });
-        navigate("/");
-      } else {
-        setError(data.message || "Falha no login com Google");
+      if (!res.ok) {
+        setError(
+          data.message || `Falha no login com Google (HTTP ${res.status})`
+        );
+        return;
       }
+
+      login(data);
+      socket.emit("userLoggedIn", {
+        _id: data._id,
+        email: data.email,
+        profileImage: data.profileImage || "https://via.placeholder.com/50",
+      });
+      navigate("/");
     } catch (err) {
       console.error("Erro no login com Google:", err);
       setError("Erro ao tentar logar com o Google.");
