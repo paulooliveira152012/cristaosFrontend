@@ -153,6 +153,10 @@ body.dark-mode .chat-icon-button {
   padding: 20px;
 }
 
+.profile-listings {
+  padding-bottom: 50px;
+}
+
 .profile-listings .profile-listing-item {
   background-color: #f9f9f9;
   padding: 15px;
