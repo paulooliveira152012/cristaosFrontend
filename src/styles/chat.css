@@ -43,6 +43,15 @@ body.dark-mode {
   border-bottom: 1px solid var(--border);
 }
 
+.chatPageInputContainer {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  background: var(--bg);
+  backdrop-filter: saturate(150%) blur(6px);
+  border-top: 1px solid var(--border);
+}
+
 .chatHeaderActions {
   display: flex;
   align-items: center;

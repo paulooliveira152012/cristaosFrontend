@@ -37,7 +37,7 @@ html, body {
   display: flex;
   flex-direction: column;
   padding: 10px;
-  /* background-color: yellow; */
+  background-color: yellow;
 }
 
 .messageItem {
@@ -76,6 +76,7 @@ html, body {
   font-size: 16px;
   border-radius: 4px;
   border: 1px solid #ddd;
+  background-color: #28a745;
 }
 
 .button {
