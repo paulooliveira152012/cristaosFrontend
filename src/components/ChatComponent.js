@@ -10,6 +10,7 @@ import MicOff2 from "../assets/icons/microphone/micOff2.js";
 import AudioContext from "../context/AudioContext.js";
 import SendIcon from "../assets/icons/send.js";
 import profilePlaceholder from "../assets/images/profileplaceholder.png";
+import { useLocation } from "react-router-dom";
 
 import {
   useSocketConnectionLogger,
@@ -36,6 +37,9 @@ const ChatComponent = ({ roomId }) => {
   const inputRef = useRef(null);
   const usernameColors = useRef({});
   const [isAtBottom, setIsAtBottom] = useState(true);
+
+  const currentScreen = useLocation()
+  console.log("currentScreen:", currentScreen.pathname)
 
   useSocketConnectionLogger();
   useJoinRoomChat(roomId, currentUser, setMessages, () =>
@@ -150,14 +154,16 @@ const ChatComponent = ({ roomId }) => {
           className="composerInput"
         />
 
-        <button
-          className="iconBtn"
-          onClick={onToggleMic}
-          aria-label={micState ? "Desativar microfone" : "Ativar microfone"}
-          title={micState ? "Microfone ligado" : "Microfone desligado"}
-        >
-          {micState ? <MicOn /> : <MicOff2 />}
-        </button>
+        {currentScreen.pathname.startsWith("/liveRoom") && (
+          <button
+            className="iconBtn"
+            onClick={onToggleMic}
+            aria-label={micState ? "Desativar microfone" : "Ativar microfone"}
+            title={micState ? "Microfone ligado" : "Microfone desligado"}
+          >
+            {micState ? <MicOn /> : <MicOff2 />}
+          </button>
+        )}
 
         <button
           className="sendBtn"

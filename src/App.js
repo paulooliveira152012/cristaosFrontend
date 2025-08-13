@@ -113,7 +113,7 @@ const AppWithLocation = () => {
   const shouldShowFooter =
     !location.pathname.startsWith("/mainChat") &&
     !location.pathname.startsWith("/liveRoom") &&
-    !location.pathname.startsWith("/privateChat/:id");
+    !location.pathname.startsWith("/privateChat");
   // ! location.pathname.startsWith("/mainChat")
   const hideSideMenu = ["/login"];
   const shouldShowSideMenu = !hideSideMenu.includes(location.pathname);
