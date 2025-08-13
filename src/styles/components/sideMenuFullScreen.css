@@ -1,0 +1,177 @@
+.sideMenuFullScreen {
+  background-color: white;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  height: 100dvh;
+  max-height: 100dvh;
+  color: #1A1A1A;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+
+}
+
+body.dark-mode .sideMenuFullScreen {
+  background-color: #121212;
+  color: #F1F1F1;
+}
+
+/* Topo com imagem de perfil */
+.topFullScreen {
+  display: flex;
+  padding: 20px 0;
+  justify-content: center;
+  align-items: center;
+}
+
+.profileImageContainerFullScreen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.sideMenuProfileImage {
+  height: 110px;
+  width: 110px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* Parte inferior com espaçamento para rolagem */
+.bottomFullScreen {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 60px;
+  gap: 12px;
+  /* justify-content: flex-start; */
+  /* background-color: aqua; */
+
+}
+
+/* Lista de opções principais */
+.menuOptionsFullScreen {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.menuOptionsFullScreen li {
+  width: 100%;
+  padding: 16px 20px;
+  font-size: 17px;
+  font-weight: bold;
+  color: #1A1A1A;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.menuOptionsFullScreen li:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+body.dark-mode .menuOptionsFullScreen li {
+  color: #F1F1F1;
+}
+
+body.dark-mode .menuOptionsFullScreen li:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Opções secundárias */
+.secondaryMenuOptionsFullScreen {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 8px;
+  list-style: none;
+}
+
+.secondaryMenuOptionsFullScreen li {
+  width: 100%;
+  padding: 13px 20px;
+  font-size: 16px;
+  font-weight: normal;
+  color: #1A1A1A;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.secondaryMenuOptionsFullScreen li:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+body.dark-mode .secondaryMenuOptionsFullScreen li {
+  color: #F1F1F1;
+}
+
+body.dark-mode .secondaryMenuOptionsFullScreen li:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.themeToggleBtnFullScreenContainer {
+  display: flex;
+  justify-content: flex-start;
+  /* align-items: center; */
+  margin-top: auto; /* Pushes the button to the bottom */
+  padding: 16px 0;
+  /* background-color: rgb(59, 6, 59); */
+  width: 100%;
+}
+/* Botão de tema */
+.themeToggleBtnFullScreen {
+  background-color: transparent;
+  border: none;
+  border-radius: 100px;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+   width: 60px;
+  height: 60px; 
+  padding: 0;
+  /* margin: 0 auto; */
+  /* background-color: aqua; */
+}
+
+.themeToggleBtnFullScreen svg {
+  width: 24px;
+  height: 24px;
+}
+
+.themeToggleBtnFullScreen:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+body.dark-mode .themeToggleBtnFullScreen:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Botão de logout */
+.logout-buttonFullScreen {
+  padding: 16px 20px;
+  background-color: transparent;
+  color: #CE3B3D;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-weight: bold;
+  /* font-size: 200px; */
+  text-align: left;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.logout-buttonFullScreen:hover {
+  opacity: 0.9;
+}

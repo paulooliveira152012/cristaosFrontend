@@ -1,0 +1,153 @@
+/* ---------------------------------------------------------
+   TOKENS (Design System)
+   - Fonte: Inter (fallbacks robustos)
+   - Paleta com dark mode
+   - Espaçamento, tipografia, radius, sombras, z-index
+   --------------------------------------------------------- */
+
+/* Fonte (Google Fonts). Se preferir local, substitua por @font-face */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+/* ===== Escopo base / resets leves ===== */
+:root {
+  /* ---------- Fontes ---------- */
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji",
+               "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+
+  /* Tamanhos de fonte (rem) */
+  --fs-2xs: 0.75rem;   /* 12px */
+  --fs-xs:  0.8125rem; /* 13px */
+  --fs-sm:  0.875rem;  /* 14px */
+  --fs-md:  1rem;      /* 16px */
+  --fs-lg:  1.125rem;  /* 18px */
+  --fs-xl:  1.25rem;   /* 20px */
+  --fs-2xl: 1.5rem;    /* 24px */
+  --fs-3xl: 1.875rem;  /* 30px */
+
+  /* Pesos */
+  --fw-regular: 400;
+  --fw-medium:  500;
+  --fw-semibold:600;
+  --fw-bold:    700;
+  --fw-extrabold:800;
+
+  /* ---------- Espaçamentos (rem) ---------- */
+  --space-0: 0;
+  --space-1: 0.25rem;  /* 4px  */
+  --space-2: 0.5rem;   /* 8px  */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-5: 1.5rem;   /* 24px */
+  --space-6: 2rem;     /* 32px */
+  --space-7: 3rem;     /* 48px */
+  --space-8: 4rem;     /* 64px */
+
+  /* ---------- Raio de borda ---------- */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-full: 999px;
+
+  /* ---------- Sombras ---------- */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.08);
+  --shadow-md: 0 6px 24px rgba(0,0,0,0.10);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.16);
+  --shadow-inner: inset 0 1px 0 rgba(255,255,255,0.03);
+
+  /* ---------- Larguras de container ---------- */
+  --container-narrow: 720px;
+  --container:        1200px;
+  --container-wide:   1440px;
+
+  /* ---------- Z-index padrão ---------- */
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-dropdown: 20;
+  --z-overlay: 30;
+  --z-modal: 40;
+  --z-popover: 50;
+  --z-toast: 60;
+
+  /* ---------- Animação ---------- */
+  --ease-out: cubic-bezier(.2,.8,.2,1);
+  --ease-in:  cubic-bezier(.4,0,1,1);
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+
+  /* ---------- Cores (tema claro por padrão) ---------- */
+  --bg: #f7f8fa;
+  --card: #ffffff;
+  --surface: #fbfbfc;      /* superfícies secundárias */
+  --text: #111315;
+  --muted: #6b7280;
+  --border: #e6e8ec;
+  --ring: rgba(42, 104, 216, 0.25);
+
+  /* Paleta principal (pedido) */
+  --accent: #2a68d8;
+  --accent-contrast: #ffffff;
+
+  /* Estados (úteis numa rede social) */
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger:  #ef4444;
+  --info:    #06b6d4;
+
+  /* Gradientes utilitários */
+  --grad-accent: linear-gradient(180deg, rgba(42,104,216,0.18), rgba(42,104,216,0.06));
+}
+
+/* ===== Dark mode (pedido: fundo 1A1A1A / destaque 2A68D8) ===== */
+body.dark-mode {
+  --bg: #1a1a1a;
+  --card: #1f1f1f;
+  --surface: #191919;
+  --text: #eceff4;
+  --muted: #a1a1aa;
+  --border: #2b2b2b;
+  --ring: rgba(42, 104, 216, 0.35);
+
+  --accent: #2a68d8;
+  --accent-contrast: #ffffff;
+
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger:  #ef4444;
+  --info:    #06b6d4;
+}
+
+/* ===== Base mínima do documento ===== */
+html, body {
+  height: 100%;
+}
+html {
+  font-size: 16px; /* escala previsível */
+}
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Seleção de texto combinando com o tema */
+::selection {
+  background: color-mix(in oklab, var(--accent) 30%, transparent);
+  color: var(--text);
+}
+
+/* Redução de movimento para acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
