@@ -368,7 +368,12 @@ export const requestChat = async (requester, requested) => {
 
 // profilePageFunctions.js
 
-export const openEditor = (listing, setEditingId, setDraft, setShowListingMenu) => {
+export const openEditor = (
+  listing,
+  setEditingId,
+  setDraft,
+  setShowListingMenu
+) => {
   setEditingId(listing._id);
   // Fecha o menu ao abrir o editor (opcional)
   if (setShowListingMenu) setShowListingMenu(null);
@@ -407,7 +412,7 @@ export const saveEdit = async (
   setShowListingMenu,
   baseURL = process.env.REACT_APP_API_BASE_URL
 ) => {
-  console.log("função para editar listagem alcançada")
+  console.log("função para editar listagem alcançada");
   try {
     const res = await fetch(`${baseURL}/api/listings/edit/${listingId}`, {
       method: "PUT",
@@ -422,8 +427,10 @@ export const saveEdit = async (
     // Se sua API retorna { updatedListing }, mantenha:
     const updated = data.updatedListing || data.listing || data; // cobre diferentes formatos
 
-    setUserListings(prev =>
-      prev.map(item => (item._id === listingId ? { ...item, ...updated } : item))
+    setUserListings((prev) =>
+      prev.map((item) =>
+        item._id === listingId ? { ...item, ...updated } : item
+      )
     );
 
     setEditingId(null);
@@ -440,3 +447,48 @@ export const cancelEdit = (setEditingId, setDraft) => {
   setDraft({});
 };
 
+export const submitMuralContent = async (
+  currentUserId,
+  userId,
+  newMuralMessage
+) => {
+  console.log(
+    `${currentUserId} submiting a new message to ${userId}: ${newMuralMessage}`
+  );
+
+  try {
+    const response = await fetch(`${baseUrl}/api/mural/newMuralMessage/${userId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify ({
+        senderId: currentUserId,
+        text: newMuralMessage
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Erro ao enviar pedido.");
+    return data;
+  } catch (error){
+    console.error("Erro ao escrever algo no mural:", error);
+    return { error: error.message };
+  }
+};
+
+
+export const getMuralContent = async (userId) => {
+  console.log("fetching mural conten...")
+  
+  const res = await fetch(`${baseUrl}/api/mural/getMuralContent/${userId}`, {
+    method: "GET",
+    credentials: "include",
+  });
+
+  const data = await res.json().catch(() => ({}));
+  console.log("mural content:", data)
+  if (!res.ok) throw new Error(data.message || `Erro (HTTP ${res.status})`);
+
+  // esperado: { items, page, limit, total, hasMore }
+  return data;
+};
