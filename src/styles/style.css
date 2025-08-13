@@ -1,7 +1,7 @@
 :root {
-  --bg: #f7f9fc;
-  --card: #ffffff;
-  --text: #0f172a;
+  --bg: #FDFDFD;
+  --card: #FDFDFD;
+  --text: #1A1A1A;
   --muted: #6b7280;
   --brand: #2a68d8;
   --brand-ghost: #e6efff;
@@ -15,12 +15,12 @@
 @media (prefers-color-scheme: dark) {
   :root .dark-mode {
     --bg: #0b1220;
-    --card: #0f172a;
+    --card: #1A1A1A;
     --text: #e5e7eb;
     --muted: #9aa3af;
     --brand: #5a8bff;
     --brand-ghost: #1c2742;
-    --border: #1f2a44;
+    --border: #404040;
     --ring: 0 10px 30px rgba(90, 139, 255, 0.18);
     --pollText-notVoted: #fff; /* ajuste se preferir */
     --pollText-voted: #fff; /* ou outra cor de contraste */
@@ -54,7 +54,7 @@
 }
 
 body.dark-mode .screenWrapper {
-  background-color: #1e1e1e;
+  background-color: #1A1A1A;
   color: #f1f1f1;
 }
 
