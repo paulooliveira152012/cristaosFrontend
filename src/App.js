@@ -57,6 +57,11 @@ import SideMenuFullScreen from "./components/SideMenuFullScreen.js";
 import SideAddSection from "./components/SideAddSection.js";
 import Footer from "./components/Footer.js";
 import "./styles/darkMode.css";
+import "./styles/base/global.css";
+
+// // (opcional) se quiser dark como padrão:
+// document.body.classList.add("dark-mode");
+
 
 import ProtectedRoute from "./components/ProtectedRoutes.js"; // Importar o componente de rota protegida
 

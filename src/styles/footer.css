@@ -24,11 +24,12 @@
   justify-content: space-evenly;
   align-items: center;
   font-weight: bold;
+  -webkit-backdrop-filter: blur(6px);
   bottom: 0;
   z-index: 10;
+  position: absolute;
   /* background-color: red; */
 }
-
 
 body.dark-mode .footerContainer {
     background-color: rgba(26, 26, 26, 0.2); /* #1A1A1A com 90% opacidade */

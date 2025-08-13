@@ -1,0 +1,110 @@
+/* src/styles/components/footer.css */
+
+/* ===== Desktop / base (sem blur, não atrapalha o menu) ===== */
+.footerContainer {
+  position: sticky;             /* gruda no fim do scroller, sem “flutuar” */
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  width: 100%;
+  height: 56px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: var(--space-3);
+  padding-inline: var(--space-4);
+  box-sizing: border-box;
+
+  /* border-top: 1px solid var(--border); */
+  background: var(--card);      /* sem transparência no desktop */
+  color: var(--text);
+  z-index: 150;                 /* abaixo do SideMenu (2000+) */
+
+  /* proteção extra */
+  isolation: isolate;
+  overflow-x: clip;
+}
+
+body.dark-mode .footerContainer {
+  background: var(--card);
+}
+
+/* ===== Ícones, avatar e badges (comuns) ===== */
+.footerContainer > * { cursor: pointer; }
+
+.icon {
+  width: 26px;
+  height: 26px;
+  display: inline-block;
+}
+
+.footerProfileImage {
+  height: 80%;
+  aspect-ratio: 1;
+  background-size: cover;
+  background-position: center;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+}
+
+.notificationIcon,
+.reelsIcon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Evita overflow horizontal */
+.notificationStatus {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translate(40%, -40%);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+
+  display: grid;
+  place-items: center;
+
+  background: #f90c28;
+  color: #fff;
+  border-radius: 999px;
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-extrabold);
+  box-shadow: 0 2px 8px rgba(249, 12, 40, .35);
+}
+
+/* ===== Mobile: fixo + vidro/blur ===== */
+@media (max-width: 768px) {
+  .footerContainer {
+    position: fixed;                          /* <- só no mobile */
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    /* vidro fosco (igual ao bottomFixedTheme) */
+    background-color: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+
+    z-index: 1100;                            /* SideMenu ainda fica acima (2000+) */
+  }
+
+  body.dark-mode .footerContainer {
+    background-color: rgba(26, 26, 26, 0.2);
+  }
+
+  /* Reserva espaço no fim da página para não “comer” conteúdo */
+  :root { --bottom-nav-h: 56px; }
+  body { padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom)); }
+}
+
+/* Responsivo mínimo */
+@media (max-width: 420px) {
+  .icon { width: 24px; height: 24px; }
+  .footerContainer { height: 52px; }
+}

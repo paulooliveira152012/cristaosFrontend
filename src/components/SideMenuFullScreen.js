@@ -1,4 +1,4 @@
-import "../styles/sideMenuFullScreen.css";
+import "../styles/components/sideMenuFullScreen.css";
 import { useUser } from "../context/UserContext";
 import { useDarkMode } from "../context/DarkModeContext";
 import imagePlaceholder from "../assets/images/profileplaceholder.png";
@@ -21,12 +21,13 @@ const SideMenuFullScreen = () => {
             style={{
               backgroundImage: `url(${currentUser?.profileImage || imagePlaceholder})`,
             }}
-            onClick={() => navigate(`profile/${currentUser._id}`)}
-          ></div>
+            onClick={() => navigate(`profile/${currentUser?._id}`)}
+          />
         </div>
       </div>
 
       <div className="bottomFullScreen">
+        {/* === Itens principais (igual ao SideMenu) === */}
         <ul className="menuOptionsFullScreen">
           <li onClick={() => navigate("bibleStudies")}>Estudos Bíblico</li>
           <li onClick={() => navigate("privateRooms")}>Salas de Reuniões Privadas</li>
@@ -34,30 +35,43 @@ const SideMenuFullScreen = () => {
           <li onClick={() => navigate("findGathering")}>Encontrar Reunião Próxima</li>
           <li onClick={() => navigate("promotions")}>Promoções</li>
           <li onClick={() => navigate("communityForum")}>Fórum da Comunidade</li>
-          <li onClick={() => navigate("guidelines")}>Diretrizes da Plataforma</li>
-          <li onClick={() => navigate("suggestions")}>Sugestões</li>
-          <li onClick={() => navigate("contactUs")}>Fale Conosco</li>
-
-          {currentUser && (
-            <li
-              onClick={() => handleLogout(logout, navigate)}
-              className="logout-buttonFullScreen"
-            >
-              Logout
-            </li>
-          )}
         </ul>
 
-        <div className="themeToggleBtnFullScreenContainer">
-        <button
-          onClick={() => setDarkMode(!darkMode)}
-          className="themeToggleBtnFullScreen"
-          aria-label="Alternar tema"
-        >
-          {darkMode ? <SunIcon /> : <MoonIcon />}
-        </button>
-        </div>
+        {/* === Secundários (igual ao SideMenu) === */}
+        <ul className="secondaryMenuOptionsFullScreen">
+          <li onClick={() => navigate("guidelines")}>Diretrizes da Plataforma</li>
+          <li onClick={() => navigate("privacyPolicy")}>Política de Privacidade</li>
+          <li onClick={() => navigate("suggestions")}>Sugestões</li>
+          <li onClick={() => navigate("contactUs")}>Fale Conosco</li>
+          <li onClick={() => navigate("termsOfUse")}>Termos de Uso</li>
+          <li onClick={() => navigate("globe")}>Igrejas Registradas</li>
+        </ul>
 
+        {/* === Administração (3ª seção como no SideMenu) === */}
+        <ul className="secondaryMenuOptionsFullScreen">
+          <li onClick={() => navigate("admin")}>Administração</li>
+        </ul>
+
+        {/* === Logout (igual ao SideMenu) === */}
+        {currentUser && (
+          <button
+            onClick={() => handleLogout(logout, navigate)}
+            className="logout-buttonFullScreen"
+          >
+            Sair
+          </button>
+        )}
+
+        {/* === Toggle de Tema no rodapé === */}
+        <div className="themeToggleBtnFullScreenContainer">
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="themeToggleBtnFullScreen"
+            aria-label="Alternar tema"
+          >
+            {darkMode ? <SunIcon /> : <MoonIcon />}
+          </button>
+        </div>
       </div>
     </div>
   );

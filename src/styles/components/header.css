@@ -1,0 +1,128 @@
+/* Container do header (sem sticky e sem blur, pra não criar stacking context) */
+.stickyHeader {
+  top: 0;
+  z-index: 20;                      /* acima do conteúdo, abaixo do SideMenu */
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Faixa interna */
+.header {
+  width: 100%;
+  max-width: var(--container);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  color: var(--text);
+  height: 9vh;
+}
+
+.left-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: var(--space-2);
+}
+
+.right-section {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  flex: 2;
+}
+
+/* Botões (mantidos) */
+.back-button {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--fs-sm);
+}
+
+.login-button {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--fs-sm);
+}
+
+.logout-button {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--fs-sm);
+}
+
+.leaveRoomButton {
+  margin: 5px;
+  padding: 10px 14px;
+  background: var(--danger);
+  color: #fff;
+  width: auto;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+/* Links */
+.link { text-decoration: none; }
+
+/* Avatar */
+.headerProfileImage {
+  width: 45px;
+  height: 45px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+
+/* Ícone de configurações */
+.settingsIcon { cursor: pointer; }
+
+/* Modal (compat) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 3000;
+}
+.modal-content {
+  background: var(--card);
+  color: var(--text);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+}
+.modal-content button { display: block; margin: 10px auto; }
+
+/* PM settings (compat) */
+.privateMessageSettings {
+  position: absolute; inset: 0;
+  background: var(--danger); color: #fff;
+}
+
+/* Responsivo */
+@media (max-width: 500px) { .right-section { align-items: center; } }
+@media (min-width: 1024px) { .headerProfileImage { display: none; } }
+
+.no-scroll { overflow-y: hidden !important; height: 100vh !important; }
