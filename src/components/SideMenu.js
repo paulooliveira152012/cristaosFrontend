@@ -13,6 +13,8 @@ const SideMenu = ({ closeMenu, isOpen }) => {
   const { darkMode, setDarkMode } = useDarkMode();
   const navigate = useNavigate();
 
+  console.log("currentUser on side menu:", currentUser)
+
   return (
     <>
       <div
@@ -70,9 +72,11 @@ const SideMenu = ({ closeMenu, isOpen }) => {
             <li onClick={() => navigate("globe")}>Igrejas Registradas</li>
           </ul>
 
-          <ul className="secondaryMenuOptions">
-            <li onClick={() => navigate("admin")}>Administração</li>
-          </ul>
+          {currentUser?.leader && (
+            <ul className="secondaryMenuOptions">
+              <li onClick={() => navigate("admin")}>Administração</li>
+            </ul>
+          )}
 
           {/* Botão de logout */}
           {currentUser && (
