@@ -1,3 +1,4 @@
+// src/pages/PrivateChat.js
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
@@ -18,47 +19,69 @@ const PrivateChat = () => {
   const [message, setMessage] = useState("");
   const messagesContainerRef = useRef(null);
   const [isOtherUserInChat, setIsOtherUserInChat] = useState(false);
-  const [hasOtherUserLeft, setHasOtherUserLeft] = useState(false); // ✅ nova flag
+  const [hasOtherUserLeft, setHasOtherUserLeft] = useState(false);
 
   const baseURL = process.env.REACT_APP_API_BASE_URL;
   const navigate = useNavigate();
 
-
+  // Busca presença inicial do outro usuário
   useEffect(() => {
-     if (conversationId && currentUser) {
-       handleFetchRoomMembers(conversationId, currentUser, setIsOtherUserInChat);
-       console.log("isOtherUserInRoom:", isOtherUserInChat);
-
-     }
+    if (!conversationId || !currentUser) return;
+    handleFetchRoomMembers(conversationId, currentUser, (usersInChat) => {
+      // garante que só conta o OUTRO usuário
+      const others = Array.isArray(usersInChat)
+        ? usersInChat.filter((u) => u?._id !== currentUser._id)
+        : [];
+      setIsOtherUserInChat(others.length > 0);
+    });
   }, [conversationId, currentUser]);
 
+  // Join/leave + listener de nova mensagem + fetch inicial + markAsRead
   useEffect(() => {
     if (!conversationId || !currentUser) return;
 
-    // fetch messages
-    const fetchMessages = async () => {
+    const handleIncomingMessage = (newMsg) => {
+      if (newMsg?.conversationId !== conversationId) return;
+      setMessages((prev) => {
+        const exists = prev.some((m) => m._id === newMsg._id);
+        return exists ? prev : [...prev, newMsg];
+      });
+    };
+
+    // Entrar na sala
+    const join = () =>
+      socket.emit("joinPrivateChat", {
+        conversationId,
+        userId: currentUser._id,
+      });
+
+    if (socket.connected) join();
+    const handleConnect = () => join();
+    socket.on("connect", handleConnect);
+
+    // Listener para novas mensagens
+    socket.on("newPrivateMessage", handleIncomingMessage);
+
+    // Carrega histórico
+    (async () => {
       try {
-        const res = await fetch(
-          `${baseURL}/api/dm/messages/${conversationId}`,
-          { credentials: "include" }
-        );
+        const res = await fetch(`${baseURL}/api/dm/messages/${conversationId}`, {
+          credentials: "include",
+        });
         const data = await res.json();
-        setMessages(data);
+        setMessages(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Erro ao carregar mensagens:", err);
       }
-    };
+    })();
 
-    // mark chat as read
-    const markAsRead = async () => {
+    // Marca como lida
+    (async () => {
       try {
-        const res = await fetch(
-          `${baseURL}/api/dm/markAsRead/${conversationId}`,
-          {
-            method: "POST",
-            credentials: "include",
-          }
-        );
+        await fetch(`${baseURL}/api/dm/markAsRead/${conversationId}`, {
+          method: "POST",
+          credentials: "include",
+        });
         socket.emit("privateChatRead", {
           conversationId,
           userId: currentUser._id,
@@ -66,148 +89,108 @@ const PrivateChat = () => {
       } catch (error) {
         console.error("Erro ao marcar como lida:", error);
       }
-    };
+    })();
 
-    // Listener fora da função principal
-    const handleIncomingMessage = (newMsg) => {
-      if (newMsg.conversationId === conversationId) {
-        setMessages((prev) => {
-          const alreadyExists = prev.some((msg) => msg._id === newMsg._id);
-          if (!alreadyExists) return [...prev, newMsg];
-          return prev;
-        });
-        console.log("📥 Nova mensagem recebida:", newMsg);
-      }
-    };
-
-    // 🔐 Registra o listener ANTES de tudo
-    socket.off("newPrivateMessage");
-    socket.on("newPrivateMessage", handleIncomingMessage);
-
-    if (socket.connected) {
-      socket.emit("joinPrivateChat", {
+    // Cleanup
+    return () => {
+      socket.off("newPrivateMessage", handleIncomingMessage);
+      socket.off("connect", handleConnect);
+      socket.emit("leavePrivateChat", {
         conversationId,
         userId: currentUser._id,
       });
-    } else {
-      socket.on("connect", () => {
-        socket.emit("joinPrivateChat", {
-          conversationId,
-          userId: currentUser._id,
-        });
-      });
-    }
-
-    socket.emit("joinPrivateChat", {
-      conversationId,
-      userId: currentUser._id,
-    });
-
-    fetchMessages();
-    markAsRead();
-
-    return () => {
-      // 🔇 Limpa quando sai do componente
-      socket.off("newPrivateMessage", handleIncomingMessage);
     };
-  }, [conversationId, currentUser, baseURL, socket]);
+  }, [conversationId, currentUser, baseURL]);
 
+  // Presença em tempo real (lista completa dos presentes)
   useEffect(() => {
     const handlePresence = ({ conversationId: convId, users }) => {
-      if (convId === conversationId) {
-        // console.log("📡 Atualização de presença recebida:", users);
-        setIsOtherUserInChat(users.length > 0);
-      }
+      if (convId !== conversationId) return;
+      const others = (users || []).filter((u) => u?._id !== currentUser?._id);
+      setIsOtherUserInChat(others.length > 0);
     };
-
     socket.on("currentUsersInPrivateChat", handlePresence);
+    return () => socket.off("currentUsersInPrivateChat", handlePresence);
+  }, [conversationId, currentUser?._id]);
 
-    return () => {
-      socket.off("currentUsersInPrivateChat", handlePresence);
-    };
-  }, [conversationId, socket]);
-
-  const sendMessage = () => {
-    if (!message.trim()) return;
-
-    const msg = {
-      conversationId,
-      sender: currentUser._id,
-      message: message.trim(),
-    };
-
-    socket.emit("sendPrivateMessage", msg);
-    setMessage("");
-  };
-
-  useEffect(() => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop =
-        messagesContainerRef.current.scrollHeight;
-    }
-  }, [messages]);
-
+  // Eventos discretos de entrar/sair (atualiza flags)
   useEffect(() => {
     const handleUserJoined = ({ conversationId: convId, joinedUser }) => {
-      if (convId === conversationId) {
-        // console.log(`🟢 ${joinedUser.username} entrou na conversa!`);
+      if (convId === conversationId && joinedUser?._id !== currentUser?._id) {
         setIsOtherUserInChat(true);
-        setHasOtherUserLeft(false); // reset caso ele volte
+        setHasOtherUserLeft(false);
       }
     };
-
     const handleUserLeft = ({ conversationId: convId, leftUser }) => {
-      if (convId === conversationId) {
-        console.log(`🔴 ${leftUser.username} saiu da conversa!`);
+      if (convId === conversationId && leftUser?._id !== currentUser?._id) {
         setIsOtherUserInChat(false);
-        setHasOtherUserLeft(true); // ✅ agora sim!
+        setHasOtherUserLeft(true);
       }
     };
-
     socket.on("userJoinedPrivateChat", handleUserJoined);
     socket.on("userLeftPrivateChat", handleUserLeft);
-
     return () => {
       socket.off("userJoinedPrivateChat", handleUserJoined);
       socket.off("userLeftPrivateChat", handleUserLeft);
     };
-  }, [conversationId]);
+  }, [conversationId, currentUser?._id]);
 
-  return (
-    <div className="screenWrapper">
-      <Header
-        showProfileImage={false}
-        navigate={navigate}
-        showLeavePrivateRoomButton={true}
-        handleLeaveDirectMessagingChat={handleLeaveDirectMessagingChat}
-        roomId={conversationId}
-      />
+  // Auto-scroll ao fim quando chegam novas mensagens
+  useEffect(() => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [messages]);
 
-      <div className="messagesContainer">
-        <div className="chatPageContainer" ref={messagesContainerRef}>
-          <div className="messagesContainer">
-            {messages.map((msg, index) => (
-              <div
-                key={index}
-                className={`messageItem ${msg.system ? "systemMessage" : ""}`}
-              >
-                {msg.system ? (
-                  <em>{msg.message}</em>
-                ) : (
-                  <>
-                    <strong>{msg.username || "Você"}:</strong> {msg.message}
-                    <br />
-                    <small>
-                      {format(new Date(msg.timestamp || new Date()), "PPpp")}
-                    </small>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
+  const sendMessage = () => {
+    const trimmed = message.trim();
+    if (!trimmed) return;
+    socket.emit("sendPrivateMessage", {
+      conversationId,
+      sender: currentUser._id,
+      message: trimmed,
+    });
+    setMessage("");
+  };
+
+  // topo do componente:
+return (
+  <div className="screenWrapper privateChatPage">
+    <Header
+      showProfileImage={false}
+      navigate={navigate}
+      showLeavePrivateRoomButton={true}
+      handleLeaveDirectMessagingChat={handleLeaveDirectMessagingChat}
+      roomId={conversationId}
+    />
+
+    {/* NOVO wrapper para controlar layout em coluna */}
+    <div className="privateChatContent">
+      {/* área que rola */}
+      <div className="messagesScroll" ref={messagesContainerRef}>
+        <div className="messagesContainer">
+          {messages.map((msg, index) => (
+            <div
+              key={msg._id || index}
+              className={`messageItem ${msg.system ? "systemMessage" : ""}`}
+            >
+              {msg.system ? (
+                <em>{msg.message}</em>
+              ) : (
+                <>
+                  <strong>{msg.username || "Você"}:</strong> {msg.message}
+                  <br />
+                  <small>
+                    {format(new Date(msg.timestamp || new Date()), "PPpp")}
+                  </small>
+                </>
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
+      {/* input fixo no fundo (sticky) */}
       <div className="chatPageInputContainer">
         {!isOtherUserInChat ? (
           <button
@@ -235,7 +218,9 @@ const PrivateChat = () => {
         )}
       </div>
     </div>
-  );
+  </div>
+);
+
 };
 
 export default PrivateChat;
