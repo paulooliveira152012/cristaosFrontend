@@ -363,11 +363,23 @@ const Listings = () => {
               {currentUser?.leader == true && (
                 <div>
                   <button
-                    style={{ backgroundColor: "red" }}
-                    onClick={(index) => toggleLeaderMenu(listing._id)}
+                    aria-label="Mais opções"
+                    onClick={() => toggleLeaderMenu(listing._id)}
+                    style={{
+                      backgroundColor: "#2a68d8",
+                      color: "white",
+                      height: 30,
+                      width: 30,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: "none",
+                      borderRadius: 6,
+                      fontSize: 18,
+                      cursor: "pointer",
+                    }}
                   >
-                    {" "}
-                    <p>...</p>
+                    …
                   </button>
                 </div>
               )}
