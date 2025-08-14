@@ -85,6 +85,8 @@ export const handleLeaveDirectMessagingChat = async ({
     const data = await res.json();
     console.log("✅ Saiu da conversa:", data.message);
 
+    console.log(`🔴 conversationId: ${conversationId}, userId: ${userId}, username:${username}`)
+
     // 🔴 Emitir saída via socket
     socket.emit("leavePrivateChat", {
       conversationId,
