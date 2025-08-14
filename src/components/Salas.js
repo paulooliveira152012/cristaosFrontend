@@ -35,7 +35,7 @@ const Salas = () => {
 
         const data = await response.json();
         setRooms(data); // Store fetched rooms in state
-        console.log("Fetched rooms:", data); // Log fetched rooms
+        // console.log("Fetched rooms:", data); // Log fetched rooms
       } catch (error) {
         console.error("Error fetching rooms:", error);
       }

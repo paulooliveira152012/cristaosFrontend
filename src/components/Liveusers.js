@@ -16,7 +16,7 @@ const LiveUsers = () => {
   }, []);
 
   useEffect(() => {
-    console.log("allUsers in Component:", allUsers);
+    // console.log("allUsers in Component:", allUsers);
   }, [allUsers]);
 
   const handleUserClick = (user) => {

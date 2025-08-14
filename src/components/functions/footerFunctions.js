@@ -16,7 +16,7 @@ export const checkForNewNotifications = async (setNotifications) => {
     }
 
     const data = await response.json();
-    console.log("Notificações recebidas:", data);
+    // console.log("Notificações recebidas:", data);
 
     // ✅ Corrigido: checa se tem ALGUMA notificação NÃO lida
     const hasUnread = data.some((n) => !n.isRead);

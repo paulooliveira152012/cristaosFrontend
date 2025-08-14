@@ -30,7 +30,7 @@ const Listings = () => {
 
   // Logging whenever newCommentId changes
   useEffect(() => {
-    console.log("trying to fetch the newCommentId");
+    // console.log("trying to fetch the newCommentId");
 
     if (newCommentId) {
       console.log("New Comment ID set in state:", newCommentId);
@@ -39,11 +39,11 @@ const Listings = () => {
 
   // Fetch all listed items from the backend
   useEffect(() => {
-    console.log("✅ BUSCANDO ITENS");
+    // console.log("✅ BUSCANDO ITENS");
     const fetchListings = async () => {
       const api = `${baseURL}/api/listings/alllistings`;
 
-      console.log("✅✅ api usada:", api);
+      // console.log("✅✅ api usada:", api);
       try {
         setLoading(true); // Start loading before fetch
         const response = await fetch(api, {
@@ -54,7 +54,7 @@ const Listings = () => {
           },
         });
 
-        console.log("✅");
+        // console.log("✅");
 
         if (!response.ok) {
           console.log("✅ erro aqui => :", response.statusText);
@@ -62,7 +62,7 @@ const Listings = () => {
         }
 
         const data = await response.json();
-        console.log("✅ Items received:", data);
+        // console.log("✅ Items received:", data);
 
         // Sort listings by creation date
         const sortedListings = (data.listings || []).sort(

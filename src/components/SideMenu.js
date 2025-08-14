@@ -14,7 +14,7 @@ const SideMenu = ({ closeMenu, isOpen }) => {
   const { darkMode, setDarkMode } = useDarkMode();
   const navigate = useNavigate();
 
-  console.log("currentUser on side menu:", currentUser)
+  // console.log("currentUser on side menu:", currentUser)
 
   return (
     <>
