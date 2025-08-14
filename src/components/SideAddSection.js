@@ -28,6 +28,7 @@ const normalizeIndexesMany = (len, idxs) => {
 };
 
 const SideAdSection = () => {
+  const socket = useSocket();
   const [ads, setAds] = useState([]);
   const [currentIndexes, setCurrentIndexes] = useState(
     Array.from({ length: SLOTS }, (_, i) => i)
@@ -37,7 +38,6 @@ const SideAdSection = () => {
   const timeoutRefs = useRef([]);
   const { currentUser } = useUser();
   const navigate = useNavigate();
-  const socket = useSocket();
 
   // fetch inicial
   useEffect(() => {

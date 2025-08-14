@@ -32,6 +32,7 @@ export const RoomProvider = ({ children }) => {
 
   // ➖ Remove user da sala
   const removeCurrentUser = async (roomId, userId, baseUrl) => {
+     if (!socket) return;            // 👈 evita .on em null
     console.log(
       "1️⃣🟢🟢🟢removendo usuario dos currentUsers no RoomContext.js..."
     );
@@ -92,6 +93,7 @@ export const RoomProvider = ({ children }) => {
     };
 
     const emitEvents = () => {
+       if (!socket) return;            // 👈 evita .on em null
       socket.emit("joinRoom", { roomId, user: userPayload });
 
       // socket.off("liveRoomUsers");
@@ -124,7 +126,7 @@ export const RoomProvider = ({ children }) => {
 
   // 🚪 Emitir saída da sala
   const emitLeaveRoom = (roomId, userId) => {
-    if (!roomId || !userId) return;
+    if (!roomId || !userId || !socket) return;
     socket.emit("userLeavesRoom", { roomId, userId });
     setCurrentRoomId(null);
     setCurrentUsers([]);
@@ -211,6 +213,7 @@ export const RoomProvider = ({ children }) => {
 
   // Detectar quando o usuário fecha a aba ou perde conexão
   useEffect(() => {
+     if (!socket) return;            // 👈 evita .on em null
     const handleBeforeUnload = () => {
       if (currentRoomId && user?._id) {
         socket.emit("userLeavesRoom", {
@@ -229,7 +232,8 @@ export const RoomProvider = ({ children }) => {
 
   // logic for joining a room
   const handleJoinRoom = async (roomId, user, baseUrl) => {
-    if (!roomId || !user) return;
+    
+    if (!roomId || !user || !socket) return;
     joinRoomListeners(roomId, user); // socket.io
     await new Promise((resolve) => setTimeout(resolve, 200)); // Espera 200ms
     await addCurrentUser(roomId, user, baseUrl); // banco

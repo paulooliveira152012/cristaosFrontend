@@ -1,5 +1,8 @@
 import { useLocation } from "react-router-dom";
-// Importar a página inicial
+import { useEffect } from "react";
+import { useNotification } from "./context/NotificationContext.js";
+
+// páginas
 import Landing from "./pages/landing";
 import OpenListing from "./pages/listing";
 import LiveRoom from "./pages/liveRoom";
@@ -40,30 +43,69 @@ import SettingsMenu from "./pages/SettingsMenu.js";
 import ResendVerification from "./pages/resend-verification.js";
 import PrivateChat from "./pages/PrivateChat.js";
 import PrivacyPolicy from "./pages/menuPages/PrivacyPolicy.js";
-import TermsOfUse from "./pages/menuPages/TermsOfUse.js"; // Importar a página de termos de uso
+import TermsOfUse from "./pages/menuPages/TermsOfUse.js";
 import Church from "./pages/Church.js";
 import Admin from "./pages/Admin.js";
-// Importar router, route e
+
+// router/contexts
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import { UserProvider } from "./context/UserContext";
+import { UserProvider, useUser } from "./context/UserContext";
 import { RoomProvider, useRoom } from "./context/RoomContext";
 import { AudioProvider } from "./context/AudioContext";
-import { SocketProvider } from "./context/SocketContext.js";
-import { DarkModeProvider } from "./context/DarkModeContext.js"; // ✅ novo
+import { SocketProvider, useSocket } from "./context/SocketContext.js";
+import { DarkModeProvider } from "./context/DarkModeContext.js";
 import { NotificationProvider } from "./context/NotificationContext.js";
+import ProtectedRoute from "./components/ProtectedRoutes.js";
 
+// UI
 import "./styles/style.css";
+import "./styles/darkMode.css";
+import "./styles/base/global.css";
 import SideMenuFullScreen from "./components/SideMenuFullScreen.js";
 import SideAddSection from "./components/SideAddSection.js";
 import Footer from "./components/Footer.js";
-import "./styles/darkMode.css";
-import "./styles/base/global.css";
 
-// // (opcional) se quiser dark como padrão:
-// document.body.classList.add("dark-mode");
+// ---- NOVO: faz o socket entrar na sala pessoal do usuário logado ----
+// 1) entra na sala pessoal do usuário
+function SocketSetupBridge() {
+  const socket = useSocket();
+  const { currentUser } = useUser();
 
+  useEffect(() => {
+    if (!socket || !currentUser?._id) return;
 
-import ProtectedRoute from "./components/ProtectedRoutes.js"; // Importar o componente de rota protegida
+    const join = () => socket.emit("setup", String(currentUser._id));
+    if (socket.connected) join();
+    socket.on("connect", join);
+    return () => socket.off("connect", join);
+  }, [socket, currentUser?._id]);
+
+  return null;
+}
+
+// 2) ouve notificações em tempo real e acende badge
+function NotificationsSocketBridge() {
+  const socket = useSocket();
+  const { setUnreadCount, setNotifications } = useNotification();
+  const { currentUser } = useUser();
+
+  useEffect(() => {
+    if (!socket || !currentUser?._id) return;
+
+    const onNew = (notif) => {
+      if (String(notif?.recipient) !== String(currentUser._id)) return;
+      // se você já expõe contagem:
+      if (setUnreadCount) setUnreadCount((n) => n + 1);
+      // compat (se em algum lugar ainda usa boolean):
+      if (setNotifications) setNotifications(true);
+    };
+
+    socket.on("notification:new", onNew);
+    return () => socket.off("notification:new", onNew);
+  }, [socket, currentUser?._id, setUnreadCount, setNotifications]);
+
+  return null;
+}
 
 // Componente para exibir o ícone da sala minimizada globalmente
 const MinimizedStatus = () => {
@@ -72,9 +114,7 @@ const MinimizedStatus = () => {
   if (!minimizedRoom || location.pathname.includes("/liveRoom")) return null;
 
   return (
-    <div
-      style={{ position: "fixed", bottom: "20px", right: "20px", zIndex: 1000 }}
-    >
+    <div style={{ position: "fixed", bottom: "20px", right: "20px", zIndex: 1000 }}>
       <Link
         to={`/liveRoom/${minimizedRoom._id}`}
         state={{ sala: minimizedRoom }}
@@ -93,7 +133,7 @@ const MinimizedStatus = () => {
   );
 };
 
-// Componente App principal
+// App raiz: GARANTA que exista apenas UM SocketProvider no projeto
 const App = () => {
   return (
     <SocketProvider>
@@ -106,7 +146,6 @@ const App = () => {
   );
 };
 
-// App com localização
 const AppWithLocation = () => {
   const location = useLocation();
 
@@ -114,7 +153,7 @@ const AppWithLocation = () => {
     !location.pathname.startsWith("/mainChat") &&
     !location.pathname.startsWith("/liveRoom") &&
     !location.pathname.startsWith("/privateChat");
-  // ! location.pathname.startsWith("/mainChat")
+
   const hideSideMenu = ["/login"];
   const shouldShowSideMenu = !hideSideMenu.includes(location.pathname);
 
@@ -123,19 +162,19 @@ const AppWithLocation = () => {
       <RoomProvider>
         <AudioProvider>
           <NotificationProvider>
-            {/* 100dvh e 100% width */}
+            {/* ponte que liga socket ⇄ usuário logado para notificações */}
+            <SocketSetupBridge />
+            <NotificationsSocketBridge />
+
             <div className="mainParentContainer">
               {/* 1st side menu */}
               <div className="sideMenuContainerWideScreen">
-                {/* COLOCAR O MENU AQUI */}
                 {shouldShowSideMenu && <SideMenuFullScreen />}
               </div>
 
               {/* 2nd main content */}
               <div className="screenWrapper">
-                {/* pink container */}
                 <div className="scrollable">
-                  {/* yellow */}
                   <div
                     style={{
                       flex: 1,
@@ -148,92 +187,38 @@ const AppWithLocation = () => {
                   >
                     <Routes>
                       <Route path="/" element={<Landing />} />
-                      <Route
-                        path="/openListing/:id"
-                        element={<OpenListing />}
-                      />
+                      <Route path="/openListing/:id" element={<OpenListing />} />
                       <Route path="/liveRoom/:roomId" element={<LiveRoom />} />
                       <Route path="/chat" element={<Chat />} />
                       <Route path="/login" element={<Login />} />
-                      <Route
-                        path="/resend-verification"
-                        element={<ResendVerification />}
-                      />
+                      <Route path="/resend-verification" element={<ResendVerification />} />
                       <Route path="/signup" element={<Signup />} />
-                      <Route
-                        path="/verifyAccount"
-                        element={<VerifyAccount />}
-                      />
-                      <Route
-                        path="/confirm-email-update/:token"
-                        element={<VerifyEmailUpdate />}
-                      />
+                      <Route path="/verifyAccount" element={<VerifyAccount />} />
+                      <Route path="/confirm-email-update/:token" element={<VerifyEmailUpdate />} />
                       <Route path="/newlisting" element={<NewListing />} />
                       <Route path="/profile/:userId" element={<Profile />} />
-                      <Route
-                        path="/notifications"
-                        element={<Notifications />}
-                      />
+                      <Route path="/notifications" element={<Notifications />} />
                       <Route path="/donate" element={<Donate />} />
-                      <Route
-                        path="/passwordResetLink"
-                        element={<PasswordResetLink />}
-                      />
-                      <Route
-                        path="/passwordReset"
-                        element={<PasswordReset />}
-                      />
-                      <Route
-                        path="/guidelines"
-                        element={<PlatformGuidelines />}
-                      />
-                      <Route
-                        path="/bibleStudies"
-                        element={<BibleStudiesByBook />}
-                      />
-                      <Route
-                        path="/bibleStudies"
-                        element={<BibleStudiesByTheme />}
-                      />
+                      <Route path="/passwordResetLink" element={<PasswordResetLink />} />
+                      <Route path="/passwordReset" element={<PasswordReset />} />
+                      <Route path="/guidelines" element={<PlatformGuidelines />} />
+                      <Route path="/bibleStudies" element={<BibleStudiesByBook />} />
+                      <Route path="/bibleStudies" element={<BibleStudiesByTheme />} />
                       <Route path="/privateRooms" element={<PrivateRooms />} />
                       <Route path="/suggestions" element={<Suggestions />} />
                       <Route path="/contactUs" element={<ContactUs />} />
-                      <Route
-                        path="/findGathering"
-                        element={<FindGathering />}
-                      />
-                      <Route
-                        path="/counselingSessions"
-                        element={<CounselingSessions />}
-                      />
-                      <Route
-                        path="/churchSupport"
-                        element={<ChurchSupport />}
-                      />
+                      <Route path="/findGathering" element={<FindGathering />} />
+                      <Route path="/counselingSessions" element={<CounselingSessions />} />
+                      <Route path="/churchSupport" element={<ChurchSupport />} />
                       <Route path="/promotions" element={<Promotions />} />
-                      <Route
-                        path="/communityForum"
-                        element={<CommunityForum />}
-                      />
+                      <Route path="/communityForum" element={<CommunityForum />} />
                       <Route path="/settingsMenu" element={<SettingsMenu />} />
                       <Route path="/allUsers" element={<AllUsersPage />} />
                       <Route path="/mainChat" element={<MainChat />} />
-                      <Route
-                        path="/privateChat/:id"
-                        element={<PrivateChat />}
-                      />
-                      <Route
-                        path="/privacyPolicy"
-                        element={<PrivacyPolicy />}
-                      />
-                      <Route
-                        path="*"
-                        element={<h1>404 - Página não encontrada</h1>}
-                      />
-                      <Route path="/termsOfUse" element={<TermsOfUse />} />{" "}
-                      {/* Rota para a página de termos de uso */}
-                      <Route path="/reels" element={<Reels />} />{" "}
-                      {/* Rota para a página de reels */}
+                      <Route path="/privateChat/:id" element={<PrivateChat />} />
+                      <Route path="/privacyPolicy" element={<PrivacyPolicy />} />
+                      <Route path="/termsOfUse" element={<TermsOfUse />} />
+                      <Route path="/reels" element={<Reels />} />
                       <Route
                         path="/addManagement"
                         element={
@@ -284,11 +269,13 @@ const AppWithLocation = () => {
                           </ProtectedRoute>
                         }
                       />
+                      <Route path="*" element={<h1>404 - Página não encontrada</h1>} />
                     </Routes>
+
                     <MinimizedStatus />
                   </div>
                 </div>
-                {/* footer aqui */}
+
                 {shouldShowFooter && (
                   <div className="footerFixedWrapper">
                     <div className="footerContainer">
@@ -297,6 +284,7 @@ const AppWithLocation = () => {
                   </div>
                 )}
               </div>
+
               {/* 3rd ads container */}
               <div className="sideMenuContainerWideScreen">
                 {shouldShowSideMenu && <SideAddSection />}

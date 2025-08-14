@@ -2,7 +2,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
-import socket from "../socket";
+import { useSocket } from "../context/SocketContext";
+
+
 import "../styles/chat.css";
 import { format } from "date-fns";
 import Header from "../components/Header";
@@ -13,6 +15,7 @@ import {
 import { deriveDmState } from "../utils/dmState";
 
 const PrivateChat = () => {
+  const socket = useSocket();
   const { id: conversationId } = useParams();
   const { currentUser } = useUser();
   const navigate = useNavigate();
@@ -24,13 +27,14 @@ const PrivateChat = () => {
 
   // estado canônico do DM
   const [meta, setMeta] = useState({
-    participants: [],   // [string]
-    waitingUser: null,  // string|null
-    requester: null,    // string|null
-    leavingUser: null,  // string|null
+    participants: [], // [string]
+    waitingUser: null, // string|null
+    requester: null, // string|null
+    leavingUser: null, // string|null
   });
 
-  const toStr = (x) => (x && x._id ? String(x._id) : (x != null ? String(x) : null));
+  const toStr = (x) =>
+    x && x._id ? String(x._id) : x != null ? String(x) : null;
 
   // Descobrir "o outro" sem usar pendingFor
   const getOtherId = () => {
@@ -41,7 +45,9 @@ const PrivateChat = () => {
         meta.waitingUser,
         meta.requester,
         meta.leavingUser,
-      ].filter(Boolean).map(String)
+      ]
+        .filter(Boolean)
+        .map(String)
     );
     bag.delete(me);
     for (const id of bag) return id;
@@ -51,10 +57,13 @@ const PrivateChat = () => {
   // Carregar meta do DB
   const refreshFromDB = async () => {
     try {
-      const res = await fetch(`${baseURL}/api/dm/conversation/${conversationId}`, {
-        credentials: "include",
-        headers: { "Cache-Control": "no-cache" },
-      });
+      const res = await fetch(
+        `${baseURL}/api/dm/conversation/${conversationId}`,
+        {
+          credentials: "include",
+          headers: { "Cache-Control": "no-cache" },
+        }
+      );
       if (!res.ok) return;
       const conv = await res.json();
       setMeta({
@@ -79,11 +88,16 @@ const PrivateChat = () => {
 
     const handleIncomingMessage = (newMsg) => {
       if (newMsg?.conversationId !== conversationId) return;
-      setMessages((prev) => (prev.some((m) => m._id === newMsg._id) ? prev : [...prev, newMsg]));
+      setMessages((prev) =>
+        prev.some((m) => m._id === newMsg._id) ? prev : [...prev, newMsg]
+      );
     };
 
     const join = () => {
-      socket.emit("joinPrivateChat", { conversationId, userId: currentUser._id });
+      socket.emit("joinPrivateChat", {
+        conversationId,
+        userId: currentUser._id,
+      });
     };
 
     socket.off("connect", join);
@@ -95,9 +109,12 @@ const PrivateChat = () => {
 
     (async () => {
       try {
-        const res = await fetch(`${baseURL}/api/dm/messages/${conversationId}`, {
-          credentials: "include",
-        });
+        const res = await fetch(
+          `${baseURL}/api/dm/messages/${conversationId}`,
+          {
+            credentials: "include",
+          }
+        );
         const data = await res.json();
         setMessages(Array.isArray(data) ? data : []);
       } catch (err) {
@@ -111,7 +128,10 @@ const PrivateChat = () => {
           method: "POST",
           credentials: "include",
         });
-        socket.emit("privateChatRead", { conversationId, userId: currentUser._id });
+        socket.emit("privateChatRead", {
+          conversationId,
+          userId: currentUser._id,
+        });
       } catch (error) {
         console.error("Erro ao marcar como lida:", error);
       }
@@ -129,9 +149,13 @@ const PrivateChat = () => {
       if (p?.conversationId !== conversationId) return;
       setMeta((prev) => ({
         participants: (p.participants ?? prev.participants ?? []).map(toStr),
-        waitingUser: toStr(p.waitingUser != null ? p.waitingUser : prev.waitingUser),
-        requester:   toStr(p.requester   != null ? p.requester   : prev.requester),
-        leavingUser: toStr(p.leavingUser != null ? p.leavingUser : prev.leavingUser),
+        waitingUser: toStr(
+          p.waitingUser != null ? p.waitingUser : prev.waitingUser
+        ),
+        requester: toStr(p.requester != null ? p.requester : prev.requester),
+        leavingUser: toStr(
+          p.leavingUser != null ? p.leavingUser : prev.leavingUser
+        ),
       }));
       // opcional: confirmar com o DB
       // refreshFromDB();
@@ -230,7 +254,9 @@ const PrivateChat = () => {
                   <>
                     <strong>{msg.username || "Você"}:</strong> {msg.message}
                     <br />
-                    <small>{format(new Date(msg.timestamp || new Date()), "PPpp")}</small>
+                    <small>
+                      {format(new Date(msg.timestamp || new Date()), "PPpp")}
+                    </small>
                   </>
                 )}
               </div>
@@ -249,7 +275,9 @@ const PrivateChat = () => {
                 placeholder="Digite sua mensagem..."
                 className="input"
               />
-              <button onClick={sendMessage} className="sendBtn">Enviar</button>
+              <button onClick={sendMessage} className="sendBtn">
+                Enviar
+              </button>
             </>
           )}
 
@@ -261,15 +289,21 @@ const PrivateChat = () => {
 
           {uiState === "PENDING_I_NEED_TO_ACCEPT" && (
             <>
-              <button className="sendBtn" onClick={accept}>Aceitar conversa</button>
-              <button className="inviteBackBtn" onClick={reject}>Rejeitar</button>
+              <button className="sendBtn" onClick={accept}>
+                Aceitar conversa
+              </button>
+              <button className="inviteBackBtn" onClick={reject}>
+                Rejeitar
+              </button>
             </>
           )}
 
           {uiState === "ALONE_CAN_REINVITE" && (
             <button
               className="inviteBackBtn"
-              onClick={() => handleInviteBackToChat(conversationId, currentUser._id)}
+              onClick={() =>
+                handleInviteBackToChat(conversationId, currentUser._id)
+              }
             >
               Convidar usuário de volta
             </button>

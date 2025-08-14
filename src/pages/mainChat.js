@@ -5,15 +5,18 @@ import { useUser } from "../context/UserContext";
 import Header from "../components/Header";
 import ChatComponent from "../components/ChatComponent";
 import { handleBack } from "../components/functions/headerFunctions";
-import socket from "../socket"; // ⬅️ ADICIONADO
+import { useSocket } from "../context/SocketContext";
+
+// ⬅️ ADICIONADO
 
 import "../styles/style.css";
-import "../styles/liveRoom.css";   // reaproveita .liveRoomContent / loading
+import "../styles/liveRoom.css"; // reaproveita .liveRoomContent / loading
 
 const baseURL = process.env.REACT_APP_API_BASE_URL;
 const MAIN_ROOM_ID = "mainChatRoom";
 
 const MainChat = () => {
+  const socket = useSocket();
   const { currentUser } = useUser();
   const navigate = useNavigate();
 
@@ -30,7 +33,10 @@ const MainChat = () => {
     if (!currentUser?._id) return;
     socket.emit("joinRoom", { roomId: MAIN_ROOM_ID, userId: currentUser._id });
     return () => {
-      socket.emit("leaveRoom", { roomId: MAIN_ROOM_ID, userId: currentUser._id });
+      socket.emit("leaveRoom", {
+        roomId: MAIN_ROOM_ID,
+        userId: currentUser._id,
+      });
     };
   }, [currentUser?._id]);
 

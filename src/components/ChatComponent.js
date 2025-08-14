@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { useUser } from "../context/UserContext";
-import socket from "../socket";
+import { useSocket } from "../context/SocketContext";
+
+
 import TrashIcon from "../assets/icons/trashcan";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
@@ -27,6 +29,7 @@ import {
 } from "./functions/chatComponentFunctions";
 
 const ChatComponent = ({ roomId }) => {
+  const socket = useSocket();
   const { currentUser } = useUser();
   const { toggleMicrophone, micState } = useContext(AudioContext);
 
@@ -38,8 +41,8 @@ const ChatComponent = ({ roomId }) => {
   const usernameColors = useRef({});
   const [isAtBottom, setIsAtBottom] = useState(true);
 
-  const currentScreen = useLocation()
-  console.log("currentScreen:", currentScreen.pathname)
+  const currentScreen = useLocation();
+  console.log("currentScreen:", currentScreen.pathname);
 
   useSocketConnectionLogger();
   useJoinRoomChat(roomId, currentUser, setMessages, () =>
@@ -104,7 +107,9 @@ const ChatComponent = ({ roomId }) => {
                   <div
                     className="chatAvatar"
                     style={{
-                      backgroundImage: `url(${msg.profileImage || profilePlaceholder})`,
+                      backgroundImage: `url(${
+                        msg.profileImage || profilePlaceholder
+                      })`,
                     }}
                     title={msg.username}
                   />

@@ -1,13 +1,8 @@
 import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
+  createContext, useContext, useState, useEffect, useRef, useCallback,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import socket from "../socket";
+import { useSocket } from "../context/SocketContext";
 
 const UserContext = createContext();
 const UsersContext = createContext();
@@ -16,39 +11,38 @@ export const useUser = () => useContext(UserContext);
 export const useUsers = () => useContext(UsersContext);
 
 export const UserProvider = ({ children }) => {
+  const socket = useSocket();
   const [darkMode, setDarkMode] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const hasFetchedUserRef = useRef(false);
   const navigate = useNavigate();
-
   const API = process.env.REACT_APP_API_BASE_URL;
 
-  // ---- socket helpers (memorized) ----
+  // ---- helpers ----
   const emitLogin = useCallback((user) => {
-    if (!user) return;
+    if (!user || !socket) return;
     socket.emit("userLoggedIn", {
       _id: user._id,
       username: user.username,
       profileImage: user.profileImage || "https://via.placeholder.com/50",
     });
-    // console.log("📡 Emitindo login para socket:", user.username);
-  }, []);
+  }, [socket]); // ✅ depende do socket
 
   const wakeServerAndConnectSocket = useCallback(
     async (user) => {
       try {
         await fetch(`${API}/api/users/ping`);
-        if (!socket.connected) socket.connect();
-        emitLogin(user); // sempre emite ao (re)conectar
+        if (socket && !socket.connected) socket.connect();
+        if (socket) emitLogin(user);
       } catch (err) {
         console.error("❌ Erro ao acordar servidor:", err);
       }
     },
-    [API, emitLogin]
+    [API, socket, emitLogin] // ✅ inclui socket
   );
 
-  // ---- restaura user do localStorage ao montar e acorda servidor/socket ----
+  // Restaura user e acorda socket
   useEffect(() => {
     const stored = localStorage.getItem("user");
     if (stored) {
@@ -58,25 +52,28 @@ export const UserProvider = ({ children }) => {
     }
   }, [wakeServerAndConnectSocket]);
 
-  // ---- reconexão do socket: reenvia login e pede onlineUsers ----
+  // Re-conexão
   useEffect(() => {
+    if (!socket) return;
     const onConnect = () => {
-      // console.log("🔌 Reconectado.");
       if (currentUser) emitLogin(currentUser);
       setTimeout(() => socket.emit("getOnlineUsers"), 200);
     };
     socket.on("connect", onConnect);
     return () => socket.off("connect", onConnect);
-  }, [currentUser, emitLogin]);
+  }, [socket, currentUser, emitLogin]); // ✅ inclui socket
 
-  // ---- listener de onlineUsers ----
+  // onlineUsers listener
   useEffect(() => {
+    if (!socket) return;
     const handleOnlineUsers = (users) => setOnlineUsers(users);
     socket.on("onlineUsers", handleOnlineUsers);
+    // opcional: pedir lista ao montar se já conectado
+    if (socket.connected) socket.emit("getOnlineUsers");
     return () => socket.off("onlineUsers", handleOnlineUsers);
-  }, []);
+  }, [socket]); // ✅ inclui socket
 
-  // ---- heartbeat periódico enquanto autenticado e aba visível ----
+  // Heartbeat (não precisa de socket)
   useEffect(() => {
     if (!currentUser?._id) return;
     const id = setInterval(() => {
@@ -89,8 +86,9 @@ export const UserProvider = ({ children }) => {
     return () => clearInterval(id);
   }, [API, currentUser?._id]);
 
-  // ---- valida cookie do backend uma vez e atualiza currentUser ----
+  // Valida cookie e reenvia login
   useEffect(() => {
+    if (!socket) return; // ✅ e re-dispara quando socket chegar
     const run = async () => {
       if (hasFetchedUserRef.current) return;
       hasFetchedUserRef.current = true;
@@ -103,29 +101,23 @@ export const UserProvider = ({ children }) => {
 
       setTimeout(async () => {
         try {
-          const res = await fetch(`${API}/api/users/current`, {
-            credentials: "include",
-          });
+          const res = await fetch(`${API}/api/users/current`, { credentials: "include" });
           if (!res.ok) throw new Error("Usuário não autenticado.");
-
           const verified = await res.json();
           setCurrentUser(verified);
           localStorage.setItem("user", JSON.stringify(verified));
-
           if (socket.connected) emitLogin(verified);
           else socket.connect();
         } catch {
-          console.warn(
-            "⚠️ Cookie inválido/expirado. Mantendo user do localStorage."
-          );
+          console.warn("⚠️ Cookie inválido/expirado. Mantendo user do localStorage.");
           setCurrentUser(user);
         }
       }, 500);
     };
     run();
-  }, [API, emitLogin]);
+  }, [API, socket, emitLogin]); // ✅ inclui socket
 
-  // ---- reidrata ao focar/visível/pageshow (sleep/wake) ----
+  // Reidrata ao focar/visível/pageshow
   useEffect(() => {
     let busy = false;
     const rehydrate = async () => {
@@ -133,22 +125,18 @@ export const UserProvider = ({ children }) => {
       busy = true;
       setTimeout(() => (busy = false), 800);
 
-      // ✅ Só tenta reidratar se existir user salvo (estado logado)
       const stored = localStorage.getItem("user");
       if (!stored) return;
 
       try {
-        const res = await fetch(`${API}/api/users/current`, {
-          credentials: "include",
-        });
+        const res = await fetch(`${API}/api/users/current`, { credentials: "include" });
         if (!res.ok) throw new Error("no auth");
-
         const verified = await res.json();
         setCurrentUser(verified);
         localStorage.setItem("user", JSON.stringify(verified));
         await wakeServerAndConnectSocket(verified);
       } catch {
-        // sem sessão no backend -> mantém estado atual
+        // mantém estado atual
       }
     };
 
@@ -168,7 +156,7 @@ export const UserProvider = ({ children }) => {
     };
   }, [API, wakeServerAndConnectSocket]);
 
-  // ---- sync entre abas (login/logout) ----
+  // Sync entre abas
   useEffect(() => {
     const onStorage = (e) => {
       if (e.key !== "auth:event") return;
@@ -179,90 +167,67 @@ export const UserProvider = ({ children }) => {
         wakeServerAndConnectSocket(u);
       } else {
         setCurrentUser(null);
-        socket.disconnect();
+        if (socket) socket.disconnect();
       }
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
-  }, [wakeServerAndConnectSocket]);
+  }, [socket, wakeServerAndConnectSocket]); // ✅ inclui socket
 
   // ---- ações públicas ----
   const login = (user) => {
     setCurrentUser(user);
     localStorage.setItem("user", JSON.stringify(user));
-    localStorage.setItem("auth:event", String(Date.now())); // notifica outras abas
-    if (socket.connected) emitLogin(user);
-    else socket.connect();
-
-    // debug opcional de cookies
-    fetch(`${API}/api/users/debug/cookies`, { credentials: "include" }).catch(
-      () => {}
-    );
+    localStorage.setItem("auth:event", String(Date.now()));
+    if (socket) {
+      if (socket.connected) emitLogin(user);
+      else socket.connect();
+    }
+    fetch(`${API}/api/users/debug/cookies`, { credentials: "include" }).catch(() => {});
   };
 
   const logout = async () => {
     const userId = currentUser?._id;
 
-    // avisa o socket (se tivermos user)
-    if (userId) {
-      socket.emit("userLoggedOut", {
-        _id: userId,
-        username: currentUser.username,
-      });
+    // apenas emite se houver socket, mas NÃO sai da função
+    if (userId && socket) {
+      socket.emit("userLoggedOut", { _id: userId, username: currentUser.username });
     }
 
-    // tenta limpar cookies/sessão no backend
     try {
-      await fetch(`${API}/api/auth/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (_) {
-      // ignora erro de rede aqui — ainda vamos limpar o client state
-    }
+      await fetch(`${API}/api/auth/logout`, { method: "POST", credentials: "include" });
+    } catch (_) {}
 
-    // limpa estado/localStorage e sincroniza com outras abas
     setCurrentUser(null);
     localStorage.removeItem("user");
     localStorage.setItem("auth:event", String(Date.now()));
 
-    // tenta atualizar onlineUsers antes de desconectar
     const handleUpdatedOnlineUsers = (users) => {
-      // remove este usuário da lista que chegou do servidor
+      // remove este usuário e segue para desconectar
       setOnlineUsers(users.filter((u) => u._id !== userId));
-      socket.off("onlineUsers", handleUpdatedOnlineUsers);
-      socket.disconnect();
+      if (socket) {
+        socket.off("onlineUsers", handleUpdatedOnlineUsers);
+        socket.disconnect();
+      }
       navigate("/");
     };
 
-    if (socket.connected) {
+    if (socket?.connected) {
       socket.once("onlineUsers", handleUpdatedOnlineUsers);
-      // garante que venha um "onlineUsers" agora
       socket.emit("getOnlineUsers");
-
-      // fallback rápido caso o evento não chegue
       setTimeout(() => {
-        socket.off("onlineUsers", handleUpdatedOnlineUsers);
-        socket.disconnect();
+        if (socket) socket.off("onlineUsers", handleUpdatedOnlineUsers);
+        if (socket) socket.disconnect();
         navigate("/");
       }, 800);
     } else {
-      socket.disconnect();
+      if (socket) socket.disconnect();
       navigate("/");
     }
   };
 
   return (
-    <UserContext.Provider
-      value={{
-        currentUser,
-        setCurrentUser,
-        login,
-        logout,
-        darkMode,
-        setDarkMode,
-      }}
-    >
+    <UserContext.Provider value={{ currentUser, setCurrentUser, login, logout, darkMode, setDarkMode }}>
       <UsersContext.Provider value={{ onlineUsers }}>
         {children}
       </UsersContext.Provider>

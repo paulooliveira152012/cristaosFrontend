@@ -4,9 +4,11 @@ import "../styles/adManagement.css";
 import Header from "../components/Header";
 import { getAds } from "../components/functions/addManagementFuncitons";
 import { useNavigate } from "react-router-dom";
-import socket from "../socket";
+import { useSocket } from "../context/SocketContext";
+
 
 const ViewAds = () => {
+  const socket = useSocket();
   const navigate = useNavigate();
   const [ads, setAds] = useState([]);
   const [loading, setLoading] = useState(true);

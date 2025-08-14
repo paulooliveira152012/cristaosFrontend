@@ -2,12 +2,15 @@ import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import { useUser } from "../context/UserContext";
 import { useNavigate, Link } from "react-router-dom";
-import socket from "../socket";
+import { useSocket } from "../context/SocketContext";
+
+
 import "../styles/Login.css";
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 const Login = () => {
+  const socket = useSocket();
   // referenciar a logica de login do useUser
   const { login } = useUser();
   const navigate = useNavigate();

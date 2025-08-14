@@ -1,56 +1,35 @@
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 export const checkForNewNotifications = async (setNotifications) => {
-  console.log("function call for notifications check...");
-
-  const token = localStorage.getItem("token"); // ✅ pegar o token
-
   try {
-    const response = await fetch(`${baseUrl}/api/notifications/`, {
+    const res = await fetch(`${baseUrl}/api/notifications/`, {
       method: "GET",
-      credentials: "include"
+      credentials: "include",
     });
+    if (!res.ok) throw new Error("Erro ao buscar notificações");
+    const data = await res.json();
 
-    if (!response.ok) {
-      throw new Error("Erro ao buscar notificações");
-    }
-
-    const data = await response.json();
-    // console.log("Notificações recebidas:", data);
-
-    // ✅ Corrigido: checa se tem ALGUMA notificação NÃO lida
-    const hasUnread = data.some((n) => !n.isRead);
-    setNotifications(hasUnread);
-
-    return data;
-  } catch (error) {
-    console.error("Erro ao buscar notificações:", error);
-    return [];
+    const unreadCount = data.filter(n => !n.isRead).length;
+    setNotifications(unreadCount > 0); // se seu contexto usa boolean
+    return { unreadCount, data };
+  } catch (err) {
+    console.error("Erro ao buscar notificações:", err);
+    setNotifications(false);
+    return { unreadCount: 0, data: [] };
   }
 };
 
 export const markAllNotificationsAsRead = async () => {
-  const token = localStorage.getItem("token"); // ✅ pegar o token
-
   try {
     const res = await fetch(`${baseUrl}/api/notifications/read-all`, {
       method: "PUT",
       credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      }, 
-       
+      headers: { "Content-Type": "application/json" },
     });
-
-    if (!res.ok) {
-      throw new Error("Erro ao marcar notificações como lidas.");
-    }
-
-    const data = await res.json();
-    console.log("✔️ Todas as notificações foram marcadas como lidas.");
-    return data;
-  } catch (error) {
-    console.error("❌ Erro ao marcar notificações como lidas:", error);
+    if (!res.ok) throw new Error("Erro ao marcar notificações como lidas.");
+    return await res.json();
+  } catch (err) {
+    console.error("Erro ao marcar notificações como lidas:", err);
   }
 };
 

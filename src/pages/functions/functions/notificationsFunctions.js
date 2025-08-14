@@ -1,5 +1,3 @@
-import { json } from "react-router-dom";
-
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 // Buscar pedidos de amizade recebidos
@@ -109,44 +107,32 @@ export const rejectDmRequest = async (requester, requested) => {
 
 
 
-// Buscar todas as notificações do usuário
+// Buscar todas as notificações
 export const fetchNotifications = async () => {
   try {
     const response = await fetch(`${baseUrl}/api/notifications`, {
       credentials: "include",
     });
-
     if (!response.ok) throw new Error("Erro ao buscar notificações");
-    const data = await response.json();
-    return data; // já é o array direto
-  } catch (error) {
-    console.error("Erro ao buscar notificações:", error);
+    return await response.json();
+  } catch (err) {
+    console.error("Erro ao buscar notificações:", err);
     return [];
   }
 };
 
 // Marcar uma notificação como lida
-export const markNotificationAsRead = async (notifId, token) => {
+// Marcar UMA como lida (sem token; usa cookie)
+export const markNotificationAsRead = async (notifId) => {
   try {
-    if (typeof notifId !== "string") {
-      console.error("notifId precisa ser uma string:", notifId);
-      return;
-    }
-
-    const response = await fetch(
-      `${baseUrl}/api/notifications/read/${notifId}`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`, // se seu backend exige autenticação
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (!response.ok) throw new Error("Erro ao marcar notificação como lida");
-    return await response.json();
-  } catch (error) {
-    console.error("Erro ao marcar notificação como lida:", error);
+    const res = await fetch(`${baseUrl}/api/notifications/read/${notifId}`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!res.ok) throw new Error("Erro ao marcar notificação como lida");
+    return await res.json();
+  } catch (err) {
+    console.error("Erro ao marcar notificação como lida:", err);
   }
 };
