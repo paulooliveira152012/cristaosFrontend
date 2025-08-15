@@ -65,6 +65,15 @@ body.dark-mode .landingLivesContainer {
     /* background-color: pink; */
 }
 
+.newRoomContainer {
+    /* background-color: red; */
+    height: 100dvh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
 .modal {
     height: 100vh; /* O modal ocupa toda a altura da viewport */
     width: 100vw;  /* O modal ocupa toda a largura da viewport */
@@ -84,16 +93,21 @@ body.dark-mode .landingLivesContainer {
     display: flex;
     justify-content: space-between;
     padding: 0px 0px;
-    background-color: lightblue; 
+    /* background-color: lightblue;  */
     color: black;
     /* box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); */
     /* height: 60px; */
     max-width: 800px;
-    margin: auto;
-    align-items: center;
-    padding: 10px ;
+    /* margin: auto; */
+    /* align-items: center; */
+    padding:  30px ;
     height: 9vh;
     justify-content: right;
+    /* background-color: red; */
+    position: absolute;
+    top: 0;
+    /* background-color: transparent; */
+    border-radius: 20px;
 }
 
 body.modal-open {
@@ -106,19 +120,22 @@ body.modal-open {
 
 .newRoomForm {
     max-width: 500px; /* Limita a largura máxima para telas maiores */
-    width: 50%;
-    aspect-ratio: 0.75; /* Mantém a proporção */
+    width: 80%;
+    aspect-ratio: 0.95; /* Mantém a proporção */
     background-color: white;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Adiciona um leve sombreado */
     /* border-radius: 100px; Adiciona bordas arredondadas para um estilo mais moderno */
-    padding: 20px; /* Adiciona padding interno */
-    margin: auto;
-    margin-top: 20%;
+    
+    /* margin-top: 20%; */
     display: flex;
     flex-direction: column;
-    text-align: center;
-    display: flex;
-    justify-content:space-around;
+    /* text-align: center; */
+    /* display: flex; */
+    justify-content:center;
+    /* padding-top: 10%; */
+    align-items: center ;
+    border-radius: 20px;
+    position: relative;
 }
 
 /* .selectedImageContainer img {
