@@ -7,7 +7,7 @@ import { useUser } from "../context/UserContext";
 
 import NewChat from "../assets/icons/newchatIcon";
 
-const baseUrl = process.env.REACT_APP_API_BASE_URL
+const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 const Salas = () => {
   const { currentUser } = useUser();
@@ -16,6 +16,7 @@ const Salas = () => {
   const [roomImageFile, setRoomImageFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [rooms, setRooms] = useState([]);
+  const [modal, setModal] = useState(true);
 
   // Fetch rooms from backend on component mount
   useEffect(() => {
@@ -45,19 +46,18 @@ const Salas = () => {
   }, []); // Empty dependency array to ensure fetch only runs once on mount
 
   // Toggle modal visibility
-const toggleModal = () => {
-  const modal = document.getElementsByClassName("modal")[0];
-  const isModalOpen = modal.style.display === "block";
+  const toggleModal = () => {
+    const modal = document.getElementsByClassName("modal")[0];
+    const isModalOpen = modal.style.display === "block";
 
-  if (isModalOpen) {
-    modal.style.display = "none";
-    document.body.style.overflow = ""; // Desbloqueia scroll
-  } else {
-    modal.style.display = "block";
-    document.body.style.overflow = "hidden"; // Bloqueia scroll
-  }
-};
-
+    if (isModalOpen) {
+      modal.style.display = "none";
+      document.body.style.overflow = ""; // Desbloqueia scroll
+    } else {
+      modal.style.display = "block";
+      document.body.style.overflow = "hidden"; // Bloqueia scroll
+    }
+  };
 
   // Handle file selection
   const handleSelectImage = (event) => {
@@ -139,61 +139,61 @@ const toggleModal = () => {
   return (
     <div className="landingLivesContainer">
       {/* Modal for creating a new room */}
-      <div className="modal" style={{ display: "none" }}>
-        <div>
-          <form className="newRoomForm" onSubmit={(e) => e.preventDefault()}>
-        <div 
-          onClick={toggleModal}
-          className="closeModalButtonContainer"
-        >
-          X
-        </div>
-            <label>Título Da Sala</label>
-            <input
-              className="nomeDaSala"
-              value={roomTitle}
-              onChange={(e) => setRoomTitle(e.target.value)}
-              placeholder="Enter room title"
-            />
 
-            <label>Imagem Da Sala</label>
-            {/* Image file input */}
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleSelectImage}
-              style={{ display: "none" }}
-              id="imageUpload"
-            />
-            <label htmlFor="imageUpload" className="imageUploadLabel">
-              <div
-                className="selectedImageContainer"
-                style={{
-                  backgroundImage: roomImageFile
-                    ? `url(${URL.createObjectURL(roomImageFile)})`
-                    : "none",
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                  width: "100px",
-                  height: "100px",
-                  borderRadius: "50%",
-                  backgroundColor: "#ddd",
-                }}
-              >
-                {!roomImageFile && <div className="circlePlaceholder"></div>}
+      {modal && (
+        <div className="modal" style={{ display: "none" }}>
+          <div className="newRoomContainer">
+            <form className="newRoomForm" onSubmit={(e) => e.preventDefault()}>
+              <div onClick={toggleModal} className="closeModalButtonContainer">
+                X
               </div>
-            </label>
 
-            <div className="button" onClick={handleCreateRoom}>
-              <p>{isLoading ? "Criando Sala..." : "Criar Sala"}</p>
-            </div>
-          </form>
+              {/* Image file input */}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleSelectImage}
+                style={{ display: "none" }}
+                id="imageUpload"
+              />
+              <label htmlFor="imageUpload" className="imageUploadLabel">
+                <div
+                  className="selectedImageContainer"
+                  style={{
+                    backgroundImage: roomImageFile
+                      ? `url(${URL.createObjectURL(roomImageFile)})`
+                      : "none",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    width: "100px",
+                    height: "100px",
+                    borderRadius: "50%",
+                    backgroundColor: "#ddd",
+                  }}
+                >
+                  {!roomImageFile && <div className="circlePlaceholder"></div>}
+                </div>
+              </label>
+              <input
+                className="nomeDaSala"
+                value={roomTitle}
+                onChange={(e) => setRoomTitle(e.target.value)}
+                placeholder="Enter room title"
+              />
+
+              
+
+              <div className="button" onClick={handleCreateRoom}>
+                <p>{isLoading ? "Criando Sala..." : "Criar Sala"}</p>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Button to open the modal */}
       <div className="landingLiveNewRoomContainer" onClick={toggleModal}>
-          <NewChat className="newChatICon" />
+        <NewChat className="newChatICon" />
       </div>
 
       {/* Mapping through fetched rooms (following the openLiveRooms pattern) */}
