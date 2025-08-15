@@ -80,9 +80,16 @@ export const acceptDmRequest = async (requester, requested, notificationId) => {
   }
 };
 
-export const rejectDmRequest = async (requester, requested) => {
+export const rejectDmRequest = async (
+  requester,
+  requested,
+  conversationId,
+  notificationId
+) => {
   const requesterId = typeof requester === "object" ? requester._id : requester;
   const requestedId = typeof requested === "object" ? requested._id : requested;
+
+  console.log("conversationId:", conversationId)
 
   try {
     const response = await fetch(`${baseUrl}/api/dm/rejectChatRequest`, {
@@ -92,20 +99,19 @@ export const rejectDmRequest = async (requester, requested) => {
       body: JSON.stringify({
         requester: requesterId,
         requested: requestedId,
+        conversationId, // ✅ novo
+        notificationId, //
       }),
     });
 
-    if (!response.ok) throw new Error("Erro ao rejeitar solicitação de conversa");
+    if (!response.ok)
+      throw new Error("Erro ao rejeitar solicitação de conversa");
 
     return await response.json();
   } catch (error) {
     console.error("Erro ao rejeitar DM:", error);
   }
 };
-
-
-
-
 
 // Buscar todas as notificações
 export const fetchNotifications = async () => {
@@ -116,8 +122,8 @@ export const fetchNotifications = async () => {
 
     const res = await fetch(`${baseUrl}/api/notifications`, {
       method: "GET",
-      credentials: "include",       // cookies (se usados)
-      headers,                      // bearer (se existir)
+      credentials: "include", // cookies (se usados)
+      headers, // bearer (se existir)
     });
 
     if (!res.ok) {

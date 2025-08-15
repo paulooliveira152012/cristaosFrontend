@@ -273,7 +273,7 @@ const Signup = () => {
                 style={{
                   backgroundImage: profileImage
                     ? `url(${profileImage})`
-                    : `url('https://via.placeholder.com/150x150?text=Upload+Image')`,
+                    : `url('https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-2210.jpg?w=360')`,
                 }}
                 onClick={handleImagePicker}
               />

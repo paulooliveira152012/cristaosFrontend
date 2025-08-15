@@ -25,7 +25,7 @@ export const UserProvider = ({ children }) => {
     socket.emit("userLoggedIn", {
       _id: user._id,
       username: user.username,
-      profileImage: user.profileImage || "https://via.placeholder.com/50",
+      profileImage: user.profileImage || "https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-2210.jpg?w=360",
     });
   }, [socket]); // ✅ depende do socket
 

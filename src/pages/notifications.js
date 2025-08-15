@@ -161,6 +161,8 @@ export const Notifications = () => {
     return { friendRequests, dmRequests, otherNotifications };
   }, [items]);
 
+  console.log("items:", items)
+
   // amizade
   const handleAcceptFriend = async (requesterId) => {
     setProcessingId(requesterId);
@@ -208,10 +210,28 @@ export const Notifications = () => {
     }
   };
 
+  // tenta resolver o ID da conversa a partir do objeto de notificação
+  const resolveConversationId = (req) =>
+    req?.conversationId ||
+    req?.dmConversationId ||
+    req?.conversation?._id ||
+    null;
+
   const handleRejectDm = async (request) => {
     setProcessingId(request._id);
+    console.log("processingId:", processingId)
+    
     try {
-      await rejectDmRequest(request.fromUser?._id, currentUser._id);
+      const conversationId = resolveConversationId(request);
+      console.log("✅ conversationId:", conversationId)
+      // (opcional) fallback: se não veio no request, você pode buscar no back
+      // const conversationId = await ensureConversationId(request.fromUser?._id, currentUser._id);
+      await rejectDmRequest(
+        request.fromUser?._id,
+        currentUser._id,
+        conversationId, // ✅ agora definido
+        request._id // opcional: id da notificação para o back fechar/ler
+      );
       setItems((prev) => {
         const next = prev.filter((r) => r._id !== request._id);
         setFromList(next);

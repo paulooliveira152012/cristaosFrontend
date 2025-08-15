@@ -74,7 +74,7 @@ const Login = () => {
         socket.emit("userLoggedIn", {
           _id: data._id,
           email: data.email,
-          profileImage: data.profileImage || "https://via.placeholder.com/50",
+          profileImage: data.profileImage || "https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-2210.jpg?w=360",
         });
 
         // depois de logar/deslogar:
@@ -116,7 +116,7 @@ const Login = () => {
       socket.emit("userLoggedIn", {
         _id: data._id,
         email: data.email,
-        profileImage: data.profileImage || "https://via.placeholder.com/50",
+        profileImage: data.profileImage || "https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-2210.jpg?w=360",
       });
       navigate("/");
     } catch (err) {

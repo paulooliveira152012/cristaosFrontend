@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useUser } from "../context/UserContext";
 import Header from "../components/Header";
 import { useSocket } from "../context/SocketContext";
+import profilePlaceHolder from"../assets/images/profileplaceholder.png"
 
 // Use the globally managed socket
 import { useNavigate } from "react-router-dom";
@@ -14,6 +15,7 @@ const Chat = () => {
   const [onlineUsers, setOnlineUsers] = useState([]); // To store online users
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
+  
 
   // Scroll to the bottom of the chat when a new message is added
   const scrollToBottom = () => {
@@ -82,7 +84,7 @@ const Chat = () => {
           {onlineUsers.map((user, index) => (
             <div key={index} style={styles.userItem}>
               <img
-                src={user.profileImage || "https://via.placeholder.com/50"}
+                src={user.profileImage || "https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-2210.jpg?w=360"}
                 alt={`${user.username}'s profile`}
                 style={styles.userImage}
               />
