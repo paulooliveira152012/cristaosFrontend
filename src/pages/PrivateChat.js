@@ -4,7 +4,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { useSocket } from "../context/SocketContext";
 
-
 import "../styles/chat.css";
 import { format } from "date-fns";
 import Header from "../components/Header";
@@ -32,6 +31,20 @@ const PrivateChat = () => {
     requester: null, // string|null
     leavingUser: null, // string|null
   });
+
+  // useEffect(() => {
+  //   if (!socket || !currentUser?._id) return;
+
+  //   const refresh = () => fetchPrivateChats();
+
+  //   socket.on("dm:accepted", refresh);
+  //   socket.on("conversation:participantChanged", refresh);
+
+  //   return () => {
+  //     socket.off("dm:accepted", refresh);
+  //     socket.off("conversation:participantChanged", refresh);
+  //   };
+  // }, [socket, currentUser?._id, fetchPrivateChats]);
 
   const toStr = (x) =>
     x && x._id ? String(x._id) : x != null ? String(x) : null;

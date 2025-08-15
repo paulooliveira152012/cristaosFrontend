@@ -192,23 +192,43 @@ export const Notifications = () => {
   };
 
   // DM
-  const handleAcceptDm = async (request) => {
-    setProcessingId(request._id);
-    try {
-      await acceptDmRequest(
-        request.fromUser?._id,
-        currentUser._id,
-        request._id
-      );
-      setItems((prev) => {
-        const next = prev.filter((r) => r._id !== request._id);
-        setFromList(next);
-        return next;
-      });
-    } finally {
-      setProcessingId(null);
+const handleAcceptDm = async (request) => {
+  setProcessingId(request._id);
+  try {
+    const conversationId = resolveConversationId(request);
+
+    // monta payload: preferimos conversationId; senão, caímos no par (fallback)
+    const payload = conversationId
+      ? { conversationId, notificationId: request._id }
+      : {
+          requester: request.fromUser?._id,    // quem convidou
+          requested: currentUser._id,          // eu (quem está aceitando)
+          notificationId: request._id,
+        };
+
+    const res = await acceptDmRequest(payload); // { conversation }
+
+    // remove a notificação da lista e atualiza badge
+    setItems((prev) => {
+      const next = prev.filter((r) => r._id !== request._id);
+      setFromList(next);
+      return next;
+    });
+
+    // (opcional) já entro/sincronizo a sala no socket
+    const convId = res?.conversation?._id || conversationId;
+    if (socket && convId) {
+      // adapte o evento ao que você emite no back (ex: "dm:join")
+      socket.emit?.("dm:join", { conversationId: convId });
     }
-  };
+
+    // navega direto para a conversa; o input já deve estar habilitado (status=active)
+    if (convId) navigate(`/privateChat/${convId}`, { replace: true });
+
+  } finally {
+    setProcessingId(null);
+  }
+};
 
   // tenta resolver o ID da conversa a partir do objeto de notificação
   const resolveConversationId = (req) =>

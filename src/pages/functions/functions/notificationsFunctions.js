@@ -56,29 +56,19 @@ export const rejectFriendRequest = async (requesterId) => {
 };
 
 // Aceitar pedido de amizade
-export const acceptDmRequest = async (requester, requested, notificationId) => {
-  const requesterId = typeof requester === "object" ? requester._id : requester;
-  const requestedId = typeof requested === "object" ? requested._id : requested;
-
-  console.log(requestedId, "accepting dm... from", requesterId);
-
-  try {
-    const response = await fetch(`${baseUrl}/api/dm/startNewConversation/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        requester: requesterId,
-        requested: requestedId,
-        notificationId, // ID da notificação
-      }),
-    });
-    if (!response.ok) throw new Error("Erro ao aceitar pedido de amizade");
-    return await response.json();
-  } catch (error) {
-    console.error("Erro ao aceitar pedido:", error);
-  }
+// notificationsFunctions.js
+export const acceptDmRequest = async (payload) => {
+  console.log("Aceitando dm...")
+  const res = await fetch(`${baseUrl}/api/dm/accept`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Erro ao aceitar solicitação de conversa");
+  return res.json(); // { message, conversation }
 };
+
 
 export const rejectDmRequest = async (
   requester,
