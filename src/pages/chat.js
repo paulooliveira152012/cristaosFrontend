@@ -5,7 +5,6 @@ import "../styles/chat.css";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSocket } from "../context/SocketContext";
 
-
 function getInitials(name = "Usuário") {
   const parts = name.trim().split(/\s+/);
   const first = parts[0]?.[0] || "";
@@ -23,9 +22,6 @@ const Chat = () => {
   const [unreadMainChatCount, setUnreadMainChatCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-
-
-
 
   const fetchPrivateChats = useCallback(async () => {
     if (!currentUser?._id) return;
@@ -45,18 +41,18 @@ const Chat = () => {
   }, [currentUser?._id]);
 
   // ler "privateChatRead" para atualizar a lista
-useEffect(() => {
-  if (!socket || !currentUser?._id) return;
+  useEffect(() => {
+    if (!socket || !currentUser?._id) return;
 
-  const handler = (data) => {
-    if (String(data?.userId) === String(currentUser._id)) {
-      fetchPrivateChats();
-    }
-  };
+    const handler = (data) => {
+      if (String(data?.userId) === String(currentUser._id)) {
+        fetchPrivateChats();
+      }
+    };
 
-  socket.on("privateChatRead", handler);
-  return () => socket.off("privateChatRead", handler);
-}, [socket, currentUser?._id, fetchPrivateChats]);
+    socket.on("privateChatRead", handler);
+    return () => socket.off("privateChatRead", handler);
+  }, [socket, currentUser?._id, fetchPrivateChats]);
 
   const checkUnreadMainChat = useCallback(async () => {
     try {
@@ -90,20 +86,18 @@ useEffect(() => {
   ]);
 
   // badge do chat principal quando chega mensagem
-useEffect(() => {
-  if (!socket || !currentUser?._id) return;
+  useEffect(() => {
+    if (!socket || !currentUser?._id) return;
 
-  const handleNewMainMessage = ({ roomId }) => {
-    if (roomId === "mainChatRoom" && location.pathname !== "/mainChat") {
-      setUnreadMainChatCount((prev) => prev + 1);
-    }
-  };
+    const handleNewMainMessage = ({ roomId }) => {
+      if (roomId === "mainChatRoom" && location.pathname !== "/mainChat") {
+        setUnreadMainChatCount((prev) => prev + 1);
+      }
+    };
 
-  socket.on("newMessage", handleNewMainMessage);
-  return () => socket.off("newMessage", handleNewMainMessage);
-}, [socket, currentUser?._id, location.pathname]);
-
-
+    socket.on("newMessage", handleNewMainMessage);
+    return () => socket.off("newMessage", handleNewMainMessage);
+  }, [socket, currentUser?._id, location.pathname]);
 
   const handleNavigateToPrivateChat = async (chatId) => {
     try {
@@ -136,9 +130,13 @@ useEffect(() => {
     });
   }, [query, privateChats, currentUser?._id]);
 
-    if (!socket) {
-  return <div className="chatPage"><div className="emptyState">Conectando…</div></div>;
-}
+  if (!socket) {
+    return (
+      <div className="chatPage">
+        <div className="emptyState">Conectando…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="chatPage">

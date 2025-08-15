@@ -69,6 +69,15 @@ export const Notifications = () => {
   const [processingId, setProcessingId] = useState(null);
   const navigate = useNavigate();
 
+  // useEffect(() => {
+  //   if (!currentUser || !socket) return;
+  //   console.log("✅ notifications page");
+  //   console.log("currentUser:", currentUser)
+  //   // fetch notifications
+  //   const userId = currentUser?._id
+  //   fetchNotifications(userId)
+  // }, []);
+
   // carregar + marcar lidas + limpar badge
   // carregar + marcar lidas + limpar badge (sequência)
   useEffect(() => {

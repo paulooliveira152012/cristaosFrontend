@@ -110,11 +110,23 @@ export const rejectDmRequest = async (requester, requested) => {
 // Buscar todas as notificações
 export const fetchNotifications = async () => {
   try {
-    const response = await fetch(`${baseUrl}/api/notifications`, {
-      credentials: "include",
+    const token = localStorage.getItem("token");
+    const headers = { Accept: "application/json" };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    const res = await fetch(`${baseUrl}/api/notifications`, {
+      method: "GET",
+      credentials: "include",       // cookies (se usados)
+      headers,                      // bearer (se existir)
     });
-    if (!response.ok) throw new Error("Erro ao buscar notificações");
-    return await response.json();
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      console.warn("GET /api/notifications falhou:", res.status, text);
+      throw new Error(`Falha ${res.status}`);
+    }
+
+    return await res.json(); // array
   } catch (err) {
     console.error("Erro ao buscar notificações:", err);
     return [];
