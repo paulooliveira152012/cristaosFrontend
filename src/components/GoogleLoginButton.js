@@ -24,8 +24,8 @@ const GoogleLoginButton = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          credentials: "include",                // <— importante p/ cookie
-          body: JSON.stringify({ credential }),  // <— nome certo
+          credentials: "include", // <— importante p/ cookie
+          body: JSON.stringify({ credential }), // <— nome certo
         }
       );
 

@@ -1,141 +1,140 @@
 .landingLivesContainer {
-    height: 200px; /* Remove o calc desnecessário */
-    width: 100%;
-    /* background-color: rgb(189, 34, 34);  */
-    display: flex;
-    overflow-x: auto; /* Adiciona rolagem horizontal */
-    white-space: nowrap; /* Garante que os itens fiquem em linha e não quebrem para a próxima linha */
-    gap: 15px; /* Espaçamento entre os itens */
-    padding: 10px 10px;
+  height: 200px; /* Remove o calc desnecessário */
+  width: 100%;
+  /* background-color: rgb(189, 34, 34);  */
+  display: flex;
+  overflow-x: auto; /* Adiciona rolagem horizontal */
+  white-space: nowrap; /* Garante que os itens fiquem em linha e não quebrem para a próxima linha */
+  gap: 15px; /* Espaçamento entre os itens */
+  padding: 10px 10px;
 }
 
 body.dark-mode .landingLivesContainer {
-    background-color: #1A1A1A;
+  background-color: #1a1a1a;
 }
 
-
 .landingLiveContainer {
-    height: 100%;
-    aspect-ratio: 1;
-    /* background-color: #1E1E1E;  */
-    /* color: white;  */
-    text-align: center;   
-    display: flex;
-    flex-direction: column;
-    cursor: pointer;
-    flex-shrink: 0; /* Evita que os itens encolham */
-    width: 120px; /* Define uma largura fixa */
-    /* border: 2px solid #333333;  */
-    /* border-radius: 30px;  */
+  height: 100%;
+  aspect-ratio: 1;
+  /* background-color: #1E1E1E;  */
+  /* color: white;  */
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  flex-shrink: 0; /* Evita que os itens encolham */
+  width: 120px; /* Define uma largura fixa */
+  /* border: 2px solid #333333;  */
+  /* border-radius: 30px;  */
 }
 
 .landingLiveNewRoomContainer {
-    height: 120px;
-    aspect-ratio: 1;
-    background-color: white; 
-    /* color: #2A68D8;  */
-    /* text-align: center;    */
-    display: flex;
-    /* flex-direction: column; */
-    justify-content: center;    /* Centraliza verticalmente */
-    align-items: center;        /* Centraliza horizontalmente */
-    cursor: pointer;
-    flex-shrink: 0;
-    width: 120px;
-    border-radius: 45px;
-    border: 1px solid transparent;
-    box-shadow: 0 4px 8px rgba(97, 129, 211, 0.3);
-    transition: height 0.3s, box-shadow 0.3s, background-color 0.3s;
-  }
+  height: 120px;
+  aspect-ratio: 1;
+  background-color: white;
+  /* color: #2A68D8;  */
+  /* text-align: center;    */
+  display: flex;
+  /* flex-direction: column; */
+  justify-content: center; /* Centraliza verticalmente */
+  align-items: center; /* Centraliza horizontalmente */
+  cursor: pointer;
+  flex-shrink: 0;
+  width: 120px;
+  border-radius: 45px;
+  border: 1px solid transparent;
+  box-shadow: 0 4px 8px rgba(97, 129, 211, 0.3);
+  transition: height 0.3s, box-shadow 0.3s, background-color 0.3s;
+}
 
-  body.dark-mode .landingLiveNewRoomContainer {
-  background-color:  #1A1A1A ;
+body.dark-mode .landingLiveNewRoomContainer {
+  background-color: #1a1a1a;
   box-shadow: none;
   border: 1px solid #333; /* opcional, pra dar leve destaque */
 }
 
 .landingLiveNewRoomContainer:hover {
-    height: 70%;
-    transition: .2s;
-    /* background-color: #E5F3FD; */
+  height: 70%;
+  transition: 0.2s;
+  /* background-color: #E5F3FD; */
 }
 
 .newChatICon {
-    height: 50%;    
-    /* background-color: pink; */
+  height: 50%;
+  /* background-color: pink; */
 }
 
 .newRoomContainer {
-    /* background-color: red; */
-    height: 100dvh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
+  /* background-color: red; */
+  height: 100dvh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
 }
 
 .modal {
-    height: 100vh; /* O modal ocupa toda a altura da viewport */
-    width: 100vw;  /* O modal ocupa toda a largura da viewport */
-    background-color: rgba(0, 0, 0, 0.609);
-    position: absolute; /* Usar fixed para garantir que o modal cubra a tela */
-    left: 0;
-    top: 0;
-    z-index: 10;
-    display: flex;
-    justify-content: center; /* Centraliza verticalmente */
-    align-items: center;     /* Centraliza horizontalmente */
-    position: fixed; /* fara com que a scrolagem nao aconteça quando modal estiver aberto */
+  height: 100vh; /* O modal ocupa toda a altura da viewport */
+  width: 100vw; /* O modal ocupa toda a largura da viewport */
+  background-color: rgba(0, 0, 0, 0.609);
+  position: absolute; /* Usar fixed para garantir que o modal cubra a tela */
+  left: 0;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center; /* Centraliza verticalmente */
+  align-items: center; /* Centraliza horizontalmente */
+  position: fixed; /* fara com que a scrolagem nao aconteça quando modal estiver aberto */
 }
 
 .closeModalButtonContainer {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    padding: 0px 0px;
-    /* background-color: lightblue;  */
-    color: black;
-    /* box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); */
-    /* height: 60px; */
-    max-width: 800px;
-    /* margin: auto; */
-    /* align-items: center; */
-    padding:  30px ;
-    height: 9vh;
-    justify-content: right;
-    /* background-color: red; */
-    position: absolute;
-    top: 0;
-    /* background-color: transparent; */
-    border-radius: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 0px 0px;
+  /* background-color: lightblue;  */
+  color: black;
+  /* box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); */
+  /* height: 60px; */
+  max-width: 800px;
+  /* margin: auto; */
+  /* align-items: center; */
+  padding: 30px;
+  height: 9vh;
+  justify-content: right;
+  /* background-color: red; */
+  position: absolute;
+  top: 0;
+  /* background-color: transparent; */
+  border-radius: 20px;
 }
 
 body.modal-open {
-    overflow: hidden; /* Impede o scroll quando o modal estiver aberto */
+  overflow: hidden; /* Impede o scroll quando o modal estiver aberto */
 }
 
 .nomeDaSala {
-    padding: 10px;
+  padding: 10px;
 }
 
 .newRoomForm {
-    max-width: 500px; /* Limita a largura máxima para telas maiores */
-    width: 80%;
-    aspect-ratio: 0.95; /* Mantém a proporção */
-    background-color: white;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Adiciona um leve sombreado */
-    /* border-radius: 100px; Adiciona bordas arredondadas para um estilo mais moderno */
-    
-    /* margin-top: 20%; */
-    display: flex;
-    flex-direction: column;
-    /* text-align: center; */
-    /* display: flex; */
-    justify-content:center;
-    /* padding-top: 10%; */
-    align-items: center ;
-    border-radius: 20px;
-    position: relative;
+  max-width: 500px; /* Limita a largura máxima para telas maiores */
+  width: 80%;
+  aspect-ratio: 0.95; /* Mantém a proporção */
+  background-color: white;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Adiciona um leve sombreado */
+  /* border-radius: 100px; Adiciona bordas arredondadas para um estilo mais moderno */
+
+  /* margin-top: 20%; */
+  display: flex;
+  flex-direction: column;
+  /* text-align: center; */
+  /* display: flex; */
+  justify-content: center;
+  /* padding-top: 10%; */
+  align-items: center;
+  border-radius: 20px;
+  position: relative;
 }
 
 /* .selectedImageContainer img {
@@ -145,43 +144,40 @@ body.modal-open {
     object-fit: cover; 
 } */
 
-
 .selectedImageContainer {
-    width: 50%;
-    aspect-ratio: 1;
-    /* background-color: black; */
-    border-radius: 100%;   
-    margin: 0px auto 20px auto; /* Centraliza o contêiner da imagem */
-    border: 1px solid grey;
-    cursor: pointer;
-    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
+  width: 50%;
+  aspect-ratio: 1;
+  /* background-color: black; */
+  border-radius: 100%;
+  margin: 0px auto 20px auto; /* Centraliza o contêiner da imagem */
+  border: 1px solid grey;
+  cursor: pointer;
+  box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
 }
 
 .button {
-    background-color: #2A68D8; /* Cor do botão */
-    color: white;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    padding: 15px;
-    border-radius: 10px;
+  background-color: #2a68d8; /* Cor do botão */
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  padding: 15px;
+  border-radius: 10px;
 }
 
 .button:hover {
-    background-color: #0056b3; /* Cor ao passar o mouse */
+  background-color: #0056b3; /* Cor ao passar o mouse */
 }
-
 
 /* 64 */
 
 @media screen and (max-width: 500px) {
-    .modal {
-        /* background-color: red; */
-    }
+  .modal {
+    /* background-color: red; */
+  }
 
-    .newRoomForm {
+  .newRoomForm {
     width: 90%;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Adiciona um leve sombreado */
-}
-
+  }
 }
