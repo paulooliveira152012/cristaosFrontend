@@ -87,10 +87,8 @@ const PrivateChat = () => {
     };
 
     const join = () =>
-      socket.emit("joinPrivateChat", {
-        conversationId,
-        userId: currentUser._id,
-      });
+      socket.emit("joinPrivateChat", { conversationId });
+
 
     if (socket.connected) join();
     socket.on("connect", join);
@@ -134,11 +132,7 @@ const PrivateChat = () => {
       socket.off("newPrivateMessage", handleIncomingMessage);
       socket.off("connect", join);
       // ✅ importante: sair da sala ao desmontar
-      socket.emit("leavePrivateChat", {
-        conversationId,
-        userId: currentUser._id,
-        username: currentUser.username,
-      });
+      socket.emit("leavePrivateChat", { conversationId });
     };
   }, [socket, conversationId, currentUser?._id, baseURL, reset]);
 

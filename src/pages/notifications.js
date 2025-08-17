@@ -192,10 +192,7 @@ export const Notifications = () => {
       const convId = res?.conversation?._id || conversationId;
       if (socket && convId) {
         // ✅ usa o mesmo evento de join do resto da app
-        socket.emit("joinPrivateChat", {
-          conversationId: convId,
-          userId: currentUser._id,
-        });
+        socket.emit("joinPrivateChat", { conversationId });
       }
       if (convId) navigate(`/privateChat/${convId}`, { replace: true });
     } finally {

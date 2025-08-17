@@ -95,10 +95,8 @@ export function usePrivateChatController({
     };
 
     const join = () =>
-      socket.emit("joinPrivateChat", {
-        conversationId,
-        userId: currentUser._id,
-      });
+      socket.emit("joinPrivateChat", { conversationId });
+
 
     if (socket.connected) join();
     socket.on("connect", join);
