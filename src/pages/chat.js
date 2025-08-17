@@ -13,7 +13,7 @@ function getInitials(name = "Usuário") {
 }
 
 const Chat = () => {
-  const socket = useSocket();
+  const { socket } = useSocket(); // ✅ novo
   const { currentUser } = useUser();
   const location = useLocation();
   const navigate = useNavigate();
@@ -40,18 +40,28 @@ const Chat = () => {
     }
   }, [currentUser?._id]);
 
-  // ler "privateChatRead" para atualizar a lista
+  // marcar lida (outro lado avisa) -> recarrega lista
   useEffect(() => {
     if (!socket || !currentUser?._id) return;
-
-    const handler = (data) => {
+    const onRead = (data) => {
       if (String(data?.userId) === String(currentUser._id)) {
         fetchPrivateChats();
       }
     };
+    socket.on("privateChatRead", onRead);
+    return () => socket.off("privateChatRead", onRead);
+  }, [socket, currentUser?._id, fetchPrivateChats]);
 
-    socket.on("privateChatRead", handler);
-    return () => socket.off("privateChatRead", handler);
+  // quando entrar DM nova, atualiza lista (cobre ambos eventos)
+  useEffect(() => {
+    if (!socket || !currentUser?._id) return;
+    const refresh = () => fetchPrivateChats();
+    socket.on("newPrivateMessage", refresh);
+    socket.on("dm:incoming", refresh); // se você já emite esse no back
+    return () => {
+      socket.off("newPrivateMessage", refresh);
+      socket.off("dm:incoming", refresh);
+    };
   }, [socket, currentUser?._id, fetchPrivateChats]);
 
   const checkUnreadMainChat = useCallback(async () => {
@@ -88,13 +98,11 @@ const Chat = () => {
   // badge do chat principal quando chega mensagem
   useEffect(() => {
     if (!socket || !currentUser?._id) return;
-
     const handleNewMainMessage = ({ roomId }) => {
       if (roomId === "mainChatRoom" && location.pathname !== "/mainChat") {
         setUnreadMainChatCount((prev) => prev + 1);
       }
     };
-
     socket.on("newMessage", handleNewMainMessage);
     return () => socket.off("newMessage", handleNewMainMessage);
   }, [socket, currentUser?._id, location.pathname]);
@@ -164,7 +172,7 @@ const Chat = () => {
             onClick={handleNavigateToMainChat}
           >
             <div className="avatar" aria-hidden="true">
-              {/* SVG inline do Heroicons */}
+              {/* ícone */}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -210,7 +218,6 @@ const Chat = () => {
                 );
                 const name = otherUser?.username || "Usuário";
                 const initials = getInitials(name);
-
                 return (
                   <li key={chat?._id}>
                     <button

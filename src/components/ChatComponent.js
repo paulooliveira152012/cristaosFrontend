@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useContext } from "react";
 import { useUser } from "../context/UserContext";
 import { useSocket } from "../context/SocketContext";
 
-
 import TrashIcon from "../assets/icons/trashcan";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
@@ -29,7 +28,7 @@ import {
 } from "./functions/chatComponentFunctions";
 
 const ChatComponent = ({ roomId }) => {
-  const socket = useSocket();
+  const { socket } = useSocket();
   const { currentUser } = useUser();
   const { toggleMicrophone, micState } = useContext(AudioContext);
 
@@ -44,12 +43,12 @@ const ChatComponent = ({ roomId }) => {
   const currentScreen = useLocation();
   console.log("currentScreen:", currentScreen.pathname);
 
-  useSocketConnectionLogger();
-  useJoinRoomChat(roomId, currentUser, setMessages, () =>
+  useSocketConnectionLogger(socket);
+  useJoinRoomChat(socket, roomId, currentUser, setMessages, () =>
     scrollToBottomUtil(messagesContainerRef)
   );
-  useReceiveMessage(setMessages);
-  useListenMessageDeleted(roomId, setMessages);
+  useReceiveMessage(socket, setMessages);
+  useListenMessageDeleted(socket, roomId, setMessages);
   useAutoScrollToBottom(messages, isAtBottom, () =>
     scrollToBottomUtil(messagesContainerRef)
   );

@@ -61,7 +61,7 @@ const Loader = () => (
 );
 
 export const Notifications = () => {
-  const socket = useSocket();
+  const { socket } = useSocket();                   // ✅ desestrutura
   const { currentUser } = useUser();
   const { setNotifications, setFromList, markAllSeen } = useNotification();
   const [items, setItems] = useState([]);
@@ -69,36 +69,24 @@ export const Notifications = () => {
   const [processingId, setProcessingId] = useState(null);
   const navigate = useNavigate();
 
-  // useEffect(() => {
-  //   if (!currentUser || !socket) return;
-  //   console.log("✅ notifications page");
-  //   console.log("currentUser:", currentUser)
-  //   // fetch notifications
-  //   const userId = currentUser?._id
-  //   fetchNotifications(userId)
-  // }, []);
-
   // carregar + marcar lidas + limpar badge
-  // carregar + marcar lidas + limpar badge (sequência)
   useEffect(() => {
     if (!currentUser) return;
 
-    // zera a badge na hora
-    markAllSeen();
-
+    markAllSeen(); // zera a badge na hora
     let mounted = true;
 
     (async () => {
       try {
         setLoading(true);
         const allNotifs = await fetchNotifications();
-        const sorted = allNotifs
+        const sorted = (allNotifs || [])
           .filter(Boolean)
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         if (!mounted) return;
         setItems(sorted);
-        setFromList(sorted); // <-- atualiza a badge com base na lista carregada
+        setFromList(sorted);
       } catch (e) {
         console.error("Erro ao carregar notificações:", e);
       } finally {
@@ -106,21 +94,12 @@ export const Notifications = () => {
         setLoading(false);
       }
 
-      // ✅ marca tudo como lido no backend
       try {
-        await markAllNotificationsAsRead().then(() => {
-          // zera imediatamente
-          markAllSeen(); // nova API
-          // compat:
-        });
-      } catch (e) {
-        // segue a vida; não trava UI
-      }
+        await markAllNotificationsAsRead();
+        markAllSeen();
+      } catch {}
 
-      // ✅ limpa badge imediatamente no estado global
       setNotifications(false);
-
-      // ✅ revalida (opcional) para manter badge em sincronia caso algo novo chegue entre o load e o markAll
       checkForNewNotifications(setNotifications);
     })();
 
@@ -129,24 +108,21 @@ export const Notifications = () => {
     };
   }, [currentUser, setNotifications, markAllSeen, setFromList]);
 
-  // push em tempo real: se chegar notificação enquanto essa tela está aberta,
-  // adiciona no topo e não marca lida automaticamente (deixa o usuário clicar)
+  // push em tempo real: nova notificação enquanto está na tela
   useEffect(() => {
     if (!socket || !currentUser) return;
 
     const onNew = (notif) => {
-      // opcional: ignore notificações que não sejam minhas
       if (String(notif?.recipient) !== String(currentUser._id)) return;
       setItems((prev) => [notif, ...prev]);
-      // badge global volta a ficar ativo
       setNotifications(true);
     };
 
-    socket.on("notification:new", onNew);
-    return () => socket.off("notification:new", onNew);
+    socket.on("newNotification", onNew);
+    return () => socket.off("newNotification", onNew);
   }, [socket, currentUser, setNotifications]);
 
-  // buckets — ❗️não descarte itens só porque fromUser é null.
+  // buckets
   const { friendRequests, dmRequests, otherNotifications } = useMemo(() => {
     const friendRequests = items.filter((n) => n.type === "friend_request");
     const dmRequests = items.filter(
@@ -160,8 +136,6 @@ export const Notifications = () => {
     );
     return { friendRequests, dmRequests, otherNotifications };
   }, [items]);
-
-  console.log("items:", items)
 
   // amizade
   const handleAcceptFriend = async (requesterId) => {
@@ -191,66 +165,53 @@ export const Notifications = () => {
     }
   };
 
-  // DM
-const handleAcceptDm = async (request) => {
-  setProcessingId(request._id);
-  try {
-    const conversationId = resolveConversationId(request);
-
-    // monta payload: preferimos conversationId; senão, caímos no par (fallback)
-    const payload = conversationId
-      ? { conversationId, notificationId: request._id }
-      : {
-          requester: request.fromUser?._id,    // quem convidou
-          requested: currentUser._id,          // eu (quem está aceitando)
-          notificationId: request._id,
-        };
-
-    const res = await acceptDmRequest(payload); // { conversation }
-
-    // remove a notificação da lista e atualiza badge
-    setItems((prev) => {
-      const next = prev.filter((r) => r._id !== request._id);
-      setFromList(next);
-      return next;
-    });
-
-    // (opcional) já entro/sincronizo a sala no socket
-    const convId = res?.conversation?._id || conversationId;
-    if (socket && convId) {
-      // adapte o evento ao que você emite no back (ex: "dm:join")
-      socket.emit?.("dm:join", { conversationId: convId });
-    }
-
-    // navega direto para a conversa; o input já deve estar habilitado (status=active)
-    if (convId) navigate(`/privateChat/${convId}`, { replace: true });
-
-  } finally {
-    setProcessingId(null);
-  }
-};
-
-  // tenta resolver o ID da conversa a partir do objeto de notificação
+  // util
   const resolveConversationId = (req) =>
-    req?.conversationId ||
-    req?.dmConversationId ||
-    req?.conversation?._id ||
-    null;
+    req?.conversationId || req?.dmConversationId || req?.conversation?._id || null;
+
+  // DM
+  const handleAcceptDm = async (request) => {
+    setProcessingId(request._id);
+    try {
+      const conversationId = resolveConversationId(request);
+      const payload = conversationId
+        ? { conversationId, notificationId: request._id }
+        : {
+            requester: request.fromUser?._id,
+            requested: currentUser._id,
+            notificationId: request._id,
+          };
+
+      const res = await acceptDmRequest(payload); // espera { conversation }
+      setItems((prev) => {
+        const next = prev.filter((r) => r._id !== request._id);
+        setFromList(next);
+        return next;
+      });
+
+      const convId = res?.conversation?._id || conversationId;
+      if (socket && convId) {
+        // ✅ usa o mesmo evento de join do resto da app
+        socket.emit("joinPrivateChat", {
+          conversationId: convId,
+          userId: currentUser._id,
+        });
+      }
+      if (convId) navigate(`/privateChat/${convId}`, { replace: true });
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
   const handleRejectDm = async (request) => {
     setProcessingId(request._id);
-    console.log("processingId:", processingId)
-    
     try {
       const conversationId = resolveConversationId(request);
-      console.log("✅ conversationId:", conversationId)
-      // (opcional) fallback: se não veio no request, você pode buscar no back
-      // const conversationId = await ensureConversationId(request.fromUser?._id, currentUser._id);
       await rejectDmRequest(
         request.fromUser?._id,
         currentUser._id,
-        conversationId, // ✅ agora definido
-        request._id // opcional: id da notificação para o back fechar/ler
+        conversationId,
+        request._id
       );
       setItems((prev) => {
         const next = prev.filter((r) => r._id !== request._id);
@@ -265,7 +226,7 @@ const handleAcceptDm = async (request) => {
   // click em outras notificações
   const handleNotificationClick = async (notif) => {
     try {
-      await markNotificationAsRead(notif._id); // ver obs. #4
+      await markNotificationAsRead(notif._id);
       setItems((prev) => {
         const next = prev.map((n) =>
           n._id === notif._id ? { ...n, isRead: true } : n
@@ -277,14 +238,12 @@ const handleAcceptDm = async (request) => {
 
     if (notif.type === "comment" || notif.type === "reply") {
       if (notif.listingId && notif.commentId) {
-        navigate(
-          `/openListing/${notif.listingId}?commentId=${notif.commentId}`
-        );
+        navigate(`/openListing/${notif.listingId}?commentId=${notif.commentId}`);
       } else if (notif.listingId) {
         navigate(`/openListing/${notif.listingId}`);
       }
-    } else if (notif.type === "like") {
-      if (notif.listingId) navigate(`/openListing/${notif.listingId}`);
+    } else if (notif.type === "like" && notif.listingId) {
+      navigate(`/openListing/${notif.listingId}`);
     }
   };
 
@@ -347,15 +306,9 @@ const handleAcceptDm = async (request) => {
                         aria-label="Rejeitar"
                         title="Rejeitar"
                       >
-                        <svg
-                          className="ntf-icon"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
+                        {/* X icon */}
+                        <svg className="ntf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                          strokeLinecap="round" strokeLinejoin="round">
                           <line x1="18" y1="6" x2="6" y2="18" />
                           <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
@@ -367,15 +320,9 @@ const handleAcceptDm = async (request) => {
                         aria-label="Aceitar"
                         title="Aceitar"
                       >
-                        <svg
-                          className="ntf-icon"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
+                        {/* check icon */}
+                        <svg className="ntf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                          strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
                       </button>
@@ -423,15 +370,8 @@ const handleAcceptDm = async (request) => {
                         aria-label="Rejeitar"
                         title="Rejeitar"
                       >
-                        <svg
-                          className="ntf-icon"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
+                        <svg className="ntf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                          strokeLinecap="round" strokeLinejoin="round">
                           <line x1="18" y1="6" x2="6" y2="18" />
                           <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
@@ -443,15 +383,8 @@ const handleAcceptDm = async (request) => {
                         aria-label="Aceitar"
                         title="Aceitar"
                       >
-                        <svg
-                          className="ntf-icon"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
+                        <svg className="ntf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                          strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
                       </button>
@@ -475,15 +408,11 @@ const handleAcceptDm = async (request) => {
             {otherNotifications.map((notif) => (
               <article
                 key={notif._id}
-                className={`ntf-item clickable ${
-                  notif.isRead ? "read" : "unread"
-                }`}
+                className={`ntf-item clickable ${notif.isRead ? "read" : "unread"}`}
                 onClick={() => handleNotificationClick(notif)}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) =>
-                  e.key === "Enter" ? handleNotificationClick(notif) : null
-                }
+                onKeyDown={(e) => e.key === "Enter" && handleNotificationClick(notif)}
               >
                 <Avatar
                   src={notif.fromUser?.profileImage}
@@ -491,9 +420,7 @@ const handleAcceptDm = async (request) => {
                 />
                 <div className="ntf-item-body">
                   <div className="ntf-item-title">
-                    <strong>
-                      {notif.title || notif.fromUser?.username || "Notificação"}
-                    </strong>
+                    <strong>{notif.title || notif.fromUser?.username || "Notificação"}</strong>
                     <span className="ntf-dot" />
                     <span className="ntf-time">
                       {new Date(notif.createdAt).toLocaleString()}

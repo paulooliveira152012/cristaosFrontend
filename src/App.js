@@ -65,19 +65,24 @@ import SideMenuFullScreen from "./components/SideMenuFullScreen.js";
 import SideAddSection from "./components/SideAddSection.js";
 import Footer from "./components/Footer.js";
 
+import { UnreadProvider } from "./context/UnreadContext.js";
+
 // ---- NOVO: faz o socket entrar na sala pessoal do usuário logado ----
 // 1) entra na sala pessoal do usuário
 function SocketSetupBridge() {
-  const socket = useSocket();
+  const { socket } = useSocket();
   const { currentUser } = useUser();
 
   useEffect(() => {
-    if (!socket || !currentUser?._id) return;
+    // garante que temos a instância e a API .on/.emit
+    if (!socket || typeof socket.on !== "function" || !currentUser?._id) return;
 
-    const join = () => socket.emit("setup", String(currentUser._id));
-    if (socket.connected) join();
-    socket.on("connect", join);
-    return () => socket.off("connect", join);
+    // no padrão novo, o back lê o userId do JWT no handshake
+    // só precisamos emitir "addUser" após conectar
+    const register = () => socket.emit("addUser");
+    if (socket.connected) register();
+    socket.on("connect", register);
+    return () => socket.off("connect", register);
   }, [socket, currentUser?._id]);
 
   return null;
@@ -85,27 +90,27 @@ function SocketSetupBridge() {
 
 // 2) ouve notificações em tempo real e acende badge
 function NotificationsSocketBridge() {
-  const socket = useSocket();
+  const { socket } = useSocket();
   const { setUnreadCount, setNotifications } = useNotification();
   const { currentUser } = useUser();
 
   useEffect(() => {
-    if (!socket || !currentUser?._id) return;
+    if (!socket || typeof socket.on !== "function" || !currentUser?._id) return;
 
     const onNew = (notif) => {
       if (String(notif?.recipient) !== String(currentUser._id)) return;
-      // se você já expõe contagem:
-      if (setUnreadCount) setUnreadCount((n) => n + 1);
-      // compat (se em algum lugar ainda usa boolean):
-      if (setNotifications) setNotifications(true);
+      setUnreadCount?.((n) => n + 1);
+      setNotifications?.(true);
     };
 
-    socket.on("notification:new", onNew);
-    return () => socket.off("notification:new", onNew);
+    socket.on("newNotification", onNew);
+
+    return () => socket.off("newNotification", onNew);
   }, [socket, currentUser?._id, setUnreadCount, setNotifications]);
 
   return null;
 }
+
 
 // Componente para exibir o ícone da sala minimizada globalmente
 const MinimizedStatus = () => {
@@ -114,7 +119,9 @@ const MinimizedStatus = () => {
   if (!minimizedRoom || location.pathname.includes("/liveRoom")) return null;
 
   return (
-    <div style={{ position: "fixed", bottom: "20px", right: "20px", zIndex: 1000 }}>
+    <div
+      style={{ position: "fixed", bottom: "20px", right: "20px", zIndex: 1000 }}
+    >
       <Link
         to={`/liveRoom/${minimizedRoom._id}`}
         state={{ sala: minimizedRoom }}
@@ -161,136 +168,198 @@ const AppWithLocation = () => {
     <UserProvider>
       <RoomProvider>
         <AudioProvider>
-          <NotificationProvider>
-            {/* ponte que liga socket ⇄ usuário logado para notificações */}
-            <SocketSetupBridge />
-            <NotificationsSocketBridge />
+          <UnreadProvider>
+            <NotificationProvider>
+              {/* ponte que liga socket ⇄ usuário logado para notificações */}
+              <SocketSetupBridge />
+              <NotificationsSocketBridge />
 
-            <div className="mainParentContainer">
-              {/* 1st side menu */}
-              <div className="sideMenuContainerWideScreen">
-                {shouldShowSideMenu && <SideMenuFullScreen />}
-              </div>
-
-              {/* 2nd main content */}
-              <div className="screenWrapper">
-                <div className="scrollable">
-                  <div
-                    style={{
-                      flex: 1,
-                      margin: "0 auto",
-                      width: "100%",
-                      maxWidth: 800,
-                      position: "relative",
-                      height: "100vh",
-                    }}
-                  >
-                    <Routes>
-                      <Route path="/" element={<Landing />} />
-                      <Route path="/openListing/:id" element={<OpenListing />} />
-                      <Route path="/liveRoom/:roomId" element={<LiveRoom />} />
-                      <Route path="/chat" element={<Chat />} />
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/resend-verification" element={<ResendVerification />} />
-                      <Route path="/signup" element={<Signup />} />
-                      <Route path="/verifyAccount" element={<VerifyAccount />} />
-                      <Route path="/confirm-email-update/:token" element={<VerifyEmailUpdate />} />
-                      <Route path="/newlisting" element={<NewListing />} />
-                      <Route path="/profile/:userId" element={<Profile />} />
-                      <Route path="/notifications" element={<Notifications />} />
-                      <Route path="/donate" element={<Donate />} />
-                      <Route path="/passwordResetLink" element={<PasswordResetLink />} />
-                      <Route path="/passwordReset" element={<PasswordReset />} />
-                      <Route path="/guidelines" element={<PlatformGuidelines />} />
-                      <Route path="/bibleStudies" element={<BibleStudiesByBook />} />
-                      <Route path="/bibleStudies" element={<BibleStudiesByTheme />} />
-                      <Route path="/privateRooms" element={<PrivateRooms />} />
-                      <Route path="/suggestions" element={<Suggestions />} />
-                      <Route path="/contactUs" element={<ContactUs />} />
-                      <Route path="/findGathering" element={<FindGathering />} />
-                      <Route path="/counselingSessions" element={<CounselingSessions />} />
-                      <Route path="/churchSupport" element={<ChurchSupport />} />
-                      <Route path="/promotions" element={<Promotions />} />
-                      <Route path="/communityForum" element={<CommunityForum />} />
-                      <Route path="/settingsMenu" element={<SettingsMenu />} />
-                      <Route path="/allUsers" element={<AllUsersPage />} />
-                      <Route path="/mainChat" element={<MainChat />} />
-                      <Route path="/privateChat/:id" element={<PrivateChat />} />
-                      <Route path="/privacyPolicy" element={<PrivacyPolicy />} />
-                      <Route path="/termsOfUse" element={<TermsOfUse />} />
-                      <Route path="/reels" element={<Reels />} />
-                      <Route
-                        path="/addManagement"
-                        element={
-                          <ProtectedRoute requiredRole="lider">
-                            <AdManagement />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/ads/add"
-                        element={
-                          <ProtectedRoute requiredRole="lider">
-                            <AddAd />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/ads/edit"
-                        element={
-                          <ProtectedRoute requiredRole="lider">
-                            <EditAd />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/ads/delete"
-                        element={
-                          <ProtectedRoute requiredRole="lider">
-                            <DeleteAd />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/ads/view"
-                        element={
-                          <ProtectedRoute requiredRole="lider">
-                            <ViewAds />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route path="/globe" element={<GlobeChurches />} />
-                      <Route path="/church/:id" element={<Church />} />
-                      <Route
-                        path="/admin"
-                        element={
-                          <ProtectedRoute requiredRole="lider">
-                            <Admin />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route path="*" element={<h1>404 - Página não encontrada</h1>} />
-                    </Routes>
-
-                    <MinimizedStatus />
-                  </div>
+              <div className="mainParentContainer">
+                {/* 1st side menu */}
+                <div className="sideMenuContainerWideScreen">
+                  {shouldShowSideMenu && <SideMenuFullScreen />}
                 </div>
 
-                {shouldShowFooter && (
-                  <div className="footerFixedWrapper">
-                    <div className="footerContainer">
-                      <Footer />
+                {/* 2nd main content */}
+                <div className="screenWrapper">
+                  <div className="scrollable">
+                    <div
+                      style={{
+                        flex: 1,
+                        margin: "0 auto",
+                        width: "100%",
+                        maxWidth: 800,
+                        position: "relative",
+                        height: "100vh",
+                      }}
+                    >
+                      <Routes>
+                        <Route path="/" element={<Landing />} />
+                        <Route
+                          path="/openListing/:id"
+                          element={<OpenListing />}
+                        />
+                        <Route
+                          path="/liveRoom/:roomId"
+                          element={<LiveRoom />}
+                        />
+                        <Route path="/chat" element={<Chat />} />
+                        <Route path="/login" element={<Login />} />
+                        <Route
+                          path="/resend-verification"
+                          element={<ResendVerification />}
+                        />
+                        <Route path="/signup" element={<Signup />} />
+                        <Route
+                          path="/verifyAccount"
+                          element={<VerifyAccount />}
+                        />
+                        <Route
+                          path="/confirm-email-update/:token"
+                          element={<VerifyEmailUpdate />}
+                        />
+                        <Route path="/newlisting" element={<NewListing />} />
+                        <Route path="/profile/:userId" element={<Profile />} />
+                        <Route
+                          path="/notifications"
+                          element={<Notifications />}
+                        />
+                        <Route path="/donate" element={<Donate />} />
+                        <Route
+                          path="/passwordResetLink"
+                          element={<PasswordResetLink />}
+                        />
+                        <Route
+                          path="/passwordReset"
+                          element={<PasswordReset />}
+                        />
+                        <Route
+                          path="/guidelines"
+                          element={<PlatformGuidelines />}
+                        />
+                        <Route
+                          path="/bibleStudies"
+                          element={<BibleStudiesByBook />}
+                        />
+                        <Route
+                          path="/bibleStudies"
+                          element={<BibleStudiesByTheme />}
+                        />
+                        <Route
+                          path="/privateRooms"
+                          element={<PrivateRooms />}
+                        />
+                        <Route path="/suggestions" element={<Suggestions />} />
+                        <Route path="/contactUs" element={<ContactUs />} />
+                        <Route
+                          path="/findGathering"
+                          element={<FindGathering />}
+                        />
+                        <Route
+                          path="/counselingSessions"
+                          element={<CounselingSessions />}
+                        />
+                        <Route
+                          path="/churchSupport"
+                          element={<ChurchSupport />}
+                        />
+                        <Route path="/promotions" element={<Promotions />} />
+                        <Route
+                          path="/communityForum"
+                          element={<CommunityForum />}
+                        />
+                        <Route
+                          path="/settingsMenu"
+                          element={<SettingsMenu />}
+                        />
+                        <Route path="/allUsers" element={<AllUsersPage />} />
+                        <Route path="/mainChat" element={<MainChat />} />
+                        <Route
+                          path="/privateChat/:id"
+                          element={<PrivateChat />}
+                        />
+                        <Route
+                          path="/privacyPolicy"
+                          element={<PrivacyPolicy />}
+                        />
+                        <Route path="/termsOfUse" element={<TermsOfUse />} />
+                        <Route path="/reels" element={<Reels />} />
+                        <Route
+                          path="/addManagement"
+                          element={
+                            <ProtectedRoute requiredRole="lider">
+                              <AdManagement />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/ads/add"
+                          element={
+                            <ProtectedRoute requiredRole="lider">
+                              <AddAd />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/ads/edit"
+                          element={
+                            <ProtectedRoute requiredRole="lider">
+                              <EditAd />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/ads/delete"
+                          element={
+                            <ProtectedRoute requiredRole="lider">
+                              <DeleteAd />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/ads/view"
+                          element={
+                            <ProtectedRoute requiredRole="lider">
+                              <ViewAds />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route path="/globe" element={<GlobeChurches />} />
+                        <Route path="/church/:id" element={<Church />} />
+                        <Route
+                          path="/admin"
+                          element={
+                            <ProtectedRoute requiredRole="lider">
+                              <Admin />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="*"
+                          element={<h1>404 - Página não encontrada</h1>}
+                        />
+                      </Routes>
+
+                      <MinimizedStatus />
                     </div>
                   </div>
-                )}
-              </div>
 
-              {/* 3rd ads container */}
-              <div className="sideMenuContainerWideScreen">
-                {shouldShowSideMenu && <SideAddSection />}
+                  {shouldShowFooter && (
+                    <div className="footerFixedWrapper">
+                      <div className="footerContainer">
+                        <Footer />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3rd ads container */}
+                <div className="sideMenuContainerWideScreen">
+                  {shouldShowSideMenu && <SideAddSection />}
+                </div>
               </div>
-            </div>
-          </NotificationProvider>
+            </NotificationProvider>
+          </UnreadProvider>
         </AudioProvider>
       </RoomProvider>
     </UserProvider>

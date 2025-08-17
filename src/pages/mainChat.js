@@ -6,52 +6,52 @@ import Header from "../components/Header";
 import ChatComponent from "../components/ChatComponent";
 import { handleBack } from "../components/functions/headerFunctions";
 import { useSocket } from "../context/SocketContext";
-
-// ⬅️ ADICIONADO
+import { useUnread } from "../context/UnreadContext";
 
 import "../styles/style.css";
-import "../styles/liveRoom.css"; // reaproveita .liveRoomContent / loading
+import "../styles/liveRoom.css";
 
 const baseURL = process.env.REACT_APP_API_BASE_URL;
-const MAIN_ROOM_ID = "mainChatRoom";
 
 const MainChat = () => {
-  const socket = useSocket();
+  const { socket } = useSocket(); // ✅ desestrutura
   const { currentUser } = useUser();
+  const { reset, MAIN_ROOM_ID } = useUnread(); // ✅ usa só o da store
   const navigate = useNavigate();
 
-  // Marca o chat principal como lido ao abrir
+  // Marca o main chat como lido ao abrir (e ao voltar o foco)
   useEffect(() => {
-    fetch(`${baseURL}/api/users/markMainChatAsRead`, {
-      method: "POST",
-      credentials: "include",
-    }).catch(() => {});
-  }, []);
+    const mark = () =>
+      fetch(`${baseURL}/api/users/markMainChatAsRead`, {
+        method: "POST",
+        credentials: "include",
+      }).catch(() => {});
+    mark();
+    reset(MAIN_ROOM_ID);
 
-  // ⬇️ ENTRA/SAI da sala principal para receber eventos em tempo real
-  useEffect(() => {
-    if (!currentUser?._id) return;
-    socket.emit("joinRoom", { roomId: MAIN_ROOM_ID, userId: currentUser._id });
+    const onFocusOrVisible = () => {
+      mark();
+      reset(MAIN_ROOM_ID);
+    };
+    window.addEventListener("focus", onFocusOrVisible);
+    document.addEventListener("visibilitychange", onFocusOrVisible);
     return () => {
-      socket.emit("leaveRoom", {
-        roomId: MAIN_ROOM_ID,
-        userId: currentUser._id,
-      });
+      window.removeEventListener("focus", onFocusOrVisible);
+      document.removeEventListener("visibilitychange", onFocusOrVisible);
     };
-  }, [currentUser?._id]);
+  }, [baseURL, reset, MAIN_ROOM_ID]);
 
-  // ⬇️ ESCUTA novas mensagens (debug/side-effects aqui; o ChatComponent renderiza)
+  // (Opcional) log/efeitos quando chega msg do main (o ChatComponent renderiza em si)
   useEffect(() => {
-    const handleNewMessage = (payload) => {
+    if (!socket) return;
+    const onNew = (payload) => {
       if (payload?.roomId !== MAIN_ROOM_ID) return;
-      // aqui você pode fazer side-effects, logs, etc.
-      // ex.: console.log("Nova mensagem no mainChat:", payload);
+      // console.log("Nova mensagem no mainChat:", payload);
     };
-    socket.on("newMessage", handleNewMessage);
-    return () => socket.off("newMessage", handleNewMessage);
-  }, []);
+    socket.on("newMessage", onNew);
+    return () => socket.off("newMessage", onNew);
+  }, [socket, MAIN_ROOM_ID]);
 
-  // (Opcional) se quiser bloquear quando não logado
   if (!currentUser?._id) {
     return (
       <div className="screenWrapper">
@@ -81,19 +81,13 @@ const MainChat = () => {
         />
 
         <p
-          style={{
-            textAlign: "center",
-            marginBottom: "10px",
-            fontStyle: "italic",
-          }}
+          style={{ textAlign: "center", marginBottom: 10, fontStyle: "italic" }}
         >
           Bem-vindo ao Chat Principal
         </p>
 
-        {/* Chat em si (mesmo componente usado no LiveRoom) */}
+        {/* O ChatComponent já faz join/leave via "joinRoomChat"/"leaveRoomChat" */}
         <ChatComponent roomId={MAIN_ROOM_ID} />
-        {/* Se o seu ChatComponent usa outra prop:
-            <ChatComponent conversationId={MAIN_ROOM_ID} /> */}
       </div>
     </div>
   );

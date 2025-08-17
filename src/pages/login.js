@@ -4,32 +4,23 @@ import { useUser } from "../context/UserContext";
 import { useNavigate, Link } from "react-router-dom";
 import { useSocket } from "../context/SocketContext";
 
-
 import "../styles/Login.css";
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 const Login = () => {
-  const socket = useSocket();
   // referenciar a logica de login do useUser
+  const { connectSocket } = useSocket();
   const { login } = useUser();
   const navigate = useNavigate();
 
   // State to manage input fields
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
-  const [error, setError] = useState("");
   const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  // connect to socket right away
-  useEffect(() => {
-    socket.connect();
-  }, []);
 
   useEffect(() => {
-    socket.connect();
-
     /* Inicializar o botão de login do Google */
     if (window.google) {
       window.google.accounts.id.initialize({
@@ -68,13 +59,12 @@ const Login = () => {
 
       if (response.ok) {
         console.log("Login successful!", data);
-        login(data); // Log the user in
+        login(data.user); // Log the user in
 
         // Emit userLoggedIn event to notify the server that the user is online
-        socket.emit("userLoggedIn", {
-          _id: data._id,
-          email: data.email,
-          profileImage: data.profileImage || "https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-2210.jpg?w=360",
+        const s = connectSocket(data.token);
+        s.once("connect", () => {
+          s.emit("addUser"); // servidor usa socket.data.userId; sem payload
         });
 
         // depois de logar/deslogar:
@@ -91,39 +81,39 @@ const Login = () => {
   };
 
   const handleGoogleCallback = async (response) => {
-    try {
-      const res = await fetch(`${baseUrl}/api/users/google-login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // necessário pra receber o cookie
-        body: JSON.stringify({
-          credential: response.credential, // << usar "credential"
-          // opcional:
-          // rememberMe: true,
-        }),
-      });
+  try {
+    const res = await fetch(`${baseUrl}/api/users/google-login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ credential: response.credential }),
+    });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(
-          data.message || `Falha no login com Google (HTTP ${res.status})`
-        );
-        return;
-      }
-
-      login(data);
-      socket.emit("userLoggedIn", {
-        _id: data._id,
-        email: data.email,
-        profileImage: data.profileImage || "https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-2210.jpg?w=360",
-      });
-      navigate("/");
-    } catch (err) {
-      console.error("Erro no login com Google:", err);
-      setError("Erro ao tentar logar com o Google.");
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.message || `Falha no login com Google (HTTP ${res.status})`);
+      return;
     }
-  };
+
+    // backend retorna { user, token }
+    login(data.user);
+
+    // 1) conecta o socket com o token no handshake
+    const s = connectSocket(data.token);
+
+    // 2) quando conectar, registra presença sem payload
+    if (s.connected) {
+      s.emit("addUser");
+    } else {
+      s.once("connect", () => s.emit("addUser"));
+    }
+
+    navigate("/");
+  } catch (err) {
+    console.error("Erro no login com Google:", err);
+    setError("Erro ao tentar logar com o Google.");
+  }
+};
 
   return (
     <div className="screenWrapper">
@@ -133,7 +123,7 @@ const Login = () => {
         navigate={navigate}
       />
       <div className="loginContainer">
-        <h2 className="title">Logi</h2>
+        <h2 className="title">Login</h2>
 
         <form onSubmit={handleLogin} className="form">
           {/* Email input */}

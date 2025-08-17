@@ -4,6 +4,7 @@ import "../styles/style.css";
 import { Link, useNavigate } from "react-router-dom";
 import { getAllUsers } from "./functions/liveUsersComponent";
 
+
 const FALLBACK_AVATAR = "/images/avatar-placeholder.png";
 
 const LiveUsers = () => {

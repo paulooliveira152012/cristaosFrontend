@@ -1,12 +1,12 @@
-// Ajuste o caminho se sua pasta for diferente
+// hooks/usePrivateChatController.js
 import { useEffect, useMemo, useState } from "react";
-import socket from "../../socket"; // ← de components/functions até /src/socket
+import { useSocket } from "../../context/SocketContext";
 
 /**
- * Hook controlador do fluxo de DM:
- * - busca metadados da conversa (participants, pendingFor, leavingUser)
+ * Controla DM:
+ * - busca metadados
  * - entra na sala e escuta mensagens em tempo real
- * - presença (userJoined/userLeft/currentUsersInPrivateChat)
+ * - presença (join/left/currentUsersInPrivateChat)
  * - marcar como lido
  * - ações: enviar, aceitar, reinvitar
  */
@@ -14,9 +14,10 @@ export function usePrivateChatController({
   conversationId,
   currentUser,
   baseURL,
-  inviteBackHandler,   // ex.: handleInviteBackToChat
+  inviteBackHandler,   // ex.: ({ socket, conversationId, currentUserId }) => void
   onAccepted,          // opcional (toast, etc)
 }) {
+  const { socket } = useSocket();        // ✅ pega { socket }
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
 
@@ -40,12 +41,12 @@ export function usePrivateChatController({
 
         // participants pode vir como array de IDs ou objetos
         const parts = (conv?.participants || []).map((p) => p?._id || p);
-        const other = parts.find((id) => id !== currentUser._id) || null;
+        const other = parts.find((id) => String(id) !== String(currentUser._id)) || null;
         setOtherId(other);
 
-        // continua participante se “other” ainda está no array
+        // se leavingUser === other, o outro saiu da conversa
         let otherStillParticipant = !!other;
-        if (conv?.leavingUser && conv.leavingUser === other) {
+        if (conv?.leavingUser && String(conv.leavingUser) === String(other)) {
           otherStillParticipant = false;
         }
         setIsOtherParticipant(otherStillParticipant);
@@ -56,8 +57,15 @@ export function usePrivateChatController({
           conv?.pending ||
           (conv?.pendingUser ? [conv.pendingUser] : []);
 
-        setPendingForMe(Array.isArray(pendingArray) && pendingArray.includes(currentUser._id));
-        setWaitingOther(Array.isArray(pendingArray) && other ? pendingArray.includes(other) : false);
+        setPendingForMe(
+          Array.isArray(pendingArray) &&
+          pendingArray.map(String).includes(String(currentUser._id))
+        );
+        setWaitingOther(
+          Array.isArray(pendingArray) && other
+            ? pendingArray.map(String).includes(String(other))
+            : false
+        );
       } catch (e) {
         console.error("Erro ao buscar conversa:", e);
         // fallback seguro: deixa conversar
@@ -68,13 +76,15 @@ export function usePrivateChatController({
     })();
   }, [conversationId, currentUser?._id, baseURL]);
 
-  // ----- Join/rejoin + mensagens em tempo real + histórico + markAsRead -----
+  // ----- Join + mensagens em tempo real + histórico + markAsRead -----
   useEffect(() => {
-    if (!conversationId || !currentUser?._id) return;
+    if (!socket || !conversationId || !currentUser?._id) return;
 
     const handleIncomingMessage = (newMsg) => {
       if (newMsg?.conversationId !== conversationId) return;
-      setMessages((prev) => (prev.some((m) => m._id === newMsg._id) ? prev : [...prev, newMsg]));
+      setMessages((prev) =>
+        prev.some((m) => m._id === newMsg._id) ? prev : [...prev, newMsg]
+      );
     };
 
     const handleAccepted = ({ conversationId: cid }) => {
@@ -85,7 +95,10 @@ export function usePrivateChatController({
     };
 
     const join = () =>
-      socket.emit("joinPrivateChat", { conversationId, userId: currentUser._id });
+      socket.emit("joinPrivateChat", {
+        conversationId,
+        userId: currentUser._id,
+      });
 
     if (socket.connected) join();
     socket.on("connect", join);
@@ -113,7 +126,10 @@ export function usePrivateChatController({
           method: "POST",
           credentials: "include",
         });
-        socket.emit("privateChatRead", { conversationId, userId: currentUser._id });
+        socket.emit("privateChatRead", {
+          conversationId,
+          userId: currentUser._id,
+        });
       } catch (err) {
         console.error("Erro ao marcar como lida:", err);
       }
@@ -123,24 +139,36 @@ export function usePrivateChatController({
       socket.off("newPrivateMessage", handleIncomingMessage);
       socket.off("dm:accepted", handleAccepted);
       socket.off("connect", join);
-      socket.emit("leavePrivateChat", { conversationId, userId: currentUser._id });
+      socket.emit("leavePrivateChat", {
+        conversationId,
+        userId: currentUser._id,
+        username: currentUser.username, // opcional, seu back usa em logs/mensagem do sistema
+      });
     };
-  }, [conversationId, currentUser?._id, baseURL, onAccepted]);
+  }, [socket, conversationId, currentUser?._id, baseURL, onAccepted]);
 
   // ----- Presença (online/offline) – apenas informativo -----
   useEffect(() => {
-    if (!conversationId || !currentUser?._id) return;
+    if (!socket || !conversationId || !currentUser?._id) return;
 
     const handlePresence = ({ conversationId: cid, users }) => {
       if (cid !== conversationId) return;
-      const others = (users || []).filter((u) => u?._id !== currentUser._id);
-      setIsOtherPresent(others.length > 0);
+      // users pode ser array de IDs (string) OU objetos ({_id} / {userId})
+      const ids = (users || []).map((u) => String(u?._id || u?.userId || u));
+      // se existir alguém que não seja eu -> outro presente
+      setIsOtherPresent(ids.some((id) => id !== String(currentUser._id)));
     };
+
     const handleUserJoined = ({ conversationId: cid, joinedUser }) => {
-      if (cid === conversationId && joinedUser?._id !== currentUser._id) setIsOtherPresent(true);
+      if (cid !== conversationId) return;
+      const id = String(joinedUser?._id || joinedUser?.userId || "");
+      if (id && id !== String(currentUser._id)) setIsOtherPresent(true);
     };
+
     const handleUserLeft = ({ conversationId: cid, leftUser }) => {
-      if (cid === conversationId && leftUser?._id !== currentUser._id) setIsOtherPresent(false);
+      if (cid !== conversationId) return;
+      const id = String(leftUser?._id || leftUser?.userId || "");
+      if (id && id !== String(currentUser._id)) setIsOtherPresent(false);
     };
 
     socket.on("currentUsersInPrivateChat", handlePresence);
@@ -152,7 +180,7 @@ export function usePrivateChatController({
       socket.off("userJoinedPrivateChat", handleUserJoined);
       socket.off("userLeftPrivateChat", handleUserLeft);
     };
-  }, [conversationId, currentUser?._id]);
+  }, [socket, conversationId, currentUser?._id]);
 
   // ----- Ações -----
   const canSend = useMemo(
@@ -162,7 +190,7 @@ export function usePrivateChatController({
 
   const send = () => {
     const trimmed = message.trim();
-    if (!trimmed || !canSend) return;
+    if (!socket || !trimmed || !canSend) return;
     socket.emit("sendPrivateMessage", {
       conversationId,
       sender: currentUser._id,
@@ -177,9 +205,9 @@ export function usePrivateChatController({
         method: "POST",
         credentials: "include",
       });
+      // update otimista local; o back deve emitir "dm:accepted" para a sala
       setPendingForMe(false);
       setWaitingOther(false);
-      socket.emit("dm:accepted", { conversationId });
       onAccepted?.();
     } catch (e) {
       console.error("Erro ao aceitar conversa:", e);
@@ -187,8 +215,11 @@ export function usePrivateChatController({
   };
 
   const reinvite = () => {
-    inviteBackHandler?.(conversationId, currentUser._id);
-    // após reinvitar, o outro fica pendente
+    inviteBackHandler?.({
+      socket,
+      conversationId,
+      currentUserId: currentUser._id,
+    });
     setWaitingOther(true);
   };
 

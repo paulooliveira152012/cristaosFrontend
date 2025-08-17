@@ -1,51 +1,81 @@
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import "../styles/adManagement.css";
 import Header from "../components/Header";
 import { getAds } from "../components/functions/addManagementFuncitons";
 import { useNavigate } from "react-router-dom";
 import { useSocket } from "../context/SocketContext";
 
-
 const ViewAds = () => {
-  const socket = useSocket();
+  const { socket } = useSocket();               // ✅ pega { socket }
   const navigate = useNavigate();
   const [ads, setAds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Carregar lista inicial
   useEffect(() => {
-    socket.on("newAdCreated", (ad) => {
-      console.log("Novo anúncio recebido via socket:", ad);
-      setAds((prevAds) => [ad, ...prevAds]); // adiciona no topo da lista
-    });
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await getAds();
+        if (mounted) setAds(Array.isArray(data) ? data : []);
+      } catch {
+        if (mounted) setError("Erro ao carregar anúncios.");
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
-    socket.on("addDeleted", (deletedAd) => {
-      console.log("Ad deleted");
-      setAds((prevAds) => prevAds.filter((ad) => ad._id !== deletedAd._id));
-    });
+  // Assinar atualizações via socket
+  useEffect(() => {
+    if (!socket) return;
+
+    const onNew = (ad) => {
+      setAds((prev) => {
+        // evita duplicata
+        const next = prev.filter((x) => String(x._id) !== String(ad._id));
+        return [ad, ...next];
+      });
+    };
+
+    const onDeleted = (payload) => {
+      const id = payload?._id || payload;
+      setAds((prev) => prev.filter((ad) => String(ad._id) !== String(id)));
+    };
+
+    const onUpdated = (updated) => {
+      setAds((prev) => {
+        const others = prev.filter((x) => String(x._id) !== String(updated._id));
+        return [updated, ...others];
+      });
+    };
+
+    socket.on("newAdCreated", onNew);
+    socket.on("adDeleted", onDeleted);
+    socket.on("addDeleted", onDeleted);   // fallback legado, se existir
+    socket.on("updatedAd", onUpdated);
 
     return () => {
-      socket.off("newAdCreated");
-      socket.off("addDeleted");
+      socket.off("newAdCreated", onNew);
+      socket.off("adDeleted", onDeleted);
+      socket.off("addDeleted", onDeleted);
+      socket.off("updatedAd", onUpdated);
     };
-  });
+  }, [socket]);
 
-  useEffect(() => {
-    getAds()
-      .then(setAds)
-      .catch(() => setError("Erro ao carregar anúncios."))
-      .finally(() => setLoading(false));
-  }, []);
   return (
     <>
       <Header
-        showBackArrow={true}
+        showBackArrow
         showProfileImage={false}
         onBack={() => navigate(-1)}
       />
+
       <div className="adManagementWrapper">
         <h2 className="adManagementTitle">Visualizar Anúncios</h2>
+
         <div className="adList">
           {loading ? (
             <p>Carregando...</p>
@@ -57,7 +87,8 @@ const ViewAds = () => {
             <ul>
               {ads.map((ad) => (
                 <li key={ad._id}>
-                  <strong>{ad.title}</strong> - {ad.description} <br />
+                  <strong>{ad.title}</strong> - {ad.description}
+                  <br />
                   {ad.link && (
                     <a href={ad.link} target="_blank" rel="noopener noreferrer">
                       {ad.link}

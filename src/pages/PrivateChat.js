@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { useSocket } from "../context/SocketContext";
+import { useUnread } from "../context/UnreadContext";
 
 import "../styles/chat.css";
 import { format } from "date-fns";
@@ -14,9 +15,10 @@ import {
 import { deriveDmState } from "../utils/dmState";
 
 const PrivateChat = () => {
-  const socket = useSocket();
+  const { socket } = useSocket();                 // ✅ desestrutura
   const { id: conversationId } = useParams();
   const { currentUser } = useUser();
+  const { reset } = useUnread();
   const navigate = useNavigate();
   const baseURL = process.env.REACT_APP_API_BASE_URL;
 
@@ -24,59 +26,21 @@ const PrivateChat = () => {
   const [message, setMessage] = useState("");
   const messagesContainerRef = useRef(null);
 
-  // estado canônico do DM
   const [meta, setMeta] = useState({
-    participants: [], // [string]
-    waitingUser: null, // string|null
-    requester: null, // string|null
-    leavingUser: null, // string|null
+    participants: [],
+    waitingUser: null,
+    requester: null,
+    leavingUser: null,
   });
 
-  // useEffect(() => {
-  //   if (!socket || !currentUser?._id) return;
+  const toStr = (x) => (x && x._id ? String(x._id) : x != null ? String(x) : null);
 
-  //   const refresh = () => fetchPrivateChats();
-
-  //   socket.on("dm:accepted", refresh);
-  //   socket.on("conversation:participantChanged", refresh);
-
-  //   return () => {
-  //     socket.off("dm:accepted", refresh);
-  //     socket.off("conversation:participantChanged", refresh);
-  //   };
-  // }, [socket, currentUser?._id, fetchPrivateChats]);
-
-  const toStr = (x) =>
-    x && x._id ? String(x._id) : x != null ? String(x) : null;
-
-  // Descobrir "o outro" sem usar pendingFor
-  const getOtherId = () => {
-    const me = String(currentUser?._id || "");
-    const bag = new Set(
-      [
-        ...(meta.participants || []),
-        meta.waitingUser,
-        meta.requester,
-        meta.leavingUser,
-      ]
-        .filter(Boolean)
-        .map(String)
-    );
-    bag.delete(me);
-    for (const id of bag) return id;
-    return null;
-  };
-
-  // Carregar meta do DB
   const refreshFromDB = async () => {
     try {
-      const res = await fetch(
-        `${baseURL}/api/dm/conversation/${conversationId}`,
-        {
-          credentials: "include",
-          headers: { "Cache-Control": "no-cache" },
-        }
-      );
+      const res = await fetch(`${baseURL}/api/dm/conversation/${conversationId}`, {
+        credentials: "include",
+        headers: { "Cache-Control": "no-cache" },
+      });
       if (!res.ok) return;
       const conv = await res.json();
       setMeta({
@@ -93,41 +57,40 @@ const PrivateChat = () => {
   useEffect(() => {
     if (!conversationId || !currentUser?._id) return;
     refreshFromDB();
-  }, [conversationId, currentUser?._id]);
+  }, [conversationId, currentUser?._id, baseURL]);
 
-  // Join + mensagens + markAsRead
+  // Join sala + mensagens + marcar como lida
   useEffect(() => {
-    if (!conversationId || !currentUser?._id) return;
+    if (!socket || !conversationId || !currentUser?._id) return;
 
-    const handleIncomingMessage = (newMsg) => {
+    const handleIncomingMessage = async (newMsg) => {
       if (newMsg?.conversationId !== conversationId) return;
-      setMessages((prev) =>
-        prev.some((m) => m._id === newMsg._id) ? prev : [...prev, newMsg]
-      );
+      setMessages((prev) => (prev.some((m) => m._id === newMsg._id) ? prev : [...prev, newMsg]));
+      try {
+        await fetch(`${baseURL}/api/dm/markAsRead/${conversationId}`, {
+          method: "POST",
+          credentials: "include",
+        });
+        // opcional: avisar o outro cliente pra zerar badge
+        socket.emit("privateChatRead", { conversationId, userId: currentUser._id });
+        reset(conversationId);
+      } catch {}
     };
 
-    const join = () => {
-      socket.emit("joinPrivateChat", {
-        conversationId,
-        userId: currentUser._id,
-      });
-    };
+    const join = () =>
+      socket.emit("joinPrivateChat", { conversationId, userId: currentUser._id });
 
-    socket.off("connect", join);
     if (socket.connected) join();
     socket.on("connect", join);
 
-    socket.off("newPrivateMessage", handleIncomingMessage);
     socket.on("newPrivateMessage", handleIncomingMessage);
 
+    // histórico
     (async () => {
       try {
-        const res = await fetch(
-          `${baseURL}/api/dm/messages/${conversationId}`,
-          {
-            credentials: "include",
-          }
-        );
+        const res = await fetch(`${baseURL}/api/dm/messages/${conversationId}`, {
+          credentials: "include",
+        });
         const data = await res.json();
         setMessages(Array.isArray(data) ? data : []);
       } catch (err) {
@@ -135,16 +98,15 @@ const PrivateChat = () => {
       }
     })();
 
+    // marca como lida ao abrir
     (async () => {
       try {
         await fetch(`${baseURL}/api/dm/markAsRead/${conversationId}`, {
           method: "POST",
           credentials: "include",
         });
-        socket.emit("privateChatRead", {
-          conversationId,
-          userId: currentUser._id,
-        });
+        socket.emit("privateChatRead", { conversationId, userId: currentUser._id }); // ✅ opcional
+        reset(conversationId);
       } catch (error) {
         console.error("Erro ao marcar como lida:", error);
       }
@@ -153,46 +115,74 @@ const PrivateChat = () => {
     return () => {
       socket.off("newPrivateMessage", handleIncomingMessage);
       socket.off("connect", join);
+      // ✅ importante: sair da sala ao desmontar
+      socket.emit("leavePrivateChat", {
+        conversationId,
+        userId: currentUser._id,
+        username: currentUser.username,
+      });
     };
-  }, [conversationId, currentUser?._id, baseURL]);
+  }, [socket, conversationId, currentUser?._id, baseURL, reset]);
 
-  // Atualizações em tempo real
+  // garantir lido ao focar/visível
   useEffect(() => {
+    if (!conversationId || !currentUser?._id || !socket) return;
+    const onFocusOrVisible = async () => {
+      try {
+        await fetch(`${baseURL}/api/dm/markAsRead/${conversationId}`, {
+          method: "POST",
+          credentials: "include",
+        });
+        socket.emit("privateChatRead", { conversationId, userId: currentUser._id });
+      } catch {}
+      reset(conversationId);
+    };
+    window.addEventListener("focus", onFocusOrVisible);
+    document.addEventListener("visibilitychange", onFocusOrVisible);
+    return () => {
+      window.removeEventListener("focus", onFocusOrVisible);
+      document.removeEventListener("visibilitychange", onFocusOrVisible);
+    };
+  }, [conversationId, baseURL, reset, currentUser?._id, socket]);
+
+  // mudanças de participante em tempo real
+  useEffect(() => {
+    if (!socket) return;
     const onParticipantChanged = (p) => {
       if (p?.conversationId !== conversationId) return;
       setMeta((prev) => ({
         participants: (p.participants ?? prev.participants ?? []).map(toStr),
-        waitingUser: toStr(
-          p.waitingUser != null ? p.waitingUser : prev.waitingUser
-        ),
+        waitingUser: toStr(p.waitingUser != null ? p.waitingUser : prev.waitingUser),
         requester: toStr(p.requester != null ? p.requester : prev.requester),
-        leavingUser: toStr(
-          p.leavingUser != null ? p.leavingUser : prev.leavingUser
-        ),
+        leavingUser: toStr(p.leavingUser != null ? p.leavingUser : prev.leavingUser),
       }));
-      // opcional: confirmar com o DB
-      // refreshFromDB();
     };
     socket.on("dm:participantChanged", onParticipantChanged);
     return () => socket.off("dm:participantChanged", onParticipantChanged);
-  }, [conversationId]);
+  }, [socket, conversationId]);
 
-  // Auto-scroll
+  // auto-scroll
   useEffect(() => {
     const el = messagesContainerRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
   }, [messages]);
 
-  // Ações simples (se você criou rotas /accept e /reject)
   const accept = async () => {
     try {
-      await fetch(`${baseURL}/api/dm/accept`, {
+      const res = await fetch(`${baseURL}/api/dm/accept`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ conversationId }),
       });
+      if (res.ok) {
+        setMeta((prev) => {
+          const set = new Set([...(prev.participants || []), String(currentUser._id)]);
+          return { ...prev, participants: Array.from(set), waitingUser: null, leavingUser: null };
+        });
+        reset(conversationId);
+      }
     } catch (e) {
       console.error("accept erro:", e);
     }
@@ -200,7 +190,7 @@ const PrivateChat = () => {
 
   const reject = async () => {
     try {
-      await fetch(`${baseURL}/api/dm/reject`, {
+      await fetch(`${baseURL}/api/dm/rejectChatRequest`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -212,10 +202,9 @@ const PrivateChat = () => {
     }
   };
 
-  // Enviar msg (só se ACTIVE)
   const sendMessage = () => {
     const trimmed = message.trim();
-    if (!trimmed) return;
+    if (!trimmed || !socket) return;
 
     const uiState = deriveDmState(
       currentUser?._id,
@@ -234,7 +223,6 @@ const PrivateChat = () => {
     setMessage("");
   };
 
-  // Estado de UI (ASSINATURA NOVA!)
   const uiState = deriveDmState(
     currentUser?._id,
     meta.participants,
@@ -249,7 +237,16 @@ const PrivateChat = () => {
         showProfileImage={false}
         navigate={navigate}
         showLeavePrivateRoomButton={true}
-        handleLeaveDirectMessagingChat={handleLeaveDirectMessagingChat}
+        // ✅ se o Header chamar direto sua função, passe um wrapper com os args esperados:
+        handleLeaveDirectMessagingChat={() =>
+          handleLeaveDirectMessagingChat({
+            socket,
+            conversationId,
+            userId: currentUser?._id,
+            username: currentUser?.username,
+            navigate,
+          })
+        }
         roomId={conversationId}
       />
 
@@ -267,9 +264,7 @@ const PrivateChat = () => {
                   <>
                     <strong>{msg.username || "Você"}:</strong> {msg.message}
                     <br />
-                    <small>
-                      {format(new Date(msg.timestamp || new Date()), "PPpp")}
-                    </small>
+                    <small>{format(new Date(msg.timestamp || new Date()), "PPpp")}</small>
                   </>
                 )}
               </div>
@@ -288,9 +283,7 @@ const PrivateChat = () => {
                 placeholder="Digite sua mensagem..."
                 className="input"
               />
-              <button onClick={sendMessage} className="sendBtn">
-                Enviar
-              </button>
+              <button onClick={sendMessage} className="sendBtn">Enviar</button>
             </>
           )}
 
@@ -302,12 +295,8 @@ const PrivateChat = () => {
 
           {uiState === "PENDING_I_NEED_TO_ACCEPT" && (
             <>
-              <button className="sendBtn" onClick={accept}>
-                Aceitar conversa
-              </button>
-              <button className="inviteBackBtn" onClick={reject}>
-                Rejeitar
-              </button>
+              <button className="sendBtn" onClick={accept}>Aceitar conversa</button>
+              <button className="inviteBackBtn" onClick={reject}>Rejeitar</button>
             </>
           )}
 
@@ -315,7 +304,11 @@ const PrivateChat = () => {
             <button
               className="inviteBackBtn"
               onClick={() =>
-                handleInviteBackToChat(conversationId, currentUser._id)
+                handleInviteBackToChat({
+                  socket,                         // ✅ objeto
+                  conversationId,
+                  currentUserId: currentUser._id,
+                })
               }
             >
               Convidar usuário de volta
