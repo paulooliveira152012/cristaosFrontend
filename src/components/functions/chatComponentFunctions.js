@@ -1,6 +1,6 @@
 // utils/chatComponentFunctions.js (JS puro, compatível com o novo contexto)
 // ✅ Sem import de useSocket aqui — o socket vem por parâmetro
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 
 // Nomes de eventos (ajuste se seu back usar outros)
 const MAIN_CHAT_NEW_MESSAGE_EVENT = "newMessage";
@@ -40,35 +40,39 @@ export const useJoinRoomChat = (
   setMessages,
   scrollToBottom
 ) => {
+  const requestedOnceRef = useRef(false);
+
   useEffect(() => {
     if (!socket || typeof socket.emit !== "function") return;
     if (!roomId || !currentUser || !currentUser._id) return;
 
-    // entrar e pedir histórico
+    // entrar na sala
     socket.emit(ROOM_CHAT_JOIN_EVENT, { roomId, user: currentUser });
-    socket.emit("requestChatHistory", { roomId });
+
+    // pedir histórico apenas uma vez por montagem
+    if (!requestedOnceRef.current) {
+      socket.emit("requestChatHistory", { roomId });
+      requestedOnceRef.current = true;
+    }
 
     const handleChatHistory = (history) => {
       const list = Array.isArray(history) ? history : history?.messages;
       const hid = history?.roomId;
       if (hid && roomId && hid !== roomId) return;
       setMessages(Array.isArray(list) ? list : []);
-      if (typeof scrollToBottom === "function") scrollToBottom(); // chama sem args
+      if (typeof scrollToBottom === "function") scrollToBottom();
     };
 
     socket.on(ROOM_CHAT_HISTORY_EVENT, handleChatHistory);
 
     return () => {
-      socket.emit(ROOM_CHAT_LEAVE_EVENT, { roomId }); // "leaveRoom" no seu back
+      // reset para quando desmontar e montar outra sala
+      requestedOnceRef.current = false;
+      socket.emit(ROOM_CHAT_LEAVE_EVENT, { roomId });
       socket.off(ROOM_CHAT_HISTORY_EVENT, handleChatHistory);
     };
-  }, [
-    socket,
-    roomId,
-    currentUser && currentUser._id,
-    setMessages,
-    scrollToBottom,
-  ]);
+  }, [socket, roomId, currentUser && currentUser._id, setMessages]);
+  // 👆 intencionalmente sem scrollToBottom nas deps
 };
 
 export const useReceiveMessage = (socket, setMessages, roomId) => {

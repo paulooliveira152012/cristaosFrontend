@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useState, useEffect, useRef, useContext, useCallback } from "react";
 import { useUser } from "../context/UserContext";
 import { useSocket } from "../context/SocketContext";
 
@@ -43,15 +43,19 @@ const ChatComponent = ({ roomId }) => {
   const currentScreen = useLocation();
   console.log("currentScreen:", currentScreen.pathname);
 
+    // ✅ função estável para rolar ao fim — não muda entre renders
+  const scrollToBottom = useCallback(
+    () => scrollToBottomUtil(messagesContainerRef),
+    []
+  );
+
   useSocketConnectionLogger(socket);
-  useJoinRoomChat(socket, roomId, currentUser, setMessages, () =>
-    scrollToBottomUtil(messagesContainerRef)
-  );
-  useReceiveMessage(socket, setMessages, roomId);
+
+  useJoinRoomChat(socket, roomId, currentUser, setMessages, scrollToBottom);
+ useReceiveMessage(socket, setMessages, roomId);
+
   useListenMessageDeleted(socket, roomId, setMessages);
-  useAutoScrollToBottom(messages, isAtBottom, () =>
-    scrollToBottomUtil(messagesContainerRef)
-  );
+useAutoScrollToBottom(messages, isAtBottom, scrollToBottom);
 
   const onScroll = () => handleScrollUtil(messagesContainerRef, setIsAtBottom);
 
@@ -63,7 +67,7 @@ const ChatComponent = ({ roomId }) => {
       socket,
       setMessages,
       setMessage,
-      scrollToBottom: () => scrollToBottomUtil(messagesContainerRef),
+      scrollToBottom,
       inputRef,
     });
 
