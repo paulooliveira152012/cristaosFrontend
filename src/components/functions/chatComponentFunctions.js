@@ -33,7 +33,13 @@ export const useSocketConnectionLogger = (socket) => {
   }, [socket]);
 };
 
-export const useJoinRoomChat = (socket, roomId, currentUser, setMessages, scrollToBottom) => {
+export const useJoinRoomChat = (
+  socket,
+  roomId,
+  currentUser,
+  setMessages,
+  scrollToBottom
+) => {
   useEffect(() => {
     if (!socket || typeof socket.emit !== "function") return;
     if (!roomId || !currentUser || !currentUser._id) return;
@@ -43,7 +49,10 @@ export const useJoinRoomChat = (socket, roomId, currentUser, setMessages, scroll
     socket.emit("requestChatHistory", { roomId });
 
     const handleChatHistory = (history) => {
-      setMessages(Array.isArray(history) ? history : []);
+      const list = Array.isArray(history) ? history : history?.messages;
+      const hid = history?.roomId;
+      if (hid && roomId && hid !== roomId) return;
+      setMessages(Array.isArray(list) ? list : []);
       if (typeof scrollToBottom === "function") scrollToBottom(); // chama sem args
     };
 
@@ -53,14 +62,21 @@ export const useJoinRoomChat = (socket, roomId, currentUser, setMessages, scroll
       socket.emit(ROOM_CHAT_LEAVE_EVENT, { roomId }); // "leaveRoom" no seu back
       socket.off(ROOM_CHAT_HISTORY_EVENT, handleChatHistory);
     };
-  }, [socket, roomId, currentUser && currentUser._id, setMessages, scrollToBottom]);
+  }, [
+    socket,
+    roomId,
+    currentUser && currentUser._id,
+    setMessages,
+    scrollToBottom,
+  ]);
 };
 
-export const useReceiveMessage = (socket, setMessages) => {
+export const useReceiveMessage = (socket, setMessages, roomId) => {
   useEffect(() => {
     if (!socket || typeof socket.on !== "function") return;
 
     const handleReceiveMessage = (newMessage) => {
+      if (roomId && newMessage?.roomId && newMessage.roomId !== roomId) return;
       setMessages((prev) => [...prev, newMessage]);
     };
 
@@ -72,7 +88,7 @@ export const useReceiveMessage = (socket, setMessages) => {
       socket.off(MAIN_CHAT_NEW_MESSAGE_EVENT, handleReceiveMessage);
       // socket.off("message:created", handleReceiveMessage);
     };
-  }, [socket, setMessages]);
+  }, [socket, setMessages, roomId]);
 };
 
 export const useListenMessageDeleted = (socket, roomId, setMessages) => {
@@ -81,9 +97,12 @@ export const useListenMessageDeleted = (socket, roomId, setMessages) => {
 
     const handleDelete = (payload) => {
       // Pode vir como { messageId, roomId } ou direto como id
-      const messageId = typeof payload === "string" ? payload : payload?.messageId;
+      const messageId =
+        typeof payload === "string" ? payload : payload?.messageId;
       if (!messageId) return;
-      setMessages((prev) => prev.filter((msg) => String(msg._id) !== String(messageId)));
+      setMessages((prev) =>
+        prev.filter((msg) => String(msg._id) !== String(messageId))
+      );
     };
 
     socket.on("messageDeleted", handleDelete);
@@ -138,12 +157,21 @@ export const sendMessageUtil = ({
 
   setMessage("");
   if (typeof scrollToBottom === "function") scrollToBottom();
-  if (inputRef && inputRef.current && typeof inputRef.current.focus === "function") {
+  if (
+    inputRef &&
+    inputRef.current &&
+    typeof inputRef.current.focus === "function"
+  ) {
     inputRef.current.focus();
   }
 };
 
-export const handleDeleteMessageUtil = ({ socket, messageId, currentUser, roomId }) => {
+export const handleDeleteMessageUtil = ({
+  socket,
+  messageId,
+  currentUser,
+  roomId,
+}) => {
   if (!socket || typeof socket.emit !== "function") return;
   if (!currentUser || !currentUser._id) return;
   if (!messageId) return;
@@ -167,7 +195,7 @@ export const handleToggleMicrophoneUtil = async ({
   try {
     const newMicState = !micState;
     await toggleMicrophone(newMicState);
-    socket.emit("micStatusChanged", {
+    socket.emit("toggleMicrophone", {
       roomId,
       userId: currentUser._id,
       micOpen: newMicState,
@@ -192,7 +220,8 @@ export const handleScrollUtil = (ref, setIsAtBottom) => {
   const el = ref && ref.current;
   if (!el) return;
   const threshold = 20;
-  const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - threshold;
+  const atBottom =
+    el.scrollTop + el.clientHeight >= el.scrollHeight - threshold;
   setIsAtBottom(Boolean(atBottom));
 };
 

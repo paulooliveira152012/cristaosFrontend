@@ -47,7 +47,7 @@ const ChatComponent = ({ roomId }) => {
   useJoinRoomChat(socket, roomId, currentUser, setMessages, () =>
     scrollToBottomUtil(messagesContainerRef)
   );
-  useReceiveMessage(socket, setMessages);
+  useReceiveMessage(socket, setMessages, roomId);
   useListenMessageDeleted(socket, roomId, setMessages);
   useAutoScrollToBottom(messages, isAtBottom, () =>
     scrollToBottomUtil(messagesContainerRef)
