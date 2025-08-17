@@ -67,6 +67,30 @@ const PrivateChat = () => {
   useAutoScrollToBottom(messagesContainerRef, [messages]);
   const usernameColors = useRef({});
 
+  // ---- helpers para mensagens de sistema ----
+  const SYSTEM_REGEX =
+    /(saiu da conversa|saiu da sala|entrou na conversa|voltou para a conversa|voltou para a sala)/i;
+
+  const isSystemMessage = (m) =>
+    m?.type === "system" ||
+    m?.isSystem === true ||
+    ["join", "leave", "return", "reinvite"].includes(m?.eventType) ||
+    SYSTEM_REGEX.test(m?.message ?? "");
+
+  const getSystemVariant = (m) => {
+    if (
+      m?.eventType === "join" ||
+      m?.eventType === "return" ||
+      m?.eventType === "reinvite"
+    )
+      return "join";
+    if (m?.eventType === "leave") return "leave";
+    // fallback baseado no texto:
+    if (/saiu/i.test(m?.message)) return "leave";
+    if (/entrou|voltou/i.test(m?.message)) return "join";
+    return "info";
+  };
+
   return (
     <div className="screenWrapper">
       <div className="liveRoomContent">
@@ -88,7 +112,9 @@ const PrivateChat = () => {
           onBack={() => navigate(-1)}
         />
 
-        <p style={{ textAlign: "center", marginBottom: 10, fontStyle: "italic" }}>
+        <p
+          style={{ textAlign: "center", marginBottom: 10, fontStyle: "italic" }}
+        >
           Conversa privada
         </p>
 
@@ -96,58 +122,62 @@ const PrivateChat = () => {
           <div ref={messagesContainerRef} className="chatScroll">
             <div className="messages">
               {messages.map((msg, index) => {
-                // Preferências de campos para DM
-                const author =
-                  msg.senderUsername ||
-                  msg.username ||
-                  (msg.sender && String(msg.sender) === String(currentUser?._id)
-                    ? "Você"
-                    : "Usuário");
+  const when = msg.timestamp ? format(new Date(msg.timestamp), "dd-MM-yy h:mm a") : "";
 
-                if (!usernameColors.current[author]) {
-                  usernameColors.current[author] = getRandomDarkColor();
-                }
+  // ---- branch: mensagens de sistema ----
+  if (isSystemMessage(msg)) {
+    const variant = getSystemVariant(msg); // "join" | "leave" | "info"
+    return (
+      <div
+        key={msg._id ?? `sys-${msg.timestamp ?? index}-${index}`}
+        className={` systemMessageRow system-${variant}`}
+      >
+        <div className="systemMessageBubble">
+          <span className="systemMessageText">{msg.message}</span>
+          {when && <small className="systemMessageTime">{when}</small>}
+        </div>
+      </div>
+    );
+  }
 
-                const isMine =
-                  (msg.userId && String(msg.userId) === String(currentUser?._id)) ||
-                  (msg.sender && String(msg.sender) === String(currentUser?._id));
+  // ---- branch: mensagens normais (mantém seu código atual) ----
+  const author =
+    msg.senderUsername ||
+    msg.username ||
+    (msg.sender && String(msg.sender) === String(currentUser?._id) ? "Você" : "Usuário");
 
-                const when = msg.timestamp
-                  ? format(new Date(msg.timestamp), "dd-MM-yy h:mm a")
-                  : "";
+  if (!usernameColors.current[author]) {
+    usernameColors.current[author] = getRandomDarkColor();
+  }
+  const isMine =
+    (msg.userId && String(msg.userId) === String(currentUser?._id)) ||
+    (msg.sender && String(msg.sender) === String(currentUser?._id));
 
-                const authorId = msg.userId || msg.sender; // DM costuma enviar "sender"
-                const avatar = msg.profileImage || profilePlaceholder;
+  const authorId = msg.userId || msg.sender;
+  const avatar = msg.profileImage || profilePlaceholder;
 
-                return (
-                  <div
-                    key={msg._id ?? `${msg.sender ?? "unknown"}-${msg.timestamp ?? index}-${index}`}
-                    className={`messageRow ${isMine ? "mine" : "theirs"}`}
-                  >
-                    <Link to={`/profile/${authorId || ""}`} className="avatarLink">
-                      <div
-                        className="chatAvatar"
-                        style={{ backgroundImage: `url(${avatar})` }}
-                        title={author}
-                      />
-                    </Link>
+  return (
+    <div
+      key={msg._id ?? `${msg.sender ?? "unknown"}-${msg.timestamp ?? index}-${index}`}
+      className={`messageRow ${isMine ? "mine" : "theirs"}`}
+    >
+      <Link to={`/profile/${authorId || ""}`} className="avatarLink">
+        <div className="chatAvatar" style={{ backgroundImage: `url(${avatar})` }} title={author} />
+      </Link>
 
-                    <div className="messageBubble">
-                      <div className="messageHeader">
-                        <strong
-                          className="author"
-                          style={{ color: usernameColors.current[author] }}
-                          title={author}
-                        >
-                          {author}
-                        </strong>
-                        <small className="time">{when}</small>
-                      </div>
-                      <div className="messageText">{msg.message}</div>
-                    </div>
-                  </div>
-                );
-              })}
+      <div className="messageBubble">
+        <div className="messageHeader">
+          <strong className="author" style={{ color: usernameColors.current[author] }} title={author}>
+            {author}
+          </strong>
+          <small className="time">{when}</small>
+        </div>
+        <div className="messageText">{msg.message}</div>
+      </div>
+    </div>
+  );
+})}
+
             </div>
           </div>
 
