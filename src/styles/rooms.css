@@ -107,6 +107,43 @@ body.dark-mode .landingLiveNewRoomContainer {
   top: 0;
   /* background-color: transparent; */
   border-radius: 20px;
+  background-color: green;
+}
+
+.leaveDMContainer {
+  /* background-color: blue; */
+  width: 100%;
+  margin-right: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: 25px;
+}
+
+.leaveDMContainer span {
+  /* background-color: red; */
+
+}
+
+.privateMessageSettings ul {
+  /* background: green; */
+  height: 80vh;
+  width: 100%;
+}
+
+.privateMessageSettings ul {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-top: 10%;
+  align-items: center;
+  /* background-color: pink; */
+}
+
+.privateMessageSettings ul li {
+  list-style: none;
+  border: 1px solid grey;
+  padding: 20px;
+  border-radius: 20px;
 }
 
 body.modal-open {

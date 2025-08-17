@@ -7,6 +7,10 @@ import ChatComponent from "../components/ChatComponent";
 import { handleBack } from "../components/functions/headerFunctions";
 import { useSocket } from "../context/SocketContext";
 import { useUnread } from "../context/UnreadContext";
+import {
+  useReadOnOpenAndFocus,
+  useMainNewMessageLog,
+} from "./functions/chatUnifiedFunctions";
 
 import "../styles/style.css";
 import "../styles/liveRoom.css";
@@ -18,6 +22,14 @@ const MainChat = () => {
   const { currentUser } = useUser();
   const { reset, MAIN_ROOM_ID } = useUnread(); // ✅ usa só o da store
   const navigate = useNavigate();
+
+  useReadOnOpenAndFocus({
+    kind: "main",
+    id: MAIN_ROOM_ID,
+    baseURL,
+    reset,
+  });
+  useMainNewMessageLog(socket, MAIN_ROOM_ID);
 
   // Marca o main chat como lido ao abrir (e ao voltar o foco)
   useEffect(() => {

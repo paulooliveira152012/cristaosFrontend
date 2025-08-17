@@ -7,7 +7,7 @@ import {
   markNotificationAsRead,
   acceptDmRequest,
   rejectDmRequest,
-} from "./functions/functions/notificationsFunctions.js";
+} from "./functions/notificationsFunctions.js";
 import "../styles/notifications.css";
 import { useNavigate } from "react-router-dom";
 import { useNotification } from "../context/NotificationContext.js";

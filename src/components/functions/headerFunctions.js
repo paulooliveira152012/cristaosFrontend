@@ -127,6 +127,7 @@ export const handleLeaveDirectMessagingChat = async ({
   username,
   navigate,
 }) => {
+  console.log("leaving private message")
   try {
     const res = await fetch(
       `${baseURL}/api/dm/leaveChat/${conversationId}`,

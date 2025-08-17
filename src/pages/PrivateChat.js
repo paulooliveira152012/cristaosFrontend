@@ -1,354 +1,197 @@
 // src/pages/PrivateChat.js
-import React, { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useRef } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { useSocket } from "../context/SocketContext";
 import { useUnread } from "../context/UnreadContext";
 
-import "../styles/chat.css";
-import { format } from "date-fns";
+import "../styles/components/chat.css"; // mesmíssima folha do ChatComponent
 import Header from "../components/Header";
 import {
   handleLeaveDirectMessagingChat,
   handleInviteBackToChat,
 } from "../components/functions/headerFunctions";
-import { deriveDmState } from "../utils/dmState";
+
+import {
+  usePrivateChatController,
+  useReadOnOpenAndFocus,
+  useAutoScrollToBottom,
+  getRandomDarkColor,
+} from "./functions/chatUnifiedFunctions";
+
+import { format } from "date-fns";
+import profilePlaceholder from "../assets/images/profileplaceholder.png";
 
 const PrivateChat = () => {
-  const { socket } = useSocket(); // ✅ desestrutura
+  const { socket } = useSocket();
   const { id: conversationId } = useParams();
   const { currentUser } = useUser();
   const { reset } = useUnread();
   const navigate = useNavigate();
   const baseURL = process.env.REACT_APP_API_BASE_URL;
 
-  const [messages, setMessages] = useState([]);
-  const [message, setMessage] = useState("");
-  const messagesContainerRef = useRef(null);
-
-  const [meta, setMeta] = useState({
-    participants: [],
-    waitingUser: null,
-    requester: null,
-    leavingUser: null,
+  const {
+    messages,
+    message,
+    setMessage,
+    sendMessage,
+    isOtherParticipant,
+    pendingForMe,
+    waitingOther,
+    // isOtherPresent, // se quiser exibir status online
+    acceptConversation,
+    rejectConversation,
+    reinviteConversation,
+    canSend,
+  } = usePrivateChatController({
+    socket,
+    conversationId,
+    currentUser,
+    baseURL,
+    reset,
+    inviteBackHandler: handleInviteBackToChat,
+    onAccepted: () => reset(conversationId),
   });
 
-  const toStr = (x) =>
-    x && x._id ? String(x._id) : x != null ? String(x) : null;
+  useReadOnOpenAndFocus({
+    kind: "dm",
+    id: conversationId,
+    baseURL,
+    reset,
+    socket,
+    userId: currentUser?._id,
+  });
 
-  const refreshFromDB = async () => {
-    try {
-      const res = await fetch(
-        `${baseURL}/api/dm/conversation/${conversationId}`,
-        {
-          credentials: "include",
-          headers: { "Cache-Control": "no-cache" },
-        }
-      );
-      if (!res.ok) return;
-      const conv = await res.json();
-      setMeta({
-        participants: (conv?.participants || []).map(toStr),
-        waitingUser: toStr(conv?.waitingUser),
-        requester: toStr(conv?.requester),
-        leavingUser: toStr(conv?.leavingUser),
-      });
-    } catch (e) {
-      console.error("Erro ao buscar conversa:", e);
-    }
-  };
-
-  useEffect(() => {
-    if (!conversationId || !currentUser?._id) return;
-    refreshFromDB();
-  }, [conversationId, currentUser?._id, baseURL]);
-
-  // Join sala + mensagens + marcar como lida
-  useEffect(() => {
-    if (!socket || !conversationId || !currentUser?._id) return;
-
-    const handleIncomingMessage = async (newMsg) => {
-      if (newMsg?.conversationId !== conversationId) return;
-      setMessages((prev) =>
-        prev.some((m) => m._id === newMsg._id) ? prev : [...prev, newMsg]
-      );
-      try {
-        await fetch(`${baseURL}/api/dm/markAsRead/${conversationId}`, {
-          method: "POST",
-          credentials: "include",
-        });
-        // opcional: avisar o outro cliente pra zerar badge
-        socket.emit("privateChatRead", {
-          conversationId,
-          userId: currentUser._id,
-        });
-        reset(conversationId);
-      } catch {}
-    };
-
-    const join = () =>
-      socket.emit("joinPrivateChat", { conversationId });
-
-
-    if (socket.connected) join();
-    socket.on("connect", join);
-
-    socket.on("newPrivateMessage", handleIncomingMessage);
-
-    // histórico
-    (async () => {
-      try {
-        const res = await fetch(
-          `${baseURL}/api/dm/messages/${conversationId}`,
-          {
-            credentials: "include",
-          }
-        );
-        const data = await res.json();
-        setMessages(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Erro ao carregar mensagens:", err);
-      }
-    })();
-
-    // marca como lida ao abrir
-    (async () => {
-      try {
-        await fetch(`${baseURL}/api/dm/markAsRead/${conversationId}`, {
-          method: "POST",
-          credentials: "include",
-        });
-        socket.emit("privateChatRead", {
-          conversationId,
-          userId: currentUser._id,
-        }); // ✅ opcional
-        reset(conversationId);
-      } catch (error) {
-        console.error("Erro ao marcar como lida:", error);
-      }
-    })();
-
-    return () => {
-      socket.off("newPrivateMessage", handleIncomingMessage);
-      socket.off("connect", join);
-      // ✅ importante: sair da sala ao desmontar
-      socket.emit("leavePrivateChat", { conversationId });
-    };
-  }, [socket, conversationId, currentUser?._id, baseURL, reset]);
-
-  // garantir lido ao focar/visível
-  useEffect(() => {
-    if (!conversationId || !currentUser?._id || !socket) return;
-    const onFocusOrVisible = async () => {
-      try {
-        await fetch(`${baseURL}/api/dm/markAsRead/${conversationId}`, {
-          method: "POST",
-          credentials: "include",
-        });
-        socket.emit("privateChatRead", {
-          conversationId,
-          userId: currentUser._id,
-        });
-      } catch {}
-      reset(conversationId);
-    };
-    window.addEventListener("focus", onFocusOrVisible);
-    document.addEventListener("visibilitychange", onFocusOrVisible);
-    return () => {
-      window.removeEventListener("focus", onFocusOrVisible);
-      document.removeEventListener("visibilitychange", onFocusOrVisible);
-    };
-  }, [conversationId, baseURL, reset, currentUser?._id, socket]);
-
-  // mudanças de participante em tempo real
-  useEffect(() => {
-    if (!socket) return;
-    const onParticipantChanged = (p) => {
-      if (p?.conversationId !== conversationId) return;
-      setMeta((prev) => ({
-        participants: (p.participants ?? prev.participants ?? []).map(toStr),
-        waitingUser: toStr(
-          p.waitingUser != null ? p.waitingUser : prev.waitingUser
-        ),
-        requester: toStr(p.requester != null ? p.requester : prev.requester),
-        leavingUser: toStr(
-          p.leavingUser != null ? p.leavingUser : prev.leavingUser
-        ),
-      }));
-    };
-    socket.on("dm:participantChanged", onParticipantChanged);
-    return () => socket.off("dm:participantChanged", onParticipantChanged);
-  }, [socket, conversationId]);
-
-  // auto-scroll
-  useEffect(() => {
-    const el = messagesContainerRef.current;
-    if (!el) return;
-    el.scrollTop = el.scrollHeight;
-  }, [messages]);
-
-  const accept = async () => {
-    try {
-      const res = await fetch(`${baseURL}/api/dm/accept`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conversationId }),
-      });
-      if (res.ok) {
-        setMeta((prev) => {
-          const set = new Set([
-            ...(prev.participants || []),
-            String(currentUser._id),
-          ]);
-          return {
-            ...prev,
-            participants: Array.from(set),
-            waitingUser: null,
-            leavingUser: null,
-          };
-        });
-        reset(conversationId);
-      }
-    } catch (e) {
-      console.error("accept erro:", e);
-    }
-  };
-
-  const reject = async () => {
-    try {
-      await fetch(`${baseURL}/api/dm/rejectChatRequest`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conversationId }),
-      });
-      navigate("/chat");
-    } catch (e) {
-      console.error("reject erro:", e);
-    }
-  };
-
-  const sendMessage = () => {
-    const trimmed = message.trim();
-    if (!trimmed || !socket) return;
-
-    const uiState = deriveDmState(
-      currentUser?._id,
-      meta.participants,
-      meta.waitingUser,
-      meta.requester,
-      meta.leavingUser
-    );
-    if (uiState !== "ACTIVE") return;
-
-    socket.emit("sendPrivateMessage", {
-      conversationId,
-      sender: currentUser._id,
-      message: trimmed,
-    });
-    setMessage("");
-  };
-
-  const uiState = deriveDmState(
-    currentUser?._id,
-    meta.participants,
-    meta.waitingUser,
-    meta.requester,
-    meta.leavingUser
-  );
+  // ===== UI =====
+  const messagesContainerRef = useRef(null);
+  useAutoScrollToBottom(messagesContainerRef, [messages]);
+  const usernameColors = useRef({});
 
   return (
-    <div className="screenWrapper privateChatPage">
-      <Header
-        showProfileImage={false}
-        navigate={navigate}
-        showLeavePrivateRoomButton={true}
-        // ✅ se o Header chamar direto sua função, passe um wrapper com os args esperados:
-        handleLeaveDirectMessagingChat={() =>
-          handleLeaveDirectMessagingChat({
-            socket,
-            conversationId,
-            userId: currentUser?._id,
-            username: currentUser?.username,
-            navigate,
-          })
-        }
-        roomId={conversationId}
-      />
+    <div className="screenWrapper">
+      <div className="liveRoomContent">
+        <Header
+          showProfileImage={false}
+          showLogoutButton={false}
+          showBackArrow={true}
+          showLeavePrivateRoomButton={true}
+          handleLeaveDirectMessagingChat={() =>
+            handleLeaveDirectMessagingChat({
+              socket,
+              conversationId,
+              userId: currentUser?._id,
+              username: currentUser?.username,
+              navigate,
+            })
+          }
+          roomId={conversationId}
+          onBack={() => navigate(-1)}
+        />
 
-      <div className="privateChatContent">
-        <div className="messagesScroll" ref={messagesContainerRef}>
-          <div className="messagesContainer">
-            {messages.map((msg, index) => (
-              <div
-                key={msg._id ?? `${msg.sender}-${msg.timestamp}-${index}`}
-                className={`messageItem ${msg.system ? "systemMessage" : ""}`}
-              >
-                {msg.system ? (
-                  <em>{msg.message}</em>
-                ) : (
-                  <>
-                    <strong>{msg.username || "Você"}:</strong> {msg.message}
-                    <br />
-                    <small>
-                      {format(new Date(msg.timestamp || new Date()), "PPpp")}
-                    </small>
-                  </>
-                )}
-              </div>
-            ))}
+        <p style={{ textAlign: "center", marginBottom: 10, fontStyle: "italic" }}>
+          Conversa privada
+        </p>
+
+        <div className="chatComponent">
+          <div ref={messagesContainerRef} className="chatScroll">
+            <div className="messages">
+              {messages.map((msg, index) => {
+                // Preferências de campos para DM
+                const author =
+                  msg.senderUsername ||
+                  msg.username ||
+                  (msg.sender && String(msg.sender) === String(currentUser?._id)
+                    ? "Você"
+                    : "Usuário");
+
+                if (!usernameColors.current[author]) {
+                  usernameColors.current[author] = getRandomDarkColor();
+                }
+
+                const isMine =
+                  (msg.userId && String(msg.userId) === String(currentUser?._id)) ||
+                  (msg.sender && String(msg.sender) === String(currentUser?._id));
+
+                const when = msg.timestamp
+                  ? format(new Date(msg.timestamp), "dd-MM-yy h:mm a")
+                  : "";
+
+                const authorId = msg.userId || msg.sender; // DM costuma enviar "sender"
+                const avatar = msg.profileImage || profilePlaceholder;
+
+                return (
+                  <div
+                    key={msg._id ?? `${msg.sender ?? "unknown"}-${msg.timestamp ?? index}-${index}`}
+                    className={`messageRow ${isMine ? "mine" : "theirs"}`}
+                  >
+                    <Link to={`/profile/${authorId || ""}`} className="avatarLink">
+                      <div
+                        className="chatAvatar"
+                        style={{ backgroundImage: `url(${avatar})` }}
+                        title={author}
+                      />
+                    </Link>
+
+                    <div className="messageBubble">
+                      <div className="messageHeader">
+                        <strong
+                          className="author"
+                          style={{ color: usernameColors.current[author] }}
+                          title={author}
+                        >
+                          {author}
+                        </strong>
+                        <small className="time">{when}</small>
+                      </div>
+                      <div className="messageText">{msg.message}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
 
-        <div className="chatPageInputContainer">
-          {uiState === "ACTIVE" && (
-            <>
-              <input
-                type="text"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                placeholder="Digite sua mensagem..."
-                className="input"
-              />
-              <button onClick={sendMessage} className="sendBtn">
-                Enviar
+          {/* Composer com os MESMOS estilos do ChatComponent */}
+          <div className="composer">
+            {canSend ? (
+              <>
+                <input
+                  type="text"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                  placeholder="Digite sua mensagem..."
+                  className="composerInput"
+                />
+                <button className="sendBtn" onClick={sendMessage}>
+                  Enviar
+                </button>
+              </>
+            ) : pendingForMe ? (
+              <>
+                <button className="sendBtn" onClick={acceptConversation}>
+                  Aceitar conversa
+                </button>
+                <button
+                  className="inviteBackBtn"
+                  onClick={async () => {
+                    await rejectConversation();
+                    navigate("/chat");
+                  }}
+                >
+                  Rejeitar
+                </button>
+              </>
+            ) : waitingOther ? (
+              <button className="inviteBackBtn" disabled>
+                Aguardando usuário aceitar a conversa…
               </button>
-            </>
-          )}
-
-          {uiState === "PENDING_ME_WAITING_OTHER" && (
-            <button className="inviteBackBtn" disabled>
-              Aguardando usuário aceitar a conversa…
-            </button>
-          )}
-
-          {uiState === "PENDING_I_NEED_TO_ACCEPT" && (
-            <>
-              <button className="sendBtn" onClick={accept}>
-                Aceitar conversa
+            ) : (
+              <button className="inviteBackBtn" onClick={reinviteConversation}>
+                Convidar usuário de volta
               </button>
-              <button className="inviteBackBtn" onClick={reject}>
-                Rejeitar
-              </button>
-            </>
-          )}
-
-          {uiState === "ALONE_CAN_REINVITE" && (
-            <button
-              className="inviteBackBtn"
-              onClick={() =>
-                handleInviteBackToChat({
-                  socket, // ✅ objeto
-                  conversationId,
-                  currentUserId: currentUser._id,
-                })
-              }
-            >
-              Convidar usuário de volta
-            </button>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
