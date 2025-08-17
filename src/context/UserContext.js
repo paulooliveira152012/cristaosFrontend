@@ -36,20 +36,23 @@ export const UserProvider = ({ children }) => {
     }
   }, [API, connectSocket, socket?.connected]);
 
+  useEffect(() => {
+    if (!socket?.connected) connectSocket?.(); // conecta como guest também
+  }, [socket, connectSocket]);
+
   // ✅ ÚNICO effect para "connect": addUser + getOnlineUsers
   useEffect(() => {
-    if (!socket || !currentUser) return;
+  if (!socket) return;
 
-    const onConnect = () => {
-      socket.emit("addUser");
-      socket.emit("getOnlineUsers");
-    };
+  const onConnect = () => {
+    if (currentUser) socket.emit("addUser"); // só se estiver logado
+    socket.emit("getOnlineUsers");           // SEMPRE (guest ou logado)
+  };
 
-    socket.on("connect", onConnect);
-    if (socket.connected) onConnect(); // cobre reconexão instantânea
-
-    return () => socket.off("connect", onConnect);
-  }, [socket, currentUser]);
+  socket.on("connect", onConnect);
+  if (socket.connected) onConnect(); // cobre reconexão instantânea
+  return () => socket.off("connect", onConnect);
+}, [socket, currentUser]);
 
   // Restaura user e acorda socket (primeiro load)
   useEffect(() => {
