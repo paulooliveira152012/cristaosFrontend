@@ -19,7 +19,6 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-
   useEffect(() => {
     /* Inicializar o botão de login do Google */
     if (window.google) {
@@ -62,13 +61,16 @@ const Login = () => {
         login(data.user); // Log the user in
 
         // Emit userLoggedIn event to notify the server that the user is online
-        const s = connectSocket(data.token);
-        s.once("connect", () => {
-          s.emit("addUser"); // servidor usa socket.data.userId; sem payload
-        });
+        // const s = connectSocket(data.token);
+        // s.once("connect", () => {
+        //   s.emit("addUser"); // servidor usa socket.data.userId; sem payload
+        // });
+
+        // conectar com o token (isso já vai disparar onConnect do UserContext)
+        connectSocket(data.token);
 
         // depois de logar/deslogar:
-        localStorage.setItem("auth: event", String(Date.now()));
+        localStorage.setItem("auth:event", String(Date.now()));
 
         navigate("/"); // Redirect to home page on successful login
       } else {
@@ -81,39 +83,41 @@ const Login = () => {
   };
 
   const handleGoogleCallback = async (response) => {
-  try {
-    const res = await fetch(`${baseUrl}/api/users/google-login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ credential: response.credential }),
-    });
+    try {
+      const res = await fetch(`${baseUrl}/api/users/google-login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ credential: response.credential }),
+      });
 
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.message || `Falha no login com Google (HTTP ${res.status})`);
-      return;
+      const data = await res.json();
+      if (!res.ok) {
+        setError(
+          data.message || `Falha no login com Google (HTTP ${res.status})`
+        );
+        return;
+      }
+
+      // backend retorna { user, token }
+      login(data.user);
+
+      // 1) conecta o socket com o token no handshake
+      const s = connectSocket(data.token);
+
+      // 2) quando conectar, registra presença sem payload
+      if (s.connected) {
+        s.emit("addUser");
+      } else {
+        s.once("connect", () => s.emit("addUser"));
+      }
+
+      navigate("/");
+    } catch (err) {
+      console.error("Erro no login com Google:", err);
+      setError("Erro ao tentar logar com o Google.");
     }
-
-    // backend retorna { user, token }
-    login(data.user);
-
-    // 1) conecta o socket com o token no handshake
-    const s = connectSocket(data.token);
-
-    // 2) quando conectar, registra presença sem payload
-    if (s.connected) {
-      s.emit("addUser");
-    } else {
-      s.once("connect", () => s.emit("addUser"));
-    }
-
-    navigate("/");
-  } catch (err) {
-    console.error("Erro no login com Google:", err);
-    setError("Erro ao tentar logar com o Google.");
-  }
-};
+  };
 
   return (
     <div className="screenWrapper">

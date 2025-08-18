@@ -2,6 +2,7 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { useSocket } from "./SocketContext";
 import { useUser } from "./UserContext";
+// Se quiser manter como fallback, deixe importado; caso contrário pode remover:
 import {
   addCurrentUserInRoom as apiAddUser,
   removeCurrentUserInRoom as apiRemoveUser,
@@ -13,8 +14,8 @@ const RoomContext = createContext();
 export const useRoom = () => useContext(RoomContext);
 
 export const RoomProvider = ({ children }) => {
-  const { socket } = useSocket(); // ✅ desestruturação correta
-  const { currentUser } = useUser(); // ✅ padroniza nome
+  const { socket } = useSocket();
+  const { currentUser } = useUser();
 
   const [minimizedRoom, setMinimizedRoom] = useState(null);
   const [hasJoinedBefore, setHasJoinedBefore] = useState(false);
@@ -24,68 +25,58 @@ export const RoomProvider = ({ children }) => {
   const [currentUsersSpeaking, setCurrentUsersSpeaking] = useState([]);
   const [roomReady, setRoomReady] = useState(false);
 
-  /* -------------------------------- API helpers ------------------------------- */
+  /* -------------------------------- API helpers (opcionais) ------------------- */
   const addCurrentUser = async (roomId, user, baseUrl) => {
     if (!roomId || !user?._id) return;
-    // Se o back novo já persiste no joinLiveRoom, você pode remover esta linha:
-    await apiAddUser(roomId, user, baseUrl);
+    // Se o back JÁ persiste no "joinLiveRoom", comente esta linha:
+    // await apiAddUser(roomId, user, baseUrl);
   };
 
   const removeCurrentUser = async (roomId, userId, baseUrl) => {
     if (!roomId || !userId) return;
-    await apiRemoveUser(roomId, userId, baseUrl, socket);
-    setCurrentUsers((prev) => prev.filter((u) => u._id !== userId));
+    // Se o back JÁ remove no "leaveLiveRoom", comente esta linha:
+    // await apiRemoveUser(roomId, userId, baseUrl, socket);
+    // setCurrentUsers((prev) => prev.filter((u) => String(u._id) !== String(userId)));
   };
 
   const addSpeaker = async (roomId, user, baseUrl) => {
     if (!roomId || !user?._id) return;
-    // Se o back novo já controla speakers via socket (joinAsSpeaker), pode omitir:
-    await addSpeakerToRoom(roomId, user, baseUrl).catch(() => {});
+    // Se o back controla speakers via "joinAsSpeaker", pode remover:
+    // await addSpeakerToRoom(roomId, user, baseUrl).catch(() => {});
   };
 
   const removeSpeaker = async (roomId, userId, baseUrl) => {
     if (!roomId || !userId) return;
-    const updated = await removeSpeakerFromRoom(roomId, userId, baseUrl).catch(
-      () => null
-    );
-    if (updated) setCurrentUsersSpeaking(updated);
+    // Se o back já resolve no socket, pode ignorar:
+    // const updated = await removeSpeakerFromRoom(roomId, userId, baseUrl).catch(() => null);
+    // if (updated) setCurrentUsersSpeaking(updated);
   };
 
   /* ------------------------------- Socket listeners --------------------------- */
   useEffect(() => {
-    if (!socket || typeof socket.on !== "function") return;
+    if (!socket) return;
 
-    const onLiveUsers = (users) => {
-      // console.log("📣 liveRoomUsers:", users);
-      setCurrentUsers(users || []);
-      setTimeout(() => setRoomReady(true), 50);
-    };
+    const onLiveUsers = (payload) => {
+      if (!payload) return;
+      const { roomId: rid, users = [], speakers } =
+        Array.isArray(payload) ? { roomId: currentRoomId, users: payload } : payload;
 
-    const onSpeakers = (speakers) => {
-      // console.log("🎤 updateSpeakers:", speakers);
-      setCurrentUsersSpeaking(speakers || []);
-    };
+      // evita aplicar updates de outra sala
+      if (currentRoomId && rid && String(rid) !== String(currentRoomId)) return;
 
-    // Opcional (se o servidor ainda emite):
-    const onUserLeft = ({ userId }) => {
-      setCurrentUsers((prev) =>
-        prev.filter((u) => String(u._id) !== String(userId))
-      );
-      setCurrentUsersSpeaking((prev) =>
-        prev.filter((u) => String(u._id) !== String(userId))
-      );
+      setCurrentUsers(Array.isArray(users) ? users : []);
+
+      const computedSpeakers = Array.isArray(speakers)
+        ? speakers
+        : users.filter((u) => u.isSpeaker);
+
+      setCurrentUsersSpeaking(computedSpeakers);
+      setRoomReady(true);
     };
 
     socket.on("liveRoomUsers", onLiveUsers);
-    socket.on("updateSpeakers", onSpeakers);
-    socket.on("userLeft", onUserLeft);
-
-    return () => {
-      socket.off("liveRoomUsers", onLiveUsers);
-      socket.off("updateSpeakers", onSpeakers);
-      socket.off("userLeft", onUserLeft);
-    };
-  }, [socket]);
+    return () => socket.off("liveRoomUsers", onLiveUsers);
+  }, [socket, currentRoomId]);
 
   /* ------------------------------ Emit helpers -------------------------------- */
   const joinRoomListeners = (roomId, user) => {
@@ -94,21 +85,11 @@ export const RoomProvider = ({ children }) => {
     setCurrentRoomId(roomId);
     setCurrentUsers([]);
     setCurrentUsersSpeaking([]);
+    setRoomReady(false);
 
     const emitJoin = () => {
-      if (!socket || typeof socket.emit !== "function") return;
-      // ✅ novo nome de evento (back limpo)
+      if (!socket) return;
       socket.emit("joinLiveRoom", { roomId });
-
-      // 🔙 fallback (se ainda existir o handler antigo):
-      socket.emit("joinRoom", {
-        roomId,
-        user: {
-          _id: user._id,
-          username: user.username,
-          profileImage: user.profileImage,
-        },
-      });
     };
 
     if (socket?.connected) emitJoin();
@@ -116,22 +97,18 @@ export const RoomProvider = ({ children }) => {
   };
 
   const emitJoinAsSpeaker = (roomId, user) => {
-    if (!roomId || !user || !socket || typeof socket.emit !== "function")
-      return;
+    if (!roomId || !user || !socket) return;
     socket.emit("joinAsSpeaker", { roomId });
-    // fallback antigo:
-    socket.emit("joinAsSpeaker", { roomId, userId: user._id });
   };
 
   const emitLeaveRoom = (roomId) => {
-    if (!roomId || !socket || typeof socket.emit !== "function") return;
-    // ✅ novo
+    if (!roomId || !socket) return;
     socket.emit("leaveLiveRoom", { roomId });
-    // 🔙 antigo
-    socket.emit("userLeavesRoom", { roomId, userId: currentUser?._id });
+    // Não precisa mandar userId; o back usa socket.data.userId
     setCurrentRoomId(null);
     setCurrentUsers([]);
     setCurrentUsersSpeaking([]);
+    setRoomReady(false);
   };
 
   const minimizeRoom = (room, microphoneOn) => {
@@ -139,15 +116,8 @@ export const RoomProvider = ({ children }) => {
     setMinimizedRoom({ ...room, microphoneOn });
     setMicOpen(microphoneOn);
 
-    // Se o back novo usa "minimizeUser":
-    if (socket?.connected && typeof socket.emit === "function") {
+    if (socket?.connected) {
       socket.emit("minimizeUser", { roomId: room._id });
-      // fallback antigo:
-      socket.emit("minimizeRoom", {
-        roomId: room._id,
-        userId: currentUser?._id,
-        microphoneOn,
-      });
     }
   };
 
@@ -173,13 +143,9 @@ export const RoomProvider = ({ children }) => {
   // Sair automaticamente ao fechar aba
   useEffect(() => {
     const handleBeforeUnload = () => {
-      if (!socket || typeof socket.emit !== "function") return;
+      if (!socket) return;
       if (currentRoomId && currentUser?._id) {
         socket.emit("leaveLiveRoom", { roomId: currentRoomId });
-        socket.emit("userLeavesRoom", {
-          roomId: currentRoomId,
-          userId: currentUser._id,
-        }); // fallback
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -190,37 +156,31 @@ export const RoomProvider = ({ children }) => {
   const handleJoinRoom = async (roomId, user, baseUrl) => {
     if (!roomId || !user) return;
     joinRoomListeners(roomId, user);
-    // pequeno atraso pra entrar no WS antes de mexer no DB
-    await new Promise((r) => setTimeout(r, 200));
-    await addCurrentUser(roomId, user, baseUrl);
+    // pequeno atraso pra entrar no WS antes de mexer no DB (se mantiver REST)
+    // await new Promise((r) => setTimeout(r, 200));
+    // await addCurrentUser(roomId, user, baseUrl);
   };
 
-  const handleLeaveRoom = async (
-    roomId,
-    user,
-    baseUrl,
-    leaveChannel,
-    navigate
-  ) => {
-    if (!roomId || !user?._id) return;
+  const handleLeaveRoom = async (roomId, user, baseUrl, leaveChannel, navigate) => {
+    if (!roomId) return;
 
-    // 1) WS
+    // 1) WS (faz a remoção e o broadcast no back)
     emitLeaveRoom(roomId);
 
-    // 2) DB
-    try {
-      await fetch(`${baseUrl}/api/rooms/removeMember`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId, userId: user._id }),
-      });
-    } catch (err) {
-      console.error("❌ Erro ao remover do banco:", err);
-    }
+    // 2) (opcional) REST — se seu back NÃO atualizar o DB no removeUserFromRoom:
+    // try {
+    //   await fetch(`${baseUrl}/api/rooms/removeMember`, {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({ roomId, userId: user?._id }),
+    //   });
+    // } catch (err) {
+    //   console.error("❌ Erro ao remover do banco:", err);
+    // }
 
-    // 3) Estado local
-    await removeCurrentUser(roomId, user._id, baseUrl);
-    await removeSpeaker(roomId, user._id, baseUrl);
+    // 3) (opcional) otimismo local, caso queira ver sumir na hora:
+    // setCurrentUsers((prev) => prev.filter((u) => String(u._id) !== String(user?._id)));
+    // setCurrentUsersSpeaking((prev) => prev.filter((u) => String(u._id) !== String(user?._id)));
 
     // 4) UI/voz
     clearMinimizedRoom();
@@ -228,9 +188,8 @@ export const RoomProvider = ({ children }) => {
 
     try {
       await leaveChannel?.();
+    } finally {
       navigate?.("/");
-    } catch (err) {
-      console.error("❌ Erro ao sair do canal de voz:", err);
     }
   };
 
@@ -253,10 +212,10 @@ export const RoomProvider = ({ children }) => {
         joinRoomListeners,
         emitLeaveRoom,
         emitJoinAsSpeaker,
-        addCurrentUser,
-        removeCurrentUser,
-        addSpeaker,
-        removeSpeaker,
+        addCurrentUser,     // opcionais
+        removeCurrentUser,  // opcionais
+        addSpeaker,         // opcionais
+        removeSpeaker,      // opcionais
         handleJoinRoom,
         handleLeaveRoom,
       }}

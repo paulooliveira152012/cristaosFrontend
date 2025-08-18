@@ -72,7 +72,7 @@ const VoiceComponent = ({ isMinimized }) => {
     console.log("micState", micState)
 
   // chamar funcao que acessa rota para adicionar ao banco de dados
-    addSpeakerToRoom(roomId, currentUser, baseUrl)
+    // addSpeakerToRoom(roomId, currentUser, baseUrl)
     // chamar funcao que emit socket no useRoom (RoomContext.js)
     emitJoinAsSpeaker(roomId, currentUser, micState);
     setIsSpeaker(true);
