@@ -29,7 +29,7 @@ const ListingInteractionBox = ({
   showDeleteButton = false,
   showShareButton = true,
   userId,
-  setItems = { setItems },
+  setItems,
   sharedListings = [],
   updateListing,
   isSingleListing = false,
@@ -42,6 +42,7 @@ const ListingInteractionBox = ({
   const location = useLocation();
   const [pendingHighlightId, setPendingHighlightId] = useState(null);
   const [showCommentBox, setShowCommentBox] = useState(false);
+  const [likeBusy, setLikeBusy] = useState(false);
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -126,14 +127,32 @@ const ListingInteractionBox = ({
   return (
     <div className="interactionBoxContainer">
       <div className="interactionIcons">
-        <div className="iconsContainer" onClick={() => handleLike(listingId)}>
+        <button
+          type="button"
+          className="iconsContainer likeButton"
+          onPointerUp={async (e) => {
+            e.preventDefault();
+            e.stopPropagation(); // 👈 não deixa o card pai receber o click
+            if (likeBusy) return; // 👈 trava re-cliques
+            setLikeBusy(true);
+            try {
+              await handleLike(listingId); // sua função atual
+            } finally {
+              // cooldown pequeno ajuda no iOS a evitar duplo disparo
+              setTimeout(() => setLikeBusy(false), 200);
+            }
+          }}
+          disabled={likeBusy}
+          aria-pressed={!!isLiked}
+          aria-label={isLiked ? "Descurtir" : "Curtir"}
+        >
           {isLiked ? (
             <LikedIcon alt="Liked" className="shared-feedback" />
           ) : (
             <LikeIcon alt="Like" />
           )}
           <span style={{ marginLeft: "5px" }}>{likesCount}</span>
-        </div>
+        </button>
 
         <div className="iconsContainer">
           <CommentIcon
@@ -184,7 +203,6 @@ const ListingInteractionBox = ({
           </div>
         </div>
       )}
-
 
       {showComments && comments.length > 0 && (
         <div className="commentSectionContainer">
@@ -303,7 +321,9 @@ const ListingInteractionBox = ({
                               <div
                                 className="commentProfileImage"
                                 style={{
-                                  backgroundImage: `url(${reply.profileImage || ""})`,
+                                  backgroundImage: `url(${
+                                    reply.profileImage || ""
+                                  })`,
                                   backgroundPosition: "center",
                                   backgroundSize: "cover",
                                   backgroundRepeat: "no-repeat",

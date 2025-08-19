@@ -209,3 +209,18 @@
     }
   }
   
+
+  .likeButton,
+.comment-like-btn,
+.iconsContainer button {
+  touch-action: manipulation;              /* evita 300ms delay/ghosts */
+  -webkit-tap-highlight-color: transparent;
+  background: none;
+  border: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.likeButton[disabled] { cursor: not-allowed; opacity: .7; }
