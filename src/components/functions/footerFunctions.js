@@ -1,10 +1,20 @@
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
+// Reaproveita o mesmo token salvo pelo SocketContext (authToken)
+const authHeaders = () => {
+  const token = localStorage.getItem("authToken");
+  const h = { Accept: "application/json" };
+  if (token) h.Authorization = `Bearer ${token}`;
+  return h;
+};
+
 export const checkForNewNotifications = async (setNotifications) => {
   try {
     const res = await fetch(`${baseUrl}/api/notifications/`, {
       method: "GET",
       credentials: "include",
+       headers: authHeaders(),           // ✅ manda Bearer
+      cache: "no-store",
     });
     if (!res.ok) throw new Error("Erro ao buscar notificações");
     const data = await res.json();
@@ -24,7 +34,7 @@ export const markAllNotificationsAsRead = async () => {
     const res = await fetch(`${baseUrl}/api/notifications/read-all`, {
       method: "PUT",
       credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: { ...authHeaders(), "Content-Type": "application/json" }, // ✅ Bearer + JSON
     });
     if (!res.ok) throw new Error("Erro ao marcar notificações como lidas.");
     return await res.json();
@@ -37,13 +47,24 @@ export const checkForNewMessages = async (setUnreadMessagesCount, userId) => {
   try {
     const resMain = await fetch(
       `${process.env.REACT_APP_API_BASE_URL}/api/users/checkUnreadMainChat`,
-      { credentials: "include" }
+      {
+         method: "GET",
+        credentials: "include",
+        headers: authHeaders(),         // ✅ Bearer
+        cache: "no-store",
+      }
+      
     );
     const dataMain = await resMain.json(); // { count: 3 }
 
     const resDM = await fetch(
       `${process.env.REACT_APP_API_BASE_URL}/api/dm/totalUnread/${userId}`,
-      { credentials: "include" }
+      {
+        method: "GET",
+        credentials: "include",
+        headers: authHeaders(),         // ✅ Bearer
+        cache: "no-store",
+      }
     );
     const dataDM = await resDM.json(); // { totalUnread: 5 }
 
