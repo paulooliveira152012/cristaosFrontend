@@ -1,5 +1,13 @@
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
+// em algum utils central, se quiser (opcional)
+const authHeaders = () => {
+  const token = localStorage.getItem("authToken");
+  const h = { "Content-Type": "application/json", Accept: "application/json" };
+  if (token) h.Authorization = `Bearer ${token}`;
+  return h;
+};
+
 // 🔹 Buscar dados do perfil e listagens
 export const fetchUserData = async (userId) => {
   try {
@@ -356,13 +364,27 @@ export const requestChat = async (requester, requested) => {
     const response = await fetch(`${baseUrl}/api/dm/sendChatRequest`, {
       method: "POST",
       credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requester, requested }),
+      headers: authHeaders(),
+      body: JSON.stringify({ requested }),
     });
 
-    console.log("response:", response);
+    if (!response.ok) {
+      const txt = await response.text().catch(() => "");
+      console.warn("sendChatRequest falhou:", response.status, txt);
+      if (response.status === 401) {
+        // opcional: UX melhor
+        alert("Sua sessão expirou. Faça login novamente.");
+      }
+      return null;
+    }
+
+    const data = await response.json();
+    console.log("sendChatRequest OK:", data);
+    return data;  
+
   } catch (error) {
-    console.log(error);
+    console.error("Erro ao pedir conversa:", error);
+    return null;
   }
 };
 
@@ -457,36 +479,38 @@ export const submitMuralContent = async (
   );
 
   try {
-    const response = await fetch(`${baseUrl}/api/mural/newMuralMessage/${userId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify ({
-        senderId: currentUserId,
-        text: newMuralMessage
-      })
-    });
+    const response = await fetch(
+      `${baseUrl}/api/mural/newMuralMessage/${userId}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          senderId: currentUserId,
+          text: newMuralMessage,
+        }),
+      }
+    );
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Erro ao enviar pedido.");
     return data;
-  } catch (error){
+  } catch (error) {
     console.error("Erro ao escrever algo no mural:", error);
     return { error: error.message };
   }
 };
 
-
 export const getMuralContent = async (userId) => {
-  console.log("fetching mural conten...")
-  
+  console.log("fetching mural conten...");
+
   const res = await fetch(`${baseUrl}/api/mural/getMuralContent/${userId}`, {
     method: "GET",
     credentials: "include",
   });
 
   const data = await res.json().catch(() => ({}));
-  console.log("mural content:", data)
+  console.log("mural content:", data);
   if (!res.ok) throw new Error(data.message || `Erro (HTTP ${res.status})`);
 
   // esperado: { items, page, limit, total, hasMore }
