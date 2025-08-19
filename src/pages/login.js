@@ -102,15 +102,9 @@ const Login = () => {
       // backend retorna { user, token }
       login(data.user);
 
-      // 1) conecta o socket com o token no handshake
-      const s = connectSocket(data.token);
-
-      // 2) quando conectar, registra presença sem payload
-      if (s.connected) {
-        s.emit("addUser");
-      } else {
-        s.once("connect", () => s.emit("addUser"));
-      }
+      // conecta socket com token; o back já registra no 'connection'
+      connectSocket(data.token);
+      localStorage.setItem("auth:event", String(Date.now()));
 
       navigate("/");
     } catch (err) {

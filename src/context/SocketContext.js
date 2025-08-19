@@ -1,11 +1,5 @@
 // src/context/SocketContext.js
-import React, {
-  createContext,
-  useContext,
-  useMemo,
-  useEffect,
-  useRef,
-} from "react";
+import React, { createContext, useContext, useMemo, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 
 const Ctx = createContext({
@@ -27,80 +21,84 @@ export const SocketProvider = ({ children }) => {
   const socketRef = useRef(null);
   if (!socketRef.current) {
     socketRef.current = io(baseUrl, {
-      autoConnect: false,           // 👈 importantíssimo
-      withCredentials: true,        // manda cookies no polling
+      autoConnect: false,         // 👈 importantíssimo
+      withCredentials: true,      // manda cookies no polling
       transports: ["websocket", "polling"],
       reconnection: true,
-      // path: "/socket.io",        // só se você tiver mudado no servidor
+      // path: "/socket.io",      // só se tiver mudado no servidor
     });
   }
   const socket = socketRef.current;
 
-  // evita loop de fallback infinito quando token é inválido
-  const triedNoTokenRef = useRef(false);
-
-  // logs/diagnóstico + fallback de auth
   useEffect(() => {
+    const getToken = () => localStorage.getItem("authToken") || "";
+
+    // Em qualquer tentativa de reconexão, injeta o token mais recente
+    // (no Manager e também no próprio socket)
+    socket.io.on("reconnect_attempt", () => {
+      socket.auth = { token: getToken() };
+    });
+    socket.on("reconnect_attempt", () => {
+      socket.auth = { token: getToken() };
+    });
+
     const onConnect = () => {
-      triedNoTokenRef.current = false; // reset ao conectar
       console.log("✅ [Socket] conectado:", socket.id);
     };
 
-    const onDisconnect = (reason) =>
+    const onDisconnect = (reason) => {
       console.warn("❌ [Socket] desconectado:", reason);
+    };
 
     const onError = (err) => {
       console.error("⛔ [Socket] connect_error:", err?.message || err, err);
-      // fallback: se falhou por auth/token inválido, tenta reconectar só com cookie uma única vez
-      const msg = (err?.message || "").toLowerCase();
-      if (!triedNoTokenRef.current && (msg.includes("auth") || msg.includes("token"))) {
-        triedNoTokenRef.current = true;
-        try {
-          socket.auth = {};          // limpa token do handshake
-          if (socket.connected) socket.disconnect();
-          socket.connect();          // tenta com cookie/sessão
-        } catch (e) {
-          console.error("[Socket] fallback sem token falhou:", e);
-        }
-      }
+      // garante que a próxima tentativa já leve o token atual
+      socket.auth = { token: getToken() };
     };
 
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     socket.on("connect_error", onError);
 
-    // 🔒 em dev/StrictMode o Provider monta/desmonta duas vezes; desconecte no unmount
+    // Em dev/StrictMode, o Provider pode desmontar; desconecte limpo
     return () => {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("connect_error", onError);
-      try {
-        socket.disconnect();
-      } catch {}
+      socket.off("reconnect_attempt");
+      try { socket.disconnect(); } catch {}
     };
   }, [socket]);
 
   // helpers públicos
   const connectSocket = (token) => {
-    // injeta o JWT no handshake (se houver); senão conecta só com cookie/sessão
-    socket.auth = token ? { token } : {};
-    if (!socket.connected) {
-      console.log("🌐 [Socket] conectando em:", baseUrl);
-      socket.connect();
-    }
+    // salva para reusar em reconexões (mobile troca de rede/aba com frequência)
+    if (token) localStorage.setItem("authToken", token);
+    const jwt = token || localStorage.getItem("authToken") || undefined;
+
+    // injeta no handshake
+    socket.auth = jwt ? { token: jwt } : {};
+
+    // se já estava conectado (ex.: guest), force novo handshake autenticado
+    if (socket.connected) socket.disconnect();
+
+    console.log("🌐 [Socket] conectando em:", baseUrl);
+    socket.connect();
     return socket;
   };
 
   const reconnectWithToken = (nextToken) => {
-    // útil para refresh de token pós-login/refresh
-    socket.auth = nextToken ? { token: nextToken } : {};
+    if (nextToken) localStorage.setItem("authToken", nextToken);
+    const jwt = nextToken || localStorage.getItem("authToken") || undefined;
+    socket.auth = jwt ? { token: jwt } : {};
     if (socket.connected) socket.disconnect();
     socket.connect();
   };
 
   const disconnectSocket = () => {
     try {
-      socket.auth = {}; // limpa auth
+      socket.auth = {}; // limpa auth no handshake
+      localStorage.removeItem("authToken"); // 🔑 remove token persistido
       if (socket.connected) socket.disconnect();
     } catch (e) {
       console.error("[Socket] erro ao desconectar:", e);
