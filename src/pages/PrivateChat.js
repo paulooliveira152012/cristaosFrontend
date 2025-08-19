@@ -122,62 +122,85 @@ const PrivateChat = () => {
           <div ref={messagesContainerRef} className="chatScroll">
             <div className="messages">
               {messages.map((msg, index) => {
-  const when = msg.timestamp ? format(new Date(msg.timestamp), "dd-MM-yy h:mm a") : "";
+                const when = msg.timestamp
+                  ? format(new Date(msg.timestamp), "dd-MM-yy h:mm a")
+                  : "";
 
-  // ---- branch: mensagens de sistema ----
-  if (isSystemMessage(msg)) {
-    const variant = getSystemVariant(msg); // "join" | "leave" | "info"
-    return (
-      <div
-        key={msg._id ?? `sys-${msg.timestamp ?? index}-${index}`}
-        className={` systemMessageRow system-${variant}`}
-      >
-        <div className="systemMessageBubble">
-          <span className="systemMessageText">{msg.message}</span>
-          {when && <small className="systemMessageTime">{when}</small>}
-        </div>
-      </div>
-    );
-  }
+                // ---- branch: mensagens de sistema ----
+                if (isSystemMessage(msg)) {
+                  const variant = getSystemVariant(msg); // "join" | "leave" | "info"
+                  return (
+                    <div
+                      key={msg._id ?? `sys-${msg.timestamp ?? index}-${index}`}
+                      className={` systemMessageRow system-${variant}`}
+                    >
+                      <div className="systemMessageBubble">
+                        <span className="systemMessageText">{msg.message}</span>
+                        {when && (
+                          <small className="systemMessageTime">{when}</small>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
 
-  // ---- branch: mensagens normais (mantém seu código atual) ----
-  const author =
-    msg.senderUsername ||
-    msg.username ||
-    (msg.sender && String(msg.sender) === String(currentUser?._id) ? "Você" : "Usuário");
+                // ---- branch: mensagens normais (mantém seu código atual) ----
+                const author =
+                  msg.senderUsername ||
+                  msg.username ||
+                  (msg.sender && String(msg.sender) === String(currentUser?._id)
+                    ? "Você"
+                    : "Usuário");
 
-  if (!usernameColors.current[author]) {
-    usernameColors.current[author] = getRandomDarkColor();
-  }
-  const isMine =
-    (msg.userId && String(msg.userId) === String(currentUser?._id)) ||
-    (msg.sender && String(msg.sender) === String(currentUser?._id));
+                if (!usernameColors.current[author]) {
+                  usernameColors.current[author] = getRandomDarkColor();
+                }
+                const isMine =
+                  (msg.userId &&
+                    String(msg.userId) === String(currentUser?._id)) ||
+                  (msg.sender &&
+                    String(msg.sender) === String(currentUser?._id));
 
-  const authorId = msg.userId || msg.sender;
-  const avatar = msg.profileImage || profilePlaceholder;
+                const authorId = msg.userId || msg.sender;
+                const avatar = msg.profileImage || profilePlaceholder;
 
-  return (
-    <div
-      key={msg._id ?? `${msg.sender ?? "unknown"}-${msg.timestamp ?? index}-${index}`}
-      className={`messageRow ${isMine ? "mine" : "theirs"}`}
-    >
-      <Link to={`/profile/${authorId || ""}`} className="avatarLink">
-        <div className="chatAvatar" style={{ backgroundImage: `url(${avatar})` }} title={author} />
-      </Link>
+                return (
+                  <div
+                    key={
+                      msg._id ??
+                      `${msg.sender ?? "unknown"}-${
+                        msg.timestamp ?? index
+                      }-${index}`
+                    }
+                    className={`messageRow ${isMine ? "mine" : "theirs"}`}
+                  >
+                    <Link
+                      to={`/profile/${authorId || ""}`}
+                      className="avatarLink"
+                    >
+                      <div
+                        className="chatAvatar"
+                        style={{ backgroundImage: `url(${avatar})` }}
+                        title={author}
+                      />
+                    </Link>
 
-      <div className="messageBubble">
-        <div className="messageHeader">
-          <strong className="author" style={{ color: usernameColors.current[author] }} title={author}>
-            {author}
-          </strong>
-          <small className="time">{when}</small>
-        </div>
-        <div className="messageText">{msg.message}</div>
-      </div>
-    </div>
-  );
-})}
-
+                    <div className="messageBubble">
+                      <div className="messageHeader">
+                        <strong
+                          className="author"
+                          style={{ color: usernameColors.current[author] }}
+                          title={author}
+                        >
+                          {author}
+                        </strong>
+                        <small className="time">{when}</small>
+                      </div>
+                      <div className="messageText">{msg.message}</div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
