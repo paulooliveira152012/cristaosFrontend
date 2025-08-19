@@ -24,7 +24,7 @@ import {
 } from "./functions/profilePageFunctions";
 import { useProfileLogic } from "./functions/useProfileLogic";
 import FiMessageCircle from "../assets/icons/FiMessageCircle.js";
-import { FiMoreVertical } from "react-icons/fi";
+import { FiMoreVertical, FiMoreHorizontal } from "react-icons/fi";
 
 const imagePlaceholder = require("../assets/images/profileplaceholder.png");
 
@@ -40,10 +40,8 @@ const Profile = () => {
   const [sharedListings, setSharedListings] = useState([]);
   const [showOptions, setShowOptions] = useState(false);
   const [showListingMenu, setShowListingMenu] = useState(null);
-  // abaixo dos outros useState
-  const [editingId, setEditingId] = useState(null); // id da listagem em edição
-  const [draft, setDraft] = useState({}); // rascunho da listagem atual
-
+  const [editingId, setEditingId] = useState(null);
+  const [draft, setDraft] = useState({});
   const [muralMessages, setMuralMessages] = useState([]);
   const [newMuralMessage, setNewMessage] = useState("");
 
@@ -62,10 +60,6 @@ const Profile = () => {
     setSharedListings,
   });
 
-  console.log("currentUser no perfil:", currentUser);
-
-  console.log("user:", user);
-
   useEffect(() => {
     const getData = async () => {
       setLoading(true);
@@ -82,14 +76,11 @@ const Profile = () => {
     if (userId) getData();
   }, [userId]);
 
-  // carrega o mural quando o userId mudar
   useEffect(() => {
     if (!userId) return;
-
     (async () => {
       try {
         const { items = [] } = await getMuralContent(userId);
-        console.log("items:", items)
         setMuralMessages(items);
       } catch (err) {
         console.error("Erro ao carregar mural:", err);
@@ -140,7 +131,11 @@ const Profile = () => {
       );
     }
     if (hasSentRequest) return <span>⏳ Pedido enviado</span>;
-    return <span onClick={handleSendRequest}>➕ Adicionar</span>;
+    return (
+      <span className="add-friend-btn" onClick={handleSendRequest}>
+        + Adicionar
+      </span>
+    );
   };
 
   const renderMoreMenu = () => (
@@ -159,26 +154,26 @@ const Profile = () => {
   );
 
   const handleAddMuralMessage = async () => {
-  const text = newMuralMessage?.trim();
-  if (!text) return;
+    const text = newMuralMessage?.trim();
+    if (!text) return;
+    try {
+      const { error, message } = await submitMuralContent(
+        currentUser._id,
+        userId,
+        text
+      );
+      if (error) throw new Error(error);
+      setMuralMessages((prev) => [message, ...prev]);
+      setNewMessage("");
+    } catch (e) {
+      console.error(e);
+      alert(e.message || "Erro ao enviar mensagem.");
+    }
+  };
 
-  try {
-    const { error, message } = await submitMuralContent(
-      currentUser._id,
-      userId,
-      text
-    );
-    if (error) throw new Error(error);
-
-    // adiciona a mensagem real retornada pela API
-    setMuralMessages((prev) => [message, ...prev]);
-    setNewMessage("");
-  } catch (e) {
-    console.error(e);
-    alert(e.message || "Erro ao enviar mensagem.");
-  }
-};
-
+  const toggleListingMenu = (listingId) => {
+    setShowListingMenu((prev) => (prev === listingId ? null : listingId));
+  };
 
   if (loading) return <p className="profile-loading">Carregando perfil...</p>;
   if (error) return <p className="profile-error">{error}</p>;
@@ -189,11 +184,7 @@ const Profile = () => {
   const churchName =
     typeof user?.church === "object"
       ? user.church?.name
-      : user?.churchName || "Ver igreja"; // opcional, caso você guarde o nome separado
-
-  const toggleListingMenu = (listingId) => {
-    setShowListingMenu((prev) => (prev === listingId ? null : listingId));
-  };
+      : user?.churchName || "Ver igreja";
 
   return (
     <>
@@ -209,12 +200,13 @@ const Profile = () => {
               backgroundSize: "cover",
               backgroundPosition: "center",
               backgroundRepeat: "no-repeat",
-              height: 220, // sem isso, pode não aparecer
+              height: 220,
             }}
           />
           <div className="bottom">
             <div className="imageAndnameContainer">
-              <div className="imageWrapper">
+              {/* Coluna da imagem + localização em badges */}
+              <div className="imageColumn">
                 <div
                   className="ProfileProfileImage"
                   style={{
@@ -223,15 +215,22 @@ const Profile = () => {
                     })`,
                     backgroundPosition: "center",
                   }}
-                ></div>
+                />
+                <div className="under-avatar">
+                  {user.city && <span className="badge">{user.city}</span>}
+                  {user.state && <span className="badge">{user.state}</span>}
+                </div>
               </div>
+
+              {/* Texto principal */}
               <div className="infoWrapper">
                 <div className="topInfo">
                   <h2 className="profile-username">
                     {user.firstName || ""} {user.lastName || ""}
                   </h2>
                   <span>@{user.username}</span>
-                  <span>
+                  {/* Denominação logo abaixo do @ */}
+                  <span className="denomination-line">
                     Denominação:{" "}
                     {churchId ? (
                       <Link to={`/church/${encodeURIComponent(churchId)}`}>
@@ -242,38 +241,36 @@ const Profile = () => {
                     )}
                   </span>
                 </div>
+
                 <div className="locationInfo">
-                  <p>{user.city || ""}</p>
-                  <p>{user.state || ""}</p>
-                  {renderFriendAction()}
-                  <span
-                    onClick={() => navigate(`/profile/${user._id}/friends`)}
-                    style={{ cursor: "pointer", textDecoration: "underline" }}
-                  >
-                    Amigos
-                  </span>
+                  {/* Amigos + Adicionar (lado a lado) */}
+                  <div className="friends-container">
+                    <span
+                      className="friends-link"
+                      onClick={() => navigate(`/profile/${user._id}/friends`)}
+                    >
+                      Amigos
+                    </span>
+                    {renderFriendAction()}
+                  </div>
                 </div>
               </div>
+
               <div className="interactionButtons">
-                {(currentUser._id !== user._id ||
-                  currentUser._id === user._id) && (
-                  <>
-                    {currentUser._id !== user._id && (
-                      <button
-                        className="chat-icon-button"
-                        onClick={() => requestChat(currentUser?._id, user?._id)}
-                      >
-                        <FiMessageCircle size={20} />
-                      </button>
-                    )}
-                    <button
-                      className="more-icon-button"
-                      onClick={() => setShowOptions(!showOptions)}
-                    >
-                      <FiMoreVertical size={20} />
-                    </button>
-                  </>
+                {currentUser._id !== user._id && (
+                  <button
+                    className="chat-icon-button"
+                    onClick={() => requestChat(currentUser?._id, user?._id)}
+                  >
+                    <FiMessageCircle size={20} />
+                  </button>
                 )}
+                <button
+                  className="more-icon-button"
+                  onClick={() => setShowOptions(!showOptions)}
+                >
+                  <FiMoreVertical size={20} />
+                </button>
                 {showOptions && renderMoreMenu()}
               </div>
             </div>
@@ -283,8 +280,18 @@ const Profile = () => {
 
       <div className="profileOptions">
         <ul>
-          <li onClick={() => setCurrentTab("")}>Listagens</li>
-          <li onClick={() => setCurrentTab("mural")}>Mural</li>
+          <li
+            className={currentTab === "" ? "active" : ""}
+            onClick={() => setCurrentTab("")}
+          >
+            Listagens
+          </li>
+          <li
+            className={currentTab === "mural" ? "active" : ""}
+            onClick={() => setCurrentTab("mural")}
+          >
+            Mural
+          </li>
         </ul>
       </div>
 
@@ -304,7 +311,6 @@ const Profile = () => {
                     <button onClick={handleAddMuralMessage}>Enviar</button>
                   </div>
                 )}
-
                 <div className="mural-messages">
                   {muralMessages.length === 0 ? (
                     <p>Este mural ainda não tem mensagens.</p>
@@ -334,17 +340,20 @@ const Profile = () => {
             ) : (
               userListings.map((listing) => {
                 const isOpen = showListingMenu === listing._id;
-
                 return (
                   <div key={listing._id} className="profile-listing-item">
                     {currentUser._id === user._id && (
                       <div className="listingUpdateBox">
-                        <p onClick={() => toggleListingMenu(listing._id)}>
-                          {isOpen ? "x" : "menu"}
-                        </p>
+                        <button
+                          className="listingMenuTrigger"
+                          onClick={() => toggleListingMenu(listing._id)}
+                          aria-label="Abrir menu da listagem"
+                        >
+                          {isOpen ? "×" : <FiMoreHorizontal size={18} />}
+                        </button>
                       </div>
                     )}
-                    {showListingMenu === listing._id && (
+                    {isOpen && (
                       <div className="listingEditMenu">
                         <ul>
                           <li
@@ -357,11 +366,19 @@ const Profile = () => {
                               )
                             }
                           >
-                            edit
+                            ✏️ Editar
+                          </li>
+                          <li
+                            onClick={() =>
+                              handleDeleteListing(listing._id, setUserListings)
+                            }
+                          >
+                            🗑️ Excluir
                           </li>
                         </ul>
                       </div>
                     )}
+
                     {listing.type === "image" && listing.imageUrl && (
                       <img
                         src={listing.imageUrl}
@@ -376,13 +393,6 @@ const Profile = () => {
                         <p>
                           {listing.blogContent?.slice(0, 150) || "No content."}
                         </p>
-                        {listing.imageUrl && (
-                          <img
-                            src={listing.imageUrl}
-                            alt="blog-img"
-                            style={{ width: "100%", borderRadius: "8px" }}
-                          />
-                        )}
                       </div>
                     )}
 
@@ -400,126 +410,7 @@ const Profile = () => {
                     {editingId === listing._id && (
                       <div className="modal">
                         <div className="modal-content">
-                          <div
-                            className="listing-edit-form" /* ...estilos... */
-                          >
-                            {draft.type === "blog" && (
-                              <>
-                                <label>Título</label>
-                                <input
-                                  value={draft.blogTitle}
-                                  onChange={(e) =>
-                                    setDraft((d) => ({
-                                      ...d,
-                                      blogTitle: e.target.value,
-                                    }))
-                                  }
-                                />
-
-                                <label>Conteúdo</label>
-                                <textarea
-                                  rows={6}
-                                  value={draft.blogContent}
-                                  onChange={(e) =>
-                                    setDraft((d) => ({
-                                      ...d,
-                                      blogContent: e.target.value,
-                                    }))
-                                  }
-                                />
-
-                                <label>Imagem (URL)</label>
-                                <input
-                                  value={draft.imageUrl}
-                                  onChange={(e) =>
-                                    setDraft((d) => ({
-                                      ...d,
-                                      imageUrl: e.target.value,
-                                    }))
-                                  }
-                                />
-                              </>
-                            )}
-
-                            {draft.type === "image" && (
-                              <>
-                                <label>Legenda</label>
-                                <input
-                                  value={draft.caption || ""}
-                                  onChange={(e) =>
-                                    setDraft((d) => ({
-                                      ...d,
-                                      caption: e.target.value,
-                                    }))
-                                  }
-                                />
-                              </>
-                            )}
-
-                            {draft.type === "poll" && (
-                              <>
-                                <label>Pergunta</label>
-                                <input
-                                  value={draft.question}
-                                  onChange={(e) =>
-                                    setDraft((d) => ({
-                                      ...d,
-                                      question: e.target.value,
-                                    }))
-                                  }
-                                />
-                                <label>Opções</label>
-                                {draft.options?.map((opt, i) => (
-                                  <input
-                                    key={i}
-                                    value={opt}
-                                    onChange={(e) => {
-                                      const arr = [...draft.options];
-                                      arr[i] = e.target.value;
-                                      setDraft((d) => ({ ...d, options: arr }));
-                                    }}
-                                  />
-                                ))}
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setDraft((d) => ({
-                                      ...d,
-                                      options: [...(d.options || []), ""],
-                                    }))
-                                  }
-                                >
-                                  + adicionar opção
-                                </button>
-                              </>
-                            )}
-
-                            <div style={{ display: "flex", gap: 8 }}>
-                              <button
-                                onClick={() =>
-                                  saveEdit(
-                                    listing._id,
-                                    draft,
-                                    setUserListings,
-                                    setEditingId,
-                                    setDraft,
-                                    setShowListingMenu
-                                  )
-                                }
-                              >
-                                Salvar
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  cancelEdit(setEditingId, setDraft)
-                                }
-                              >
-                                Cancelar
-                              </button>
-                            </div>
-                          </div>
+                          <div className="listing-edit-form">{/* ... */}</div>
                         </div>
                       </div>
                     )}
