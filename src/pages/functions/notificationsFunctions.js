@@ -1,18 +1,31 @@
+// notificationsFunctions.js
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
+
+/** Headers com Bearer + JSON, reaproveitando o mesmo authToken do SocketContext */
+const authHeaders = () => {
+  const token = localStorage.getItem("authToken"); // ✅ mesma chave do SocketContext
+  const h = { Accept: "application/json", "Content-Type": "application/json" };
+  if (token) h.Authorization = `Bearer ${token}`;
+  return h;
+};
+
+/* ===========================
+ * Pedidos de amizade
+ * =========================== */
 
 // Buscar pedidos de amizade recebidos
 export const fetchFriendRequests = async (userId) => {
-  console.log("useEffect for fetching friend requests");
   try {
     const response = await fetch(
       `${baseUrl}/api/users/${userId}/friendRequests`,
       {
+        method: "GET",
         credentials: "include",
+        headers: authHeaders(),
       }
     );
     if (!response.ok) throw new Error("Erro ao buscar pedidos de amizade");
-    const data = await response.json();
-    return data; // Agora retorna direto o array
+    return await response.json(); // array
   } catch (error) {
     console.error("Erro ao buscar pedidos de amizade:", error);
     return [];
@@ -26,14 +39,16 @@ export const acceptFriendRequest = async (requesterId) => {
       `${baseUrl}/api/users/acceptFriend/${requesterId}`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         credentials: "include",
+        headers: authHeaders(),
+        // body: JSON.stringify({}) // se seu back exigir body
       }
     );
     if (!response.ok) throw new Error("Erro ao aceitar pedido de amizade");
     return await response.json();
   } catch (error) {
     console.error("Erro ao aceitar pedido:", error);
+    return null;
   }
 };
 
@@ -44,32 +59,41 @@ export const rejectFriendRequest = async (requesterId) => {
       `${baseUrl}/api/users/rejectFriend/${requesterId}`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         credentials: "include",
+        headers: authHeaders(),
+        // body: JSON.stringify({}) // se seu back exigir body
       }
     );
     if (!response.ok) throw new Error("Erro ao rejeitar pedido de amizade");
     return await response.json();
   } catch (error) {
     console.error("Erro ao rejeitar pedido:", error);
+    return null;
   }
 };
 
-// Aceitar pedido de amizade
-// notificationsFunctions.js
+/* ===========================
+ * Solicitações de DM
+ * =========================== */
+
+// Aceitar pedido de DM
 export const acceptDmRequest = async (payload) => {
-  console.log("Aceitando dm...")
-  const res = await fetch(`${baseUrl}/api/dm/accept`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error("Erro ao aceitar solicitação de conversa");
-  return res.json(); // { message, conversation }
+  try {
+    const res = await fetch(`${baseUrl}/api/dm/accept`, {
+      method: "POST",
+      credentials: "include",
+      headers: authHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error("Erro ao aceitar solicitação de conversa");
+    return await res.json(); // { message, conversation }
+  } catch (err) {
+    console.error("Erro ao aceitar DM:", err);
+    throw err;
+  }
 };
 
-
+// Rejeitar pedido de DM
 export const rejectDmRequest = async (
   requester,
   requested,
@@ -79,18 +103,16 @@ export const rejectDmRequest = async (
   const requesterId = typeof requester === "object" ? requester._id : requester;
   const requestedId = typeof requested === "object" ? requested._id : requested;
 
-  console.log("conversationId:", conversationId)
-
   try {
     const response = await fetch(`${baseUrl}/api/dm/rejectChatRequest`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       credentials: "include",
+      headers: authHeaders(),
       body: JSON.stringify({
         requester: requesterId,
         requested: requestedId,
-        conversationId, // ✅ novo
-        notificationId, //
+        conversationId,
+        notificationId,
       }),
     });
 
@@ -100,26 +122,27 @@ export const rejectDmRequest = async (
     return await response.json();
   } catch (error) {
     console.error("Erro ao rejeitar DM:", error);
+    return null;
   }
 };
+
+/* ===========================
+ * Notificações
+ * =========================== */
 
 // Buscar todas as notificações
 export const fetchNotifications = async () => {
   try {
-    const token = localStorage.getItem("token");
-    const headers = { Accept: "application/json" };
-    if (token) headers.Authorization = `Bearer ${token}`;
-
     const res = await fetch(`${baseUrl}/api/notifications`, {
       method: "GET",
-      credentials: "include", // cookies (se usados)
-      headers, // bearer (se existir)
+      credentials: "include",      // ok ter cookie, mas não depender apenas dele
+      headers: authHeaders(),       // ✅ manda Bearer se houver
     });
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       console.warn("GET /api/notifications falhou:", res.status, text);
-      throw new Error(`Falha ${res.status}`);
+      return []; // não quebra a tela
     }
 
     return await res.json(); // array
@@ -130,17 +153,17 @@ export const fetchNotifications = async () => {
 };
 
 // Marcar uma notificação como lida
-// Marcar UMA como lida (sem token; usa cookie)
 export const markNotificationAsRead = async (notifId) => {
   try {
     const res = await fetch(`${baseUrl}/api/notifications/read/${notifId}`, {
       method: "PUT",
       credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders(),
     });
     if (!res.ok) throw new Error("Erro ao marcar notificação como lida");
     return await res.json();
   } catch (err) {
     console.error("Erro ao marcar notificação como lida:", err);
+    return null;
   }
 };
