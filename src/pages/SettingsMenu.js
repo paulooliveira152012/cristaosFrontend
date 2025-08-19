@@ -201,7 +201,7 @@ const SettingsMenu = () => {
                 height: "150px",
                 borderRadius: "50%",
                 backgroundImage: `url(${
-                  formData.profileImage || "https://via.placeholder.com/150"
+                  formData.profileImage || "https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-2210.jpg?w=360"
                 })`,
                 border: "2px solid black",
                 backgroundSize: "cover",

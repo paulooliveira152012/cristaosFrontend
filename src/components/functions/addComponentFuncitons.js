@@ -1,5 +1,5 @@
 export const fetchAllAds = async (setAds) => {
-    console.log("🥳🥳🥳🥳🥳🥳 Fetching all ads...");
+    // console.log("🥳🥳🥳🥳🥳🥳 Fetching all ads...");
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
     console.log("API Base URL:", process.env.REACT_APP_API_BASE_URL);
 
@@ -13,7 +13,7 @@ export const fetchAllAds = async (setAds) => {
       throw new Error("Failed to fetch ads");
     }
     const data = await response.json();
-    console.log("Response data:", data);
+    // console.log("Response data:", data);
 
      // Aqui: já vem um array direto, então:
     setAds(data);

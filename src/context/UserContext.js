@@ -1,3 +1,4 @@
+// src/context/UserContext.js
 import {
   createContext,
   useContext,
@@ -7,7 +8,7 @@ import {
   useCallback,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import socket from "../socket";
+import { useSocket } from "../context/SocketContext";
 
 const UserContext = createContext();
 const UsersContext = createContext();
@@ -16,81 +17,80 @@ export const useUser = () => useContext(UserContext);
 export const useUsers = () => useContext(UsersContext);
 
 export const UserProvider = ({ children }) => {
+  const { socket, connectSocket } = useSocket(); // ✅ desestruturação correta
   const [darkMode, setDarkMode] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const hasFetchedUserRef = useRef(false);
   const navigate = useNavigate();
-
   const API = process.env.REACT_APP_API_BASE_URL;
 
-  // ---- socket helpers (memorized) ----
-  const emitLogin = useCallback((user) => {
-    if (!user) return;
-    socket.emit("userLoggedIn", {
-      _id: user._id,
-      username: user.username,
-      profileImage: user.profileImage || "https://via.placeholder.com/50",
-    });
-    // console.log("📡 Emitindo login para socket:", user.username);
-  }, []);
+  // ---- helpers ----
 
-  const wakeServerAndConnectSocket = useCallback(
-    async (user) => {
-      try {
-        await fetch(`${API}/api/users/ping`);
-        if (!socket.connected) socket.connect();
-        emitLogin(user); // sempre emite ao (re)conectar
-      } catch (err) {
-        console.error("❌ Erro ao acordar servidor:", err);
-      }
-    },
-    [API, emitLogin]
-  );
+  const wakeServerAndConnectSocket = useCallback(async () => {
+    try {
+      await fetch(`${API}/api/users/ping`).catch(() => {});
+      if (!socket?.connected) connectSocket?.(); // evita chamada redundante
+    } catch (err) {
+      console.error("❌ Erro ao acordar servidor:", err);
+    }
+  }, [API, connectSocket, socket?.connected]);
 
-  // ---- restaura user do localStorage ao montar e acorda servidor/socket ----
+  useEffect(() => {
+    if (!socket?.connected) connectSocket?.(); // conecta como guest também
+  }, [socket, connectSocket]);
+
+  // ✅ ÚNICO effect para "connect": addUser + getOnlineUsers
+  useEffect(() => {
+  if (!socket) return;
+
+  const onConnect = () => {
+    if (currentUser) socket.emit("addUser"); // só se estiver logado
+    socket.emit("getOnlineUsers");           // SEMPRE (guest ou logado)
+  };
+
+  socket.on("connect", onConnect);
+  if (socket.connected) onConnect(); // cobre reconexão instantânea
+  return () => socket.off("connect", onConnect);
+}, [socket, currentUser]);
+
+  // Restaura user e acorda socket (primeiro load)
   useEffect(() => {
     const stored = localStorage.getItem("user");
     if (stored) {
       const u = JSON.parse(stored);
       setCurrentUser(u);
-      wakeServerAndConnectSocket(u);
+      wakeServerAndConnectSocket();
     }
   }, [wakeServerAndConnectSocket]);
 
-  // ---- reconexão do socket: reenvia login e pede onlineUsers ----
+  // onlineUsers listener (opcional: ping inicial se já conectado)
   useEffect(() => {
-    const onConnect = () => {
-      // console.log("🔌 Reconectado.");
-      if (currentUser) emitLogin(currentUser);
-      setTimeout(() => socket.emit("getOnlineUsers"), 200);
-    };
-    socket.on("connect", onConnect);
-    return () => socket.off("connect", onConnect);
-  }, [currentUser, emitLogin]);
-
-  // ---- listener de onlineUsers ----
-  useEffect(() => {
+    if (!socket) return;
     const handleOnlineUsers = (users) => setOnlineUsers(users);
     socket.on("onlineUsers", handleOnlineUsers);
-    return () => socket.off("onlineUsers", handleOnlineUsers);
-  }, []);
 
-  // ---- heartbeat periódico enquanto autenticado e aba visível ----
+    if (socket.connected && currentUser?._id) socket.emit("getOnlineUsers");
+    return () => socket.off("onlineUsers", handleOnlineUsers);
+  }, [socket, currentUser]);
+
+  // Heartbeat (seu endpoint; se não existir, apenas ignora o erro)
   useEffect(() => {
     if (!currentUser?._id) return;
     const id = setInterval(() => {
-      if (document.visibilityState !== "visible") return;
+      if (document.visibilityState !== "visible" || !socket?.connected) return;
       fetch(`${API}/api/presence/heartbeat`, {
         method: "POST",
         credentials: "include",
       }).catch(() => {});
     }, 30000);
     return () => clearInterval(id);
-  }, [API, currentUser?._id]);
+  }, [API, currentUser?._id, socket?.connected]);
 
-  // ---- valida cookie do backend uma vez e atualiza currentUser ----
+  // Valida cookie e reenvia presença (primeira hidratação com socket já disponível)
+  // Valida cookie e reconecta — NÃO precisa emitir addUser aqui
   useEffect(() => {
+    if (!socket) return;
     const run = async () => {
       if (hasFetchedUserRef.current) return;
       hasFetchedUserRef.current = true;
@@ -107,13 +107,10 @@ export const UserProvider = ({ children }) => {
             credentials: "include",
           });
           if (!res.ok) throw new Error("Usuário não autenticado.");
-
           const verified = await res.json();
           setCurrentUser(verified);
           localStorage.setItem("user", JSON.stringify(verified));
-
-          if (socket.connected) emitLogin(verified);
-          else socket.connect();
+          connectSocket?.(); // ✅ só conecta; o effect do "connect" faz o resto
         } catch {
           console.warn(
             "⚠️ Cookie inválido/expirado. Mantendo user do localStorage."
@@ -123,9 +120,9 @@ export const UserProvider = ({ children }) => {
       }, 500);
     };
     run();
-  }, [API, emitLogin]);
+  }, [API, socket, connectSocket]);
 
-  // ---- reidrata ao focar/visível/pageshow (sleep/wake) ----
+  // Reidrata ao focar/visível/pageshow
   useEffect(() => {
     let busy = false;
     const rehydrate = async () => {
@@ -133,7 +130,6 @@ export const UserProvider = ({ children }) => {
       busy = true;
       setTimeout(() => (busy = false), 800);
 
-      // ✅ Só tenta reidratar se existir user salvo (estado logado)
       const stored = localStorage.getItem("user");
       if (!stored) return;
 
@@ -142,20 +138,18 @@ export const UserProvider = ({ children }) => {
           credentials: "include",
         });
         if (!res.ok) throw new Error("no auth");
-
         const verified = await res.json();
         setCurrentUser(verified);
         localStorage.setItem("user", JSON.stringify(verified));
-        await wakeServerAndConnectSocket(verified);
+        await wakeServerAndConnectSocket();
       } catch {
-        // sem sessão no backend -> mantém estado atual
+        // mantém estado atual
       }
     };
 
     const onFocus = () => rehydrate();
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") rehydrate();
-    };
+    const onVisibility = () =>
+      document.visibilityState === "visible" && rehydrate();
     const onPageShow = () => rehydrate();
 
     window.addEventListener("focus", onFocus);
@@ -168,87 +162,77 @@ export const UserProvider = ({ children }) => {
     };
   }, [API, wakeServerAndConnectSocket]);
 
-  // ---- sync entre abas (login/logout) ----
+  // Sync entre abas (padronize a chave!)
   useEffect(() => {
     const onStorage = (e) => {
-      if (e.key !== "auth:event") return;
+      if (e.key !== "auth:event") return; // ✅ use sempre "auth:event"
       const stored = localStorage.getItem("user");
       if (stored) {
         const u = JSON.parse(stored);
         setCurrentUser(u);
-        wakeServerAndConnectSocket(u);
+        wakeServerAndConnectSocket();
       } else {
         setCurrentUser(null);
-        socket.disconnect();
+        socket?.disconnect?.();
       }
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
-  }, [wakeServerAndConnectSocket]);
+  }, [socket, wakeServerAndConnectSocket]);
 
   // ---- ações públicas ----
-  const login = (user) => {
+  // login — idem: não emitir addUser aqui
+  const login = (user /*, token? */) => {
     setCurrentUser(user);
     localStorage.setItem("user", JSON.stringify(user));
-    localStorage.setItem("auth:event", String(Date.now())); // notifica outras abas
-    if (socket.connected) emitLogin(user);
-    else socket.connect();
-
-    // debug opcional de cookies
-    fetch(`${API}/api/users/debug/cookies`, { credentials: "include" }).catch(
-      () => {}
-    );
+    localStorage.setItem("auth:event", String(Date.now()));
+    if (!socket?.connected) connectSocket?.();
   };
 
   const logout = async () => {
     const userId = currentUser?._id;
 
-    // avisa o socket (se tivermos user)
-    if (userId) {
-      socket.emit("userLoggedOut", {
-        _id: userId,
-        username: currentUser.username,
-      });
-    }
+    // avisa o servidor — novo padrão
+    socket?.emit?.("removeSocket");
+    // fallback antigo (se ainda existir no back)
+    socket?.emit?.("userLoggedOut", {
+      _id: userId,
+      username: currentUser?.username,
+    });
 
-    // tenta limpar cookies/sessão no backend
     try {
-      await fetch(`${API}/api/auth/logout`, {
+      // alinhe com seu back: você tem /api/users/signout (não /api/auth/logout)
+      await fetch(`${API}/api/users/signout`, {
         method: "POST",
         credentials: "include",
       });
-    } catch (_) {
-      // ignora erro de rede aqui — ainda vamos limpar o client state
-    }
+    } catch (_) {}
 
-    // limpa estado/localStorage e sincroniza com outras abas
+    setOnlineUsers([]); // limpa lista local imediatamente
     setCurrentUser(null);
     localStorage.removeItem("user");
     localStorage.setItem("auth:event", String(Date.now()));
 
-    // tenta atualizar onlineUsers antes de desconectar
-    const handleUpdatedOnlineUsers = (users) => {
-      // remove este usuário da lista que chegou do servidor
-      setOnlineUsers(users.filter((u) => u._id !== userId));
-      socket.off("onlineUsers", handleUpdatedOnlineUsers);
-      socket.disconnect();
+    const finish = () => {
+      socket?.disconnect?.();
       navigate("/");
     };
 
-    if (socket.connected) {
-      socket.once("onlineUsers", handleUpdatedOnlineUsers);
-      // garante que venha um "onlineUsers" agora
-      socket.emit("getOnlineUsers");
-
-      // fallback rápido caso o evento não chegue
+    // tenta atualizar a lista e depois fecha
+    if (socket?.connected) {
+      const once = (users) => {
+        setOnlineUsers(users.filter((u) => String(u._id) !== String(userId)));
+        socket?.off?.("onlineUsers", once);
+        finish();
+      };
+      socket.once?.("onlineUsers", once);
+      socket.emit?.("getOnlineUsers");
       setTimeout(() => {
-        socket.off("onlineUsers", handleUpdatedOnlineUsers);
-        socket.disconnect();
-        navigate("/");
+        socket?.off?.("onlineUsers", once);
+        finish();
       }, 800);
     } else {
-      socket.disconnect();
-      navigate("/");
+      finish();
     }
   };
 

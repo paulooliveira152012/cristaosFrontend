@@ -28,6 +28,7 @@ const normalizeIndexesMany = (len, idxs) => {
 };
 
 const SideAdSection = () => {
+  const { socket } = useSocket(); // ✅ desestruturado
   const [ads, setAds] = useState([]);
   const [currentIndexes, setCurrentIndexes] = useState(
     Array.from({ length: SLOTS }, (_, i) => i)
@@ -37,28 +38,30 @@ const SideAdSection = () => {
   const timeoutRefs = useRef([]);
   const { currentUser } = useUser();
   const navigate = useNavigate();
-  const socket = useSocket();
 
   // fetch inicial
   useEffect(() => {
     fetchAllAds(setAds);
   }, []);
 
-  // listeners de socket
+  // listeners de socket (create/update/delete)
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || typeof socket.on !== "function") return;
 
     const onNew = (ad) => {
-      console.log("✅ SideAdSection -> newAdCreated:", ad);
+      // insere no topo e já normaliza índices com o NOVO array
       setAds((prev) => {
         const dedup = prev.filter((x) => String(x._id) !== String(ad._id));
-        return [ad, ...dedup];
-      });
-      // força mostrar o novo ad no slot 0
-      setCurrentIndexes((prev) => {
-        const next = [...prev];
-        next[0] = 0; // como o novo entrou no início, índice 0 aponta pra ele
-        return normalizeIndexesMany(Math.max(ads.length + 1, 1), next);
+        const newAds = [ad, ...dedup];
+
+        // força mostrar o novo ad no slot 0
+        setCurrentIndexes((prevIdxs) => {
+          const nextIdxs = [...prevIdxs];
+          nextIdxs[0] = 0; // novo ficou no índice 0
+          return normalizeIndexesMany(newAds.length, nextIdxs);
+        });
+
+        return newAds;
       });
     };
 
@@ -66,26 +69,24 @@ const SideAdSection = () => {
       const _id = payload?._id || payload;
       setAds((prev) => {
         const next = prev.filter((ad) => String(ad._id) !== String(_id));
-        setCurrentIndexes((prevIdxs) =>
-          normalizeIndexesMany(next.length, prevIdxs)
-        );
+        setCurrentIndexes((prevIdxs) => normalizeIndexesMany(next.length, prevIdxs));
         return next;
       });
     };
 
     const onUpdated = (updated) => {
-      console.log("✏️ SideAdSection -> updatedAd:", updated?._id);
       setAds((prev) => {
-        const filtered = prev.filter(
-          (ad) => String(ad._id) !== String(updated._id)
-        );
-        return [updated, ...filtered];
+        const filtered = prev.filter((ad) => String(ad._id) !== String(updated._id));
+        const newAds = [updated, ...filtered];
+        // opcional: manter slot 0 no atualizado se você quiser destacar
+        setCurrentIndexes((prevIdxs) => normalizeIndexesMany(newAds.length, prevIdxs));
+        return newAds;
       });
     };
 
     socket.on("newAdCreated", onNew);
     socket.on("adDeleted", onDeleted);
-    socket.on("addDeleted", onDeleted); // fallback
+    socket.on("addDeleted", onDeleted); // fallback/typo compat
     socket.on("updatedAd", onUpdated);
 
     return () => {
@@ -94,7 +95,7 @@ const SideAdSection = () => {
       socket.off("addDeleted", onDeleted);
       socket.off("updatedAd", onUpdated);
     };
-  }, [socket, ads.length]);
+  }, [socket]);
 
   // quando mudar o tamanho da lista, normalize os índices
   useEffect(() => {
@@ -117,15 +118,15 @@ const SideAdSection = () => {
         });
 
         setTimeout(() => {
-          setCurrentIndexes((prev) => {
-            const used = new Set(prev.filter((_, i) => i !== slot));
-            let cand = ((prev[slot] ?? 0) + 1) % ads.length;
+          setCurrentIndexes((prevIdxs) => {
+            const used = new Set(prevIdxs.filter((_, i) => i !== slot));
+            let cand = ((prevIdxs[slot] ?? 0) + 1) % ads.length;
             let tries = 0;
             while (used.has(cand) && tries < ads.length) {
               cand = (cand + 1) % ads.length;
               tries++;
             }
-            const next = [...prev];
+            const next = [...prevIdxs];
             next[slot] = cand;
             return next;
           });
@@ -179,6 +180,7 @@ const SideAdSection = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="adLink"
+                onClick={(e) => e.stopPropagation()} // evita navegar e abrir link ao mesmo tempo
               >
                 <img src={ad.imageUrl} alt={ad.title} className="adImage" />
                 <div className="adDetails">
@@ -189,12 +191,12 @@ const SideAdSection = () => {
             </div>
           );
         })}
-        {currentUser?.leader && (
+
+        {/* Se o controle de permissão for por role, considere trocar por role === 'lider' */}
+        {currentUser?.role === 'leader' && (
           <div className="addSectionHeader">
             <h2>Gerenciar Anúncios</h2>
-            <button onClick={() => navigate("/addManagement")}>
-              Gerenciar
-            </button>
+            <button onClick={() => navigate("/addManagement")}>Gerenciar</button>
           </div>
         )}
       </div>

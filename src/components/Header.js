@@ -120,7 +120,7 @@ const Header = ({
               onLeave={() =>
                 handleLeaveDirectMessagingChat({
                   conversationId: roomId,
-                  userId: currentUser._id,
+                  userId: currentUser?._id,
                   username: currentUser.username,
                   navigate,
                 })

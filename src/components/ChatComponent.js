@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useState, useEffect, useRef, useContext, useCallback } from "react";
 import { useUser } from "../context/UserContext";
-import socket from "../socket";
+import { useSocket } from "../context/SocketContext";
+
 import TrashIcon from "../assets/icons/trashcan";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
@@ -10,6 +11,7 @@ import MicOff2 from "../assets/icons/microphone/micOff2.js";
 import AudioContext from "../context/AudioContext.js";
 import SendIcon from "../assets/icons/send.js";
 import profilePlaceholder from "../assets/images/profileplaceholder.png";
+import { useLocation } from "react-router-dom";
 
 import {
   useSocketConnectionLogger,
@@ -26,6 +28,7 @@ import {
 } from "./functions/chatComponentFunctions";
 
 const ChatComponent = ({ roomId }) => {
+  const { socket } = useSocket();
   const { currentUser } = useUser();
   const { toggleMicrophone, micState } = useContext(AudioContext);
 
@@ -37,15 +40,22 @@ const ChatComponent = ({ roomId }) => {
   const usernameColors = useRef({});
   const [isAtBottom, setIsAtBottom] = useState(true);
 
-  useSocketConnectionLogger();
-  useJoinRoomChat(roomId, currentUser, setMessages, () =>
-    scrollToBottomUtil(messagesContainerRef)
+  const currentScreen = useLocation();
+  console.log("currentScreen:", currentScreen.pathname);
+
+    // ✅ função estável para rolar ao fim — não muda entre renders
+  const scrollToBottom = useCallback(
+    () => scrollToBottomUtil(messagesContainerRef),
+    []
   );
-  useReceiveMessage(setMessages);
-  useListenMessageDeleted(roomId, setMessages);
-  useAutoScrollToBottom(messages, isAtBottom, () =>
-    scrollToBottomUtil(messagesContainerRef)
-  );
+
+  useSocketConnectionLogger(socket);
+
+  useJoinRoomChat(socket, roomId, currentUser, setMessages, scrollToBottom);
+ useReceiveMessage(socket, setMessages, roomId);
+
+  useListenMessageDeleted(socket, roomId, setMessages);
+useAutoScrollToBottom(messages, isAtBottom, scrollToBottom);
 
   const onScroll = () => handleScrollUtil(messagesContainerRef, setIsAtBottom);
 
@@ -57,7 +67,7 @@ const ChatComponent = ({ roomId }) => {
       socket,
       setMessages,
       setMessage,
-      scrollToBottom: () => scrollToBottomUtil(messagesContainerRef),
+      scrollToBottom,
       inputRef,
     });
 
@@ -100,7 +110,9 @@ const ChatComponent = ({ roomId }) => {
                   <div
                     className="chatAvatar"
                     style={{
-                      backgroundImage: `url(${msg.profileImage || profilePlaceholder})`,
+                      backgroundImage: `url(${
+                        msg.profileImage || profilePlaceholder
+                      })`,
                     }}
                     title={msg.username}
                   />
@@ -150,14 +162,16 @@ const ChatComponent = ({ roomId }) => {
           className="composerInput"
         />
 
-        <button
-          className="iconBtn"
-          onClick={onToggleMic}
-          aria-label={micState ? "Desativar microfone" : "Ativar microfone"}
-          title={micState ? "Microfone ligado" : "Microfone desligado"}
-        >
-          {micState ? <MicOn /> : <MicOff2 />}
-        </button>
+        {currentScreen.pathname.startsWith("/liveRoom") && (
+          <button
+            className="iconBtn"
+            onClick={onToggleMic}
+            aria-label={micState ? "Desativar microfone" : "Ativar microfone"}
+            title={micState ? "Microfone ligado" : "Microfone desligado"}
+          >
+            {micState ? <MicOn /> : <MicOff2 />}
+          </button>
+        )}
 
         <button
           className="sendBtn"

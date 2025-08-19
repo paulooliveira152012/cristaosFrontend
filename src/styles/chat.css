@@ -43,6 +43,15 @@ body.dark-mode {
   border-bottom: 1px solid var(--border);
 }
 
+.chatPageInputContainer {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  background: var(--bg);
+  backdrop-filter: saturate(150%) blur(6px);
+  border-top: 1px solid var(--border);
+}
+
 .chatHeaderActions {
   display: flex;
   align-items: center;
@@ -304,4 +313,58 @@ body.dark-mode {
   outline: 3px solid var(--ring);
   outline-offset: 2px;
   border-color: var(--accent);
+}
+
+
+/* Escopo só da página de DM para não afetar outras telas */
+.privateChatPage {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Conteúdo em coluna: mensagens + input */
+.privateChatPage .privateChatContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  margin-bottom: 50px;
+  min-height: 0; /* crucial p/ sticky funcionar dentro do flex */
+}
+
+/* Área que rola as mensagens */
+.privateChatPage .messagesScroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
+  /* espaço extra para o input não cobrir as últimas msgs */
+  
+  overscroll-behavior: contain;
+}
+
+/* Barra de input grudada no rodapé da viewport */
+.privateChatPage .chatPageInputContainer {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg, #fff);
+  border-top: 1px solid var(--border, #e5e7eb);
+  padding: 10px 12px env(safe-area-inset-bottom);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  z-index: 5; /* acima do conteúdo rolável */
+}
+
+/* Só estética – pode manter suas classes existentes */
+.privateChatPage .input {
+  flex: 1;
+  min-height: 40px;
+  width: 90%;
+  
+}
+
+.privateChatPage .sendBtn {
+  width: auto;
 }

@@ -7,7 +7,7 @@ import {
   markNotificationAsRead,
   acceptDmRequest,
   rejectDmRequest,
-} from "./functions/functions/notificationsFunctions.js";
+} from "./functions/notificationsFunctions.js";
 import "../styles/notifications.css";
 import { useNavigate } from "react-router-dom";
 import { useNotification } from "../context/NotificationContext.js";
@@ -15,6 +15,7 @@ import {
   markAllNotificationsAsRead,
   checkForNewNotifications,
 } from "../components/functions/footerFunctions.js";
+import { useSocket } from "../context/SocketContext.js";
 
 // Avatar com fallback (inicial)
 const Avatar = ({ src, alt, size = 40 }) => {
@@ -60,49 +61,86 @@ const Loader = () => (
 );
 
 export const Notifications = () => {
+  const { socket } = useSocket();                   // ✅ desestrutura
   const { currentUser } = useUser();
-  const { setNotifications } = useNotification();
+  const { setNotifications, setFromList, markAllSeen } = useNotification();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
   const navigate = useNavigate();
 
-  // carregar
-  useEffect(() => {
-    if (!currentUser) return;
-    const loadData = async () => {
-      try {
-        const allNotifs = await fetchNotifications();
+  // carregar + marcar lidas + limpar badge
+  // carregar + marcar lidas + limpar badge
+useEffect(() => {
+  if (!currentUser) return;
+
+  markAllSeen(); // zera a badge na hora
+  let mounted = true;
+
+  (async () => {
+    try {
+      setLoading(true);
+
+      // 👉 fetchNotifications deve retornar `null` em caso de erro/401
+      const allNotifs = await fetchNotifications();
+
+      if (allNotifs) {
         const sorted = allNotifs
           .filter(Boolean)
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        setItems(sorted);
-      } catch (error) {
-        console.error("Erro ao carregar notificações:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, [currentUser]);
 
-  // marcar como lidas no mount
+        if (mounted) {
+          setItems(sorted);
+          setFromList(sorted);
+        }
+
+        // Só marca como lidas se conseguiu buscar
+        try {
+          await markAllNotificationsAsRead();
+          markAllSeen();
+        } catch (e) {
+          console.warn("Falha ao marcar todas como lidas:", e);
+        }
+      } else {
+        // ❗ Falhou (ex.: 401) — NÃO sobrescreve estado local
+        console.warn("Não atualizando lista: fetchNotifications falhou.");
+      }
+    } catch (e) {
+      console.error("Erro ao carregar notificações:", e);
+    } finally {
+      if (mounted) setLoading(false);
+    }
+
+    // Atualiza badge (usa headers com Bearer no footerFunctions)
+    setNotifications(false);
+    checkForNewNotifications(setNotifications);
+  })();
+
+  return () => {
+    mounted = false;
+  };
+}, [currentUser, setNotifications, markAllSeen, setFromList]);
+
+
+  // push em tempo real: nova notificação enquanto está na tela
   useEffect(() => {
-    if (!currentUser) return;
-    markAllNotificationsAsRead().then(() => {
-      checkForNewNotifications(setNotifications);
-    });
-  }, [currentUser, setNotifications]);
+    if (!socket || !currentUser) return;
+
+    const onNew = (notif) => {
+      if (String(notif?.recipient) !== String(currentUser._id)) return;
+      setItems((prev) => [notif, ...prev]);
+      setNotifications(true);
+    };
+
+    socket.on("newNotification", onNew);
+    return () => socket.off("newNotification", onNew);
+  }, [socket, currentUser, setNotifications]);
 
   // buckets
   const { friendRequests, dmRequests, otherNotifications } = useMemo(() => {
-    const friendRequests = items.filter(
-      (n) => n.type === "friend_request" && n.fromUser !== null
-    );
+    const friendRequests = items.filter((n) => n.type === "friend_request");
     const dmRequests = items.filter(
-      (n) =>
-        (n.type === "chat_request" || n.type === "chat_reinvite") &&
-        n.fromUser !== null
+      (n) => n.type === "chat_request" || n.type === "chat_reinvite"
     );
     const otherNotifications = items.filter(
       (n) =>
@@ -113,12 +151,16 @@ export const Notifications = () => {
     return { friendRequests, dmRequests, otherNotifications };
   }, [items]);
 
-  // ações amizade
+  // amizade
   const handleAcceptFriend = async (requesterId) => {
     setProcessingId(requesterId);
     try {
       await acceptFriendRequest(requesterId);
-      setItems((prev) => prev.filter((r) => r.fromUser?._id !== requesterId));
+      setItems((prev) => {
+        const next = prev.filter((r) => r.fromUser?._id !== requesterId);
+        setFromList(next);
+        return next;
+      });
     } finally {
       setProcessingId(null);
     }
@@ -127,27 +169,66 @@ export const Notifications = () => {
     setProcessingId(requesterId);
     try {
       await rejectFriendRequest(requesterId);
-      setItems((prev) => prev.filter((r) => r.fromUser?._id !== requesterId));
+      setItems((prev) => {
+        const next = prev.filter((r) => r.fromUser?._id !== requesterId);
+        setFromList(next);
+        return next;
+      });
     } finally {
       setProcessingId(null);
     }
   };
 
-  // ações DM
+  // util
+  const resolveConversationId = (req) =>
+    req?.conversationId || req?.dmConversationId || req?.conversation?._id || null;
+
+  // DM
   const handleAcceptDm = async (request) => {
     setProcessingId(request._id);
     try {
-      await acceptDmRequest(request.fromUser._id, currentUser._id, request._id);
-      setItems((prev) => prev.filter((r) => r._id !== request._id));
+      const conversationId = resolveConversationId(request);
+      const payload = conversationId
+        ? { conversationId, notificationId: request._id }
+        : {
+            requester: request.fromUser?._id,
+            requested: currentUser._id,
+            notificationId: request._id,
+          };
+
+      const res = await acceptDmRequest(payload); // espera { conversation }
+      setItems((prev) => {
+        const next = prev.filter((r) => r._id !== request._id);
+        setFromList(next);
+        return next;
+      });
+
+      const convId = res?.conversation?._id || conversationId;
+      if (socket && convId) {
+        // ✅ usa o mesmo evento de join do resto da app
+        socket.emit("joinPrivateChat", { conversationId });
+      }
+      if (convId) navigate(`/privateChat/${convId}`, { replace: true });
     } finally {
       setProcessingId(null);
     }
   };
+
   const handleRejectDm = async (request) => {
     setProcessingId(request._id);
     try {
-      await rejectDmRequest(request.fromUser._id, currentUser._id, request._id);
-      setItems((prev) => prev.filter((r) => r._id !== request._id));
+      const conversationId = resolveConversationId(request);
+      await rejectDmRequest(
+        request.fromUser?._id,
+        currentUser._id,
+        conversationId,
+        request._id
+      );
+      setItems((prev) => {
+        const next = prev.filter((r) => r._id !== request._id);
+        setFromList(next);
+        return next;
+      });
     } finally {
       setProcessingId(null);
     }
@@ -155,31 +236,37 @@ export const Notifications = () => {
 
   // click em outras notificações
   const handleNotificationClick = async (notif) => {
-    const token = localStorage.getItem("token");
     try {
-      await markNotificationAsRead(notif._id, token);
-      setItems((prev) =>
-        prev.map((n) => (n._id === notif._id ? { ...n, isRead: true } : n))
-      );
+      await markNotificationAsRead(notif._id);
+      setItems((prev) => {
+        const next = prev.map((n) =>
+          n._id === notif._id ? { ...n, isRead: true } : n
+        );
+        setFromList(next);
+        return next;
+      });
     } catch {}
+
     if (notif.type === "comment" || notif.type === "reply") {
       if (notif.listingId && notif.commentId) {
-        navigate(
-          `/openListing/${notif.listingId}?commentId=${notif.commentId}`
-        );
+        navigate(`/openListing/${notif.listingId}?commentId=${notif.commentId}`);
       } else if (notif.listingId) {
         navigate(`/openListing/${notif.listingId}`);
       }
-    } else if (notif.type === "like") {
-      if (notif.listingId) navigate(`/openListing/${notif.listingId}`);
+    } else if (notif.type === "like" && notif.listingId) {
+      navigate(`/openListing/${notif.listingId}`);
     }
   };
 
   if (loading) {
     return (
       <div className="ntf-screen">
-        <div className="ntf-header"><h2>Notificações</h2></div>
-        <div className="ntf-card"><Loader /></div>
+        <div className="ntf-header">
+          <h2>Notificações</h2>
+        </div>
+        <div className="ntf-card">
+          <Loader />
+        </div>
       </div>
     );
   }
@@ -230,15 +317,9 @@ export const Notifications = () => {
                         aria-label="Rejeitar"
                         title="Rejeitar"
                       >
-                        <svg
-                          className="ntf-icon"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
+                        {/* X icon */}
+                        <svg className="ntf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                          strokeLinecap="round" strokeLinejoin="round">
                           <line x1="18" y1="6" x2="6" y2="18" />
                           <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
@@ -250,15 +331,9 @@ export const Notifications = () => {
                         aria-label="Aceitar"
                         title="Aceitar"
                       >
-                        <svg
-                          className="ntf-icon"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
+                        {/* check icon */}
+                        <svg className="ntf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                          strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
                       </button>
@@ -306,15 +381,8 @@ export const Notifications = () => {
                         aria-label="Rejeitar"
                         title="Rejeitar"
                       >
-                        <svg
-                          className="ntf-icon"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
+                        <svg className="ntf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                          strokeLinecap="round" strokeLinejoin="round">
                           <line x1="18" y1="6" x2="6" y2="18" />
                           <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
@@ -326,15 +394,8 @@ export const Notifications = () => {
                         aria-label="Aceitar"
                         title="Aceitar"
                       >
-                        <svg
-                          className="ntf-icon"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
+                        <svg className="ntf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                          strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
                       </button>
@@ -362,7 +423,7 @@ export const Notifications = () => {
                 onClick={() => handleNotificationClick(notif)}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => (e.key === "Enter" ? handleNotificationClick(notif) : null)}
+                onKeyDown={(e) => e.key === "Enter" && handleNotificationClick(notif)}
               >
                 <Avatar
                   src={notif.fromUser?.profileImage}
@@ -372,7 +433,9 @@ export const Notifications = () => {
                   <div className="ntf-item-title">
                     <strong>{notif.title || notif.fromUser?.username || "Notificação"}</strong>
                     <span className="ntf-dot" />
-                    <span className="ntf-time">{new Date(notif.createdAt).toLocaleString()}</span>
+                    <span className="ntf-time">
+                      {new Date(notif.createdAt).toLocaleString()}
+                    </span>
                   </div>
                   <p className="ntf-item-text">{notif.content}</p>
                 </div>

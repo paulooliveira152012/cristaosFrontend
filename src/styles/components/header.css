@@ -118,7 +118,9 @@
 /* PM settings (compat) */
 .privateMessageSettings {
   position: absolute; inset: 0;
-  background: var(--danger); color: #fff;
+  background: #282828; 
+  color: #fff;
+  height: 100vh;
 }
 
 /* Responsivo */

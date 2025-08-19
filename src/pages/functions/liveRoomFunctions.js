@@ -146,17 +146,17 @@ export const removeCurrentUserInRoom = async (roomId, userId, baseUrl, socket) =
 
       if (socket) {
         if (socket.connected) {
-          socket.emit("userLeavesRoom", { roomId, userId });
-          console.log("📤 Evento 'userLeavesRoom' emitido para room:", roomId);
+          socket.emit("leaveLiveRoom", { roomId, userId });
+          console.log("📤 Evento 'leaveLiveRoom' emitido para room:", roomId);
         } else {
           console.warn("⚠️ Socket não conectado, esperando reconectar...");
           socket.once("connect", () => {
-            console.log("🔁 Reconectado. Emitindo 'userLeavesRoom'");
-            socket.emit("userLeavesRoom", { roomId, userId });
+            console.log("🔁 Reconectado. Emitindo 'leaveLiveRoom'");
+            socket.emit("leaveLiveRoom", { roomId, userId });
           });
         }
       } else {
-        console.warn("⚠️ Socket não disponível para emitir 'userLeavesRoom'");
+        console.warn("⚠️ Socket não disponível para emitir 'leaveLiveRoom'");
       }
     } else {
       console.error("❌ Erro ao remover usuário:", data.error || "Erro desconhecido");

@@ -3,7 +3,7 @@ import { useUser } from "../context/UserContext";
 import Header from "../components/Header";
 import "../styles/chat.css";
 import { useNavigate, useLocation } from "react-router-dom";
-import socket from "../socket";
+import { useSocket } from "../context/SocketContext";
 
 function getInitials(name = "Usuário") {
   const parts = name.trim().split(/\s+/);
@@ -13,6 +13,7 @@ function getInitials(name = "Usuário") {
 }
 
 const Chat = () => {
+  const { socket } = useSocket(); // ✅ novo
   const { currentUser } = useUser();
   const location = useLocation();
   const navigate = useNavigate();
@@ -39,16 +40,29 @@ const Chat = () => {
     }
   }, [currentUser?._id]);
 
+  // marcar lida (outro lado avisa) -> recarrega lista
   useEffect(() => {
-    if (!currentUser?._id) return;
-    const handler = (data) => {
-      if (data?.userId === currentUser._id) {
+    if (!socket || !currentUser?._id) return;
+    const onRead = (data) => {
+      if (String(data?.userId) === String(currentUser._id)) {
         fetchPrivateChats();
       }
     };
-    socket.on("privateChatRead", handler);
-    return () => socket.off("privateChatRead", handler);
-  }, [currentUser?._id, fetchPrivateChats]);
+    socket.on("privateChatRead", onRead);
+    return () => socket.off("privateChatRead", onRead);
+  }, [socket, currentUser?._id, fetchPrivateChats]);
+
+  // quando entrar DM nova, atualiza lista (cobre ambos eventos)
+  useEffect(() => {
+    if (!socket || !currentUser?._id) return;
+    const refresh = () => fetchPrivateChats();
+    socket.on("newPrivateMessage", refresh);
+    socket.on("dm:incoming", refresh); // se você já emite esse no back
+    return () => {
+      socket.off("newPrivateMessage", refresh);
+      socket.off("dm:incoming", refresh);
+    };
+  }, [socket, currentUser?._id, fetchPrivateChats]);
 
   const checkUnreadMainChat = useCallback(async () => {
     try {
@@ -59,7 +73,10 @@ const Chat = () => {
       const data = await res.json();
       setUnreadMainChatCount(data?.count || 0);
     } catch (err) {
-      console.error("Erro ao verificar mensagens não lidas no chat principal:", err);
+      console.error(
+        "Erro ao verificar mensagens não lidas no chat principal:",
+        err
+      );
     }
   }, []);
 
@@ -78,8 +95,9 @@ const Chat = () => {
     checkUnreadMainChat,
   ]);
 
+  // badge do chat principal quando chega mensagem
   useEffect(() => {
-    if (!currentUser?._id) return;
+    if (!socket || !currentUser?._id) return;
     const handleNewMainMessage = ({ roomId }) => {
       if (roomId === "mainChatRoom" && location.pathname !== "/mainChat") {
         setUnreadMainChatCount((prev) => prev + 1);
@@ -87,7 +105,7 @@ const Chat = () => {
     };
     socket.on("newMessage", handleNewMainMessage);
     return () => socket.off("newMessage", handleNewMainMessage);
-  }, [currentUser?._id, location.pathname]);
+  }, [socket, currentUser?._id, location.pathname]);
 
   const handleNavigateToPrivateChat = async (chatId) => {
     try {
@@ -112,11 +130,21 @@ const Chat = () => {
     const q = query.trim().toLowerCase();
     if (!q) return privateChats;
     return privateChats.filter((chat) => {
-      const otherUser = chat?.participants?.find((p) => p?._id !== currentUser?._id);
+      const otherUser = chat?.participants?.find(
+        (p) => p?._id !== currentUser?._id
+      );
       const name = otherUser?.username || "Usuário";
       return name.toLowerCase().includes(q);
     });
   }, [query, privateChats, currentUser?._id]);
+
+  if (!socket) {
+    return (
+      <div className="chatPage">
+        <div className="emptyState">Conectando…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="chatPage">
@@ -139,9 +167,12 @@ const Chat = () => {
         <aside className="chatSidebar">
           <h3>Suas Conversas</h3>
 
-          <button className="chatItem mainChatItem" onClick={handleNavigateToMainChat}>
+          <button
+            className="chatItem mainChatItem"
+            onClick={handleNavigateToMainChat}
+          >
             <div className="avatar" aria-hidden="true">
-              {/* SVG inline do Heroicons */}
+              {/* ícone */}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -187,14 +218,15 @@ const Chat = () => {
                 );
                 const name = otherUser?.username || "Usuário";
                 const initials = getInitials(name);
-
                 return (
                   <li key={chat?._id}>
                     <button
                       className="chatItem"
                       onClick={() => handleNavigateToPrivateChat(chat._id)}
                     >
-                      <div className="avatar" aria-hidden="true">{initials}</div>
+                      <div className="avatar" aria-hidden="true">
+                        {initials}
+                      </div>
                       <div className="chatMeta">
                         <div className="chatTitle">{name}</div>
                         <div className="chatSubtitle">

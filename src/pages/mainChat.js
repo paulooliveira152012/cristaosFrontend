@@ -1,174 +1,105 @@
-import React, { useState, useEffect, useRef } from "react";
+// src/pages/MainChat.js
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import Header from "../components/Header";
-import socket from "../socket"; // Use the globally managed socket
-import "../styles/chat.css";
-import TrashIcon from "../assets/icons/trashcan";
-import { format } from "date-fns";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
-
+import ChatComponent from "../components/ChatComponent";
+import { handleBack } from "../components/functions/headerFunctions";
+import { useSocket } from "../context/SocketContext";
+import { useUnread } from "../context/UnreadContext";
 import {
-  useSocketConnectionLogger,
-  useJoinRoomChat,
-  useReceiveMessage,
-  useListenMessageDeleted,
-  useAutoScrollToBottom,
-  getRandomDarkColor,
-  handleScrollUtil,
-  scrollToBottomUtil,
-  sendMessageUtil,
-  handleDeleteMessageUtil,
-} from "../components/functions/chatComponentFunctions";
+  useReadOnOpenAndFocus,
+  useMainNewMessageLog,
+} from "./functions/chatUnifiedFunctions";
+
+import "../styles/style.css";
+import "../styles/liveRoom.css";
+
+const baseURL = process.env.REACT_APP_API_BASE_URL;
 
 const MainChat = () => {
-  const { currentUser } = useUser(); // Access the logged-in user
-  const [messages, setMessages] = useState([]);
-  const [message, setMessage] = useState("");
-  const [isAtBottom, setIsAtBottom] = useState(true);
-  const messagesEndRef = useRef(null);
-  const inputRef = useRef(null); // Ref for the input field
-  const usernameColors = useRef({}); // To store unique colors for each username
-  const mainChatRoomId = "mainChatRoom"; // Default roomId for the main chat
-  const messagesContainerRef = useRef(null);
+  const { socket } = useSocket(); // ✅ desestrutura
+  const { currentUser } = useUser();
+  const { reset, MAIN_ROOM_ID } = useUnread(); // ✅ usa só o da store
   const navigate = useNavigate();
 
-  const baseURL = process.env.REACT_APP_API_BASE_URL;
-    // utilizando funções importadas
-    useSocketConnectionLogger();
-  useJoinRoomChat(mainChatRoomId, currentUser, setMessages, () =>
-    scrollToBottomUtil(messagesContainerRef)
-  );
-  useReceiveMessage(setMessages);
-  useListenMessageDeleted(mainChatRoomId, setMessages);
-  useAutoScrollToBottom(messages, isAtBottom, () =>
-    scrollToBottomUtil(messagesContainerRef)
-  );
+  useReadOnOpenAndFocus({
+    kind: "main",
+    id: MAIN_ROOM_ID,
+    baseURL,
+    reset,
+  });
+  useMainNewMessageLog(socket, MAIN_ROOM_ID);
 
-  const sendMessage = () =>
-    sendMessageUtil({
-      currentUser,
-      message,
-      roomId: mainChatRoomId,
-      socket,
-      setMessages,
-      setMessage,
-      scrollToBottom: () => scrollToBottomUtil(messagesContainerRef),
-      inputRef,
-    });
-
-  const handleScroll = () =>
-    handleScrollUtil(messagesContainerRef, setIsAtBottom);
-
-  const handleDeleteMessage = (messageId) =>
-    handleDeleteMessageUtil({
-      messageId,
-      currentUser,
-      socket,
-      roomId: mainChatRoomId,
-    });
-
+  // Marca o main chat como lido ao abrir (e ao voltar o foco)
   useEffect(() => {
-    socket.on("messageDeleted", (messageId) => {
-      setMessages((prevMessages) =>
-        prevMessages.filter((msg) => msg._id !== messageId)
-      );
-    });
-
-    return () => {
-      socket.off("messageDeleted");
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isAtBottom) {
-      setTimeout(() => {
-        scrollToBottomUtil(messagesContainerRef);
-      }, 50);
-    }
-  }, [messages]);
-
-  // mark main chat as read
-  useEffect(() => {
-    const markAsRead = async () => {
-      await fetch(`${baseURL}/api/users/markMainChatAsRead`, {
+    const mark = () =>
+      fetch(`${baseURL}/api/users/markMainChatAsRead`, {
         method: "POST",
         credentials: "include",
-      });
+      }).catch(() => {});
+    mark();
+    reset(MAIN_ROOM_ID);
+
+    const onFocusOrVisible = () => {
+      mark();
+      reset(MAIN_ROOM_ID);
     };
+    window.addEventListener("focus", onFocusOrVisible);
+    document.addEventListener("visibilitychange", onFocusOrVisible);
+    return () => {
+      window.removeEventListener("focus", onFocusOrVisible);
+      document.removeEventListener("visibilitychange", onFocusOrVisible);
+    };
+  }, [baseURL, reset, MAIN_ROOM_ID]);
 
-    markAsRead();
-  }, []);
+  // (Opcional) log/efeitos quando chega msg do main (o ChatComponent renderiza em si)
+  useEffect(() => {
+    if (!socket) return;
+    const onNew = (payload) => {
+      if (payload?.roomId !== MAIN_ROOM_ID) return;
+      // console.log("Nova mensagem no mainChat:", payload);
+    };
+    socket.on("newMessage", onNew);
+    return () => socket.off("newMessage", onNew);
+  }, [socket, MAIN_ROOM_ID]);
 
-  console.log("messages in chat.js", messages);
-
-  return (
-    <div className="mainChatPageWrapper">
-      <Header showProfileImage={false} navigate={navigate} />
-      <div className="messagesContainer">
-        <div
-          className="chatPageContainer"
-          ref={messagesContainerRef} // ✅ CERTO
-          onScroll={handleScroll}
-        >
-          <div className="messagesContainer">
-            {messages.map((msg, index) => {
-              if (!usernameColors.current[msg.username]) {
-                usernameColors.current[msg.username] = getRandomDarkColor();
-              }
-
-              // Ensure valid timestamp before formatting
-              const formattedTime = msg.timestamp
-                ? format(new Date(msg.timestamp), "PPpp")
-                : "Unknown time";
-
-              return (
-                <div key={index} className="messageItem">
-                  <div>
-                    {/* profile image */}
-                    <Link to={`/profile/${msg.userId}`}>
-                      <div
-                        style={{
-                          backgroundImage: `url(${msg.profileImage || ""})`, // Set the profile image URL
-                        }}
-                        className="chatMessageProfileImage"
-                      ></div>
-                    </Link>
-                    <strong
-                      style={{
-                        color: usernameColors.current[msg.username],
-                      }}
-                    >
-                      {msg.username}:
-                    </strong>{" "}
-                    {msg.message} <br />
-                    <small>{formattedTime}</small>
-                  </div>
-                  {currentUser && msg.userId === currentUser._id && (
-                    <TrashIcon
-                      onClick={() => handleDeleteMessage(msg._id)}
-                      style={{ cursor: "pointer" }}
-                    />
-                  )}
-                </div>
-              );
-            })}
+  if (!currentUser?._id) {
+    return (
+      <div className="screenWrapper">
+        <div className="liveRoomContent">
+          <Header
+            showProfileImage={false}
+            showLogoutButton={false}
+            showBackArrow={true}
+            onBack={() => handleBack(navigate)}
+          />
+          <div className="loadingContainer">
+            <p>Faça login para acessar o Chat Principal.</p>
           </div>
         </div>
       </div>
-      <div className="chatPageInputContainer">
-        <input
-          ref={inputRef}
-          type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-          placeholder="Type a message..."
-          className="input"
+    );
+  }
+
+  return (
+    <div className="screenWrapper">
+      <div className="liveRoomContent">
+        <Header
+          showProfileImage={false}
+          showLogoutButton={false}
+          showBackArrow={true}
+          onBack={() => handleBack(navigate)}
         />
-        <button onClick={sendMessage} className="sendBtn">
-          Send
-        </button>
+
+        <p
+          style={{ textAlign: "center", marginBottom: 10, fontStyle: "italic" }}
+        >
+          Bem-vindo ao Chat Principal
+        </p>
+
+        {/* O ChatComponent já faz join/leave via "joinRoomChat"/"leaveRoomChat" */}
+        <ChatComponent roomId={MAIN_ROOM_ID} />
       </div>
     </div>
   );

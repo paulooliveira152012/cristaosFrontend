@@ -214,6 +214,78 @@
     border-radius: 8px;
     padding: 6px 12px;
     margin: 10px auto;
-    max-width: 80%;
   }
   
+
+
+  /* ===== System Messages (join/leave/info) ===== */
+:root {
+  --sys-text: var(--muted, #6b7280);
+  --sys-bg: rgba(0, 0, 0, 0.05);
+  --sys-border: var(--border, #e5e7eb);
+
+  --sys-join-bg: #e6f6ee;   /* verde clarinho */
+  --sys-join-text: #087f5b;
+  --sys-leave-bg: #fdecec;  /* vermelho clarinho */
+  --sys-leave-text: #c92a2a;
+}
+
+body.dark-mode {
+  --sys-text: #a3aab8;
+  --sys-bg: rgba(255, 255, 255, 0.08);
+  --sys-border: rgba(255, 255, 255, 0.12);
+
+  --sys-join-bg: rgba(8, 127, 91, 0.18);
+  --sys-join-text: #8ff0c6;
+  --sys-leave-bg: rgba(201, 42, 42, 0.18);
+  --sys-leave-text: #ffc9c9;
+}
+
+.messageRow.systemMessageRow {
+  justify-content: center;
+  gap: 0;
+  width: 100%;
+}
+
+.systemMessageBubble {
+  max-width: min(80%, 680px);
+  margin: 10px auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--sys-bg);
+  border: 1px dashed var(--sys-border);
+  text-align: center;
+  width: 100%;
+}
+
+.systemMessageText {
+  display: inline-block;
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: var(--sys-text);
+  width: 100%;
+}
+
+.systemMessageTime {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+/* Variantes */
+.system-join .systemMessageBubble {
+  background: var(--sys-join-bg);
+  border-color: color-mix(in oklab, var(--sys-join-text), white 80%);
+  width: 50%;
+  margin: auto
+}
+.system-join .systemMessageText { color: var(--sys-join-text); }
+
+.system-leave .systemMessageBubble {
+  background: var(--sys-leave-bg);
+  border-color: color-mix(in oklab, var(--sys-leave-text), white 80%);
+  width: 50%;
+  margin: auto;
+}
+.system-leave .systemMessageText { color: var(--sys-leave-text); }

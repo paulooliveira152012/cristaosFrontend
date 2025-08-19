@@ -1,238 +1,228 @@
-import React, { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+// src/pages/PrivateChat.js
+import React, { useRef } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useUser } from "../context/UserContext";
-import socket from "../socket";
-import "../styles/chat.css";
-import { format } from "date-fns";
+import { useSocket } from "../context/SocketContext";
+import { useUnread } from "../context/UnreadContext";
+
+import "../styles/components/chat.css"; // mesmíssima folha do ChatComponent
 import Header from "../components/Header";
 import {
   handleLeaveDirectMessagingChat,
   handleInviteBackToChat,
-  handleFetchRoomMembers,
 } from "../components/functions/headerFunctions";
 
+import {
+  usePrivateChatController,
+  useReadOnOpenAndFocus,
+  useAutoScrollToBottom,
+  getRandomDarkColor,
+} from "./functions/chatUnifiedFunctions";
+
+import { format } from "date-fns";
+import profilePlaceholder from "../assets/images/profileplaceholder.png";
+
 const PrivateChat = () => {
+  const { socket } = useSocket();
   const { id: conversationId } = useParams();
   const { currentUser } = useUser();
-  const [messages, setMessages] = useState([]);
-  const [message, setMessage] = useState("");
-  const messagesContainerRef = useRef(null);
-  const [isOtherUserInChat, setIsOtherUserInChat] = useState(false);
-  const [hasOtherUserLeft, setHasOtherUserLeft] = useState(false); // ✅ nova flag
-
-  const baseURL = process.env.REACT_APP_API_BASE_URL;
+  const { reset } = useUnread();
   const navigate = useNavigate();
+  const baseURL = process.env.REACT_APP_API_BASE_URL;
 
+  const {
+    messages,
+    message,
+    setMessage,
+    sendMessage,
+    isOtherParticipant,
+    pendingForMe,
+    waitingOther,
+    // isOtherPresent, // se quiser exibir status online
+    acceptConversation,
+    rejectConversation,
+    reinviteConversation,
+    canSend,
+  } = usePrivateChatController({
+    socket,
+    conversationId,
+    currentUser,
+    baseURL,
+    reset,
+    inviteBackHandler: handleInviteBackToChat,
+    onAccepted: () => reset(conversationId),
+  });
 
-  useEffect(() => {
-     if (conversationId && currentUser) {
-       handleFetchRoomMembers(conversationId, currentUser, setIsOtherUserInChat);
-       console.log("isOtherUserInRoom:", isOtherUserInChat);
+  useReadOnOpenAndFocus({
+    kind: "dm",
+    id: conversationId,
+    baseURL,
+    reset,
+    socket,
+    userId: currentUser?._id,
+  });
 
-     }
-  }, [conversationId, currentUser]);
+  // ===== UI =====
+  const messagesContainerRef = useRef(null);
+  useAutoScrollToBottom(messagesContainerRef, [messages]);
+  const usernameColors = useRef({});
 
-  useEffect(() => {
-    if (!conversationId || !currentUser) return;
+  // ---- helpers para mensagens de sistema ----
+  const SYSTEM_REGEX =
+    /(saiu da conversa|saiu da sala|entrou na conversa|voltou para a conversa|voltou para a sala)/i;
 
-    // fetch messages
-    const fetchMessages = async () => {
-      try {
-        const res = await fetch(
-          `${baseURL}/api/dm/messages/${conversationId}`,
-          { credentials: "include" }
-        );
-        const data = await res.json();
-        setMessages(data);
-      } catch (err) {
-        console.error("Erro ao carregar mensagens:", err);
-      }
-    };
+  const isSystemMessage = (m) =>
+    m?.type === "system" ||
+    m?.isSystem === true ||
+    ["join", "leave", "return", "reinvite"].includes(m?.eventType) ||
+    SYSTEM_REGEX.test(m?.message ?? "");
 
-    // mark chat as read
-    const markAsRead = async () => {
-      try {
-        const res = await fetch(
-          `${baseURL}/api/dm/markAsRead/${conversationId}`,
-          {
-            method: "POST",
-            credentials: "include",
-          }
-        );
-        socket.emit("privateChatRead", {
-          conversationId,
-          userId: currentUser._id,
-        });
-      } catch (error) {
-        console.error("Erro ao marcar como lida:", error);
-      }
-    };
-
-    // Listener fora da função principal
-    const handleIncomingMessage = (newMsg) => {
-      if (newMsg.conversationId === conversationId) {
-        setMessages((prev) => {
-          const alreadyExists = prev.some((msg) => msg._id === newMsg._id);
-          if (!alreadyExists) return [...prev, newMsg];
-          return prev;
-        });
-        console.log("📥 Nova mensagem recebida:", newMsg);
-      }
-    };
-
-    // 🔐 Registra o listener ANTES de tudo
-    socket.off("newPrivateMessage");
-    socket.on("newPrivateMessage", handleIncomingMessage);
-
-    if (socket.connected) {
-      socket.emit("joinPrivateChat", {
-        conversationId,
-        userId: currentUser._id,
-      });
-    } else {
-      socket.on("connect", () => {
-        socket.emit("joinPrivateChat", {
-          conversationId,
-          userId: currentUser._id,
-        });
-      });
-    }
-
-    socket.emit("joinPrivateChat", {
-      conversationId,
-      userId: currentUser._id,
-    });
-
-    fetchMessages();
-    markAsRead();
-
-    return () => {
-      // 🔇 Limpa quando sai do componente
-      socket.off("newPrivateMessage", handleIncomingMessage);
-    };
-  }, [conversationId, currentUser, baseURL, socket]);
-
-  useEffect(() => {
-    const handlePresence = ({ conversationId: convId, users }) => {
-      if (convId === conversationId) {
-        // console.log("📡 Atualização de presença recebida:", users);
-        setIsOtherUserInChat(users.length > 0);
-      }
-    };
-
-    socket.on("currentUsersInPrivateChat", handlePresence);
-
-    return () => {
-      socket.off("currentUsersInPrivateChat", handlePresence);
-    };
-  }, [conversationId, socket]);
-
-  const sendMessage = () => {
-    if (!message.trim()) return;
-
-    const msg = {
-      conversationId,
-      sender: currentUser._id,
-      message: message.trim(),
-    };
-
-    socket.emit("sendPrivateMessage", msg);
-    setMessage("");
+  const getSystemVariant = (m) => {
+    if (
+      m?.eventType === "join" ||
+      m?.eventType === "return" ||
+      m?.eventType === "reinvite"
+    )
+      return "join";
+    if (m?.eventType === "leave") return "leave";
+    // fallback baseado no texto:
+    if (/saiu/i.test(m?.message)) return "leave";
+    if (/entrou|voltou/i.test(m?.message)) return "join";
+    return "info";
   };
-
-  useEffect(() => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop =
-        messagesContainerRef.current.scrollHeight;
-    }
-  }, [messages]);
-
-  useEffect(() => {
-    const handleUserJoined = ({ conversationId: convId, joinedUser }) => {
-      if (convId === conversationId) {
-        // console.log(`🟢 ${joinedUser.username} entrou na conversa!`);
-        setIsOtherUserInChat(true);
-        setHasOtherUserLeft(false); // reset caso ele volte
-      }
-    };
-
-    const handleUserLeft = ({ conversationId: convId, leftUser }) => {
-      if (convId === conversationId) {
-        console.log(`🔴 ${leftUser.username} saiu da conversa!`);
-        setIsOtherUserInChat(false);
-        setHasOtherUserLeft(true); // ✅ agora sim!
-      }
-    };
-
-    socket.on("userJoinedPrivateChat", handleUserJoined);
-    socket.on("userLeftPrivateChat", handleUserLeft);
-
-    return () => {
-      socket.off("userJoinedPrivateChat", handleUserJoined);
-      socket.off("userLeftPrivateChat", handleUserLeft);
-    };
-  }, [conversationId]);
 
   return (
     <div className="screenWrapper">
-      <Header
-        showProfileImage={false}
-        navigate={navigate}
-        showLeavePrivateRoomButton={true}
-        handleLeaveDirectMessagingChat={handleLeaveDirectMessagingChat}
-        roomId={conversationId}
-      />
+      <div className="liveRoomContent">
+        <Header
+          showProfileImage={false}
+          showLogoutButton={false}
+          showBackArrow={true}
+          showLeavePrivateRoomButton={true}
+          handleLeaveDirectMessagingChat={() =>
+            handleLeaveDirectMessagingChat({
+              socket,
+              conversationId,
+              userId: currentUser?._id,
+              username: currentUser?.username,
+              navigate,
+            })
+          }
+          roomId={conversationId}
+          onBack={() => navigate(-1)}
+        />
 
-      <div className="messagesContainer">
-        <div className="chatPageContainer" ref={messagesContainerRef}>
-          <div className="messagesContainer">
-            {messages.map((msg, index) => (
-              <div
-                key={index}
-                className={`messageItem ${msg.system ? "systemMessage" : ""}`}
-              >
-                {msg.system ? (
-                  <em>{msg.message}</em>
-                ) : (
-                  <>
-                    <strong>{msg.username || "Você"}:</strong> {msg.message}
-                    <br />
-                    <small>
-                      {format(new Date(msg.timestamp || new Date()), "PPpp")}
-                    </small>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
+        <p
+          style={{ textAlign: "center", marginBottom: 10, fontStyle: "italic" }}
+        >
+          Conversa privada
+        </p>
+
+        <div className="chatComponent">
+          <div ref={messagesContainerRef} className="chatScroll">
+            <div className="messages">
+              {messages.map((msg, index) => {
+  const when = msg.timestamp ? format(new Date(msg.timestamp), "dd-MM-yy h:mm a") : "";
+
+  // ---- branch: mensagens de sistema ----
+  if (isSystemMessage(msg)) {
+    const variant = getSystemVariant(msg); // "join" | "leave" | "info"
+    return (
+      <div
+        key={msg._id ?? `sys-${msg.timestamp ?? index}-${index}`}
+        className={` systemMessageRow system-${variant}`}
+      >
+        <div className="systemMessageBubble">
+          <span className="systemMessageText">{msg.message}</span>
+          {when && <small className="systemMessageTime">{when}</small>}
         </div>
       </div>
+    );
+  }
 
-      <div className="chatPageInputContainer">
-        {!isOtherUserInChat ? (
-          <button
-            className="inviteBackBtn"
-            onClick={() =>
-              handleInviteBackToChat(conversationId, currentUser._id)
-            }
-          >
-            Convidar usuário de volta
-          </button>
-        ) : (
-          <>
-            <input
-              type="text"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              placeholder="Digite sua mensagem..."
-              className="input"
-            />
-            <button onClick={sendMessage} className="sendBtn">
-              Enviar
-            </button>
-          </>
-        )}
+  // ---- branch: mensagens normais (mantém seu código atual) ----
+  const author =
+    msg.senderUsername ||
+    msg.username ||
+    (msg.sender && String(msg.sender) === String(currentUser?._id) ? "Você" : "Usuário");
+
+  if (!usernameColors.current[author]) {
+    usernameColors.current[author] = getRandomDarkColor();
+  }
+  const isMine =
+    (msg.userId && String(msg.userId) === String(currentUser?._id)) ||
+    (msg.sender && String(msg.sender) === String(currentUser?._id));
+
+  const authorId = msg.userId || msg.sender;
+  const avatar = msg.profileImage || profilePlaceholder;
+
+  return (
+    <div
+      key={msg._id ?? `${msg.sender ?? "unknown"}-${msg.timestamp ?? index}-${index}`}
+      className={`messageRow ${isMine ? "mine" : "theirs"}`}
+    >
+      <Link to={`/profile/${authorId || ""}`} className="avatarLink">
+        <div className="chatAvatar" style={{ backgroundImage: `url(${avatar})` }} title={author} />
+      </Link>
+
+      <div className="messageBubble">
+        <div className="messageHeader">
+          <strong className="author" style={{ color: usernameColors.current[author] }} title={author}>
+            {author}
+          </strong>
+          <small className="time">{when}</small>
+        </div>
+        <div className="messageText">{msg.message}</div>
+      </div>
+    </div>
+  );
+})}
+
+            </div>
+          </div>
+
+          {/* Composer com os MESMOS estilos do ChatComponent */}
+          <div className="composer">
+            {canSend ? (
+              <>
+                <input
+                  type="text"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                  placeholder="Digite sua mensagem..."
+                  className="composerInput"
+                />
+                <button className="sendBtn" onClick={sendMessage}>
+                  Enviar
+                </button>
+              </>
+            ) : pendingForMe ? (
+              <>
+                <button className="sendBtn" onClick={acceptConversation}>
+                  Aceitar conversa
+                </button>
+                <button
+                  className="inviteBackBtn"
+                  onClick={async () => {
+                    await rejectConversation();
+                    navigate("/chat");
+                  }}
+                >
+                  Rejeitar
+                </button>
+              </>
+            ) : waitingOther ? (
+              <button className="inviteBackBtn" disabled>
+                Aguardando usuário aceitar a conversa…
+              </button>
+            ) : (
+              <button className="inviteBackBtn" onClick={reinviteConversation}>
+                Convidar usuário de volta
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

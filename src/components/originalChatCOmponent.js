@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useUser } from "../context/UserContext";
-import socket from "../socket"; // Make sure this connects to the correct server
+import { useSocket } from "../context/SocketContext";
+
+// Make sure this connects to the correct server
 import SimplePeer from "simple-peer";
 import TrashIcon from "../assets/icons/trashcan";
 import { format } from "date-fns";
@@ -8,6 +10,7 @@ import { Link } from "react-router-dom";
 import "../styles/chat.css";
 
 const ChatComponent = ({ roomId }) => {
+  const socket = useSocket();
   const { currentUser } = useUser();
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
@@ -24,6 +27,8 @@ const ChatComponent = ({ roomId }) => {
 
   // Monitor socket connection and disconnection events
   useEffect(() => {
+     if (!socket) return;            // 👈 evita .on em null
+
     socket.on("connect", () => {
       console.log("Socket connected:", socket.id);
     });
@@ -80,6 +85,7 @@ const ChatComponent = ({ roomId }) => {
   // Join the room and listen for messages
   useEffect(() => {
     if (roomId) {
+       if (!socket) return;            // 👈 evita .on em null
       // Join the room-specific chat
       socket.emit("joinRoom", { roomId, user: currentUser });
       console.log("Client joined room:", roomId); // Should log room join
@@ -123,6 +129,7 @@ const ChatComponent = ({ roomId }) => {
       timestamp: new Date(), // Add local timestamp
     };
 
+    if (!socket) return;            // 👈 evita .on em null
     console.log("Emitting message to the server", newMessage);
     socket.emit("sendMessage", newMessage);
 
@@ -136,6 +143,7 @@ const ChatComponent = ({ roomId }) => {
 
   // Handle message deletion
   const handleDeleteMessage = (messageId) => {
+     if (!socket) return;            // 👈 evita .on em null
     if (currentUser) {
       socket.emit("deleteMessage", {
         messageId,
@@ -147,6 +155,7 @@ const ChatComponent = ({ roomId }) => {
 
   // Listen for message deletion
   useEffect(() => {
+     if (!socket) return;            // 👈 evita .on em null
     socket.on("messageDeleted", (messageId) => {
       setMessages((prevMessages) =>
         prevMessages.filter((msg) => msg._id !== messageId)
@@ -213,7 +222,9 @@ const ChatComponent = ({ roomId }) => {
                         }}
                       ></div>
                     </Link>
-                    <strong style={{ color: usernameColors.current[msg.username] }}>
+                    <strong
+                      style={{ color: usernameColors.current[msg.username] }}
+                    >
                       {msg.username}:
                     </strong>
                     <div style={{ marginLeft: "10px" }}>{msg.message}</div>
@@ -251,7 +262,6 @@ const ChatComponent = ({ roomId }) => {
 };
 
 export default ChatComponent;
-
 
 // Me regrar com tudo (disciplina)
 // - nao pegar celular quando acordar

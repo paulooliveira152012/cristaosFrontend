@@ -4,6 +4,7 @@ import "../styles/style.css";
 import { Link, useNavigate } from "react-router-dom";
 import { getAllUsers } from "./functions/liveUsersComponent";
 
+
 const FALLBACK_AVATAR = "/images/avatar-placeholder.png";
 
 const LiveUsers = () => {
@@ -16,7 +17,7 @@ const LiveUsers = () => {
   }, []);
 
   useEffect(() => {
-    console.log("allUsers in Component:", allUsers);
+    // console.log("allUsers in Component:", allUsers);
   }, [allUsers]);
 
   const handleUserClick = (user) => {

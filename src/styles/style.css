@@ -19,7 +19,7 @@
     --text: #e5e7eb;
     --muted: #9aa3af;
     --brand: #5a8bff;
-    --brand-ghost: #1c2742;
+    --brand-ghost: #1A1A1A;
     --border: #404040;
     --ring: 0 10px 30px rgba(90, 139, 255, 0.18);
     --pollText-notVoted: #fff; /* ajuste se preferir */
@@ -201,7 +201,9 @@ body.dark-mode .roomTitleText {
   gap: 12px;
   border-top: 1px solid lightgray;
   border-bottom: 1px solid lightgray;
-  padding: 10px 0;
+  padding: 10px 10px;
+  justify-content: center;
+  align-items: center;
 }
 
 .landingOnlineMembersList {
@@ -210,7 +212,7 @@ body.dark-mode .roomTitleText {
   flex-wrap: nowrap;
   gap: 12px;
   overflow-x: auto; /* rolagem horizontal */
-  padding-bottom: 6px;
+  /* padding-bottom: 6px; */
   flex: 1; /* ocupa o espaço disponível */
   min-width: 0; /* permite o overflow-x funcionar */
 }

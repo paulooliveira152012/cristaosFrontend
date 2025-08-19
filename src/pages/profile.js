@@ -1,12 +1,12 @@
-// Atualizando layout e organização do perfil com base nas instruções da Gabi
-
+// Perfil – layout responsivo com bio, denominação simplificada e localização única
 import { useEffect, useState } from "react";
 import { useUser } from "../context/UserContext";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import ListingInteractionBox from "../components/ListingInteractionBox";
 import "../styles/profile.css";
-import { ProfileUserFriends } from "./profileComponents/friends";
+import coverPlaceholder from "../assets/coverPlaceholder.jpg";
+
 import {
   fetchUserData,
   fetchListingComments,
@@ -18,31 +18,100 @@ import {
   openEditor,
   saveEdit,
   cancelEdit,
+  submitMuralContent,
+  getMuralContent,
 } from "./functions/profilePageFunctions";
 import { useProfileLogic } from "./functions/useProfileLogic";
+
 import FiMessageCircle from "../assets/icons/FiMessageCircle.js";
-import { FiMoreVertical } from "react-icons/fi";
+import {
+  FiMoreVertical,
+  FiMoreHorizontal,
+  FiMapPin,
+  FiEdit2,
+} from "react-icons/fi";
 
 const imagePlaceholder = require("../assets/images/profileplaceholder.png");
+
+/* ---------------- helpers: normalização de denominação ---------------- */
+const strip = (s = "") =>
+  s
+    .toString()
+    .trim()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+
+function levenshtein(a, b) {
+  a = strip(a);
+  b = strip(b);
+  const m = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+  for (let j = 1; j <= b.length; j++) m[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      m[i][j] = Math.min(
+        m[i - 1][j] + 1,
+        m[i][j - 1] + 1,
+        m[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+    }
+  }
+  return m[a.length][b.length];
+}
+
+function normalizeDenomination(input = "") {
+  const s = strip(input);
+  if (!s) return "";
+  const targets = [
+    { key: "protestante", aliases: ["evangelico", "evangelica", "protestant"] },
+    { key: "católico", aliases: ["catolica", "catolico", "romana"] },
+    { key: "ortodoxo", aliases: ["ortodoxa"] },
+    { key: "anglicano", aliases: ["anglicana"] },
+    { key: "luterano", aliases: ["luterana"] },
+    { key: "presbiteriano", aliases: ["presbiteriana"] },
+    { key: "batista", aliases: [] },
+    { key: "pentecostal", aliases: [] },
+  ];
+  for (const t of targets) {
+    if (s.includes(t.key) || t.aliases.some((a) => s.includes(a))) return t.key;
+  }
+  let best = { key: "", d: Infinity };
+  for (const t of targets) {
+    [t.key, ...t.aliases].forEach((c) => {
+      const d = levenshtein(s, c);
+      if (d < best.d) best = { key: t.key, d };
+    });
+  }
+  return best.d <= 3 ? best.key : input;
+}
+/* --------------------------------------------------------------------- */
 
 const Profile = () => {
   const { currentUser } = useUser();
   const { userId } = useParams();
+  const navigate = useNavigate();
+
   const [user, setUser] = useState(null);
   const [userListings, setUserListings] = useState([]);
+  const [sharedListings, setSharedListings] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
+
   const [currentTab, setCurrentTab] = useState("");
-  const [sharedListings, setSharedListings] = useState([]);
   const [showOptions, setShowOptions] = useState(false);
   const [showListingMenu, setShowListingMenu] = useState(null);
-  // abaixo dos outros useState
-  const [editingId, setEditingId] = useState(null); // id da listagem em edição
-  const [draft, setDraft] = useState({}); // rascunho da listagem atual
+
+  const [editingId, setEditingId] = useState(null);
+  const [draft, setDraft] = useState({});
 
   const [muralMessages, setMuralMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
+  const [newMuralMessage, setNewMuralMessage] = useState("");
+
+  // bio (apenas front por enquanto)
+  const [bioEditing, setBioEditing] = useState(false);
+  const [bioLocal, setBioLocal] = useState("");
+  const [bioDraft, setBioDraft] = useState("");
 
   const {
     handleCommentSubmit,
@@ -59,10 +128,6 @@ const Profile = () => {
     setSharedListings,
   });
 
-  console.log("currentUser no perfil:", currentUser);
-
-  console.log("user:", user);
-
   useEffect(() => {
     const getData = async () => {
       setLoading(true);
@@ -70,13 +135,29 @@ const Profile = () => {
         const data = await fetchUserData(userId);
         setUser(data.user);
         setUserListings(data.listings);
-      } catch (err) {
+
+        const initialBio = data.user?.bio || "";
+        setBioLocal(initialBio);
+        setBioDraft(initialBio);
+      } catch {
         setError("Failed to load profile data. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
     if (userId) getData();
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    (async () => {
+      try {
+        const { items = [] } = await getMuralContent(userId);
+        setMuralMessages(items);
+      } catch (err) {
+        console.error("Erro ao carregar mural:", err);
+      }
+    })();
   }, [userId]);
 
   const handleSendRequest = async () => {
@@ -111,18 +192,35 @@ const Profile = () => {
     const hasReceivedRequest = currentUser.friendRequests?.includes(user._id);
 
     if (isFriend) {
-      return <span onClick={() => handleRemoveFriend(user._id)}>✅ Amigo</span>;
+      return (
+        <span className="friend-pill" onClick={() => handleRemoveFriend(user._id)}>
+          ✅ Amigo
+        </span>
+      );
     }
     if (hasReceivedRequest) {
       return (
         <>
-          <span onClick={() => handleAcceptFriend(user._id)}>✅ Aceitar</span>
-          <span onClick={() => handleRejectFriend(user._id)}>❌ Recusar</span>
+          <span className="friend-pill" onClick={() => handleAcceptFriend(user._id)}>
+            ✅ Aceitar
+          </span>
+          <span
+            className="friend-pill ghost"
+            onClick={() => handleRejectFriend(user._id)}
+          >
+            ❌ Recusar
+          </span>
         </>
       );
     }
-    if (hasSentRequest) return <span>⏳ Pedido enviado</span>;
-    return <span onClick={handleSendRequest}>➕ Adicionar</span>;
+    if (hasSentRequest) return <span className="friend-pill">⏳ Pedido enviado</span>;
+
+    // <- Botão em pílula (texto) + Adicionar
+    return (
+      <span className="add-friend-btn" onClick={handleSendRequest}>
+        + Adicionar
+      </span>
+    );
   };
 
   const renderMoreMenu = () => (
@@ -140,101 +238,180 @@ const Profile = () => {
     </div>
   );
 
-  const handleAddMuralMessage = () => {
-    if (!newMessage.trim()) return;
-    const fakeMessage = {
-      _id: Date.now(),
-      sender: currentUser,
-      text: newMessage,
-      createdAt: new Date(),
-    };
-    setMuralMessages([fakeMessage, ...muralMessages]);
-    setNewMessage("");
+  const handleAddMuralMessage = async () => {
+    const text = newMuralMessage?.trim();
+    if (!text) return;
+    try {
+      const { error, message } = await submitMuralContent(
+        currentUser._id,
+        userId,
+        text
+      );
+      if (error) throw new Error(error);
+      setMuralMessages((prev) => [message, ...prev]);
+      setNewMuralMessage("");
+    } catch (e) {
+      console.error(e);
+      alert(e.message || "Erro ao enviar mensagem.");
+    }
   };
-
-  if (loading) return <p className="profile-loading">Carregando perfil...</p>;
-  if (error) return <p className="profile-error">{error}</p>;
-
-  const churchId =
-    typeof user?.church === "string" ? user.church : user?.church?._id;
-
-  const churchName =
-    typeof user?.church === "object"
-      ? user.church?.name
-      : user?.churchName || "Ver igreja"; // opcional, caso você guarde o nome separado
 
   const toggleListingMenu = (listingId) => {
     setShowListingMenu((prev) => (prev === listingId ? null : listingId));
   };
+
+  if (loading) return <p className="profile-loading">Carregando perfil...</p>;
+  if (error) return <p className="profile-error">{error}</p>;
+  if (!user) return null;
+
+  // preferir cidade; se não tiver, estado
+  const locationText = user.city || user.state || "";
+
+  // denominação (apenas valor)
+  const denominationRaw =
+    user.denomination ||
+    (typeof user?.church === "object" ? user.church?.name : "") ||
+    user?.churchName ||
+    "";
+  const denomination = normalizeDenomination(denominationRaw);
+
+  const friendsCount = Array.isArray(user.friends) ? user.friends.length : null;
 
   return (
     <>
       <div className="profilePageBasicInfoContainer">
         <Header showProfileImage={false} navigate={navigate} />
         <div className="profilePageHeaderParentSection">
-          <div className="top"></div>
+          <div
+            className="top"
+            style={{
+              backgroundImage: `url(${user?.profileBackgroundCover || coverPlaceholder})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+              height: 220,
+            }}
+          />
           <div className="bottom">
-            <div className="imageAndnameContainer">
-              <div className="imageWrapper">
+            <div className="headerRow">
+              {/* avatar */}
+              <div className="imageColumn">
                 <div
                   className="ProfileProfileImage"
                   style={{
-                    backgroundImage: `url(${
-                      user?.profileImage || imagePlaceholder
-                    })`,
+                    backgroundImage: `url(${user?.profileImage || imagePlaceholder})`,
                     backgroundPosition: "center",
                   }}
-                ></div>
+                />
               </div>
+
+              {/* info principal */}
               <div className="infoWrapper">
-                <div className="topInfo">
+                <div className="nameLine">
                   <h2 className="profile-username">
                     {user.firstName || ""} {user.lastName || ""}
                   </h2>
-                  <span>@{user.username}</span>
-                  <span>
-                    Denominação:{" "}
-                    {churchId ? (
-                      <Link to={`/church/${encodeURIComponent(churchId)}`}>
-                        {churchName || "Ver igreja"}
-                      </Link>
-                    ) : (
-                      "—"
-                    )}
-                  </span>
+                  <span className="at">@{user.username}</span>
                 </div>
-                <div className="locationInfo">
-                  <p>{user.city || ""}</p>
-                  <p>{user.state || ""}</p>
-                  {renderFriendAction()}
-                  <span
-                    onClick={() => navigate(`/profile/${user._id}/friends`)}
-                    style={{ cursor: "pointer", textDecoration: "underline" }}
-                  >
-                    Amigos
-                  </span>
+
+                {/* bio */}
+                <div className="bioSection">
+                  {!bioEditing ? (
+                    <>
+                      <p className={`bio ${bioLocal ? "" : "muted"}`}>
+                        {bioLocal || "Escreva uma breve bio..."}
+                      </p>
+                      {currentUser._id === user._id && (
+                        <button
+                          className="tiny ghost"
+                          onClick={() => setBioEditing(true)}
+                          aria-label="Editar bio"
+                          title="Editar bio"
+                        >
+                          <FiEdit2 size={14} /> Editar
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <div className="bio-editor">
+                      <textarea
+                        rows={3}
+                        maxLength={220}
+                        value={bioDraft}
+                        onChange={(e) => setBioDraft(e.target.value)}
+                        placeholder="Escreva uma breve bio (até 220 caracteres)"
+                      />
+                      <div className="bio-actions">
+                        <button
+                          className="tiny"
+                          onClick={() => {
+                            setBioLocal(bioDraft.trim());
+                            setBioEditing(false);
+                          }}
+                        >
+                          Salvar
+                        </button>
+                        <button
+                          className="tiny ghost"
+                          onClick={() => {
+                            setBioDraft(bioLocal);
+                            setBioEditing(false);
+                          }}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* denominação – só o valor */}
+                {denomination && (
+                  <div className="denomination-value">{denomination}</div>
+                )}
+
+                {/* meta: local + amigos + adicionar */}
+                <div className="metaRow">
+                  {locationText && (
+                    <span className="locationChip">
+                      <FiMapPin size={14} /> {locationText}
+                    </span>
+                  )}
+
+                  <div className="metaActions">
+                    <span
+                      className="friends-link"
+                      onClick={() => navigate(`/profile/${user._id}/friends`)}
+                    >
+                      {friendsCount !== null
+                        ? `${friendsCount} ${
+                            friendsCount === 1 ? "amigo" : "amigos"
+                          }`
+                        : "Amigos"}
+                    </span>
+                    {renderFriendAction()}
+                  </div>
                 </div>
               </div>
+
+              {/* ações à direita */}
               <div className="interactionButtons">
-                {(currentUser._id !== user._id ||
-                  currentUser._id === user._id) && (
-                  <>
-                    {currentUser._id !== user._id && (
-                      <button
-                        className="chat-icon-button"
-                        onClick={() => requestChat(currentUser?._id, user?._id)}
-                      >
-                        <FiMessageCircle size={20} />
-                      </button>
-                    )}
-                    <button
-                      className="more-icon-button"
-                      onClick={() => setShowOptions(!showOptions)}
-                    >
-                      <FiMoreVertical size={20} />
-                    </button>
-                  </>
+                {currentUser._id !== user._id && (
+                  <button
+                    className="icon-btn"
+                    onClick={() => requestChat(currentUser?._id, user?._id)}
+                    aria-label="Enviar mensagem"
+                  >
+                    <FiMessageCircle size={20} />
+                  </button>
                 )}
+                <button
+                  className="icon-btn"
+                  onClick={() => setShowOptions(!showOptions)}
+                  aria-label="Mais opções"
+                >
+                  <FiMoreVertical size={20} />
+                </button>
                 {showOptions && renderMoreMenu()}
               </div>
             </div>
@@ -242,13 +419,25 @@ const Profile = () => {
         </div>
       </div>
 
+      {/* Abas */}
       <div className="profileOptions">
         <ul>
-          <li onClick={() => setCurrentTab("")}>Listagens</li>
-          <li onClick={() => setCurrentTab("mural")}>Mural</li>
+          <li
+            className={currentTab === "" ? "active" : ""}
+            onClick={() => setCurrentTab("")}
+          >
+            Listagens
+          </li>
+          <li
+            className={currentTab === "mural" ? "active" : ""}
+            onClick={() => setCurrentTab("mural")}
+          >
+            Mural
+          </li>
         </ul>
       </div>
 
+      {/* Conteúdo */}
       <div className="profile-container">
         {(currentTab === "" || currentTab === "mural") && (
           <div className="profile-listings">
@@ -258,14 +447,13 @@ const Profile = () => {
                   <div className="mural-input">
                     <textarea
                       placeholder="Deixe uma mensagem no mural..."
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
+                      value={newMuralMessage}
+                      onChange={(e) => setNewMuralMessage(e.target.value)}
                       rows={3}
                     />
                     <button onClick={handleAddMuralMessage}>Enviar</button>
                   </div>
                 )}
-
                 <div className="mural-messages">
                   {muralMessages.length === 0 ? (
                     <p>Este mural ainda não tem mensagens.</p>
@@ -295,17 +483,21 @@ const Profile = () => {
             ) : (
               userListings.map((listing) => {
                 const isOpen = showListingMenu === listing._id;
-
                 return (
                   <div key={listing._id} className="profile-listing-item">
                     {currentUser._id === user._id && (
                       <div className="listingUpdateBox">
-                        <p onClick={() => toggleListingMenu(listing._id)}>
-                          {isOpen ? "x" : "menu"}
-                        </p>
+                        <button
+                          className="listingMenuTrigger"
+                          onClick={() => toggleListingMenu(listing._id)}
+                          aria-label="Abrir menu da listagem"
+                        >
+                          {isOpen ? "×" : <FiMoreHorizontal size={18} />}
+                        </button>
                       </div>
                     )}
-                    {showListingMenu === listing._id && (
+
+                    {isOpen && (
                       <div className="listingEditMenu">
                         <ul>
                           <li
@@ -318,12 +510,19 @@ const Profile = () => {
                               )
                             }
                           >
-                            edit
+                            ✏️ Editar
                           </li>
-                          <li>delete</li>
+                          <li
+                            onClick={() =>
+                              handleDeleteListing(listing._id, setUserListings)
+                            }
+                          >
+                            🗑️ Excluir
+                          </li>
                         </ul>
                       </div>
                     )}
+
                     {listing.type === "image" && listing.imageUrl && (
                       <img
                         src={listing.imageUrl}
@@ -338,13 +537,6 @@ const Profile = () => {
                         <p>
                           {listing.blogContent?.slice(0, 150) || "No content."}
                         </p>
-                        {listing.imageUrl && (
-                          <img
-                            src={listing.imageUrl}
-                            alt="blog-img"
-                            style={{ width: "100%", borderRadius: "8px" }}
-                          />
-                        )}
                       </div>
                     )}
 
@@ -360,130 +552,9 @@ const Profile = () => {
                     )}
 
                     {editingId === listing._id && (
-                      <div className="listing-edit-form" /* ...estilos... */>
-                        {draft.type === "blog" && (
-                          <>
-                            <label>Título</label>
-                            <input
-                              value={draft.blogTitle}
-                              onChange={(e) =>
-                                setDraft((d) => ({
-                                  ...d,
-                                  blogTitle: e.target.value,
-                                }))
-                              }
-                            />
-
-                            <label>Conteúdo</label>
-                            <textarea
-                              rows={6}
-                              value={draft.blogContent}
-                              onChange={(e) =>
-                                setDraft((d) => ({
-                                  ...d,
-                                  blogContent: e.target.value,
-                                }))
-                              }
-                            />
-
-                            <label>Imagem (URL)</label>
-                            <input
-                              value={draft.imageUrl}
-                              onChange={(e) =>
-                                setDraft((d) => ({
-                                  ...d,
-                                  imageUrl: e.target.value,
-                                }))
-                              }
-                            />
-                          </>
-                        )}
-
-                        {draft.type === "image" && (
-                          <>
-                            <label>Imagem (URL)</label>
-                            <input
-                              value={draft.imageUrl}
-                              onChange={(e) =>
-                                setDraft((d) => ({
-                                  ...d,
-                                  imageUrl: e.target.value,
-                                }))
-                              }
-                            />
-                            <label>Legenda</label>
-                            <input
-                              value={draft.caption || ""}
-                              onChange={(e) =>
-                                setDraft((d) => ({
-                                  ...d,
-                                  caption: e.target.value,
-                                }))
-                              }
-                            />
-                          </>
-                        )}
-
-                        {draft.type === "poll" && (
-                          <>
-                            <label>Pergunta</label>
-                            <input
-                              value={draft.question}
-                              onChange={(e) =>
-                                setDraft((d) => ({
-                                  ...d,
-                                  question: e.target.value,
-                                }))
-                              }
-                            />
-                            <label>Opções</label>
-                            {draft.options?.map((opt, i) => (
-                              <input
-                                key={i}
-                                value={opt}
-                                onChange={(e) => {
-                                  const arr = [...draft.options];
-                                  arr[i] = e.target.value;
-                                  setDraft((d) => ({ ...d, options: arr }));
-                                }}
-                              />
-                            ))}
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setDraft((d) => ({
-                                  ...d,
-                                  options: [...(d.options || []), ""],
-                                }))
-                              }
-                            >
-                              + adicionar opção
-                            </button>
-                          </>
-                        )}
-
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <button
-                            onClick={() =>
-                              saveEdit(
-                                listing._id,
-                                draft,
-                                setUserListings,
-                                setEditingId,
-                                setDraft,
-                                setShowListingMenu
-                              )
-                            }
-                          >
-                            Salvar
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => cancelEdit(setEditingId, setDraft)}
-                          >
-                            Cancelar
-                          </button>
+                      <div className="modal">
+                        <div className="modal-content">
+                          <div className="listing-edit-form">{/* ... */}</div>
                         </div>
                       </div>
                     )}
