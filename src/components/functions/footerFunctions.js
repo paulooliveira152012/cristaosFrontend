@@ -1,31 +1,35 @@
+// footerFunctions.js
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
-// Reaproveita o mesmo token salvo pelo SocketContext (authToken)
 const authHeaders = () => {
   const token = localStorage.getItem("authToken");
-  const h = { Accept: "application/json" };
+  const h = { Accept: "application/json", "Content-Type": "application/json" };
   if (token) h.Authorization = `Bearer ${token}`;
   return h;
 };
 
 export const checkForNewNotifications = async (setNotifications) => {
   try {
-    const res = await fetch(`${baseUrl}/api/notifications/`, {
+    const res = await fetch(`${baseUrl}/api/notifications`, {
       method: "GET",
       credentials: "include",
-       headers: authHeaders(),           // ✅ manda Bearer
+      headers: authHeaders(),
       cache: "no-store",
     });
-    if (!res.ok) throw new Error("Erro ao buscar notificações");
-    const data = await res.json();
 
-    const unreadCount = data.filter(n => !n.isRead).length;
-    setNotifications(unreadCount > 0); // se seu contexto usa boolean
+    if (!res.ok) {
+      // Não zere badge agressivamente em caso de 401
+      console.warn("GET /api/notifications falhou:", res.status);
+      return { unreadCount: 0, data: null };
+    }
+
+    const data = await res.json();
+    const unreadCount = data.filter((n) => !n.isRead).length;
+    setNotifications(unreadCount > 0);
     return { unreadCount, data };
   } catch (err) {
     console.error("Erro ao buscar notificações:", err);
-    setNotifications(false);
-    return { unreadCount: 0, data: [] };
+    return { unreadCount: 0, data: null };
   }
 };
 
@@ -34,39 +38,31 @@ export const markAllNotificationsAsRead = async () => {
     const res = await fetch(`${baseUrl}/api/notifications/read-all`, {
       method: "PUT",
       credentials: "include",
-      headers: { ...authHeaders(), "Content-Type": "application/json" }, // ✅ Bearer + JSON
+      headers: authHeaders(),
     });
     if (!res.ok) throw new Error("Erro ao marcar notificações como lidas.");
     return await res.json();
   } catch (err) {
     console.error("Erro ao marcar notificações como lidas:", err);
+    return null;
   }
 };
 
 export const checkForNewMessages = async (setUnreadMessagesCount, userId) => {
   try {
+    const h = authHeaders();
+
     const resMain = await fetch(
-      `${process.env.REACT_APP_API_BASE_URL}/api/users/checkUnreadMainChat`,
-      {
-         method: "GET",
-        credentials: "include",
-        headers: authHeaders(),         // ✅ Bearer
-        cache: "no-store",
-      }
-      
+      `${baseUrl}/api/users/checkUnreadMainChat`,
+      { credentials: "include", headers: h, cache: "no-store" }
     );
-    const dataMain = await resMain.json(); // { count: 3 }
+    const dataMain = resMain.ok ? await resMain.json() : { count: 0 };
 
     const resDM = await fetch(
-      `${process.env.REACT_APP_API_BASE_URL}/api/dm/totalUnread/${userId}`,
-      {
-        method: "GET",
-        credentials: "include",
-        headers: authHeaders(),         // ✅ Bearer
-        cache: "no-store",
-      }
+      `${baseUrl}/api/dm/totalUnread/${userId}`,
+      { credentials: "include", headers: h, cache: "no-store" }
     );
-    const dataDM = await resDM.json(); // { totalUnread: 5 }
+    const dataDM = resDM.ok ? await resDM.json() : { totalUnread: 0 };
 
     const totalUnread = (dataMain.count || 0) + (dataDM.totalUnread || 0);
     setUnreadMessagesCount(totalUnread);
@@ -75,9 +71,3 @@ export const checkForNewMessages = async (setUnreadMessagesCount, userId) => {
     setUnreadMessagesCount(0);
   }
 };
-
-
-
-
-
-

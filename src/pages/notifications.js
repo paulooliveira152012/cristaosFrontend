@@ -70,43 +70,57 @@ export const Notifications = () => {
   const navigate = useNavigate();
 
   // carregar + marcar lidas + limpar badge
-  useEffect(() => {
-    if (!currentUser) return;
+  // carregar + marcar lidas + limpar badge
+useEffect(() => {
+  if (!currentUser) return;
 
-    markAllSeen(); // zera a badge na hora
-    let mounted = true;
+  markAllSeen(); // zera a badge na hora
+  let mounted = true;
 
-    (async () => {
-      try {
-        setLoading(true);
-        const allNotifs = await fetchNotifications();
-        const sorted = (allNotifs || [])
+  (async () => {
+    try {
+      setLoading(true);
+
+      // 👉 fetchNotifications deve retornar `null` em caso de erro/401
+      const allNotifs = await fetchNotifications();
+
+      if (allNotifs) {
+        const sorted = allNotifs
           .filter(Boolean)
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-        if (!mounted) return;
-        setItems(sorted);
-        setFromList(sorted);
-      } catch (e) {
-        console.error("Erro ao carregar notificações:", e);
-      } finally {
-        if (!mounted) return;
-        setLoading(false);
+        if (mounted) {
+          setItems(sorted);
+          setFromList(sorted);
+        }
+
+        // Só marca como lidas se conseguiu buscar
+        try {
+          await markAllNotificationsAsRead();
+          markAllSeen();
+        } catch (e) {
+          console.warn("Falha ao marcar todas como lidas:", e);
+        }
+      } else {
+        // ❗ Falhou (ex.: 401) — NÃO sobrescreve estado local
+        console.warn("Não atualizando lista: fetchNotifications falhou.");
       }
+    } catch (e) {
+      console.error("Erro ao carregar notificações:", e);
+    } finally {
+      if (mounted) setLoading(false);
+    }
 
-      try {
-        await markAllNotificationsAsRead();
-        markAllSeen();
-      } catch {}
+    // Atualiza badge (usa headers com Bearer no footerFunctions)
+    setNotifications(false);
+    checkForNewNotifications(setNotifications);
+  })();
 
-      setNotifications(false);
-      checkForNewNotifications(setNotifications);
-    })();
+  return () => {
+    mounted = false;
+  };
+}, [currentUser, setNotifications, markAllSeen, setFromList]);
 
-    return () => {
-      mounted = false;
-    };
-  }, [currentUser, setNotifications, markAllSeen, setFromList]);
 
   // push em tempo real: nova notificação enquanto está na tela
   useEffect(() => {

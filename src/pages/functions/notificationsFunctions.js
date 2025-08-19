@@ -137,18 +137,19 @@ export const fetchNotifications = async () => {
       method: "GET",
       credentials: "include",      // ok ter cookie, mas não depender apenas dele
       headers: authHeaders(),       // ✅ manda Bearer se houver
+      cache: "no-store",
     });
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       console.warn("GET /api/notifications falhou:", res.status, text);
-      return []; // não quebra a tela
+      return null; // não quebra a tela
     }
 
     return await res.json(); // array
   } catch (err) {
     console.error("Erro ao buscar notificações:", err);
-    return [];
+    return null;
   }
 };
 
