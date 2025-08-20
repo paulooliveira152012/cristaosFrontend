@@ -10,7 +10,7 @@ body, html {
 }
 
 .profilePageBasicInfoContainer {
-  height: 50dvh;
+  /* height: 50dvh; */
   /* background-color: orange; */
 }
 
@@ -54,7 +54,7 @@ body, html {
   justify-content: center;
   flex: 1;
   min-width: 0;
-  background-color: green;
+  /* background-color: green; */
 }
 
 .topInfo {
