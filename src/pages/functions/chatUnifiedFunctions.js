@@ -172,6 +172,14 @@ export function usePrivateChatController({
       );
       if (msgConvId !== String(conversationId)) return;
 
+      // Guard: só renderizamos sistemas persistidos (com _id)
+      if (
+        (newMsg?.type === "system" || newMsg?.isSystem || newMsg?.eventType) &&
+        !newMsg?._id
+      ) {
+        return;
+      }
+
       setMessages((prev) => {
         const has = prev.some((m) => String(m._id) === String(newMsg._id));
         return has ? prev : [...prev, newMsg];
@@ -291,6 +299,9 @@ export function usePrivateChatController({
       const id = String(joinedUser?._id || joinedUser?.userId || "");
       if (id && id !== String(currentUser._id)) {
         setIsOtherPresent(true);
+
+        // dá um pequeno guarda pra suprimir "left" de reconexão
+        suppressLeaveUntilRef.current = Date.now() + 1500;
         // setMessages((prev) =>
         //   prev.concat([
         //     {
