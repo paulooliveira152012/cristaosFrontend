@@ -1,5 +1,5 @@
 // src/pages/PrivateChat.js
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { useSocket } from "../context/SocketContext";
@@ -61,6 +61,20 @@ const PrivateChat = () => {
     socket,
     userId: currentUser?._id,
   });
+
+  useEffect(() => {
+  if (!socket || !conversationId) return;
+
+  const join = () => {
+    socket.emit('joinPrivateChat', { conversationId: String(conversationId) });
+  };
+
+  if (socket.connected) join();
+  socket.on('connect', join);
+
+  return () => socket.off('connect', join);
+}, [socket, conversationId]);
+
 
   // ===== UI =====
   const messagesContainerRef = useRef(null);

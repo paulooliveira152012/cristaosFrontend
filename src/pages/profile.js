@@ -25,10 +25,12 @@ import {
 import { useProfileLogic } from "./functions/useProfileLogic";
 import FiMessageCircle from "../assets/icons/FiMessageCircle.js";
 import { FiMoreVertical } from "react-icons/fi";
+import { useSocket } from "../context/SocketContext";
 
 const imagePlaceholder = require("../assets/images/profileplaceholder.png");
 
 const Profile = () => {
+  const { socket } = useSocket();
   const { currentUser } = useUser();
   const { userId } = useParams();
   const [user, setUser] = useState(null);
@@ -89,7 +91,7 @@ const Profile = () => {
     (async () => {
       try {
         const { items = [] } = await getMuralContent(userId);
-        console.log("items:", items)
+        console.log("items:", items);
         setMuralMessages(items);
       } catch (err) {
         console.error("Erro ao carregar mural:", err);
@@ -159,26 +161,25 @@ const Profile = () => {
   );
 
   const handleAddMuralMessage = async () => {
-  const text = newMuralMessage?.trim();
-  if (!text) return;
+    const text = newMuralMessage?.trim();
+    if (!text) return;
 
-  try {
-    const { error, message } = await submitMuralContent(
-      currentUser._id,
-      userId,
-      text
-    );
-    if (error) throw new Error(error);
+    try {
+      const { error, message } = await submitMuralContent(
+        currentUser._id,
+        userId,
+        text
+      );
+      if (error) throw new Error(error);
 
-    // adiciona a mensagem real retornada pela API
-    setMuralMessages((prev) => [message, ...prev]);
-    setNewMessage("");
-  } catch (e) {
-    console.error(e);
-    alert(e.message || "Erro ao enviar mensagem.");
-  }
-};
-
+      // adiciona a mensagem real retornada pela API
+      setMuralMessages((prev) => [message, ...prev]);
+      setNewMessage("");
+    } catch (e) {
+      console.error(e);
+      alert(e.message || "Erro ao enviar mensagem.");
+    }
+  };
 
   if (loading) return <p className="profile-loading">Carregando perfil...</p>;
   if (error) return <p className="profile-error">{error}</p>;
@@ -261,7 +262,25 @@ const Profile = () => {
                     {currentUser._id !== user._id && (
                       <button
                         className="chat-icon-button"
-                        onClick={() => requestChat(currentUser?._id, user?._id)}
+                        onClick={async () => {
+                          const res = await requestChat(
+                            currentUser?._id,
+                            user?._id
+                          );
+                          const convId =
+                            res?.conversationId || res?.conversation?._id;
+                          if (!convId) return; // nada a fazer se o backend não retornou id
+
+                          // (opcional) já entra na sala pelo socket
+                          socket?.emit?.("joinPrivateChat", {
+                            conversationId: convId,
+                          });
+
+                          // navega direto pra conversa; justInvited ajuda a mostrar "Aguardando..."
+                          navigate(`/privateChat/${convId}`, {
+                            state: { justInvited: res?.status === "pending" },
+                          });
+                        }}
                       >
                         <FiMessageCircle size={20} />
                       </button>
