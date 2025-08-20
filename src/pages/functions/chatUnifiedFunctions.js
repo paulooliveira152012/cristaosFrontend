@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 /** Marca como lido ao abrir e quando a aba volta ao foco/visível. */
 export function useReadOnOpenAndFocus({
   kind, // 'main' | 'dm'
-  id,   // MAIN_ROOM_ID (main) ou conversationId (dm)
+  id, // MAIN_ROOM_ID (main) ou conversationId (dm)
   baseURL,
   reset, // fn do UnreadContext
   socket, // (dm) para emitir privateChatRead
@@ -73,12 +73,13 @@ export function usePrivateChatController({
   conversationId,
   currentUser,
   baseURL,
-  reset,               // zera badge; chamado via ref
-  inviteBackHandler,   // ({ socket, conversationId, currentUserId })
-  onAccepted,          // toast, etc — via ref
+  reset, // zera badge; chamado via ref
+  inviteBackHandler, // ({ socket, conversationId, currentUserId })
+  onAccepted, // toast, etc — via ref
 }) {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
+  const suppressLeaveUntilRef = useRef(0);
 
   // Estados de UI
   const [otherId, setOtherId] = useState(null);
@@ -90,8 +91,12 @@ export function usePrivateChatController({
   // 🔒 refs para funções instáveis (não entram nas deps)
   const resetRef = useRef(reset);
   const onAcceptedRef = useRef(onAccepted);
-  useEffect(() => { resetRef.current = reset; }, [reset]);
-  useEffect(() => { onAcceptedRef.current = onAccepted; }, [onAccepted]);
+  useEffect(() => {
+    resetRef.current = reset;
+  }, [reset]);
+  useEffect(() => {
+    onAcceptedRef.current = onAccepted;
+  }, [onAccepted]);
 
   // ----- Metadados -----
   useEffect(() => {
@@ -179,9 +184,32 @@ export function usePrivateChatController({
     };
 
     const handleAccepted = ({ conversationId: cid }) => {
-      if (cid !== conversationId) return;
+      if (String(cid) !== String(conversationId)) return;
+
+      // libere envio/estados DENTRO do hook
       setPendingForMe(false);
       setWaitingOther(false);
+      setIsOtherParticipant(true); // garante canSend => true pelo useMemo
+
+      // evite "saiu" fantasma por ~1.5s
+      suppressLeaveUntilRef.current = Date.now() + 1500;
+
+      // system "join" local (quem chamou vê que o outro entrou)
+      setMessages((prev) =>
+        prev.concat([
+          {
+            _id: `sys-join-${Date.now()}`,
+            type: "system",
+            eventType: "join",
+            message: "Usuário entrou na conversa",
+            timestamp: Date.now(),
+          },
+        ])
+      );
+
+      // garante presença no room
+      socket.emit("joinPrivateChat", { conversationId });
+
       onAcceptedRef.current?.();
     };
 
@@ -207,12 +235,35 @@ export function usePrivateChatController({
       }
     })();
 
+    const handleParticipantChanged = ({
+      conversationId: cid,
+      participants,
+      waitingUser,
+    }) => {
+      if (String(cid) !== String(conversationId)) return;
+
+      // Se não tem mais waitingUser, a conversa está ativa
+      if (!waitingUser) {
+        setWaitingOther(false);
+        setPendingForMe(false);
+        setIsOtherParticipant(true);
+      }
+
+      // (opcional) se quiser derivar presença do "outro" via participants:
+      // const someoneElse = (participants || []).map(String).some(id => id !== String(currentUser._id));
+      // setIsOtherParticipant(someoneElse);
+    };
+
+    socket.on("dm:participantChanged", handleParticipantChanged);
+
     return () => {
       mounted = false;
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("newPrivateMessage", handleIncomingMessage);
       socket.off("dm:accepted", handleAccepted);
+      socket.off("dm:participantChanged", handleParticipantChanged);
+
       socket.emit("leavePrivateChat", { conversationId });
     };
   }, [socket, conversationId, currentUser?._id, baseURL]);
@@ -228,15 +279,45 @@ export function usePrivateChatController({
     };
 
     const handleUserJoined = ({ conversationId: cid, joinedUser }) => {
-      if (cid !== conversationId) return;
+      if (String(cid) !== String(conversationId)) return;
       const id = String(joinedUser?._id || joinedUser?.userId || "");
-      if (id && id !== String(currentUser._id)) setIsOtherPresent(true);
+      if (id && id !== String(currentUser._id)) {
+        setIsOtherPresent(true);
+        setMessages((prev) =>
+          prev.concat([
+            {
+              _id: `sys-join-${Date.now()}`,
+              type: "system",
+              eventType: "join",
+              message: `${
+                joinedUser?.username || "Usuário"
+              } entrou na conversa`,
+              timestamp: Date.now(),
+            },
+          ])
+        );
+      }
     };
 
     const handleUserLeft = ({ conversationId: cid, leftUser }) => {
-      if (cid !== conversationId) return;
+      if (String(cid) !== String(conversationId)) return;
+      if (Date.now() < suppressLeaveUntilRef.current) return; // suprime fantasma
+
       const id = String(leftUser?._id || leftUser?.userId || "");
-      if (id && id !== String(currentUser._id)) setIsOtherPresent(false);
+      if (id && id !== String(currentUser._id)) {
+        setIsOtherPresent(false);
+        setMessages((prev) =>
+          prev.concat([
+            {
+              _id: `sys-leave-${Date.now()}`,
+              type: "system",
+              eventType: "leave",
+              message: `${leftUser?.username || "Usuário"} saiu da conversa`,
+              timestamp: Date.now(),
+            },
+          ])
+        );
+      }
     };
 
     socket.on("currentUsersInPrivateChat", handlePresence);

@@ -1,5 +1,6 @@
 // src/pages/PrivateChat.js
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { useSocket } from "../context/SocketContext";
@@ -24,11 +25,20 @@ import profilePlaceholder from "../assets/images/profileplaceholder.png";
 
 const PrivateChat = () => {
   const { socket } = useSocket();
+  // pega hint "justInvited" vindo do navigate(state) ou ?pending=1
+  const { state, search } = useLocation();
+  const qsPending = new URLSearchParams(search).get("pending") === "1";
   const { id: conversationId } = useParams();
   const { currentUser } = useUser();
   const { reset } = useUnread();
   const navigate = useNavigate();
   const baseURL = process.env.REACT_APP_API_BASE_URL;
+
+  const [forcePending, setForcePending] = useState(
+    state?.justInvited === true || qsPending
+  );
+  const [acceptedNow, setAcceptedNow] = useState(false);
+  const acceptanceGuardRef = useRef(0); // evita falso "saiu" durante a transição
 
   const {
     messages,
@@ -38,7 +48,7 @@ const PrivateChat = () => {
     isOtherParticipant,
     pendingForMe,
     waitingOther,
-    // isOtherPresent, // se quiser exibir status online
+    isOtherPresent, // se quiser exibir status online
     acceptConversation,
     rejectConversation,
     reinviteConversation,
@@ -53,6 +63,10 @@ const PrivateChat = () => {
     onAccepted: () => reset(conversationId),
   });
 
+  // depois de obter os valores do hook
+  const userHasLeft =
+    isOtherParticipant === false && !waitingOther && !pendingForMe;
+
   useReadOnOpenAndFocus({
     kind: "dm",
     id: conversationId,
@@ -63,18 +77,84 @@ const PrivateChat = () => {
   });
 
   useEffect(() => {
+    if (!socket || !conversationId) return;
+
+    const join = () => {
+      socket.emit("joinPrivateChat", {
+        conversationId: String(conversationId),
+      });
+    };
+
+    if (socket.connected) join();
+    socket.on("connect", join);
+
+    return () => socket.off("connect", join);
+  }, [socket, conversationId]);
+
+  useEffect(() => {
   if (!socket || !conversationId) return;
 
-  const join = () => {
+  const onAccepted = ({ conversationId: cid }) => {
+    if (String(cid) !== String(conversationId)) return;
+    // 1) libera envio imediatamente
+    
+    // 2) garante que este cliente está no room certo
     socket.emit('joinPrivateChat', { conversationId: String(conversationId) });
+    // 3) (opcional) sincroniza via GET para o caso de ficar algo defasado
+    fetch(`${baseURL}/api/dm/conversation/${conversationId}`, {
+      credentials: 'include',
+      headers: { 'Cache-Control': 'no-cache' },
+    }).catch(() => {});
   };
 
-  if (socket.connected) join();
-  socket.on('connect', join);
+  const onParticipants = (payload) => {
+    const { conversationId: cid, waitingUser } = payload || {};
+    if (String(cid) !== String(conversationId)) return;
 
-  return () => socket.off('connect', join);
-}, [socket, conversationId]);
+  };
 
+  socket.on('dm:accepted', onAccepted);
+  socket.on('dm:participantChanged', onParticipants);
+  return () => {
+    socket.off('dm:accepted', onAccepted);
+    socket.off('dm:participantChanged', onParticipants);
+  };
+}, [socket, conversationId, baseURL]);
+
+
+  useEffect(() => {
+    let t;
+    if (waitingOther) {
+      const tick = async () => {
+        try {
+          const res = await fetch(
+            `${baseURL}/api/dm/conversation/${conversationId}`,
+            {
+              credentials: "include",
+              headers: { "Cache-Control": "no-cache" },
+            }
+          );
+          const conv = await res.json();
+          // se seu hook já atualiza waitingOther/canSend a partir desse GET,
+          // basta chamar o fetch; o hook deve reagir
+        } catch {}
+        t = setTimeout(tick, 3000);
+      };
+      tick();
+    }
+    return () => t && clearTimeout(t);
+  }, [waitingOther, conversationId, baseURL]);
+
+  useEffect(() => {
+    setAcceptedNow(false);
+    setForcePending(state?.justInvited === true || qsPending);
+  }, [conversationId]); // eslint-disable-line
+
+  // mostra “Aguardando...” se: acabou de convidar OU hook ainda diz que está esperando
+  const showWaiting = waitingOther;
+
+  // pode enviar se: hook permitir OU recebemos aceite agora
+  const canSendNow = acceptedNow || canSend;
 
   // ===== UI =====
   const messagesContainerRef = useRef(null);
@@ -143,6 +223,17 @@ const PrivateChat = () => {
                 // ---- branch: mensagens de sistema ----
                 if (isSystemMessage(msg)) {
                   const variant = getSystemVariant(msg); // "join" | "leave" | "info"
+
+                  if (variant === "leave") {
+                    const inGuard = Date.now() < acceptanceGuardRef.current;
+                    if (
+                      inGuard ||
+                      /* o outro não saiu de fato */ isOtherParticipant
+                    ) {
+                      return null; // ignora falso "saiu"
+                    }
+                  }
+
                   return (
                     <div
                       key={msg._id ?? `sys-${msg.timestamp ?? index}-${index}`}
@@ -220,17 +311,24 @@ const PrivateChat = () => {
 
           {/* Composer com os MESMOS estilos do ChatComponent */}
           <div className="composer">
-            {canSend ? (
+            {showWaiting ? (
+              <button className="inviteBackBtn" disabled>
+                Aguardando usuário aceitar a conversa…
+              </button>
+            ) : canSendNow ? (
               <>
                 <input
                   type="text"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                  onKeyDown={(e) => e.key === "Enter" && sendMessage({ force: acceptedNow })}
                   placeholder="Digite sua mensagem..."
                   className="composerInput"
                 />
-                <button className="sendBtn" onClick={sendMessage}>
+                <button
+                  className="sendBtn"
+                  onClick={() => sendMessage({ force: acceptedNow })}
+                >
                   Enviar
                 </button>
               </>
@@ -249,15 +347,11 @@ const PrivateChat = () => {
                   Rejeitar
                 </button>
               </>
-            ) : waitingOther ? (
-              <button className="inviteBackBtn" disabled>
-                Aguardando usuário aceitar a conversa…
-              </button>
-            ) : (
+            ) : userHasLeft ? (
               <button className="inviteBackBtn" onClick={reinviteConversation}>
                 Convidar usuário de volta
               </button>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
