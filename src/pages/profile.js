@@ -213,9 +213,13 @@ const Profile = () => {
               height: 220, // sem isso, pode não aparecer
             }}
           />
+          {/* two rows */}
           <div className="bottom">
+            {/* two rows / row 1 */}
             <div className="imageAndnameContainer">
+              {/* flex sideways */}
               <div className="imageWrapper">
+                {/* profile image */}
                 <div
                   className="ProfileProfileImage"
                   style={{
@@ -224,8 +228,10 @@ const Profile = () => {
                     })`,
                     backgroundPosition: "center",
                   }}
-                ></div>
+                />
               </div>
+
+              {/* informações do usuário */}
               <div className="infoWrapper">
                 <div className="topInfo">
                   <h2 className="profile-username">

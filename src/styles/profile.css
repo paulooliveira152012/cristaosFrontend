@@ -21,7 +21,7 @@ body, html {
 }
 
 .profilePageHeaderParentSection .top {
-  /* background-color: rgb(46, 78, 46); */
+  background-color: rgb(46, 78, 46);
   height: 20dvh;
 }
 
@@ -31,6 +31,7 @@ body, html {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  background-color: red;
 }
 
 .imageAndnameContainer {
@@ -53,6 +54,7 @@ body, html {
   justify-content: center;
   flex: 1;
   min-width: 0;
+  background-color: green;
 }
 
 .topInfo {
@@ -151,10 +153,12 @@ body.dark-mode .chat-icon-button {
   max-width: 900px;
   margin: 0 auto;
   padding: 20px;
+  background-color: purple;
 }
 
 .profile-listings {
   padding-bottom: 50px;
+  background-color: orange;;
 }
 
 .profile-listings .profile-listing-item {
