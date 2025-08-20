@@ -195,17 +195,17 @@ export function usePrivateChatController({
       suppressLeaveUntilRef.current = Date.now() + 1500;
 
       // system "join" local (quem chamou vê que o outro entrou)
-      setMessages((prev) =>
-        prev.concat([
-          {
-            _id: `sys-join-${Date.now()}`,
-            type: "system",
-            eventType: "join",
-            message: "Usuário entrou na conversa",
-            timestamp: Date.now(),
-          },
-        ])
-      );
+      // setMessages((prev) =>
+      //   prev.concat([
+      //     {
+      //       _id: `sys-join-${Date.now()}`,
+      //       type: "system",
+      //       eventType: "join",
+      //       message: "Usuário entrou na conversa",
+      //       timestamp: Date.now(),
+      //     },
+      //   ])
+      // );
 
       // garante presença no room
       socket.emit("joinPrivateChat", { conversationId });
@@ -283,19 +283,19 @@ export function usePrivateChatController({
       const id = String(joinedUser?._id || joinedUser?.userId || "");
       if (id && id !== String(currentUser._id)) {
         setIsOtherPresent(true);
-        setMessages((prev) =>
-          prev.concat([
-            {
-              _id: `sys-join-${Date.now()}`,
-              type: "system",
-              eventType: "join",
-              message: `${
-                joinedUser?.username || "Usuário"
-              } entrou na conversa`,
-              timestamp: Date.now(),
-            },
-          ])
-        );
+        // setMessages((prev) =>
+        //   prev.concat([
+        //     {
+        //       _id: `sys-join-${Date.now()}`,
+        //       type: "system",
+        //       eventType: "join",
+        //       message: `${
+        //         joinedUser?.username || "Usuário"
+        //       } entrou na conversa`,
+        //       timestamp: Date.now(),
+        //     },
+        //   ])
+        // );
       }
     };
 
