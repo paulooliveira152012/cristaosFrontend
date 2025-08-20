@@ -110,31 +110,22 @@ export function usePrivateChatController({
         );
         const conv = await res.json();
 
-        const parts = (conv?.participants || []).map((p) => p?._id || p);
-        const other =
-          parts.find((id) => String(id) !== String(currentUser._id)) || null;
-        setOtherId(other);
-
-        let otherStillParticipant = !!other;
-        if (conv?.leavingUser && String(conv.leavingUser) === String(other)) {
-          otherStillParticipant = false;
-        }
-        setIsOtherParticipant(otherStillParticipant);
-
-        const pendingArray =
-          conv?.pendingFor ||
-          conv?.pending ||
-          (conv?.pendingUser ? [conv.pendingUser] : []);
-
-        setPendingForMe(
-          Array.isArray(pendingArray) &&
-            pendingArray.map(String).includes(String(currentUser._id))
-        );
-        setWaitingOther(
-          Array.isArray(pendingArray) && other
-            ? pendingArray.map(String).includes(String(other))
-            : false
-        );
+          const myId = String(currentUser._id);
+      const parts  = (conv?.participants || []).map((p) => String(p?._id || p));
+      const waiting = conv?.waitingUser ? String(conv.waitingUser) : null;
+      const requester = conv?.requester ? String(conv.requester) : null;
+      // se há alguém além de mim nos participants, o "outro" participa
+      const othersInParticipants = parts.filter((id) => id !== myId);
+      setIsOtherParticipant(othersInParticipants.length > 0);
+      // pendências derivadas de waitingUser
+      setPendingForMe(waiting === myId);
+      setWaitingOther(!!waiting && waiting !== myId);
+      // inferir o id do "outro": participante existente ou o waitingUser / requester
+      const inferredOther =
+        othersInParticipants[0] ||
+        (waiting === myId ? requester : waiting) ||
+        null;
+      setOtherId(inferredOther);
       } catch (e) {
         console.error("Erro ao buscar conversa:", e);
         setIsOtherParticipant(true);
