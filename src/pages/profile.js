@@ -30,6 +30,7 @@ import {
   FiMapPin,
   FiEdit2,
 } from "react-icons/fi";
+import { useSocket } from "../context/SocketContext";
 
 const imagePlaceholder = require("../assets/images/profileplaceholder.png");
 
@@ -87,6 +88,7 @@ function normalizeDenomination(input = "") {
 /* --------------------------------------------------------------------- */
 
 const Profile = () => {
+  const { socket } = useSocket();
   const { currentUser } = useUser();
   const { userId } = useParams();
   const navigate = useNavigate();
@@ -105,6 +107,7 @@ const Profile = () => {
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState({});
 
+  const [newMessage, setNewMessage] = ""
   const [muralMessages, setMuralMessages] = useState([]);
   const [newMuralMessage, setNewMuralMessage] = useState("");
 
@@ -153,6 +156,8 @@ const Profile = () => {
     (async () => {
       try {
         const { items = [] } = await getMuralContent(userId);
+        console.log("items:", items);
+       
         setMuralMessages(items);
       } catch (err) {
         console.error("Erro ao carregar mural:", err);
@@ -241,6 +246,7 @@ const Profile = () => {
   const handleAddMuralMessage = async () => {
     const text = newMuralMessage?.trim();
     if (!text) return;
+
     try {
       const { error, message } = await submitMuralContent(
         currentUser._id,
@@ -248,13 +254,26 @@ const Profile = () => {
         text
       );
       if (error) throw new Error(error);
+
+      // adiciona a mensagem real retornada pela API
       setMuralMessages((prev) => [message, ...prev]);
-      setNewMuralMessage("");
+      setNewMessage("");
     } catch (e) {
       console.error(e);
       alert(e.message || "Erro ao enviar mensagem.");
     }
   };
+
+  if (loading) return <p className="profile-loading">Carregando perfil...</p>;
+  if (error) return <p className="profile-error">{error}</p>;
+
+  const churchId =
+    typeof user?.church === "string" ? user.church : user?.church?._id;
+
+  const churchName =
+    typeof user?.church === "object"
+      ? user.church?.name
+      : user?.churchName || "Ver igreja"; // opcional, caso você guarde o nome separado
 
   const toggleListingMenu = (listingId) => {
     setShowListingMenu((prev) => (prev === listingId ? null : listingId));
@@ -396,22 +415,43 @@ const Profile = () => {
 
               {/* ações à direita */}
               <div className="interactionButtons">
-                {currentUser._id !== user._id && (
-                  <button
-                    className="icon-btn"
-                    onClick={() => requestChat(currentUser?._id, user?._id)}
-                    aria-label="Enviar mensagem"
-                  >
-                    <FiMessageCircle size={20} />
-                  </button>
+                {(currentUser._id !== user._id ||
+                  currentUser._id === user._id) && (
+                  <>
+                    {currentUser._id !== user._id && (
+                      <button
+                        className="chat-icon-button"
+                        onClick={async () => {
+                          const res = await requestChat(
+                            currentUser?._id,
+                            user?._id
+                          );
+                          const convId =
+                            res?.conversationId || res?.conversation?._id;
+                          if (!convId) return; // nada a fazer se o backend não retornou id
+
+                          // (opcional) já entra na sala pelo socket
+                          socket?.emit?.("joinPrivateChat", {
+                            conversationId: convId,
+                          });
+
+                          // navega direto pra conversa; justInvited ajuda a mostrar "Aguardando..."
+                          navigate(`/privateChat/${convId}`, {
+                            state: { justInvited: res?.status === "pending" },
+                          });
+                        }}
+                      >
+                        <FiMessageCircle size={20} />
+                      </button>
+                    )}
+                    <button
+                      className="more-icon-button"
+                      onClick={() => setShowOptions(!showOptions)}
+                    >
+                      <FiMoreVertical size={20} />
+                    </button>
+                  </>
                 )}
-                <button
-                  className="icon-btn"
-                  onClick={() => setShowOptions(!showOptions)}
-                  aria-label="Mais opções"
-                >
-                  <FiMoreVertical size={20} />
-                </button>
                 {showOptions && renderMoreMenu()}
               </div>
             </div>
