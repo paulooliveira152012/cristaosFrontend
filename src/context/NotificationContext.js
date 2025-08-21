@@ -1,32 +1,33 @@
+// src/context/NotificationContext.js
 import React, { createContext, useContext, useMemo, useState } from "react";
 
 const NotificationContext = createContext(null);
 
 export const NotificationProvider = ({ children }) => {
-  // contagem é a fonte da verdade
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // compat: boolean (se em algum lugar ainda usa)
-  const hasUnread = unreadCount > 0;
+  const incrementUnread = (n = 1) =>
+    setUnreadCount((prev) => prev + (Number(n) || 0));
 
-  // zera imediatamente a badge
+  // transformar todas lidas (chamar imediatamente quando abrir pagina de notificações)
   const markAllSeen = () => setUnreadCount(0);
 
-  // calcula a partir de um array de notificações
   const setFromList = (list) => {
     const n = Array.isArray(list) ? list.filter((x) => !x?.isRead).length : 0;
     setUnreadCount(n);
   };
 
+  const hasUnread = unreadCount > 0;
+
   const value = useMemo(
     () => ({
-      // novo API
       unreadCount,
       setUnreadCount,
+      incrementUnread,
       markAllSeen,
       setFromList,
       hasUnread,
-      // compat legado boolean
+      // compat legado (evite usar fora até remover):
       notifications: hasUnread,
       setNotifications: (flag) => setUnreadCount(flag ? Math.max(unreadCount, 1) : 0),
     }),
