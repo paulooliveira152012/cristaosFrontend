@@ -7,6 +7,7 @@ import ListingInteractionBox from "../components/ListingInteractionBox";
 import "../styles/profile.css";
 import coverPlaceholder from "../assets/coverPlaceholder.jpg";
 
+
 import {
   fetchUserData,
   fetchListingComments,
@@ -441,14 +442,17 @@ const Profile = () => {
                           });
                         }}
                       >
-                        <FiMessageCircle size={20} />
+                        <FiMessageCircle size={10000} />
                       </button>
                     )}
                     <button
                       className="more-icon-button"
                       onClick={() => setShowOptions(!showOptions)}
                     >
-                      <FiMoreVertical size={20} />
+                      <FiMoreVertical 
+                        size={20} 
+                        className="more-icon-button"
+                      />
                     </button>
                   </>
                 )}
