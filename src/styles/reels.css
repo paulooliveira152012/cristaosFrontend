@@ -306,7 +306,7 @@ body.dark-mode .commentSection { background:#1A1A1A;color:#f1f1f1; }
 }
 
 /* Bottom sheet */
-.commentSection {
+.reelsWrapper .commentSection {
   position: relative;
   width: 100%;
   max-width: 800px;
