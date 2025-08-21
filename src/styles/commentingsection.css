@@ -1,226 +1,226 @@
 .interactionBoxContainer {
-    margin-bottom: 15px;
-    margin-top: 15px;
-  }
-  
-  .commentContainer {
-    width: 100%;
-  }
-  
-  .commentsInteractionContainer {
-    display: flex;
-    justify-content: flex-start;
-  }
-  
-  .commentsInteractionContainer div {
-    display: flex;
-    text-align: center;
-  }
-  
-  .commentBox {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    margin-bottom: 10px;
-    /* background-xcolor: green; */
-    /* justify-content: center; */
-    /* align-items: center; */
-    
-  }
-  
-  .commentInputWrapper {
-    display: flex;
-    /* position: relative; */
-    width: 100%;
-    flex-direction: column;
-    align-items: center;
-    background-color: rgb(255, 255, 255);
-    justify-content: center;
-    border-radius: 40px;
-    border: 1px solid #ebebeb;
-    margin-top: 10px;
-    margin-left: 10px;
-    margin-right: 10px;
-  }
+  margin-bottom: 15px;
+  margin-top: 15px;
+}
 
-  body.dark-mode .commentInputWrapper {
-    background-color: #1A1A1A;
-    border: 1px solid #363636;
-  }
-  
-  .commentInput {
-    width: 100%;
-    padding: 10px 45px 10px 15px; /* espaço pro botão redondo */
-    margin-right: 5px;
-    font-size: 14px;
-    border: none;
-    border-radius: 40px;
-    background-color: rgb(255, 255, 255);
-    box-sizing: border-box;
-    display: flex;
-    outline: none;
-    /* box-shadow: 0 0 0 2px #ccc; */
-    
-  }
+.commentContainer {
+  width: 100%;
+}
 
-  body.dark-mode .commentInput {
-    background-color: #1A1A1A;
-  }
-  
-  .submitCommentBtn {
-    /* top: 50%; */
-    transform: translateX(-10%);
-    margin: 0;
-    width: 34px;
-    height: 30px;
-    border: none;
-    border-radius: 48%;
-    background-color: #2A68D8;
-    color: white;
-    font-size: 20px;
-    /* font-weight: bold; */
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    z-index: 2;
-    margin-right: 4px;
-  }
+.commentsInteractionContainer {
+  display: flex;
+  justify-content: flex-start;
+}
 
-  body.dark-mode .submitCommentBtn {
-    background-color: #2A68D8;
-    color: rgb(255, 255, 255);
-  }
+.commentsInteractionContainer div {
+  display: flex;
+  text-align: center;
+}
+
+.commentBox {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  margin-bottom: 10px;
+  /* background-xcolor: green; */
+  /* justify-content: center; */
+  /* align-items: center; */
   
-  /* .submitCommentBtn:hover {
-    background-color: #1f4db3;
-    transform: translateY(-50%) scale(1.1);
-  } */
+}
+
+.commentInputWrapper {
+  display: flex;
+  /* position: relative; */
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  background-color: rgb(255, 255, 255); 
+  justify-content: center;
+  border-radius: 40px;
+  border: 1px solid #ebebeb;
+  margin-top: 10px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+body.dark-mode .commentInputWrapper {
+  background-color: #1A1A1A;
+  border: 1px solid #363636;
+}
+
+.commentInput {
+  width: 100%;
+  padding: 10px 45px 10px 15px; /* espaço pro botão redondo */
+  margin-right: 5px;
+  font-size: 14px;
+  border: none;
+  border-radius: 40px;
+  background-color: rgb(255, 255, 255);
+  box-sizing: border-box;
+  display: flex;
+  outline: none;
+  /* box-shadow: 0 0 0 2px #ccc; */
   
-  .interactionIcons {
-    display: flex;
-    justify-content: flex-start; /* alinha tudo à esquerda */
-    gap: 40px; /* opcional: define o espacinho entre os itens */
-    margin-left: 10px;
-  }
-  
-  .interactionIcons * {
-    cursor: pointer;
-  }
-  
-  .commentSectionContainer {
-    justify-content: center;
-    /* border-bottom: 1px solid lightgray; */
-    text-align: justify;
-  }
-  
-  .commentSection {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    padding-bottom: 50px;
-  }
-  
-  .iconsContainer {
-    display: flex;
-    /* align-items: center; */
-    cursor: pointer;
-  }
-  
-  .left {
-    display: flex;
-    align-items: center;
-    width: 100%;
-  }
-  
-  .right {
-    display: flex;
-    align-items: center;
-  }
-  
-  .commentProfileImage {
-    height: 50px;
-    aspect-ratio: 1;
-    background-size: cover;
-    border-radius: 50%;
-    margin-right: 20px;
-  }
-  
-  .toggleCommentsButton {
-    margin-top: 0;
-  }
-  
-  .delete-comment-button {
-    width: auto;
-    align-self: flex-end;
-  }
-  
-  .replySectionContainer {
-    width: 100%;
-    display: flex;
-    justify-content: flex-end;
-  }
-  
-  .repliesSection {
-    width: 80%;
-    justify-self: flex-end;
-  }
-  
-  .replyInteractionContainer {
-    display: flex;
-    justify-content: space-between;
-  }
-  
-  .replyContent {
-    /* border-bottom: 1px solid lightgray; */
-  }
-  
-  .highlight {
+}
+
+body.dark-mode .commentInput {
+  background-color: #1A1A1A;
+}
+
+.submitCommentBtn {
+  /* top: 50%; */
+  transform: translateX(-10%);
+  margin: 0;
+  width: 34px;
+  height: 30px;
+  border: none;
+  border-radius: 48%;
+  background-color: #2A68D8;
+  color: white;
+  font-size: 20px;
+  /* font-weight: bold; */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+  margin-right: 4px;
+}
+
+body.dark-mode .submitCommentBtn {
+  background-color: #2A68D8;
+  color: rgb(255, 255, 255);
+}
+
+/* .submitCommentBtn:hover {
+  background-color: #1f4db3;
+  transform: translateY(-50%) scale(1.1);
+} */
+
+.interactionIcons {
+  display: flex;
+  justify-content: flex-start; /* alinha tudo à esquerda */
+  gap: 40px; /* opcional: define o espacinho entre os itens */
+  margin-left: 10px;
+}
+
+.interactionIcons * {
+  cursor: pointer;
+}
+
+.commentSectionContainer {
+  justify-content: center;
+  /* border-bottom: 1px solid lightgray; */
+  text-align: justify;
+}
+
+.commentSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 50px;
+}
+
+.iconsContainer {
+  display: flex;
+  /* align-items: center; */
+  cursor: pointer;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+}
+
+.commentProfileImage {
+  height: 50px;
+  aspect-ratio: 1;
+  background-size: cover;
+  border-radius: 50%;
+  margin-right: 20px;
+}
+
+.toggleCommentsButton {
+  margin-top: 0;
+}
+
+.delete-comment-button {
+  width: auto;
+  align-self: flex-end;
+}
+
+.replySectionContainer {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.repliesSection {
+  width: 80%;
+  justify-self: flex-end;
+}
+
+.replyInteractionContainer {
+  display: flex;
+  justify-content: space-between;
+}
+
+.replyContent {
+  /* border-bottom: 1px solid lightgray; */
+}
+
+.highlight {
+  background-color: #fffcb3;
+  transition: background-color 1s;
+}
+
+@keyframes flashBg {
+  0% {
     background-color: #fffcb3;
-    transition: background-color 1s;
   }
-  
-  @keyframes flashBg {
-    0% {
-      background-color: #fffcb3;
-    }
-    100% {
-      background-color: transparent;
-    }
+  100% {
+    background-color: transparent;
   }
-  
-  .shared-feedback {
-    animation: scaleUp 0.3s ease-in-out;
-  }
-  
-  @keyframes scaleUp {
-    0% {
-      transform: scale(1);
-    }
-    50% {
-      transform: scale(1.3);
-    }
-    100% {
-      transform: scale(1);
-    }
-  }
-  
+}
 
-  .likeButton,
+.shared-feedback {
+  animation: scaleUp 0.3s ease-in-out;
+}
+
+@keyframes scaleUp {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+
+.likeButton,
 .comment-like-btn,
 .iconsContainer button {
-  touch-action: manipulation;              /* evita 300ms delay/ghosts */
-  -webkit-tap-highlight-color: transparent;
-  background: none;
-  border: 0;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  cursor: pointer;
+touch-action: manipulation;              /* evita 300ms delay/ghosts */
+-webkit-tap-highlight-color: transparent;
+background: none;
+border: 0;
+padding: 0;
+display: inline-flex;
+align-items: center;
+cursor: pointer;
 }
 
 .likeButton[disabled] { cursor: not-allowed; opacity: .7; }
