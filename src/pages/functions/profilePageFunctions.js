@@ -516,3 +516,24 @@ export const getMuralContent = async (userId) => {
   // esperado: { items, page, limit, total, hasMore }
   return data;
 };
+
+export const handleSaveBio = async (bioDraft) => {
+  console.log("Saving bio...", bioDraft);
+  console.log("baseUrl:", baseUrl)
+
+  try {
+    const res = await fetch(`${baseUrl}/api/users/saveBio`, {
+      method: "POST",
+      headers: authHeaders(),
+      credentials: "include",
+      body: JSON.stringify({ bio: bioDraft }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Erro ao salvar bio.");
+
+    console.log("Bio salva com sucesso:", data);
+  } catch (error) {
+    console.log("Erro ao salvar bio:", error);
+  }
+}

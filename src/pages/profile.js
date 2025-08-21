@@ -7,7 +7,6 @@ import ListingInteractionBox from "../components/ListingInteractionBox";
 import "../styles/profile.css";
 import coverPlaceholder from "../assets/coverPlaceholder.jpg";
 
-
 import {
   fetchUserData,
   fetchListingComments,
@@ -21,6 +20,7 @@ import {
   cancelEdit,
   submitMuralContent,
   getMuralContent,
+  handleSaveBio,
 } from "./functions/profilePageFunctions";
 import { useProfileLogic } from "./functions/useProfileLogic";
 
@@ -108,7 +108,7 @@ const Profile = () => {
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState({});
 
-  const [newMessage, setNewMessage] = ""
+
   const [muralMessages, setMuralMessages] = useState([]);
   const [newMuralMessage, setNewMuralMessage] = useState("");
 
@@ -116,6 +116,23 @@ const Profile = () => {
   const [bioEditing, setBioEditing] = useState(false);
   const [bioLocal, setBioLocal] = useState("");
   const [bioDraft, setBioDraft] = useState("");
+
+  const userBio = (user?.bio ?? "").trim();
+  const localBio = (bioLocal ?? "").trim();
+  const bioText = userBio || localBio;
+
+  const isOwner = String(currentUser?._id) === String(user?._id);
+
+  // quando trocar de usuário (ou quando o backend retornar nova bio), sincronize
+  useEffect(() => {
+    const initialBio = user?.bio ?? "";
+    setBioLocal(initialBio);
+    setBioDraft(initialBio);
+  }, [user?._id, user?.bio]);
+
+  useEffect(() => {
+    console.log(bioDraft);
+  }, [bioDraft]);
 
   const {
     handleCommentSubmit,
@@ -158,7 +175,7 @@ const Profile = () => {
       try {
         const { items = [] } = await getMuralContent(userId);
         console.log("items:", items);
-       
+
         setMuralMessages(items);
       } catch (err) {
         console.error("Erro ao carregar mural:", err);
@@ -199,7 +216,10 @@ const Profile = () => {
 
     if (isFriend) {
       return (
-        <span className="friend-pill" onClick={() => handleRemoveFriend(user._id)}>
+        <span
+          className="friend-pill"
+          onClick={() => handleRemoveFriend(user._id)}
+        >
           ✅ Amigo
         </span>
       );
@@ -207,7 +227,10 @@ const Profile = () => {
     if (hasReceivedRequest) {
       return (
         <>
-          <span className="friend-pill" onClick={() => handleAcceptFriend(user._id)}>
+          <span
+            className="friend-pill"
+            onClick={() => handleAcceptFriend(user._id)}
+          >
             ✅ Aceitar
           </span>
           <span
@@ -219,7 +242,8 @@ const Profile = () => {
         </>
       );
     }
-    if (hasSentRequest) return <span className="friend-pill">⏳ Pedido enviado</span>;
+    if (hasSentRequest)
+      return <span className="friend-pill">⏳ Pedido enviado</span>;
 
     // <- Botão em pílula (texto) + Adicionar
     return (
@@ -258,15 +282,13 @@ const Profile = () => {
 
       // adiciona a mensagem real retornada pela API
       setMuralMessages((prev) => [message, ...prev]);
-      setNewMessage("");
+      setNewMuralMessage("");
     } catch (e) {
       console.error(e);
       alert(e.message || "Erro ao enviar mensagem.");
     }
   };
 
-  if (loading) return <p className="profile-loading">Carregando perfil...</p>;
-  if (error) return <p className="profile-error">{error}</p>;
 
   const churchId =
     typeof user?.church === "string" ? user.church : user?.church?._id;
@@ -280,8 +302,6 @@ const Profile = () => {
     setShowListingMenu((prev) => (prev === listingId ? null : listingId));
   };
 
-  if (loading) return <p className="profile-loading">Carregando perfil...</p>;
-  if (error) return <p className="profile-error">{error}</p>;
   if (!user) return null;
 
   // preferir cidade; se não tiver, estado
@@ -305,7 +325,9 @@ const Profile = () => {
           <div
             className="top"
             style={{
-              backgroundImage: `url(${user?.profileBackgroundCover || coverPlaceholder})`,
+              backgroundImage: `url(${
+                user?.profileBackgroundCover || coverPlaceholder
+              })`,
               backgroundSize: "cover",
               backgroundPosition: "center",
               backgroundRepeat: "no-repeat",
@@ -319,7 +341,9 @@ const Profile = () => {
                 <div
                   className="ProfileProfileImage"
                   style={{
-                    backgroundImage: `url(${user?.profileImage || imagePlaceholder})`,
+                    backgroundImage: `url(${
+                      user?.profileImage || imagePlaceholder
+                    })`,
                     backgroundPosition: "center",
                   }}
                 />
@@ -334,14 +358,21 @@ const Profile = () => {
                   <span className="at">@{user.username}</span>
                 </div>
 
-                {/* bio */}
+                {/* Bio — todos veem; só o dono edita */}
                 <div className="bioSection">
                   {!bioEditing ? (
                     <>
+                    {currentUser._id == user._id ? (
                       <p className={`bio ${bioLocal ? "" : "muted"}`}>
-                        {bioLocal || "Escreva uma breve bio..."}
+                        {bioText || "Escreva uma breve bio..."}
                       </p>
-                      {currentUser._id === user._id && (
+                    ) : (
+                      <p className={`bio ${bioLocal ? "" : "muted"}`}>
+                        {bioText || ""}
+                      </p>
+                    )}
+                      
+                      {isOwner && (
                         <button
                           className="tiny ghost"
                           onClick={() => setBioEditing(true)}
@@ -352,7 +383,7 @@ const Profile = () => {
                         </button>
                       )}
                     </>
-                  ) : (
+                  ) : isOwner ? (
                     <div className="bio-editor">
                       <textarea
                         rows={3}
@@ -364,9 +395,20 @@ const Profile = () => {
                       <div className="bio-actions">
                         <button
                           className="tiny"
-                          onClick={() => {
-                            setBioLocal(bioDraft.trim());
+                          onClick={async () => {
+                            const trimmed = (bioDraft || "").trim();
+                            setBioLocal(trimmed); // atualiza visual na hora
                             setBioEditing(false);
+                            try {
+                              // mantém sua assinatura atual:
+                              await handleSaveBio(trimmed);
+                              // otimismo: reflita no objeto user p/ evitar voltar a renderizar a antiga
+                              setUser((u) => (u ? { ...u, bio: trimmed } : u));
+                            } catch (e) {
+                              console.error(e);
+                              alert("Falha ao salvar bio");
+                              // opcional: reverter bioLocal se quiser
+                            }
                           }}
                         >
                           Salvar
@@ -374,7 +416,7 @@ const Profile = () => {
                         <button
                           className="tiny ghost"
                           onClick={() => {
-                            setBioDraft(bioLocal);
+                            setBioDraft(bioLocal || ""); // garante string
                             setBioEditing(false);
                           }}
                         >
@@ -382,7 +424,7 @@ const Profile = () => {
                         </button>
                       </div>
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 {/* denominação – só o valor */}
@@ -442,17 +484,14 @@ const Profile = () => {
                           });
                         }}
                       >
-                        <FiMessageCircle size={10000} />
+                        <FiMessageCircle size={20} />
                       </button>
                     )}
                     <button
                       className="more-icon-button"
                       onClick={() => setShowOptions(!showOptions)}
                     >
-                      <FiMoreVertical 
-                        size={20} 
-                        className="more-icon-button"
-                      />
+                      <FiMoreVertical size={20} className="more-icon-button" />
                     </button>
                   </>
                 )}
