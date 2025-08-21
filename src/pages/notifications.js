@@ -20,6 +20,8 @@ import { useSocket } from "../context/SocketContext.js";
 // Avatar com fallback (inicial)
 const Avatar = ({ src, alt, size = 40 }) => {
   const [error, setError] = useState(false);
+
+  // se houver algum erro ao carregar a imagem, usa o fallback
   if (!src || error) {
     return (
       <div
@@ -31,6 +33,7 @@ const Avatar = ({ src, alt, size = 40 }) => {
       </div>
     );
   }
+  
   return (
     <img
       className="ntf-avatar"

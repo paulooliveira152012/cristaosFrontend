@@ -41,8 +41,8 @@ body {
 
 .profile-container {
   max-width: 980px;
-  margin: 16px auto 80px;
-  padding: 0 16px;
+  /* margin: 16px auto 80px; */
+  /* padding: 0 16px; */
 }
 
 /* ===== Header/Card ===== */
@@ -50,7 +50,7 @@ body {
   display: flex;
   flex-direction: column;
   background: var(--surface);
-  border-radius: 0 0 24px 24px;
+  /* border-radius: 0 0 24px 24px; */
   box-shadow: var(--shadow);
   overflow: hidden;
 }
@@ -73,6 +73,7 @@ body {
   gap: 16px;
   align-items: flex-start;
   position: relative;
+  /* background-color: #2a68d8; */
 }
 
 /* avatar */
@@ -120,10 +121,47 @@ body {
   color: var(--muted);
 }
 
+.chat-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  /* width: 36px; */
+  /* height: 36px; */
+  padding: 6px;
+  padding-left: 7px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  /* background-color: pink; */
+
+  color: var(--brand, #2A68D8);   /* 🔑 garante o azul do ícone */
+  cursor: pointer;
+  transition: background .2s ease;
+}
+
+.chat-icon-button:hover {
+  background: var(--hover-bg);           /* cinza claro no hover */
+}
+
+.more-icon-button {
+border-radius: 50px;
+background-color: transparent;
+}
+
+.more-icon-button:hover {
+  background: var(--hover-bg);           /* cinza claro no hover */
+}
+
+
+
+
+
+
 /* bio */
 .bioSection {
   display: flex;
-  flex-direction: column;
+  /* flex-direction: column; */
   gap: 6px;
 }
 
@@ -159,10 +197,28 @@ body {
 }
 
 .tiny.ghost {
+  display: inline-flex;        /* só ocupa o tamanho do conteúdo */
+  align-items: center;         
+  gap: 6px;
+
   background: transparent;
   color: var(--brand);
   border: 1px solid rgba(42, 104, 216, .25);
+  border-radius: 6px;
+
+  font-size: 14px;
+  font-weight: 600;
+  padding: 4px 10px;           /* bem menor */
+  width: auto;                 /* 🔑 não deixa expandir */
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease, border .2s ease;
 }
+
+.tiny.ghost:hover {
+  background: rgba(42, 104, 216, 0.05);
+  border-color: var(--brand);
+}
+
 
 .bio-actions {
   display: flex;
@@ -305,54 +361,86 @@ body {
   background: #f5f7fb;
 }
 
+:root {
+  --brand-blue: #2563eb;   /* azul do destaque */
+  --fg-muted:  #475569;    /* cinza do texto inativo */
+  --hover-bg:  #f3f4f6;    /* cinza claro no hover */
+  --border:    #e5e7eb;
+}
+
 /* ===== Abas ===== */
 .profileOptions {
   position: sticky;
   top: 0;
   z-index: 30;
-  background: rgba(255, 255, 255, .85);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
+  background: white; /* fundo branco */
 }
 
 .profileOptions ul {
   display: flex;
   list-style: none;
-  padding: 6px;
   margin: 0;
-  gap: 8px;
+  padding: 0;
   max-width: 980px;
   margin-inline: auto;
 }
 
 .profileOptions li {
   flex: 1;
+  position: relative;
   text-align: center;
-  padding: 12px;
-  border-radius: 12px;
-  background: #f1f1f1;
-  color: #475569;
+  padding: 12px 8px;
+  background: white;        /* fundo branco */
+  color: var(--fg-muted);   /* texto cinza */
   font-weight: 700;
   cursor: pointer;
   font-size: var(--fs-tab);
-  transition: background .2s ease, color .2s ease;
+  user-select: none;
+  transition: color .2s ease, background-color .2s ease;
 }
 
-.profileOptions li.active {
-  background: var(--brand);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, .25);
+/* Sub-linha azul */
+.profileOptions li::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 0;
+  height: 3px;
+  background: var(--brand-blue);
+  border-radius: 999px;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform .2s ease;
 }
 
+/* Hover */
 .profileOptions li:hover {
-  background: #e9eef8;
+  background: var(--hover-bg); /* cinza clarinho */
 }
+
+/* Ativo */
+.profileOptions li.active {
+  color: var(--brand-blue); /* texto azul */
+}
+.profileOptions li.active::after {
+  transform: scaleX(1);     /* linha azul aparece */
+}
+
+/* Acessibilidade */
+.profileOptions li:focus-visible {
+  outline: 2px solid var(--brand-blue);
+  outline-offset: 2px;
+}
+
 
 /* ===== Listagens ===== */
 .profile-listings {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  /* gap: 14px; */
   padding: 16px 0;
   padding-bottom: 70px;
 }
@@ -360,16 +448,26 @@ body {
 .profile-listings .profile-listing-item {
   position: relative;
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  border: 0.5px solid var(--border);
+  /* border-radius: 14px; */
   box-shadow: var(--shadow);
-  padding: 16px;
+  /* padding: 16px; */
+  padding-top: 50px;
+  
 }
 
 .profile-listings .profile-listing-item h2 {
   margin: 0 0 6px;
   font-size: 18px;
   font-weight: 700;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.profile-listings .listing-content p {
+  /* background-color: #2a68d8; */
+  margin-left: 10px;
+  margin-right: 10px;
 }
 
 /* menu "..." da listagem */
@@ -377,6 +475,9 @@ body {
   position: absolute;
   top: 10px;
   right: 10px;
+  /* padding: 16px; */
+
+
   
 }
 
@@ -385,6 +486,8 @@ body {
   border: none;
   padding: 4px;
   cursor: pointer;
+  /* padding: 16px; */
+  
 }
 
 .profile-listings .listingMenuTrigger svg {
@@ -406,12 +509,16 @@ body {
   min-width: 170px;
   z-index: 20;
   overflow: hidden;
+  /* padding: 16px; */
+  
 }
 
 .profile-listings .listingEditMenu ul {
   list-style: none;
   margin: 0;
   padding: 6px;
+  /* padding: 16px; */
+  
 }
 
 .profile-listings .listingEditMenu li {
@@ -425,11 +532,21 @@ body {
 }
 
 .profile-listings .profile-listing-image {
-  width: 100%;
-  border-radius: 10px;
-  margin-top: 8px;
+  width: 100% ;
+  /* border-radius: 10px; */
+  /* padding: 0px !important; */
+  /* margin-top: 8px; */
+
 }
 
+
+
+body.dark-mode .more-icon-button {
+  .more-icon-button {
+    background-color: transparent; 
+    color: white;
+  }
+}
 /* ===== Mural ===== */
 .mural-section {
   display: flex;
@@ -465,6 +582,7 @@ body {
 
 .mural-section .mural-messages .mural-message {
   background: #f1f1f1;
+  /* background-color: #2a68d8; */
   padding: 10px;
   border-radius: 10px;
   margin-bottom: 10px;
@@ -555,6 +673,10 @@ body.dark-mode .icon-btn svg {
     --fs-body: 15px;
     --fs-chip: 12px;
     --fs-tab: 16px;
+  }
+
+  .more-icon-button {
+    background-color: transparent; 
   }
 
   .headerRow {
