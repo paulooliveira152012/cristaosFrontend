@@ -5,16 +5,38 @@
 
 .commentContainer {
   width: 100%;
+  /* background-color: red; */
 }
 
 .commentsInteractionContainer {
   display: flex;
-  justify-content: flex-start;
+  align-items: center;
+  gap: 12px;
+  /* background-color: red;  */
 }
 
 .commentsInteractionContainer div {
   display: flex;
-  text-align: center;
+  align-items: center;
+  gap: 5px;
+  /* background-color: rgb(102, 95, 224);  */
+  font-size: 14px;
+}
+
+.commentsInteractionContainer div.left {
+  display: flex;
+  gap: 9px;
+  margin-top: 5px;
+  /* background-color: violet; */
+  font-size: 10px;
+}
+
+.commentsInteractionContainer svg {
+  width: 17px;
+  height: 15px;
+  flex-shrink: 0;
+  display: block;
+  /* background-color: tomato; */
 }
 
 .commentBox {
@@ -22,77 +44,169 @@
   flex-direction: row;
   width: 100%;
   margin-bottom: 10px;
-  /* background-xcolor: green; */
-  /* justify-content: center; */
-  /* align-items: center; */
-  
+  margin-top: 10px;
+  background-xcolor: green;
+}
+
+.commentProfileImageReply {
+  height: 30px;
+  aspect-ratio: 1;
+  background-size: cover;
+  border-radius: 50%;
+  margin-right: 20px;
 }
 
 .commentInputWrapper {
-  display: flex;
-  /* position: relative; */
-  width: 100%;
-  flex-direction: column;
+  display: inline-flex;
+  /* coloca input e botão lado a lado */
   align-items: center;
-  background-color: rgb(255, 255, 255); 
-  justify-content: center;
-  border-radius: 40px;
-  border: 1px solid #ebebeb;
-  margin-top: 10px;
-  margin-left: 10px;
-  margin-right: 10px;
-}
-
-body.dark-mode .commentInputWrapper {
-  background-color: #1A1A1A;
-  border: 1px solid #363636;
-}
-
-.commentInput {
+  border: 2px solid #2A68D8;
+  border-radius: 24px;
+  padding: 4px 8px;
+  background: #fff;
+  box-shadow: 0 0 8px rgba(42, 104, 216, 0.4);
   width: 100%;
-  padding: 10px 45px 10px 15px; /* espaço pro botão redondo */
-  margin-right: 5px;
-  font-size: 14px;
-  border: none;
-  border-radius: 40px;
-  background-color: rgb(255, 255, 255);
-  box-sizing: border-box;
-  display: flex;
-  outline: none;
-  /* box-shadow: 0 0 0 2px #ccc; */
-  
+  margin: 10px;
+  /* background-color: aqua; */
+  height: 40px;
 }
 
-body.dark-mode .commentInput {
-  background-color: #1A1A1A;
+.commentInputWrapper input {
+  flex: 1;
+  /* input ocupa todo espaço disponível */
+  border: none;
+  outline: none;
+  font-size: 16px;
+  padding: 8px;
 }
+
+/* caixa de texto */
+.commentInput {
+  flex: 1;
+  padding: 10px 14px;
+  /* border: 1px solid #ccc; */
+  border-radius: 9999px;
+  /* arredondado */
+  font-size: 14px;
+  height: 20px;
+}
+
+
+
 
 .submitCommentBtn {
-  /* top: 50%; */
-  transform: translateX(-10%);
-  margin: 0;
-  width: 34px;
-  height: 30px;
-  border: none;
-  border-radius: 48%;
-  background-color: #2A68D8;
-  color: white;
-  font-size: 20px;
-  /* font-weight: bold; */
-  cursor: pointer;
+  /* position: absolute; */
+  right: 8px;
+  top: 50%;
+  /* transform: translateY(-50%); */
+  inline-size: 20px;
+  /* largura lógica */
+  aspect-ratio: 1 / 1;
+  /* altura sempre = largura */
+  block-size: auto;
+  border-radius: 9999px;
+  /* círculo perfeito */
+  padding: 0;
+  line-height: 0;
+  /* evita métricas de fonte “empurrarem” o box */
+  border: 0;
+  background: #2A68D8;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .16);
+  z-index: 2;
+}
+
+.replyBox {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  z-index: 2;
-  margin-right: 4px;
+  /* border: 2px solid #2A68D8; */
+  border-radius: 24px;
+  padding: 4px 8px;
+  background: #fff;
+  /* box-shadow: 0 0 8px rgba(42, 104, 216, 0.2); */
+  width: 95%;          /* ligeiramente menor que o full width */
+  margin: 8px auto;    /* centraliza horizontalmente */
+  gap: 8px;            /* espaço entre input e botão */
+}
+
+.submitCommentBtn svg {
+  fill: #fff !important;
+  width: 14px;
+  height: 14px;
+  z-index: 1000000;
+  /* background-color: red; */
+}
+
+
+.submitCommentBtn {
+  inline-size: 24px;
+}
+
+.submitCommentBtn svg {
+  width: 12px;
+  height: 12px;
+}
+
+
+
+
+
+.ArrowRight {
+  color: #eaeaea;
+}
+
+/* estados */
+.submitCommentBtn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.commentInput::placeholder {
+  color: #8A8FA3;
+}
+
+/* dark mode */
+body.dark-mode .commentInput {
+  background: #121212;
+  color: #eaeaea;
+  border-color: #2a2a2a;
+}
+
+body.dark-mode .commentInput:focus {
+  border-color: #4C8DF1;
+  box-shadow:
+    0 0 0 3px rgba(76, 141, 241, .32),
+    0 0 0 6px rgba(76, 141, 241, .18);
 }
 
 body.dark-mode .submitCommentBtn {
-  background-color: #2A68D8;
-  color: rgb(255, 255, 255);
+  background: #2A68D8;
 }
+
+/* responsivo */
+@media (max-width: 480px) {
+  .commentInput {
+    height: 20px;
+    font-size: 15px;
+    border: none;
+  }
+
+  .submitCommentBtn {
+    width: 22px;
+    height: 22px;
+    right: -5px;
+  }
+}
+
+
+
+
+body.dark-mode .submitCommentBtn {
+  background-color: #2A68D8;
+}
+
 
 /* .submitCommentBtn:hover {
   background-color: #1f4db3;
@@ -101,8 +215,10 @@ body.dark-mode .submitCommentBtn {
 
 .interactionIcons {
   display: flex;
-  justify-content: flex-start; /* alinha tudo à esquerda */
-  gap: 40px; /* opcional: define o espacinho entre os itens */
+  justify-content: flex-start;
+  /* alinha tudo à esquerda */
+  gap: 40px;
+  /* opcional: define o espacinho entre os itens */
   margin-left: 10px;
 }
 
@@ -121,14 +237,17 @@ body.dark-mode .submitCommentBtn {
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
-  padding-bottom: 50px;
+  /* margin-bottom: 20px; */
+  padding-bottom: 20px;
+  /* background-color: aquamarine; */
+  margin-left: 10px;
 }
 
 .iconsContainer {
   display: flex;
   /* align-items: center; */
   cursor: pointer;
+  /* background-color: pink; */
 }
 
 .left {
@@ -143,7 +262,7 @@ body.dark-mode .submitCommentBtn {
 }
 
 .commentProfileImage {
-  height: 50px;
+  height: 40px;
   aspect-ratio: 1;
   background-size: cover;
   border-radius: 50%;
@@ -163,17 +282,37 @@ body.dark-mode .submitCommentBtn {
   width: 100%;
   display: flex;
   justify-content: flex-end;
+  /* background-color: #4C8DF1; */
 }
 
 .repliesSection {
-  width: 80%;
+  width: 90%;
   justify-self: flex-end;
 }
 
 .replyInteractionContainer {
   display: flex;
   justify-content: space-between;
+  margin-left: 50px;
+  font-size: 14px;
+  /* gap: 2000px; */
 }
+
+.replyInteractionContainer svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  display: block;
+  /* background-color: tomato; */
+}
+
+.replyInteractionContainer div {
+gap: 5px;
+  display: flex;
+  align-items: center;
+}
+
+replyInteractionContainer 
 
 .replyContent {
   /* border-bottom: 1px solid lightgray; */
@@ -188,6 +327,7 @@ body.dark-mode .submitCommentBtn {
   0% {
     background-color: #fffcb3;
   }
+
   100% {
     background-color: transparent;
   }
@@ -201,9 +341,11 @@ body.dark-mode .submitCommentBtn {
   0% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.3);
   }
+
   100% {
     transform: scale(1);
   }
@@ -213,14 +355,19 @@ body.dark-mode .submitCommentBtn {
 .likeButton,
 .comment-like-btn,
 .iconsContainer button {
-touch-action: manipulation;              /* evita 300ms delay/ghosts */
--webkit-tap-highlight-color: transparent;
-background: none;
-border: 0;
-padding: 0;
-display: inline-flex;
-align-items: center;
-cursor: pointer;
+  touch-action: manipulation;
+  /* evita 300ms delay/ghosts */
+  -webkit-tap-highlight-color: transparent;
+  background: none;
+  border: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  /* background-color: #fffcb3; */
+  cursor: pointer;
 }
 
-.likeButton[disabled] { cursor: not-allowed; opacity: .7; }
+.likeButton[disabled] {
+  cursor: not-allowed;
+  opacity: .7;
+}

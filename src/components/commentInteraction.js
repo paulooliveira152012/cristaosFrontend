@@ -3,28 +3,44 @@ import LikeIcon from "../assets/icons/likeIcon";
 import LikedIcon from "../assets/icons/likedIcon";
 import TrashIcon from "../assets/icons/trashcan";
 
-const CommentInteraction = ({
-  commentId,
+const ICON_PX = 10; // tamanho apenas para comentários/replies
+
+export default function CommentInteraction({
   isLiked,
   likesCount,
-  handleCommentLike,
-  handleDeleteComment,
-  isReply = false,
-  parentCommentId = null,
-}) => (
-  <div className="commentInteractionContainer">
-    <div onClick={() => handleCommentLike(commentId, isReply, parentCommentId)}>
-      {isLiked ? <LikedIcon /> : <LikeIcon />}
-      <span>{likesCount}</span>
-    </div>
-    <div className="right">
-      <TrashIcon
-        onClick={() => handleDeleteComment(commentId, isReply, parentCommentId)}
-        style={{ cursor: "pointer" }}
-        alt="Delete Comment"
-      />
-    </div>
-  </div>
-);
+  onLike,
+  onDelete,
+}) {
+  return (
+    <div
+      className="commentInteractionContainer"
+      style={{ display: "flex", gap: 8, alignItems: "center" }}
+    >
+      <button
+        onClick={onLike}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          background: "none",
+          border: 0,
+          cursor: "pointer",
+          padding: 0,
+        }}
+      >
+        {isLiked ? <LikedIcon size={ICON_PX} /> : <LikeIcon size={ICON_PX} />}
+        <span style={{ fontSize: 12, lineHeight: 1 }}>{likesCount}</span>
+      </button>
 
-export default CommentInteraction;
+      <button
+        onClick={onDelete}
+        style={{ background: "none", border: 0, cursor: "pointer", padding: 0 }}
+        aria-label="Delete comment"
+        title="Delete comment"
+      >
+        <TrashIcon size={ICON_PX} />
+      </button>
+    </div>
+  );
+}
+

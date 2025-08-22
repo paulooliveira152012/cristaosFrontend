@@ -8,6 +8,7 @@ import ShareIcon from "../assets/icons/shareIcon";
 import SharedIcon from "../assets/icons/sharedIcon";
 import TrashIcon from "../assets/icons/trashcan";
 import "../styles/commentingsection.css";
+import { ArrowRight } from "lucide-react";
 
 const ListingInteractionBox = ({
   listingId,
@@ -174,16 +175,29 @@ const ListingInteractionBox = ({
               onChange={handleCommentChange}
               placeholder="Type your comment"
               className="commentInput"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleCommentSubmitClick();
+                }
+              }}
             />
-            <button
-              className="submitCommentBtn"
-              onClick={handleCommentSubmitClick}
-            >
-              →
-            </button>
+
+
+            {commentText.trim() && (
+              <button
+                className="submitCommentBtn"
+                onClick={handleCommentSubmitClick}
+                aria-label="Enviar comentário"
+                title="Enviar comentário"
+
+              >
+                <ArrowRight size={18} color="white" />
+              </button>
+            )}
           </div>
         </div>
       )}
+
 
 
       {showComments && comments.length > 0 && (
@@ -281,6 +295,12 @@ const ListingInteractionBox = ({
                   <button
                     className="submitCommentBtn"
                     onClick={() => handleReplySubmitClick(comment._id)}
+                    onkeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleReplySubmitClick(comment._id);
+                      }
+                    }}
+                    aria-label="Enviar resposta"
                   >
                     Submit Reply
                   </button>
@@ -301,7 +321,7 @@ const ListingInteractionBox = ({
                           <div style={{ display: "flex" }}>
                             <Link to={`/profile/${reply.user}`}>
                               <div
-                                className="commentProfileImage"
+                                className="commentProfileImageReply"
                                 style={{
                                   backgroundImage: `url(${reply.profileImage || ""})`,
                                   backgroundPosition: "center",
@@ -321,7 +341,11 @@ const ListingInteractionBox = ({
                           <div className="replyInteractionContainer">
                             <div
                               onClick={() =>
-                                handleCommentLike(reply._id, true, comment._id)
+                                handleCommentLike(
+                                  reply._id,
+                                  true,
+                                  comment._id
+                                )
                               }
                               style={{ cursor: "pointer", display: "flex" }}
                             >
