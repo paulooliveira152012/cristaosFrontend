@@ -1,8 +1,9 @@
+// src/pages/AllUsersPage.js
 import { useEffect, useMemo, useState } from "react";
 import {
   getAllUsers,
   getFriendIds,
-  sendFriendRequest, // ⬅️ importar
+  sendFriendRequest,
 } from "../components/functions/liveUsersComponent";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser, useUsers } from "../context/UserContext";
@@ -18,15 +19,16 @@ const AllUsersPage = () => {
 
   const [allUsers, setAllUsers] = useState([]);
   const [friendIds, setFriendIds] = useState(new Set());
-  const [sending, setSending] = useState({}); // { [userId]: true } enquanto envia
+  const [pendingIds, setPendingIds] = useState(new Set()); // NEW: convites enviados/pendentes
+  const [sending, setSending] = useState({});              // { [userId]: true } enquanto envia
   const navigate = useNavigate();
 
-  // 1) Busca todos os usuários
+  // 1) Todos os usuários
   useEffect(() => {
     getAllUsers(setAllUsers);
   }, []);
 
-  // 2) Busca IDs dos amigos do usuário logado
+  // 2) IDs dos amigos do usuário logado
   useEffect(() => {
     let cancel = false;
     (async () => {
@@ -42,13 +44,24 @@ const AllUsersPage = () => {
     return () => { cancel = true; };
   }, [currentUser?._id]);
 
-  // 3) Set de online
+  // 3) IDs pendentes (convites enviados por mim)
+  useEffect(() => {
+    // Se seu UserContext já traz sentFriendRequests, inicialize daqui
+    const arr = currentUser?.sentFriendRequests || [];
+    const init = new Set(arr.map((x) => String(x?._id ?? x)));
+    setPendingIds(init);
+  }, [currentUser?.sentFriendRequests]);
+
+  // 4) Set online
   const onlineSet = useMemo(
-    () => new Set((onlineUsers || []).map((u) => String(u?._id ?? u?.id ?? u?.userId))),
+    () =>
+      new Set(
+        (onlineUsers || []).map((u) => String(u?._id ?? u?.id ?? u?.userId))
+      ),
     [onlineUsers]
   );
 
-  // 4) Ordena: online primeiro; depois por username
+  // 5) Ordena: online primeiro; depois por username
   const sortedList = useMemo(() => {
     return [...(allUsers || [])].sort((a, b) => {
       const aOnline = onlineSet.has(String(a?._id));
@@ -58,12 +71,13 @@ const AllUsersPage = () => {
     });
   }, [allUsers, onlineSet]);
 
+  // 6) Enviar pedido (marca como pendente, não como amigo)
   const handleAddFriend = async (targetId) => {
     try {
       setSending((s) => ({ ...s, [targetId]: true }));
       await sendFriendRequest(targetId);
-      // otimista: já considera “amigo/pendente” e some o botão
-      setFriendIds((prev) => {
+      // Otimista: marca como PENDENTE para mostrar “…”
+      setPendingIds((prev) => {
         const next = new Set(prev);
         next.add(String(targetId));
         return next;
@@ -98,6 +112,7 @@ const AllUsersPage = () => {
               const isOnline = onlineSet.has(id);
               const isFriend = friendIds.has(id);
               const isMe = id === String(currentUser?._id || "");
+              const isPending = pendingIds.has(id); // NEW
 
               return (
                 <Link key={id} to={`/profile/${id}`} className="memberLink">
@@ -120,14 +135,25 @@ const AllUsersPage = () => {
                       <span className="friendBadge" title="Já é seu amigo">✓</span>
                     )}
 
-                    {/* “+” se NÂO é amigo e NÂO sou eu */}
-                    {!isFriend && !isMe && (
+                    {/* “…” se convite JÁ FOI ENVIADO e ainda não é amigo */}
+                    {!isFriend && !isMe && isPending && (
+                      <button
+                        className="addFriendBtn"
+                        title="Convite enviado"
+                        disabled
+                      >
+                        …
+                      </button>
+                    )}
+
+                    {/* “+” se ainda não enviou convite e não é amigo */}
+                    {!isFriend && !isMe && !isPending && (
                       <button
                         className="addFriendBtn"
                         title="Adicionar amigo"
                         disabled={!!sending[id]}
                         onClick={(e) => {
-                          e.preventDefault(); // não navegar
+                          e.preventDefault();
                           e.stopPropagation();
                           handleAddFriend(id);
                         }}
