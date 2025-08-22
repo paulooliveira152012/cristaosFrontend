@@ -528,6 +528,7 @@ const Listings = () => {
                           }}
                         >
                           {voters.map((v, idx) => (
+                            <Link to={`profile/${v.userId._id}`} key={idx}>
                             <img
                               key={idx}
                               src={v.userId?.profileImage || profileplaceholder}
@@ -540,6 +541,7 @@ const Listings = () => {
                                 objectFit: "cover",
                               }}
                             />
+                            </Link>
                           ))}
                         </div>
                       </div>

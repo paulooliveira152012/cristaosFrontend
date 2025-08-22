@@ -6,6 +6,8 @@ import Header from "../components/Header";
 import ListingInteractionBox from "../components/ListingInteractionBox";
 import "../styles/profile.css";
 import coverPlaceholder from "../assets/coverPlaceholder.jpg";
+import { Link } from "react-router-dom";
+import profileplaceholder from "../assets/images/profileplaceholder.png";
 
 import {
   fetchUserData,
@@ -108,7 +110,6 @@ const Profile = () => {
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState({});
 
-
   const [muralMessages, setMuralMessages] = useState([]);
   const [newMuralMessage, setNewMuralMessage] = useState("");
 
@@ -120,6 +121,8 @@ const Profile = () => {
   const userBio = (user?.bio ?? "").trim();
   const localBio = (bioLocal ?? "").trim();
   const bioText = userBio || localBio;
+
+  const [openLeaderMenuId, setOpenLeaderMenuId] = useState(null);
 
   const isOwner = String(currentUser?._id) === String(user?._id);
 
@@ -289,7 +292,6 @@ const Profile = () => {
     }
   };
 
-
   const churchId =
     typeof user?.church === "string" ? user.church : user?.church?._id;
 
@@ -316,6 +318,10 @@ const Profile = () => {
   const denomination = normalizeDenomination(denominationRaw);
 
   const friendsCount = Array.isArray(user.friends) ? user.friends.length : null;
+
+  const toggleLeaderMenu = (listingId) => {
+    setOpenLeaderMenuId((prevId) => (prevId === listingId ? null : listingId));
+  };
 
   return (
     <>
@@ -362,16 +368,16 @@ const Profile = () => {
                 <div className="bioSection">
                   {!bioEditing ? (
                     <>
-                    {currentUser._id == user._id ? (
-                      <p className={`bio ${bioLocal ? "" : "muted"}`}>
-                        {bioText || "Escreva uma breve bio..."}
-                      </p>
-                    ) : (
-                      <p className={`bio ${bioLocal ? "" : "muted"}`}>
-                        {bioText || ""}
-                      </p>
-                    )}
-                      
+                      {currentUser._id == user._id ? (
+                        <p className={`bio ${bioLocal ? "" : "muted"}`}>
+                          {bioText || "Escreva uma breve bio..."}
+                        </p>
+                      ) : (
+                        <p className={`bio ${bioLocal ? "" : "muted"}`}>
+                          {bioText || ""}
+                        </p>
+                      )}
+
                       {isOwner && (
                         <button
                           className="tiny ghost"
@@ -567,7 +573,7 @@ const Profile = () => {
               userListings.map((listing) => {
                 const isOpen = showListingMenu === listing._id;
                 return (
-                  <div key={listing._id} className="profile-listing-item">
+                  <div key={listing._id}>
                     {currentUser._id === user._id && (
                       <div className="listingUpdateBox">
                         <button
@@ -605,6 +611,76 @@ const Profile = () => {
                         </ul>
                       </div>
                     )}
+
+                    <div className="listing header">
+                      {/* 1 / 2 */}
+                      <div className="userInfo">
+                        
+                        {listing.userId && (
+                          <>
+                            <Link to={`/profile/${listing.userId._id}`}>
+                              <div
+                                style={{
+                                  height: "45px",
+                                  width: "45px",
+                                  borderRadius: "50%",
+                                  backgroundImage: `url(${
+                                    listing.userId.profileImage ||
+                                    profileplaceholder
+                                  })`,
+                                  backgroundSize: "cover",
+                                  backgroundPosition: "center",
+                                  backgroundRepeat: "no-repeat",
+                                }}
+                              ></div>
+                            </Link>
+                            <p className="userName">
+                              {listing.userId.username}
+                            </p>
+                          </>
+                        )}
+                      </div>
+
+                      {/* 2/2 */}
+
+                      {currentUser?.leader == true && (
+                        <div>
+                          <button
+                            aria-label="Mais opções"
+                            onClick={() => toggleLeaderMenu(listing._id)}
+                            style={{
+                              backgroundColor: "#2a68d8",
+                              color: "white",
+                              height: 30,
+                              width: 30,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              border: "none",
+                              borderRadius: 6,
+                              fontSize: 18,
+                              cursor: "pointer",
+                            }}
+                          >
+                            …
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {openLeaderMenuId === listing._id && (
+                        <div className="adminListingMenu">
+                          <ul>
+                            <li>
+                              <button
+                                onClick={() => handleDeleteListing(listing._id)}
+                              >
+                                delete
+                              </button>
+                            </li>
+                          </ul>
+                        </div>
+                      )}
 
                     {listing.type === "image" && listing.imageUrl && (
                       <img
