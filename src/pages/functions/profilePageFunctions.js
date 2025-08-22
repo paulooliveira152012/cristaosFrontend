@@ -237,6 +237,7 @@ export const shareListing = async (listingId, userId) => {
 
 // 🔹 Buscar amigos do usuário
 export const fetchUserFriends = async (userId) => {
+  console.log(`buscando lista de amigos do usuário ${userId}`)
   try {
     const response = await fetch(`${baseUrl}/api/users/${userId}/friends`, {
       method: "GET",

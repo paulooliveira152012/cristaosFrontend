@@ -1,0 +1,121 @@
+/* ========= FriendsList (scoped) ========= */
+
+.FriendsListPage {
+  --card-bg: #fff;
+  --hairline: #e6e6e6;
+  --text: #111827;
+  --muted: #6b7280;
+  --ring: #3b82f6;
+}
+
+@media (prefers-color-scheme: dark) {
+  .FriendsListPage {
+    --card-bg: #f1f3f5;
+    --hairline: #1d77f5;
+    --text: #e5e7eb;
+    --muted: #9ca3af;
+    --ring: #60a5fa;
+  }
+}
+
+/* container do grid */
+.FriendsListPage .friends-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  list-style: none;
+  margin: 16px 0 80px;
+  padding: 0;
+}
+
+/* cartões */
+.FriendsListPage .friend-card {
+  background: var(--card-bg);
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+
+.FriendsListPage .friend-card:hover,
+.FriendsListPage .friend-card:focus-within {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+  border-color: rgba(0,0,0,.16);
+}
+
+/* avatar (aceita sua classe antiga também) */
+.FriendsListPage .friend-avatar,
+.FriendsListPage .ProfileProfileImage {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto 10px;
+  background: #f3f4f6;
+}
+
+/* nome */
+.FriendsListPage .friend-name {
+  font-weight: 600;
+  font-size: .95rem;
+  color: var(--text);
+  line-height: 1.2;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+/* opcional: username secundário/descrição */
+.FriendsListPage .friend-sub {
+  font-size: .8rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* links */
+.FriendsListPage .friend-link {
+  text-decoration: none;
+  color: inherit;
+  display: inline-block;
+}
+
+/* foco acessível */
+.FriendsListPage .friend-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+
+/* responsividade */
+@media (min-width: 480px) {
+  .FriendsListPage .friends-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 18px;
+  }
+}
+@media (min-width: 768px) {
+  .FriendsListPage .friends-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+  }
+}
+@media (min-width: 1024px) {
+  .FriendsListPage .friends-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 22px;
+  }
+}
+
+/* estados */
+.FriendsListPage .friends-empty,
+.FriendsListPage .friends-error {
+  margin: 12px 0 32px;
+  color: var(--muted);
+}
+
+.FriendsListPage .friends-error {
+  color: #dc2626;
+}
