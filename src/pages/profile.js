@@ -615,34 +615,69 @@ const Profile = () => {
                     <div className="listing header">
                       {/* 1 / 2 */}
                       <div className="userInfo">
-                        
-                        {listing.userId && (
-                          <>
-                            <Link to={`/profile/${listing.userId._id}`}>
-                              <div
-                                style={{
-                                  height: "45px",
-                                  width: "45px",
-                                  borderRadius: "50%",
-                                  backgroundImage: `url(${
-                                    listing.userId.profileImage ||
-                                    profileplaceholder
-                                  })`,
-                                  backgroundSize: "cover",
-                                  backgroundPosition: "center",
-                                  backgroundRepeat: "no-repeat",
-                                }}
-                              ></div>
-                            </Link>
-                            <p className="userName">
-                              {listing.userId.username}
-                            </p>
-                          </>
-                        )}
+                        {listing.userId &&
+                          (() => {
+                            // é repost NESTE perfil?
+                            const isRepostHere =
+                              listing.__sharedByProfile === true ||
+                              (String(listing.userId?._id || listing.userId) !==
+                                String(user?._id) &&
+                                Array.isArray(listing.shares) &&
+                                listing.shares.some(
+                                  (u) => String(u) === String(user?._id)
+                                ));
+
+                            const author = listing.userId; // autor original (populate)
+                            const reposter = user; // dono do perfil atual
+
+                            return (
+                              <>
+                                <div className="avatarGroup">
+                                  {/* Autor */}
+                                  <Link
+                                    to={`/profile/${author._id}`}
+                                    className="avatar author"
+                                    aria-label={`Ver perfil de ${author.username}`}
+                                    style={{
+                                      backgroundImage: `url(${
+                                        author.profileImage ||
+                                        profileplaceholder
+                                      })`,
+                                    }}
+                                  />
+
+                                  {/* Reposter (apenas se for repost neste perfil) */}
+                                  {isRepostHere && (
+                                    <Link
+                                      to={`/profile/${reposter._id}`}
+                                      className="avatar reposter"
+                                      aria-label={`Repostado por ${reposter.username}`}
+                                      onClick={(e) => e.stopPropagation()}
+                                      style={{
+                                        backgroundImage: `url(${
+                                          reposter.profileImage ||
+                                          profileplaceholder
+                                        })`,
+                                      }}
+                                      title={`Repostado por ${reposter.username}`}
+                                    />
+                                  )}
+                                </div>
+
+                                <div className="nameBlock">
+                                  <p className="userName">{author.username}</p>
+                                  {isRepostHere && (
+                                    <span className="repostTag">
+                                      repostado por @{reposter.username}
+                                    </span>
+                                  )}
+                                </div>
+                              </>
+                            );
+                          })()}
                       </div>
 
-                      {/* 2/2 */}
-
+                      {/* 2/2 … mantém o resto como já está (botões, menu, etc.) */}
                       {currentUser?.leader == true && (
                         <div>
                           <button
@@ -669,18 +704,18 @@ const Profile = () => {
                     </div>
 
                     {openLeaderMenuId === listing._id && (
-                        <div className="adminListingMenu">
-                          <ul>
-                            <li>
-                              <button
-                                onClick={() => handleDeleteListing(listing._id)}
-                              >
-                                delete
-                              </button>
-                            </li>
-                          </ul>
-                        </div>
-                      )}
+                      <div className="adminListingMenu">
+                        <ul>
+                          <li>
+                            <button
+                              onClick={() => handleDeleteListing(listing._id)}
+                            >
+                              delete
+                            </button>
+                          </li>
+                        </ul>
+                      </div>
+                    )}
 
                     {listing.type === "image" && listing.imageUrl && (
                       <img
@@ -726,6 +761,7 @@ const Profile = () => {
                       commentsCount={
                         listing.comments ? listing.comments.length : 0
                       }
+                      sharesCount={listing.shares ? listing.shares.length : 0}
                       isLiked={
                         currentUser
                           ? listing.likes.includes(currentUser._id)

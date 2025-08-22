@@ -590,6 +590,7 @@ const Listings = () => {
               likesCount={listing.likes.length}
               comments={listing.comments || []}
               commentsCount={listing.comments ? listing.comments.length : 0}
+              sharesCount={listing.shares ? listing.shares.length : 0}  
               isLiked={
                 currentUser ? listing.likes.includes(currentUser._id) : false
               }
