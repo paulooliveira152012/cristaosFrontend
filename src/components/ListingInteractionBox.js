@@ -16,6 +16,7 @@ const ListingInteractionBox = ({
   likesCount,
   comments = [],
   commentsCount,
+  sharesCount,
   isLiked,
   handleCommentSubmit,
   handleReplySubmit,
@@ -146,7 +147,7 @@ const ListingInteractionBox = ({
         </div>
 
         {showShareButton && (
-          <div>
+          <div className="iconsContainer">
             {sharedListings?.includes(listingId) ? (
               <SharedIcon
                 onClick={() => handleShare(listingId)}
@@ -158,8 +159,9 @@ const ListingInteractionBox = ({
                 onClick={() => handleShare(listingId)}
                 style={{ cursor: "pointer" }}
                 alt="Share"
-              />
-            )}
+                />
+              )}
+              <span style={{ marginLeft: "5px" }}>{sharesCount}</span>
           </div>
         )}
 

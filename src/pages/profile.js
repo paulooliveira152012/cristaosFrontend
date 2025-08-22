@@ -6,7 +6,8 @@ import Header from "../components/Header";
 import ListingInteractionBox from "../components/ListingInteractionBox";
 import "../styles/profile.css";
 import coverPlaceholder from "../assets/coverPlaceholder.jpg";
-
+import { Link } from "react-router-dom";
+import profileplaceholder from "../assets/images/profileplaceholder.png";
 
 import {
   fetchUserData,
@@ -21,6 +22,7 @@ import {
   cancelEdit,
   submitMuralContent,
   getMuralContent,
+  handleSaveBio,
 } from "./functions/profilePageFunctions";
 import { useProfileLogic } from "./functions/useProfileLogic";
 
@@ -108,7 +110,6 @@ const Profile = () => {
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState({});
 
-  const [newMessage, setNewMessage] = ""
   const [muralMessages, setMuralMessages] = useState([]);
   const [newMuralMessage, setNewMuralMessage] = useState("");
 
@@ -116,6 +117,25 @@ const Profile = () => {
   const [bioEditing, setBioEditing] = useState(false);
   const [bioLocal, setBioLocal] = useState("");
   const [bioDraft, setBioDraft] = useState("");
+
+  const userBio = (user?.bio ?? "").trim();
+  const localBio = (bioLocal ?? "").trim();
+  const bioText = userBio || localBio;
+
+  const [openLeaderMenuId, setOpenLeaderMenuId] = useState(null);
+
+  const isOwner = String(currentUser?._id) === String(user?._id);
+
+  // quando trocar de usuário (ou quando o backend retornar nova bio), sincronize
+  useEffect(() => {
+    const initialBio = user?.bio ?? "";
+    setBioLocal(initialBio);
+    setBioDraft(initialBio);
+  }, [user?._id, user?.bio]);
+
+  useEffect(() => {
+    console.log(bioDraft);
+  }, [bioDraft]);
 
   const {
     handleCommentSubmit,
@@ -158,7 +178,7 @@ const Profile = () => {
       try {
         const { items = [] } = await getMuralContent(userId);
         console.log("items:", items);
-       
+
         setMuralMessages(items);
       } catch (err) {
         console.error("Erro ao carregar mural:", err);
@@ -199,7 +219,10 @@ const Profile = () => {
 
     if (isFriend) {
       return (
-        <span className="friend-pill" onClick={() => handleRemoveFriend(user._id)}>
+        <span
+          className="friend-pill"
+          onClick={() => handleRemoveFriend(user._id)}
+        >
           ✅ Amigo
         </span>
       );
@@ -207,7 +230,10 @@ const Profile = () => {
     if (hasReceivedRequest) {
       return (
         <>
-          <span className="friend-pill" onClick={() => handleAcceptFriend(user._id)}>
+          <span
+            className="friend-pill"
+            onClick={() => handleAcceptFriend(user._id)}
+          >
             ✅ Aceitar
           </span>
           <span
@@ -219,7 +245,8 @@ const Profile = () => {
         </>
       );
     }
-    if (hasSentRequest) return <span className="friend-pill">⏳ Pedido enviado</span>;
+    if (hasSentRequest)
+      return <span className="friend-pill">⏳ Pedido enviado</span>;
 
     // <- Botão em pílula (texto) + Adicionar
     return (
@@ -258,15 +285,12 @@ const Profile = () => {
 
       // adiciona a mensagem real retornada pela API
       setMuralMessages((prev) => [message, ...prev]);
-      setNewMessage("");
+      setNewMuralMessage("");
     } catch (e) {
       console.error(e);
       alert(e.message || "Erro ao enviar mensagem.");
     }
   };
-
-  if (loading) return <p className="profile-loading">Carregando perfil...</p>;
-  if (error) return <p className="profile-error">{error}</p>;
 
   const churchId =
     typeof user?.church === "string" ? user.church : user?.church?._id;
@@ -280,8 +304,6 @@ const Profile = () => {
     setShowListingMenu((prev) => (prev === listingId ? null : listingId));
   };
 
-  if (loading) return <p className="profile-loading">Carregando perfil...</p>;
-  if (error) return <p className="profile-error">{error}</p>;
   if (!user) return null;
 
   // preferir cidade; se não tiver, estado
@@ -297,6 +319,10 @@ const Profile = () => {
 
   const friendsCount = Array.isArray(user.friends) ? user.friends.length : null;
 
+  const toggleLeaderMenu = (listingId) => {
+    setOpenLeaderMenuId((prevId) => (prevId === listingId ? null : listingId));
+  };
+
   return (
     <>
       <div className="profilePageBasicInfoContainer">
@@ -305,7 +331,9 @@ const Profile = () => {
           <div
             className="top"
             style={{
-              backgroundImage: `url(${user?.profileBackgroundCover || coverPlaceholder})`,
+              backgroundImage: `url(${
+                user?.profileBackgroundCover || coverPlaceholder
+              })`,
               backgroundSize: "cover",
               backgroundPosition: "center",
               backgroundRepeat: "no-repeat",
@@ -319,7 +347,9 @@ const Profile = () => {
                 <div
                   className="ProfileProfileImage"
                   style={{
-                    backgroundImage: `url(${user?.profileImage || imagePlaceholder})`,
+                    backgroundImage: `url(${
+                      user?.profileImage || imagePlaceholder
+                    })`,
                     backgroundPosition: "center",
                   }}
                 />
@@ -334,14 +364,21 @@ const Profile = () => {
                   <span className="at">@{user.username}</span>
                 </div>
 
-                {/* bio */}
+                {/* Bio — todos veem; só o dono edita */}
                 <div className="bioSection">
                   {!bioEditing ? (
                     <>
-                      <p className={`bio ${bioLocal ? "" : "muted"}`}>
-                        {bioLocal || "Escreva uma breve bio..."}
-                      </p>
-                      {currentUser._id === user._id && (
+                      {currentUser._id == user._id ? (
+                        <p className={`bio ${bioLocal ? "" : "muted"}`}>
+                          {bioText || "Escreva uma breve bio..."}
+                        </p>
+                      ) : (
+                        <p className={`bio ${bioLocal ? "" : "muted"}`}>
+                          {bioText || ""}
+                        </p>
+                      )}
+
+                      {isOwner && (
                         <button
                           className="tiny ghost"
                           onClick={() => setBioEditing(true)}
@@ -352,7 +389,7 @@ const Profile = () => {
                         </button>
                       )}
                     </>
-                  ) : (
+                  ) : isOwner ? (
                     <div className="bio-editor">
                       <textarea
                         rows={3}
@@ -364,9 +401,20 @@ const Profile = () => {
                       <div className="bio-actions">
                         <button
                           className="tiny"
-                          onClick={() => {
-                            setBioLocal(bioDraft.trim());
+                          onClick={async () => {
+                            const trimmed = (bioDraft || "").trim();
+                            setBioLocal(trimmed); // atualiza visual na hora
                             setBioEditing(false);
+                            try {
+                              // mantém sua assinatura atual:
+                              await handleSaveBio(trimmed);
+                              // otimismo: reflita no objeto user p/ evitar voltar a renderizar a antiga
+                              setUser((u) => (u ? { ...u, bio: trimmed } : u));
+                            } catch (e) {
+                              console.error(e);
+                              alert("Falha ao salvar bio");
+                              // opcional: reverter bioLocal se quiser
+                            }
                           }}
                         >
                           Salvar
@@ -374,7 +422,7 @@ const Profile = () => {
                         <button
                           className="tiny ghost"
                           onClick={() => {
-                            setBioDraft(bioLocal);
+                            setBioDraft(bioLocal || ""); // garante string
                             setBioEditing(false);
                           }}
                         >
@@ -382,7 +430,7 @@ const Profile = () => {
                         </button>
                       </div>
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 {/* denominação – só o valor */}
@@ -442,17 +490,14 @@ const Profile = () => {
                           });
                         }}
                       >
-                        <FiMessageCircle size={10000} />
+                        <FiMessageCircle size={20} />
                       </button>
                     )}
                     <button
                       className="more-icon-button"
                       onClick={() => setShowOptions(!showOptions)}
                     >
-                      <FiMoreVertical 
-                        size={20} 
-                        className="more-icon-button"
-                      />
+                      <FiMoreVertical size={20} className="more-icon-button" />
                     </button>
                   </>
                 )}
@@ -528,7 +573,7 @@ const Profile = () => {
               userListings.map((listing) => {
                 const isOpen = showListingMenu === listing._id;
                 return (
-                  <div key={listing._id} className="profile-listing-item">
+                  <div key={listing._id}>
                     {currentUser._id === user._id && (
                       <div className="listingUpdateBox">
                         <button
@@ -562,6 +607,111 @@ const Profile = () => {
                             }
                           >
                             🗑️ Excluir
+                          </li>
+                        </ul>
+                      </div>
+                    )}
+
+                    <div className="listing header">
+                      {/* 1 / 2 */}
+                      <div className="userInfo">
+                        {listing.userId &&
+                          (() => {
+                            // é repost NESTE perfil?
+                            const isRepostHere =
+                              listing.__sharedByProfile === true ||
+                              (String(listing.userId?._id || listing.userId) !==
+                                String(user?._id) &&
+                                Array.isArray(listing.shares) &&
+                                listing.shares.some(
+                                  (u) => String(u) === String(user?._id)
+                                ));
+
+                            const author = listing.userId; // autor original (populate)
+                            const reposter = user; // dono do perfil atual
+
+                            return (
+                              <>
+                                <div className="avatarGroup">
+                                  {/* Autor */}
+                                  <Link
+                                    to={`/profile/${author._id}`}
+                                    className="avatar author"
+                                    aria-label={`Ver perfil de ${author.username}`}
+                                    style={{
+                                      backgroundImage: `url(${
+                                        author.profileImage ||
+                                        profileplaceholder
+                                      })`,
+                                    }}
+                                  />
+
+                                  {/* Reposter (apenas se for repost neste perfil) */}
+                                  {isRepostHere && (
+                                    <Link
+                                      to={`/profile/${reposter._id}`}
+                                      className="avatar reposter"
+                                      aria-label={`Repostado por ${reposter.username}`}
+                                      onClick={(e) => e.stopPropagation()}
+                                      style={{
+                                        backgroundImage: `url(${
+                                          reposter.profileImage ||
+                                          profileplaceholder
+                                        })`,
+                                      }}
+                                      title={`Repostado por ${reposter.username}`}
+                                    />
+                                  )}
+                                </div>
+
+                                <div className="nameBlock">
+                                  <p className="userName">{author.username}</p>
+                                  {isRepostHere && (
+                                    <span className="repostTag">
+                                      repostado por @{reposter.username}
+                                    </span>
+                                  )}
+                                </div>
+                              </>
+                            );
+                          })()}
+                      </div>
+
+                      {/* 2/2 … mantém o resto como já está (botões, menu, etc.) */}
+                      {currentUser?.leader == true && (
+                        <div>
+                          <button
+                            aria-label="Mais opções"
+                            onClick={() => toggleLeaderMenu(listing._id)}
+                            style={{
+                              backgroundColor: "#2a68d8",
+                              color: "white",
+                              height: 30,
+                              width: 30,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              border: "none",
+                              borderRadius: 6,
+                              fontSize: 18,
+                              cursor: "pointer",
+                            }}
+                          >
+                            …
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {openLeaderMenuId === listing._id && (
+                      <div className="adminListingMenu">
+                        <ul>
+                          <li>
+                            <button
+                              onClick={() => handleDeleteListing(listing._id)}
+                            >
+                              delete
+                            </button>
                           </li>
                         </ul>
                       </div>
@@ -611,6 +761,7 @@ const Profile = () => {
                       commentsCount={
                         listing.comments ? listing.comments.length : 0
                       }
+                      sharesCount={listing.shares ? listing.shares.length : 0}
                       isLiked={
                         currentUser
                           ? listing.likes.includes(currentUser._id)

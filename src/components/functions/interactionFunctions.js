@@ -270,6 +270,7 @@ export const handleLike = async (listingId, currentUser, items = [], setItems) =
 
 
 export const handleShare = async (listingId, currentUser) => {
+  console.log("sharing/reposting...")
   if (!currentUser) {
     alert("You must be logged in to share a listing.");
     return;
@@ -283,10 +284,7 @@ export const handleShare = async (listingId, currentUser) => {
   try {
     const response = await fetch(`${baseUrl}/api/listings/share/${listingId}`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ userId }), // Send the logged-in user's ID
+      credentials: "include", // Include credentials if needed
     });
 
     if (!response.ok) {
@@ -300,6 +298,17 @@ export const handleShare = async (listingId, currentUser) => {
     alert("An error occurred while sharing the listing. Please try again.");
   }
 };
+
+export const unshareListing = async (listingId)  => {
+  const res = await fetch(`${baseUrl}/api/listings/share/${listingId}`, {
+    method: "DELETE",
+    credentials: "include",            // 🔑 idem
+  });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) throw new Error("auth");
+  if (!res.ok) throw new Error(data?.message || "Falha ao desfazer compartilhamento.");
+  return data;
+}
 
 // function to like comment
 // function to like comment or reply

@@ -39,67 +39,69 @@ const Listings = () => {
 
   // Fetch all listed items from the backend
   useEffect(() => {
-    // console.log("✅ BUSCANDO ITENS");
-    const fetchListings = async () => {
-      const api = `${baseURL}/api/listings/alllistings`;
+  const fetchListings = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${baseURL}/api/listings/alllistings`, {
+        method: "GET",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) throw new Error("Error fetching listings");
+      const data = await res.json();
 
-      // console.log("✅✅ api usada:", api);
-      try {
-        setLoading(true); // Start loading before fetch
-        const response = await fetch(api, {
-          method: "GET",
-          credentials: "include", // Include credentials (cookies, etc.)
-          headers: {
-            "Content-Type": "application/json",
+      // Usa feed quando existir; fallback para apenas listings como "listing"
+      const raw = Array.isArray(data.feed)
+        ? data.feed
+        : (data.listings || []).map(l => ({ type: "listing", listing: l, createdAt: l.createdAt }));
+
+      // Normaliza: vira "listing com meta __feed"
+      const normalized = raw.map(doc => {
+        const isRepost = doc.type === "repost" && doc.reposter;
+        const original = doc.listing || doc; // segurança
+        return {
+          ...original,
+          __feed: {
+            isRepost,
+            reposter: isRepost ? doc.reposter : null,
+            feedCreatedAt: doc.createdAt || original.createdAt,
           },
+        };
+      });
+
+      // Ordena por quando entrou no feed (repost sobe)
+      normalized.sort(
+        (a, b) =>
+          new Date(b.__feed?.feedCreatedAt || b.createdAt) -
+          new Date(a.__feed?.feedCreatedAt || a.createdAt)
+      );
+
+      setItems(normalized);
+
+      // Inicializa votos (se houver usuário logado)
+      if (currentUser) {
+        const initialVotes = {};
+        normalized.forEach(listing => {
+          if (listing.type === "poll" && listing.poll?.votes?.length > 0) {
+            const vote = listing.poll.votes.find(v => {
+              const uid = typeof v.userId === "object" ? v.userId._id : v.userId;
+              return String(uid) === String(currentUser._id);
+            });
+            if (vote) initialVotes[listing._id] = vote.optionIndex;
+          }
         });
-
-        // console.log("✅");
-
-        if (!response.ok) {
-          console.log("✅ erro aqui => :", response.statusText);
-          throw new Error(`Error fetching listings: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        // console.log("✅ Items received:", data);
-
-        // Sort listings by creation date
-        const sortedListings = (data.listings || []).sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-        );
-
-        setItems(sortedListings);
-
-        if (currentUser) {
-          const initialVotes = {};
-          sortedListings.forEach((listing) => {
-            if (listing.type === "poll" && listing.poll?.votes?.length > 0) {
-              const vote = listing.poll.votes.find(
-                (v) =>
-                  (typeof v.userId === "object"
-                    ? v.userId._id.toString()
-                    : v.userId.toString()) === currentUser._id.toString()
-              );
-
-              if (vote) {
-                initialVotes[listing._id] = vote.optionIndex;
-              }
-            }
-          });
-          setVotedPolls(initialVotes);
-        }
-      } catch (error) {
-        console.error("Error fetching items:", error);
-      } finally {
-        setLoading(false); // Stop loading when the fetch is complete
+        setVotedPolls(initialVotes);
       }
-    };
-
-    if (currentUser !== undefined) {
-      fetchListings();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
     }
-  }, [currentUser]); // Empty dependency array to run only once after the component mounts
+  };
+
+  if (currentUser !== undefined) fetchListings();
+}, [currentUser]);
+
 
   // Use handleFetchComments, passing in setItems to manage comments
   const fetchCommentsForListing = (listingId) => {
@@ -335,25 +337,67 @@ const Listings = () => {
             {/* container para userInfo e adm */}
             <div className="listing header">
               {/* 1 / 2 */}
+              {/* 1 / 2 */}
               <div className="userInfo">
                 {listing.userId && (
                   <>
-                    <Link to={`/profile/${listing.userId._id}`}>
-                      <div
+                    {/* Agrupamento de avatares */}
+                    <div className="avatarGroup">
+                      {/* Autor */}
+                      <Link
+                        to={`/profile/${listing.userId._id}`}
+                        className="avatar author"
+                        aria-label={`Ver perfil de ${listing.userId.username}`}
                         style={{
-                          height: "45px",
-                          width: "45px",
-                          borderRadius: "50%",
                           backgroundImage: `url(${
                             listing.userId.profileImage || profileplaceholder
                           })`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                          backgroundRepeat: "no-repeat",
                         }}
-                      ></div>
-                    </Link>
-                    <p className="userName">{listing.userId.username}</p>
+                      />
+
+                      {/* Reposter, se houver */}
+                      {listing.__feed?.isRepost &&
+                        listing.__feed.reposter &&
+                        (() => {
+                          const rep = listing.__feed.reposter;
+                          const repId = typeof rep === "object" ? rep._id : rep;
+                          const repImg =
+                            typeof rep === "object" ? rep.profileImage : null;
+                          const repName =
+                            typeof rep === "object" ? rep.username : "alguém";
+                          return (
+                            <Link
+                              to={`/profile/${repId}`}
+                              className="avatar reposter"
+                              aria-label={`Repostado por ${repName}`}
+                              title={`Repostado por ${repName}`}
+                              onClick={(e) => e.stopPropagation()}
+                              style={{
+                                backgroundImage: `url(${
+                                  repImg || profileplaceholder
+                                })`,
+                              }}
+                            />
+                          );
+                        })()}
+                    </div>
+
+                    {/* Nome + tag de repost */}
+                    <div className="nameBlock">
+                      <p className="userName">{listing.userId.username}</p>
+                      {listing.__feed?.isRepost &&
+                        listing.__feed.reposter &&
+                        (() => {
+                          const rep = listing.__feed.reposter;
+                          const repName =
+                            typeof rep === "object" ? rep.username : "alguém";
+                          return (
+                            <span className="repostTag">
+                              repostado por @{repName}
+                            </span>
+                          );
+                        })()}
+                    </div>
                   </>
                 )}
               </div>
@@ -528,18 +572,22 @@ const Listings = () => {
                           }}
                         >
                           {voters.map((v, idx) => (
-                            <img
-                              key={idx}
-                              src={v.userId?.profileImage || profileplaceholder}
-                              alt="voter"
-                              title={v.userId?.username}
-                              style={{
-                                width: "22px",
-                                height: "22px",
-                                borderRadius: "50%",
-                                objectFit: "cover",
-                              }}
-                            />
+                            <Link to={`profile/${v.userId._id}`} key={idx}>
+                              <img
+                                key={idx}
+                                src={
+                                  v.userId?.profileImage || profileplaceholder
+                                }
+                                alt="voter"
+                                title={v.userId?.username}
+                                style={{
+                                  width: "22px",
+                                  height: "22px",
+                                  borderRadius: "50%",
+                                  objectFit: "cover",
+                                }}
+                              />
+                            </Link>
                           ))}
                         </div>
                       </div>
@@ -588,6 +636,7 @@ const Listings = () => {
               likesCount={listing.likes.length}
               comments={listing.comments || []}
               commentsCount={listing.comments ? listing.comments.length : 0}
+              sharesCount={listing.shares ? listing.shares.length : 0}
               isLiked={
                 currentUser ? listing.likes.includes(currentUser._id) : false
               }

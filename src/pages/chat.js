@@ -23,6 +23,8 @@ const Chat = () => {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
 
+  console.log("privateChats:", privateChats);
+
   const fetchPrivateChats = useCallback(async () => {
     if (!currentUser?._id) return;
     try {
@@ -214,27 +216,53 @@ const Chat = () => {
             <ul className="chatList" role="list">
               {filtered.map((chat) => {
                 const otherUser = chat?.participants?.find(
-                  (p) => p?._id !== currentUser?._id
+                  (p) => String(p?._id) !== String(currentUser?._id)
                 );
-                const name = otherUser?.username || "Usuário";
+
+                // Nome e avatar: usa o outro participante; se não houver, usa o leavingUser
+                const name =
+                  otherUser?.username ||
+                  chat?.leavingUser?.username ||
+                  "Usuário";
+
+                const avatarUrl =
+                  otherUser?.profileImage ||
+                  chat?.leavingUser?.profileImage ||
+                  null;
+
                 const initials = getInitials(name);
+
+                // Subtítulo: prioriza última mensagem; se não houver e alguém saiu, mostra "Fulano saiu do chat"
+                const subtitle = chat?.lastMessage?.text
+                  ? chat.lastMessage.text
+                  : chat?.leavingUser?.username
+                  ? `${chat.leavingUser.username} saiu do chat`
+                  : "Toque para abrir a conversa";
+
                 return (
                   <li key={chat?._id}>
                     <button
                       className="chatItem"
                       onClick={() => handleNavigateToPrivateChat(chat._id)}
                     >
-                      <div className="avatar" aria-hidden="true">
-                        {initials}
+                      <div
+                        className={`avatar ${avatarUrl ? "hasImage" : ""}`}
+                        aria-hidden="true"
+                        style={
+                          avatarUrl
+                            ? { backgroundImage: `url(${avatarUrl})` }
+                            : {}
+                        }
+                        backgroundSize="cover"
+                      >
+                        {!avatarUrl ? initials : null}
                       </div>
+
                       <div className="chatMeta">
                         <div className="chatTitle">{name}</div>
-                        <div className="chatSubtitle">
-                          {chat?.lastMessage?.text
-                            ? chat.lastMessage.text
-                            : "Toque para abrir a conversa"}
-                        </div>
+                        <div className="chatSubtitle">{subtitle}</div>
                       </div>
+
                       {chat?.unreadCount > 0 && (
                         <span className="badge">{chat.unreadCount}</span>
                       )}
