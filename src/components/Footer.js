@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+// Footer.jsx
+import { useEffect, useRef } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useNotification } from "../context/NotificationContext.js";
 import "../styles/components/footer.css";
@@ -14,17 +15,28 @@ import BellIconSolid from "../assets/icons/bellIconSolid";
 import PlayIcon from "../assets/icons/playIcon.js";
 import PlayIconSolid from "../assets/icons/playIconSolid.js";
 
-import { checkForNewNotifications } from "./functions/footerFunctions";
 import { useUser } from "../context/UserContext";
 import { useSocket } from "../context/SocketContext.js";
 import { useUnread } from "../context/UnreadContext.js";
 
 const Footer = () => {
-  const { socket } = useSocket(); // ✅ desestruturado
+  const { socket } = useSocket();
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser } = useUser();
-  const { notifications, setNotifications } = useNotification();
+
+  // IDs de notificações já processadas (evita contar 2x)
+  const seenIdsRef = useRef(new Set());
+
+  // sino
+  const {
+    unreadCount,
+    setUnreadCount,
+    incrementUnread,
+    markAllSeen,
+  } = useNotification();
+
+  // bolha de mensagens (principal + DMs)
   const { total, increment, reset, setMany, MAIN_ROOM_ID } = useUnread();
 
   const navigateToMainChat = () => {
@@ -32,54 +44,87 @@ const Footer = () => {
     else window.alert("Por favor fazer login para acessar o chat principal");
   };
 
-  // 🔔 notificações em tempo real
+  // 🔔 socket: novas notificações (sino)
   useEffect(() => {
-    if (!currentUser) return;
-    if (!socket || typeof socket.on !== "function") return;
+    if (!currentUser || !socket || typeof socket.on !== "function") return;
 
-    const handleNewNotification = () => setNotifications(true);
+    const bumpIfMine = (notif) => {
+      // só conta se for para este usuário (se o back informa recipient)
+      if (notif?.recipient && String(notif.recipient) !== String(currentUser._id)) return;
 
-    // use o nome que seu back emite; deixo os dois por compat:
-    socket.on("newNotification", handleNewNotification);
+      // gera um ID estável pra dedupe
+      const id = String(
+        notif?._id ??
+        notif?.id ??
+        `${notif?.type || "notif"}:${notif?.conversationId || ""}:${notif?.createdAt || ""}`
+      );
+
+      if (id) {
+        if (seenIdsRef.current.has(id)) return; // já contamos
+        // mantém o Set sob controle
+        if (seenIdsRef.current.size > 200) {
+          const first = seenIdsRef.current.values().next().value;
+          if (first) seenIdsRef.current.delete(first);
+        }
+        seenIdsRef.current.add(id);
+      }
+
+      incrementUnread(1);
+    };
+
+    // ⚠️ Evita múltiplos listeners no dev/StrictMode:
+    socket.off("newNotification");          // remove TODOS os handlers anteriores desse evento
+    socket.on("newNotification", bumpIfMine);
 
     return () => {
-      socket.off("newNotification", handleNewNotification);
+      socket.off("newNotification", bumpIfMine);
     };
-  }, [socket, currentUser, setNotifications]);
+  }, [socket, currentUser?._id, incrementUnread]);
 
-  // 🔄 hidratar contagens (main + DMs) ao trocar de rota / montar
+  // 🔄 hidratar contagem do sino + contagens dos chats
   useEffect(() => {
     if (!currentUser) return;
-    const timeout = setTimeout(() => {
-      checkForNewNotifications(setNotifications);
-      (async () => {
-        try {
-          const base = process.env.REACT_APP_API_BASE_URL;
-          const [mainRes, dmRes] = await Promise.all([
-            fetch(`${base}/api/users/checkUnreadMainChat`, {
-              credentials: "include",
-            }),
-            fetch(`${base}/api/dm/userConversations/${currentUser._id}`, {
-              credentials: "include",
-            }),
-          ]);
-          const main = mainRes.ok ? await mainRes.json() : { count: 0 };
-          const dms = dmRes.ok ? await dmRes.json() : [];
-          const entries = [[MAIN_ROOM_ID, Number(main?.count || 0)]];
-          for (const c of Array.isArray(dms) ? dms : []) {
-            entries.push([String(c._id), Number(c.unreadCount || 0)]);
-          }
-          setMany(entries);
-        } catch (_) {}
-      })();
-    }, 800);
+
+    const timeout = setTimeout(async () => {
+      const base = process.env.REACT_APP_API_BASE_URL;
+
+      try {
+        // 1) contagem via lista (já que você não tem /unreadCount)
+        const r = await fetch(`${base}/api/notifications`, { credentials: "include" });
+        if (r.ok) {
+          const arr = await r.json();
+          const count = Array.isArray(arr) ? arr.filter((n) => !n?.isRead).length : 0;
+          // não diminui se o socket já somou:
+          setUnreadCount((prev) => Math.max(prev, count));
+        }
+      } catch {
+        // silencioso
+      }
+
+      try {
+        // 2) unread do chat principal + DMs
+        const [mainRes, dmRes] = await Promise.all([
+          fetch(`${base}/api/users/checkUnreadMainChat`, { credentials: "include" }),
+          fetch(`${base}/api/dm/userConversations/${currentUser._id}`, { credentials: "include" }),
+        ]);
+        const main = mainRes.ok ? await mainRes.json() : { count: 0 };
+        const dms = dmRes.ok ? await dmRes.json() : [];
+        const entries = [[MAIN_ROOM_ID, Number(main?.count || 0)]];
+        for (const c of Array.isArray(dms) ? dms : []) {
+          entries.push([String(c._id), Number(c.unreadCount || 0)]);
+        }
+        setMany(entries);
+      } catch {
+        // silencioso
+      }
+    }, 400);
+
     return () => clearTimeout(timeout);
-  }, [currentUser, location.pathname, setNotifications, setMany, MAIN_ROOM_ID]);
+  }, [currentUser, location.pathname, setUnreadCount, setMany, MAIN_ROOM_ID]);
 
-  // 💬 mensagens no chat principal
+  // 💬 chat principal
   useEffect(() => {
-    if (!currentUser) return;
-    if (!socket || typeof socket.on !== "function") return;
+    if (!currentUser || !socket || typeof socket.on !== "function") return;
 
     const handleNewMessage = ({ roomId }) => {
       const onMain = location.pathname === "/chat";
@@ -90,17 +135,15 @@ const Footer = () => {
     return () => socket.off("newMessage", handleNewMessage);
   }, [socket, currentUser, location.pathname, increment, MAIN_ROOM_ID]);
 
-  // 📩 DMs (privadas)
+  // 📩 DMs
   useEffect(() => {
-    if (!currentUser) return;
-    if (!socket || typeof socket.on !== "function") return;
+    if (!currentUser || !socket || typeof socket.on !== "function") return;
 
     const handleNewPrivateMessage = ({ conversationId }) => {
       const here = location.pathname === `/privateChat/${conversationId}`;
       if (!here) increment(String(conversationId), 1);
     };
-    const onPrivateChatRead = ({ conversationId }) =>
-      reset(String(conversationId));
+    const onPrivateChatRead = ({ conversationId }) => reset(String(conversationId));
 
     socket.on("newPrivateMessage", handleNewPrivateMessage);
     socket.on("privateChatRead", onPrivateChatRead);
@@ -111,58 +154,42 @@ const Footer = () => {
     };
   }, [socket, currentUser, location.pathname, increment, reset]);
 
+  const openNotifications = () => {
+    // zera visual local; a página /notifications deve marcar lidas no servidor
+    markAllSeen();
+  };
+
   return (
     <div className="footerContainer">
       <Link to={"/"}>
-        {location.pathname === "/" ? (
-          <HomeIconSolid className="icon" />
-        ) : (
-          <HomeIcon className="icon" />
-        )}
+        {location.pathname === "/" ? <HomeIconSolid className="icon" /> : <HomeIcon className="icon" />}
       </Link>
 
       <div className="notificationIcon" onClick={navigateToMainChat}>
-        {location.pathname === "/chat" ? (
-          <MessageIconSolid className="icon" />
-        ) : (
-          <MessageIcon className="icon" />
-        )}
+        {location.pathname === "/chat" ? <MessageIconSolid className="icon" /> : <MessageIcon className="icon" />}
         {total > 0 && <span className="notificationStatus">{total}</span>}
       </div>
 
       {currentUser && (
         <Link to="/newlisting">
-          {location.pathname === "/newlisting" ? (
-            <PlusIconSolid className="icon" />
-          ) : (
-            <PlusIcon className="icon" />
-          )}
+          {location.pathname === "/newlisting" ? <PlusIconSolid className="icon" /> : <PlusIcon className="icon" />}
         </Link>
       )}
 
-      <div className="notificationIcon">
+      <div className="notificationIcon" onClick={openNotifications}>
         <Link to="/notifications">
-          {location.pathname === "/notifications" ? (
-            <BellIconSolid className="icon" />
-          ) : (
-            <BellIcon className="icon" />
-          )}
-          {notifications && <span className="notificationStatus" />}
+          {location.pathname === "/notifications" ? <BellIconSolid className="icon" /> : <BellIcon className="icon" />}
+          {unreadCount > 0 && <span className="notificationStatus">{unreadCount}</span>}
         </Link>
       </div>
 
       <div className="reelsIcon">
         <Link to="/reels">
-          {location.pathname === "/reels" ? (
-            <PlayIconSolid className="icon" />
-          ) : (
-            <PlayIcon className="icon" />
-          )}
+          {location.pathname === "/reels" ? <PlayIconSolid className="icon" /> : <PlayIcon className="icon" />}
         </Link>
       </div>
     </div>
   );
 };
-
 
 export default Footer;

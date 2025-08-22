@@ -142,19 +142,26 @@ export function usePrivateChatController({
 
     // garante 1 join por conexão
     const joinedRef = { current: false };
+
+    // garante 1 join por conexão
     const join = () => {
       if (joinedRef.current) return;
       socket.emit("joinPrivateChat", { conversationId });
       joinedRef.current = true;
     };
+
+    // trata reconexões
     const onConnect = () => {
       joinedRef.current = false; // permite novo join após reconectar
       join();
     };
+
+    // trata desconexões
     const onDisconnect = () => {
       joinedRef.current = false;
     };
 
+    // trata mensagens recebidas
     const handleIncomingMessage = async (newMsg) => {
       if (!mounted) return;
 
@@ -189,6 +196,7 @@ export function usePrivateChatController({
       } catch {}
     };
 
+    // trata aceitação de DM
     const handleAccepted = ({ conversationId: cid }) => {
       if (String(cid) !== String(conversationId)) return;
 
@@ -219,9 +227,13 @@ export function usePrivateChatController({
       onAcceptedRef.current?.();
     };
 
+    // trata reconexões
     socket.on("connect", onConnect);
+    // trata desconexões
     socket.on("disconnect", onDisconnect);
+    // trata mensagens recebidas
     socket.on("newPrivateMessage", handleIncomingMessage);
+    // trata aceitação de DM
     socket.on("dm:accepted", handleAccepted);
 
     if (socket.connected) join();
@@ -241,6 +253,7 @@ export function usePrivateChatController({
       }
     })();
 
+    // trata mudanças de participantes
     const handleParticipantChanged = ({
       conversationId: cid,
       participants,
@@ -261,7 +274,16 @@ export function usePrivateChatController({
       setWaitingOther(waitingUser ? String(waitingUser) !== myId : false);
     };
 
+   const handleRejected = ({ conversationId: cid }) => {
+    if (String(cid) !== String(conversationId)) return;
+    // Estado seguro pós-rejeição para atualizar a UI imediatamente
+    setWaitingOther(false);
+    setPendingForMe(false);
+    setIsOtherParticipant(false);
+  };
+
     socket.on("dm:participantChanged", handleParticipantChanged);
+    socket.on("dm:rejected", handleRejected);
 
     return () => {
       mounted = false;
@@ -270,6 +292,7 @@ export function usePrivateChatController({
       socket.off("newPrivateMessage", handleIncomingMessage);
       socket.off("dm:accepted", handleAccepted);
       socket.off("dm:participantChanged", handleParticipantChanged);
+       socket.off("dm:rejected", handleRejected);
 
       socket.emit("leavePrivateChat", { conversationId });
     };
