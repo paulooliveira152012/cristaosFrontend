@@ -20,6 +20,9 @@ export const ChurchesAdmin = () => {
     removePhoto,
     submit,
     removeChurch,
+    geoLoading,
+    geoError,
+    geocodeAddress,
   } = useChurchesAdmin();
 
   const [selectedTab, setSelectedTab] = useState("");
@@ -28,11 +31,18 @@ export const ChurchesAdmin = () => {
 
   return (
     <div className="adminPage grid md:grid-cols-2 gap-4">
-      <select className="fwSellect" onChange={(e) => setSelectedTab(e.target.value)}>
+      <select
+        className="fwSellect"
+        onChange={(e) => setSelectedTab(e.target.value)}
+      >
         {/* default */}
         <option value="">Selecionar uma opção</option>
-        <option value="new" onSelect={() => setSelectedTab("new")}>Registrar Igreja</option>
-        <option value="edit" onSelect={() => setSelectedTab("edit")}>Editar Igreja</option>
+        <option value="new" onSelect={() => setSelectedTab("new")}>
+          Registrar Igreja
+        </option>
+        <option value="edit" onSelect={() => setSelectedTab("edit")}>
+          Editar Igreja
+        </option>
       </select>
 
       {selectedTab === "new" && (
@@ -76,13 +86,28 @@ export const ChurchesAdmin = () => {
                 onChange={onChange}
                 className="border p-2 rounded"
               />
-              <input
-                name="address"
-                placeholder="Endereço"
-                value={form.address}
-                onChange={onChange}
-                className="border p-2 rounded"
-              />
+              <div className="flex gap-2 items-center">
+                <input
+                  name="address"
+                  placeholder="Endereço"
+                  value={form.address}
+                  onChange={onChange}
+                  onBlur={geocodeAddress} // opcional
+                  className="border p-2 rounded flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={geocodeAddress}
+                  disabled={geoLoading || !form.address?.trim()}
+                  className={`px-3 py-2 rounded ${
+                    geoLoading ? "bg-gray-300" : "bg-black text-white"
+                  }`}
+                >
+                  {geoLoading ? "Buscando..." : "Buscar coords"}
+                </button>
+              </div>
+              {geoError && <p className="text-red-600 text-sm">{geoError}</p>}
+
               <input
                 name="denomination"
                 placeholder="Denominação"

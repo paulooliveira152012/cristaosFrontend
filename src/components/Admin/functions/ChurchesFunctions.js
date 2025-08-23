@@ -149,7 +149,6 @@ export const fetchChurchList = async ({
   setLoading?.(true);
   setError?.("");
   try {
-    // ajuste o endpoint se necessário
     const res = await fetch(`${API}/api/churches`, {
       credentials: "include",
     });
@@ -188,6 +187,41 @@ export const uploadFile = async ({
 };
 
 /** =========================
+ * Geocoding util (pura)
+ * ========================= */
+
+export const geocodeWithMapbox = async ({
+  address,
+  token = process.env.REACT_APP_MAPBOX_TOKEN,
+  country = "BR,US",
+  proximity = undefined, // ex.: [-46.63, -23.55]
+}) => {
+  if (!address?.trim()) throw new Error("Endereço vazio");
+  if (!token) throw new Error("MAPBOX token ausente (REACT_APP_MAPBOX_TOKEN)");
+
+  const base = "https://api.mapbox.com/geocoding/v5/mapbox.places";
+  const q = encodeURIComponent(address);
+  const params = new URLSearchParams({
+    access_token: token,
+    limit: "1",
+    country,
+  });
+  if (proximity && Array.isArray(proximity) && proximity.length === 2) {
+    params.set("proximity", `${proximity[0]},${proximity[1]}`);
+  }
+
+  const url = `${base}/${q}.json?${params.toString()}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Geocoding HTTP ${res.status}`);
+  const data = await res.json();
+
+  const f = data?.features?.[0];
+  if (!f?.center?.length) throw new Error("Endereço não encontrado");
+  const [lng, lat] = f.center;
+  return { lng, lat, place: f.place_name, feature: f };
+};
+
+/** =========================
  * Hook principal da página
  * ========================= */
 
@@ -204,6 +238,10 @@ export const useChurchesAdmin = () => {
   const [form, setForm] = useState(empty);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  // estados de geocoding
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [geoError, setGeoError] = useState("");
 
   // efeito de carregar lista
   useEffect(() => {
@@ -263,12 +301,50 @@ export const useChurchesAdmin = () => {
     }));
   }, []);
 
+  // -------- geocoding dentro do hook --------
+  const geocodeAddress = useCallback(async () => {
+    if (!form.address?.trim()) return;
+    setGeoLoading(true);
+    setGeoError("");
+    try {
+      const { lng, lat, place } = await geocodeWithMapbox({
+        address: form.address,
+      });
+      setForm((f) => ({
+        ...f,
+        lng: String(lng),
+        lat: String(lat),
+        address: place || f.address, // opcional: normalizar endereço
+      }));
+    } catch (e) {
+      setGeoError(e.message || "Falha ao geocodificar");
+    } finally {
+      setGeoLoading(false);
+    }
+  }, [form.address]);
+
+  // -------- submit que tenta geocodificar se necessário --------
   const submit = useCallback(
     async (e) => {
       e.preventDefault();
       setSaving(true);
       try {
-        const body = formToRequestBody(form);
+        let localForm = form;
+
+        // se não tem coords mas tem endereço, tenta geocodificar
+        if ((!form.lng || !form.lat) && form.address?.trim()) {
+          try {
+            const { lng, lat } = await geocodeWithMapbox({
+              address: form.address,
+            });
+            localForm = { ...form, lng: String(lng), lat: String(lat) };
+            setForm(localForm); // manter UI em sincronia
+          } catch (gerr) {
+            console.warn("Geocode falhou, seguindo sem coordenadas:", gerr);
+          }
+        }
+
+        const body = formToRequestBody(localForm);
         const method = selected ? "PUT" : "POST";
         const url = selected
           ? `${API}/api/churches/${selected._id}`
@@ -320,9 +396,16 @@ export const useChurchesAdmin = () => {
     form,
     saving,
     uploading,
+
+    // geocoding
+    geoLoading,
+    geoError,
+    geocodeAddress,
+
     // setters úteis (se precisar)
     setSelected,
     setForm,
+
     // handlers
     onChange,
     startCreate,
@@ -333,6 +416,7 @@ export const useChurchesAdmin = () => {
     removePhoto,
     submit,
     removeChurch,
+
     // util
     empty,
   };
