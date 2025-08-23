@@ -1,0 +1,216 @@
+/* ============================
+   Admin (Members) — Look & Feel
+   Tudo escopado por .adminPage
+   ============================ */
+
+.adminPage {
+  --bg: #ffffff;
+  --bg-soft: #f8fafc;          /* cinza bem claro */
+  --line: #e6e8ef;             /* borda suave */
+  --text: #0f172a;             /* slate-900 */
+  --muted: #475569;            /* slate-600 */
+  --accent: #2a68d8;           /* azul do app */
+  --accent-2: #4b3ca6;         /* roxo do app */
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #f59e0b;
+  --ring: rgba(42, 104, 216, 0.35);
+  --radius: 12px;
+  --radius-sm: 10px;
+  --shadow-1: 0 6px 18px rgba(0,0,0,.06), 0 2px 6px rgba(0,0,0,.04);
+  --shadow-2: 0 12px 28px rgba(0,0,0,.08), 0 6px 14px rgba(0,0,0,.05);
+  color: var(--text);
+}
+
+.fwSellect {
+  width: 100%;
+}
+
+/* Cabeçalho do card */
+.adminPage h3 {
+  font-weight: 700;
+  font-size: 1.125rem;
+  letter-spacing: .2px;
+}
+
+.adminPage .adminPageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: .75rem;
+}
+
+.adminPage .closeBtn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: .9rem;
+  text-decoration: underline;
+  padding: .25rem .35rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color .15s ease, background-color .15s ease;
+}
+.adminPage .closeBtn:hover { background: rgba(42, 104, 216, .08); }
+
+/* ---------- Form ---------- */
+.adminPage form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-bottom: .75rem;
+}
+
+.adminPage input,
+.adminPage select,
+.adminPage textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  padding: .65rem .75rem;
+  border-radius: var(--radius-sm);
+  font-size: .95rem;
+  transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+
+.adminPage input::placeholder,
+.adminPage textarea::placeholder {
+  color: #94a3b8; /* slate-400 */
+}
+
+.adminPage input:focus,
+.adminPage select:focus,
+.adminPage textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+/* Linha “User ID” + Select + Botão */
+@media (min-width: 640px) {
+  .adminPage .memberIdInput { flex: 1 1 320px; }
+  .adminPage .roleSelect   { flex: 0 0 200px; }
+}
+
+/* ---------- Botões ---------- */
+.adminPage button {
+  appearance: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .05s ease, box-shadow .15s ease, opacity .15s ease, background-color .15s ease;
+}
+
+.adminPage .btnPrimary {
+  background: linear-gradient(180deg, var(--accent), #1f57b4);
+  color: #fff;
+  padding: .6rem 1rem;
+  box-shadow: var(--shadow-1);
+}
+.adminPage .btnPrimary:hover { transform: translateY(-1px); box-shadow: var(--shadow-2); }
+.adminPage .btnPrimary:active { transform: translateY(0); }
+
+.adminPage .btnGhost {
+  background: var(--bg-soft);
+  color: var(--accent);
+  padding: .55rem .9rem;
+}
+
+.adminPage .btnDanger {
+  background: linear-gradient(180deg, var(--danger), #b91c1c);
+  color: #fff;
+  padding: .45rem .8rem;
+  box-shadow: var(--shadow-1);
+}
+.adminPage .btnDanger:hover { transform: translateY(-1px); box-shadow: var(--shadow-2); }
+
+/* Estados desabilitado */
+.adminPage button[disabled] { opacity: .6; cursor: default; transform: none; box-shadow: none; }
+
+/* ---------- Tabela ---------- */
+.adminPage .tableWrap {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-1);
+  background: var(--bg);
+}
+
+.adminPage table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .95rem;
+}
+
+.adminPage thead th {
+  background: linear-gradient(180deg, #f1f5f9, #eef2f7);
+  color: #0f172a;
+  text-align: left;
+  padding: .8rem .75rem;
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.adminPage tbody td {
+  padding: .75rem .75rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+/* zebra */
+.adminPage tbody tr:nth-child(even) { background: #fbfdff; }
+
+/* hover */
+.adminPage tbody tr:hover { background: #f4f7fb; }
+
+/* Coluna “Papel” com visual de pill */
+.adminPage tbody td:nth-child(2) {
+  text-transform: lowercase;
+}
+.adminPage tbody td:nth-child(2)::first-letter {
+  text-transform: uppercase;
+}
+.adminPage tbody td:nth-child(2) > * {
+  display: inline-block;
+  padding: .2rem .55rem;
+  background: #eef2ff;
+  color: #3730a3;
+  border-radius: 999px;
+  font-size: .8rem;
+}
+
+/* Botão “Remover” na última coluna */
+.adminPage tbody td:last-child { text-align: right; }
+
+/* ---------- Empty / Loading ---------- */
+.adminPage .emptyRow,
+.adminPage .loadingRow {
+  color: var(--muted);
+  text-align: center;
+}
+.adminPage .emptyRow td,
+.adminPage .loadingRow td {
+  padding: 1.2rem .75rem;
+}
+
+/* ---------- Pequenas melhorias responsivas ---------- */
+@media (max-width: 640px) {
+  .adminPage thead { display: none; }
+  .adminPage table, .adminPage tbody, .adminPage tr, .adminPage td { display: block; width: 100%; }
+  .adminPage tbody tr { border-bottom: 1px solid var(--line); }
+  .adminPage tbody td {
+    padding: .6rem .75rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .adminPage tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--muted);
+  }
+}
