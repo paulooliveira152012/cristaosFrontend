@@ -452,7 +452,7 @@ const Listings = () => {
               >
                 <div className="listing-content">
                   <div className="heading">
-                    <h2>{listing.blogTitle || "Untitled Blog"}</h2>
+                    <h2>{listing.blogTitle || ""}</h2>
 
                     <p style={{ textDecoration: "none", textAlign: "justify" }}>
                       {listing.blogContent

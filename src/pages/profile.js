@@ -727,7 +727,7 @@ const Profile = () => {
 
                     {listing.type === "blog" && (
                       <div className="listing-content">
-                        <h2>{listing.blogTitle || "Untitled Blog"}</h2>
+                        <h2>{listing.blogTitle || ""}</h2>
                         <p>
                           {listing.blogContent?.slice(0, 150) || "No content."}
                         </p>
