@@ -548,3 +548,7 @@ body.dark-mode .onlineStatus {
   transform: translateY(0);
   box-shadow: 0 3px 8px rgba(42, 104, 216, 0.2);
 }
+
+html, body, #root {
+  overscroll-behavior-y: contain;
+}

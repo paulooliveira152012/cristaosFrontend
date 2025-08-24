@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNotification } from "./context/NotificationContext.js";
+import PTR from "pulltorefreshjs";
 
 // páginas
 import Landing from "./pages/landing";
@@ -112,7 +113,6 @@ function NotificationsSocketBridge() {
   return null;
 }
 
-
 // Componente para exibir o ícone da sala minimizada globalmente
 const MinimizedStatus = () => {
   const location = useLocation();
@@ -156,6 +156,7 @@ const App = () => {
 
 const AppWithLocation = () => {
   const location = useLocation();
+  const ptrRef = useRef(null);
 
   const shouldShowFooter =
     !location.pathname.startsWith("/mainChat") &&
@@ -164,6 +165,95 @@ const AppWithLocation = () => {
 
   const hideSideMenu = ["/login"];
   const shouldShowSideMenu = !hideSideMenu.includes(location.pathname);
+
+  // ⬇️ Pull-to-refresh global (sem deslocar layout)
+  useEffect(() => {
+    // destrói anterior (hot-reload / troca de rota)
+    ptrRef.current?.destroy?.();
+    ptrRef.current = null;
+
+    // rotas onde o gesto pode atrapalhar
+    const disabled =
+      location.pathname.startsWith("/liveRoom") ||
+      location.pathname.startsWith("/mainChat") ||
+      location.pathname.startsWith("/privateChat");
+
+    if (disabled) return;
+
+    // usa o contêiner que rola no seu layout
+    const selector = ".scrollable";
+    const el = document.querySelector(selector);
+    if (!el) return;
+
+    ptrRef.current = PTR.init({
+      mainElement: selector,
+      triggerElement: selector,
+      distThreshold: 70,
+      distMax: 100,
+      distReload: 70,
+      refreshTimeout: 300,
+      shouldPullToRefresh() {
+        // só ativa no topo do scroll
+        return el.scrollTop === 0;
+      },
+      onRefresh() {
+        // se preferir, dispare um evento e cada página lida com seu fetch
+        // window.dispatchEvent(new CustomEvent("app:refresh"));
+        window.location.reload();
+        return Promise.resolve();
+      },
+      // overlay fixo (não desloca o conteúdo)
+      getMarkup() {
+        return `
+          <div class="ptr-overlay">
+            <div class="ptr-icon">↓</div>
+            <div class="ptr-spinner"></div>
+          </div>
+        `;
+      },
+      getStyles() {
+        return `
+    .ptr-overlay{
+      position: fixed; top:0; left:0; right:0; height:64px;
+      display:flex; align-items:center; justify-content:center;
+      z-index:9999; pointer-events:none;
+    }
+
+    /* ⬇️ seta escondida por padrão */
+    .ptr-icon{ 
+      display:none;
+      color: transparent;
+      font-size:18px; 
+      transition:transform .2s ease, opacity .2s ease; 
+    }
+
+    /* ⬇️ mostra a seta somente durante o gesto (puxando/segurando) */
+    .ptr--pull .ptr-icon,
+    .ptr--release .ptr-icon { 
+      display:block; 
+    }
+
+    .ptr-spinner{
+      width:22px; height:22px; border:2px solid #cfcfcf; border-top-color:#2A68D8;
+      border-radius:50%; display:none; animation:ptr-spin 1s linear infinite;
+    }
+
+    .ptr--release .ptr-icon{ transform:translateY(6px) rotate(180deg); }
+
+    /* ⬇️ durante refresh: some a seta e mostra o spinner */
+    .ptr--refresh .ptr-icon{ display:none; }
+    .ptr--refresh .ptr-spinner{ display:block; }
+
+    @keyframes ptr-spin { to { transform: rotate(360deg); } }
+  `;
+      },
+    });
+
+    return () => {
+      ptrRef.current?.destroy?.();
+      ptrRef.current = null;
+    };
+  }, [location.pathname]);
 
   return (
     <UserProvider>
@@ -339,7 +429,7 @@ const AppWithLocation = () => {
                           path="*"
                           element={<h1>404 - Página não encontrada</h1>}
                         />
-                        <Route 
+                        <Route
                           path="/profile/:userId/friends"
                           element={<FriendsList />}
                         />
