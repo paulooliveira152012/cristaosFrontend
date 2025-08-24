@@ -3,12 +3,16 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
+import { uploadImageToS3 } from "../../utils/s3Upload";
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 // ---------- helpers ----------
 const fetchJSON = async (url, options = {}) => {
-  const res = await fetch(url, options);
+  const res = await fetch(
+    url,
+    { credentials: "include", ...options } // <- default inclui cookie
+  );
   const text = await res.text();
   let json = {};
   try {
@@ -21,29 +25,33 @@ const fetchJSON = async (url, options = {}) => {
   }
   return json;
 };
+
 const normalizeRoom = (json) => json?.room ?? json; // aceita {room} ou objeto direto
 const cacheBust = (url) => (url ? `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}` : url);
 
 // ---------- API (com fallbacks) ----------
-async function apiListPrivateRooms() {
+const apiListPrivateRooms = async () => {
   // 1) rota dedicada (se existir)
+  console.log("fetching private rooms...")
   try {
-    const data = await fetchJSON(`${baseUrl}/api/rooms/private`);
+    const data = await fetchJSON(`${baseUrl}/api/privateRooms/getAllRooms`);
     const rooms = data?.rooms ?? data;
     return rooms?.map(normalizeRoom) || [];
   } catch (e) {
+    console.log("um erro ocorreu ao buscar salas privadas:", e);
     // 2) genérica com filtro
-    const data = await fetchJSON(`${baseUrl}/api/rooms?isPrivate=1`);
+    const data = await fetchJSON(`${baseUrl}/api/privateRooms?isPrivate=1`);
     const rooms = data?.rooms ?? data;
     return rooms?.map(normalizeRoom) || [];
   }
 }
 
-async function apiCreatePrivateRoom({ title, password, description, imageUrl }) {
-  const body = { roomTitle: title, password, description, isPrivate: true, imageUrl };
+async function apiCreatePrivateRoom({ title, password, description, imageUrl, createdBy }) {
+  const body = { roomTitle: title, password, description, isPrivate: true, imageUrl, createdBy };
+  console.log("body:", body);
   // 1) rota dedicada
   try {
-    const data = await fetchJSON(`${baseUrl}/api/rooms/private`, {
+    const data = await fetchJSON(`${baseUrl}/api/privateRooms/private`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -52,7 +60,7 @@ async function apiCreatePrivateRoom({ title, password, description, imageUrl }) 
     return normalizeRoom(data);
   } catch (e) {
     // 2) rota de create genérica
-    const data = await fetchJSON(`${baseUrl}/api/rooms/create`, {
+    const data = await fetchJSON(`${baseUrl}/api/privateRooms/create`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -63,9 +71,11 @@ async function apiCreatePrivateRoom({ title, password, description, imageUrl }) 
 }
 
 async function apiJoinPrivateRoom({ roomId, password }) {
+  console.log("2 Tentando entrar na sala:", roomId);
   // 1) rota dedicada
+  console.log("baseUrl:", baseUrl);
   try {
-    const data = await fetchJSON(`${baseUrl}/api/rooms/private/join`, {
+    const data = await fetchJSON(`${baseUrl}/api/privateRooms/join`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -74,7 +84,7 @@ async function apiJoinPrivateRoom({ roomId, password }) {
     return normalizeRoom(data);
   } catch (e) {
     // 2) rota genérica com id
-    const data = await fetchJSON(`${baseUrl}/api/rooms/join/${roomId}`, {
+    const data = await fetchJSON(`${baseUrl}/api/privateRooms/join/${roomId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -106,6 +116,8 @@ const CreateRoomModal = ({ onClose, onCreated }) => {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const fileRef = useRef(null);
+  const { currentUser } = useUser();
+  console.log("currentUser:", currentUser);
 
   useEffect(() => {
     return () => {
@@ -133,9 +145,10 @@ const CreateRoomModal = ({ onClose, onCreated }) => {
       setLoading(true);
       let imageUrl = "";
       if (file) {
-        imageUrl = await apiUploadImage(file);
+        // imageUrl = await apiUploadImage(file);
+        imageUrl = await uploadImageToS3(file);
       }
-      const room = await apiCreatePrivateRoom({ title: title.trim(), password, description, imageUrl });
+      const room = await apiCreatePrivateRoom({ title: title.trim(), password, description, imageUrl, createdBy: currentUser._id });
       onCreated?.(room);
       onClose?.();
     } catch (e) {
@@ -204,6 +217,7 @@ const JoinRoomModal = ({ room, onClose, onJoined, isLeader }) => {
   const [err, setErr] = useState("");
 
   const handleJoin = async () => {
+    console.log("1 Tentando entrar na sala:", room);
     setErr("");
     try {
       setLoading(true);
@@ -252,7 +266,7 @@ const RoomCard = ({ room, onJoin }) => {
         <div
           style={{
             width: 58, height: 58, borderRadius: 10, background: "#f2f2f2",
-            backgroundImage: room?.imageUrl ? `url("${room.imageUrl}")` : "none",
+            backgroundImage: room?.roomImage ? `url("${room.roomImage}")` : "none",
             backgroundSize: "cover", backgroundPosition: "center",
             flexShrink: 0
           }}

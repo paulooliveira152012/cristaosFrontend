@@ -193,7 +193,7 @@ const SideAdSection = () => {
         })}
 
         {/* Se o controle de permissão for por role, considere trocar por role === 'lider' */}
-        {currentUser?.role === 'leader' && (
+        {currentUser?.leader == true && (
           <div className="addSectionHeader">
             <h2>Gerenciar Anúncios</h2>
             <button onClick={() => navigate("/addManagement")}>Gerenciar</button>

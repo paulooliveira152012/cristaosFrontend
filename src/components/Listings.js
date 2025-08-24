@@ -39,69 +39,74 @@ const Listings = () => {
 
   // Fetch all listed items from the backend
   useEffect(() => {
-  const fetchListings = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${baseURL}/api/listings/alllistings`, {
-        method: "GET",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!res.ok) throw new Error("Error fetching listings");
-      const data = await res.json();
-
-      // Usa feed quando existir; fallback para apenas listings como "listing"
-      const raw = Array.isArray(data.feed)
-        ? data.feed
-        : (data.listings || []).map(l => ({ type: "listing", listing: l, createdAt: l.createdAt }));
-
-      // Normaliza: vira "listing com meta __feed"
-      const normalized = raw.map(doc => {
-        const isRepost = doc.type === "repost" && doc.reposter;
-        const original = doc.listing || doc; // segurança
-        return {
-          ...original,
-          __feed: {
-            isRepost,
-            reposter: isRepost ? doc.reposter : null,
-            feedCreatedAt: doc.createdAt || original.createdAt,
-          },
-        };
-      });
-
-      // Ordena por quando entrou no feed (repost sobe)
-      normalized.sort(
-        (a, b) =>
-          new Date(b.__feed?.feedCreatedAt || b.createdAt) -
-          new Date(a.__feed?.feedCreatedAt || a.createdAt)
-      );
-
-      setItems(normalized);
-
-      // Inicializa votos (se houver usuário logado)
-      if (currentUser) {
-        const initialVotes = {};
-        normalized.forEach(listing => {
-          if (listing.type === "poll" && listing.poll?.votes?.length > 0) {
-            const vote = listing.poll.votes.find(v => {
-              const uid = typeof v.userId === "object" ? v.userId._id : v.userId;
-              return String(uid) === String(currentUser._id);
-            });
-            if (vote) initialVotes[listing._id] = vote.optionIndex;
-          }
+    const fetchListings = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`${baseURL}/api/listings/alllistings`, {
+          method: "GET",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
         });
-        setVotedPolls(initialVotes);
+        if (!res.ok) throw new Error("Error fetching listings");
+        const data = await res.json();
+
+        // Usa feed quando existir; fallback para apenas listings como "listing"
+        const raw = Array.isArray(data.feed)
+          ? data.feed
+          : (data.listings || []).map((l) => ({
+              type: "listing",
+              listing: l,
+              createdAt: l.createdAt,
+            }));
+
+        // Normaliza: vira "listing com meta __feed"
+        const normalized = raw.map((doc) => {
+          const isRepost = doc.type === "repost" && doc.reposter;
+          const original = doc.listing || doc; // segurança
+          return {
+            ...original,
+            __feed: {
+              id: doc._id || original._id,
+              isRepost,
+              reposter: isRepost ? doc.reposter : null,
+              feedCreatedAt: doc.createdAt || original.createdAt,
+            },
+          };
+        });
+
+        // Ordena por quando entrou no feed (repost sobe)
+        normalized.sort(
+          (a, b) =>
+            new Date(b.__feed?.feedCreatedAt || b.createdAt) -
+            new Date(a.__feed?.feedCreatedAt || a.createdAt)
+        );
+
+        setItems(normalized);
+
+        // Inicializa votos (se houver usuário logado)
+        if (currentUser) {
+          const initialVotes = {};
+          normalized.forEach((listing) => {
+            if (listing.type === "poll" && listing.poll?.votes?.length > 0) {
+              const vote = listing.poll.votes.find((v) => {
+                const uid =
+                  typeof v.userId === "object" ? v.userId._id : v.userId;
+                return String(uid) === String(currentUser._id);
+              });
+              if (vote) initialVotes[listing._id] = vote.optionIndex;
+            }
+          });
+          setVotedPolls(initialVotes);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
       }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  if (currentUser !== undefined) fetchListings();
-}, [currentUser]);
-
+    if (currentUser !== undefined) fetchListings();
+  }, [currentUser]);
 
   // Use handleFetchComments, passing in setItems to manage comments
   const fetchCommentsForListing = (listingId) => {
@@ -327,13 +332,25 @@ const Listings = () => {
     }
   };
 
+  // Gera uma key única por "instância" no feed
+  const keyForListing = (it) => {
+    const rep = it.__feed?.reposter;
+    const repId = typeof rep === "object" ? rep?._id : rep || "orig"; // "orig" quando não é repost
+    const ts = it.__feed?.feedCreatedAt || it.createdAt || it.updatedAt || "";
+    // Sempre inclui o _id do listing + quem repostou + "momento" no feed
+    return `${it._id}__${repId}__${ts}`;
+  };
+
   return (
     <div className="landingListingsContainer">
       {loading ? (
         <p>Loading listings...</p>
       ) : items.length > 0 ? (
         items.map((listing) => (
-          <div key={listing._id} className="landingListingContainer">
+          <div
+            key={keyForListing(listing)}
+            className="landingListingContainer"
+          >
             {/* container para userInfo e adm */}
             <div className="listing header">
               {/* 1 / 2 */}

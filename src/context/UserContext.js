@@ -106,7 +106,10 @@ export const UserProvider = ({ children }) => {
           const res = await fetch(`${API}/api/users/current`, {
             credentials: "include",
           });
-          if (!res.ok) throw new Error("Usuário não autenticado.");
+          if (!res.ok) {
+            console.log("Usuário não autenticado.")
+            throw new Error("Usuário não autenticado.");
+          } 
           const verified = await res.json();
           setCurrentUser(verified);
           localStorage.setItem("user", JSON.stringify(verified));
