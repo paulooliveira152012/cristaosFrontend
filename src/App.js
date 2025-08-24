@@ -239,11 +239,11 @@ const AppWithLocation = () => {
                           element={<PlatformGuidelines />}
                         />
                         <Route
-                          path="/bibleStudies"
+                          path="/bibleStudiesBook"
                           element={<BibleStudiesByBook />}
                         />
                         <Route
-                          path="/bibleStudies"
+                          path="/bibleStudiesTheme"
                           element={<BibleStudiesByTheme />}
                         />
                         <Route

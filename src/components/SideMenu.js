@@ -55,7 +55,8 @@ const SideMenu = ({ closeMenu, isOpen }) => {
         <div className="scrollableMenuContent">
           {/* Primeira seção de links */}
           <ul className="menuOptions">
-            <li onClick={() => navigate("bibleStudies")}>Estudos Bíblico</li>
+            <li onClick={() => navigate("bibleStudiesBook")}>Estudos Bíblicos (livros)</li>
+            <li onClick={() => navigate("bibleStudiesTheme")}>Estudos Bíblico (temas)</li>
             <li onClick={() => navigate("privateRooms")}>Salas de Reuniões Privadas</li>
             <li onClick={() => navigate("counselingSessions")}>Sessões de Aconselhamento</li>
             <li onClick={() => navigate("findGathering")}>Encontrar Reunião Próxima</li>
