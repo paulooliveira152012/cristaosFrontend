@@ -1,5 +1,5 @@
 // Perfil – layout responsivo com bio, denominação simplificada e localização única
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useUser } from "../context/UserContext";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
@@ -94,6 +94,7 @@ const Profile = () => {
   const { socket } = useSocket();
   const { currentUser } = useUser();
   const { userId } = useParams();
+  const apiUrl = process.env.REACT_APP_API_BASE_URL;
   const navigate = useNavigate();
 
   const [user, setUser] = useState(null);
@@ -125,6 +126,61 @@ const Profile = () => {
   const [openLeaderMenuId, setOpenLeaderMenuId] = useState(null);
 
   const isOwner = String(currentUser?._id) === String(user?._id);
+
+  const fileRef = useRef(null);
+  // adicione perto dos outros states
+  const [uploading, setUploading] = useState(false);
+
+  // implemente um uploader simples (ajuste a URL conforme sua API)
+  // uploader simples (ajuste apiUrl se preciso)
+  // 1) Fazer upload e RETORNAR a URL (sem setar estado aqui)
+const uploadCover = async (file) => {
+  const fd = new FormData();
+  fd.append("file", file); // a rota espera "file"
+
+  const res = await fetch(`${apiUrl}/api/profile/coverImage`, {
+    method: "PUT",
+    body: fd,                  // NÃO coloque headers Content-Type aqui
+    credentials: "include",    // se o protect usa cookie
+  });
+
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`Falha no upload (${res.status}) ${t}`);
+  }
+  const { url } = await res.json();
+  if (!url) throw new Error("Resposta sem URL");
+  return url;
+};
+
+  // 2) Tratar estado (uploading / setUser) apenas AQUI
+  const handleCoverSelected = async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  if (!file.type?.startsWith("image/")) {
+    alert("Escolha um arquivo de imagem."); e.target.value = ""; return;
+  }
+  if (file.size > 7 * 1024 * 1024) {
+    alert("Imagem muito grande (máx 7MB)."); e.target.value = ""; return;
+  }
+
+  try {
+    setUploading(true);
+    const url = await uploadCover(file);
+    setUser((u) => (u ? { ...u, profileBackgroundCover: url } : u));
+  } catch (err) {
+    console.error(err);
+    alert("Falha ao enviar a imagem.");
+  } finally {
+    setUploading(false);
+    e.target.value = "";
+  }
+};
+
+  const updateProfileBackground = () => {
+    if (!isOwner) return;
+    fileRef.current?.click();
+  };
 
   // quando trocar de usuário (ou quando o backend retornar nova bio), sincronize
   useEffect(() => {
@@ -328,18 +384,55 @@ const Profile = () => {
       <div className="profilePageBasicInfoContainer">
         <Header showProfileImage={false} navigate={navigate} />
         <div className="profilePageHeaderParentSection">
-          <div
-            className="top"
-            style={{
-              backgroundImage: `url(${
-                user?.profileBackgroundCover || coverPlaceholder
-              })`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
-              height: 220,
-            }}
-          />
+          <>
+            <div
+              className="top"
+              onClick={updateProfileBackground}
+              role={isOwner ? "button" : undefined}
+              tabIndex={isOwner ? 0 : -1}
+              onKeyDown={(e) =>
+                isOwner &&
+                (e.key === "Enter" || e.key === " ") &&
+                updateProfileBackground()
+              }
+              style={{
+                backgroundImage: `url(${
+                  user?.profileCoverImage || coverPlaceholder
+                })`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+                height: 220,
+                cursor: isOwner ? "pointer" : "default",
+                position: "relative",
+              }}
+            >
+              {isOwner && (
+                <div
+                  style={{
+                    position: "absolute",
+                    right: 12,
+                    bottom: 12,
+                    padding: "6px 10px",
+                    borderRadius: 8,
+                    background: "rgba(0,0,0,0.5)",
+                    color: "#fff",
+                    fontSize: 12,
+                  }}
+                >
+                  {uploading ? "Enviando..." : "Trocar capa"}
+                </div>
+              )}
+            </div>
+
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={handleCoverSelected}
+            />
+          </>
           <div className="bottom">
             <div className="headerRow">
               {/* avatar */}
