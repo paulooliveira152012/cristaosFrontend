@@ -6,6 +6,7 @@ import { ListingAdmin } from "../components/Admin/ListingAdminComponent";
 import { StaffAdmin } from "../components/Admin/StaffAdminComponent";
 import { ReportAdmin } from "../components/Admin/ReportAdminComponent";
 import { MeetingAdmin } from "../components/Admin/MeetingAdminComponent";
+import { useNavigate } from "react-router-dom";
 import "../styles/Admin.css";
 
 
@@ -14,13 +15,15 @@ const API = process.env.REACT_APP_API_BASE_URL;
 
 const Admin = () => {
   const [tab, setTab] = useState("churches");
+  const navigate = useNavigate()
 
   return (
     <div
       className="adminPage min-h-screen w-full p-4 md:p-6"
       style={{ maxWidth: 1100, margin: "0 auto" }}
     >
-      <Header showProfileImage={false} />
+      <Header showProfileImage={false} onBack={() => navigate("/")}/>
+      
 
       <select onChange={(e) => setTab(e.target.value)} className="fwSellect">
         <option value="churches">Igrejas</option>

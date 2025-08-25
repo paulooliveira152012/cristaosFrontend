@@ -34,11 +34,6 @@ export const ChurchesAdmin = () => {
 
   return (
     <>
-    <Header 
-      showBackArrow={true} 
-      navigate={navigate}
-      showProfileImage={false}
-    />
     <div className="adminPage grid md:grid-cols-2 gap-4">
       <select
         className="fwSellect"
