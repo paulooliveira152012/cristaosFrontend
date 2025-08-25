@@ -108,11 +108,10 @@ const ListingInteractionBox = ({
   };
 
   const toggleShowComments = () => {
-    if(!currentUser) {
-      window.alert("Fazer login para interagir")
-      return
-    } ;
-
+    if (!currentUser) {
+      window.alert("Fazer login para interagir");
+      return;
+    }
 
     setShowComments((prevShowComments) => !prevShowComments);
     setShowCommentBox((prevShowCommentBox) => !prevShowCommentBox);
@@ -165,9 +164,9 @@ const ListingInteractionBox = ({
                 onClick={() => handleShare(listingId)}
                 style={{ cursor: "pointer" }}
                 alt="Share"
-                />
-              )}
-              <span style={{ marginLeft: "5px" }}>{sharesCount}</span>
+              />
+            )}
+            <span style={{ marginLeft: "5px" }}>{sharesCount}</span>
           </div>
         )}
 
@@ -190,14 +189,12 @@ const ListingInteractionBox = ({
               }}
             />
 
-
             {commentText.trim() && (
               <button
                 className="submitCommentBtn"
                 onClick={handleCommentSubmitClick}
                 aria-label="Enviar comentário"
                 title="Enviar comentário"
-
               >
                 <ArrowRight size={18} color="white" />
               </button>
@@ -205,8 +202,6 @@ const ListingInteractionBox = ({
           </div>
         </div>
       )}
-
-
 
       {showComments && comments.length > 0 && (
         <div className="commentSectionContainer">
@@ -262,15 +257,20 @@ const ListingInteractionBox = ({
                         </div>
                       </div>
 
-                      <div className="right">
-                        <TrashIcon
-                          onClick={() =>
-                            handleDeleteComment(listingId, comment._id)
-                          }
-                          style={{ cursor: "pointer" }}
-                          alt="Delete Reply"
-                        />
-                      </div>
+                      {/* fazer so com que o ususario que fez o comentario veja o TrashIcon */}
+                      {currentUser &&
+                        String(currentUser._id) ===
+                          String(comment?.user?._id || comment?.user) && (
+                          <div className="right">
+                            <TrashIcon
+                              onClick={() =>
+                                handleDeleteComment(listingId, comment._id)
+                              }
+                              style={{ cursor: "pointer" }}
+                              alt="Delete Comment"
+                            />
+                          </div>
+                        )}
                     </div>
                   </div>
                 </div>
@@ -331,7 +331,9 @@ const ListingInteractionBox = ({
                               <div
                                 className="commentProfileImageReply"
                                 style={{
-                                  backgroundImage: `url(${reply.profileImage || ""})`,
+                                  backgroundImage: `url(${
+                                    reply.profileImage || ""
+                                  })`,
                                   backgroundPosition: "center",
                                   backgroundSize: "cover",
                                   backgroundRepeat: "no-repeat",
@@ -349,11 +351,7 @@ const ListingInteractionBox = ({
                           <div className="replyInteractionContainer">
                             <div
                               onClick={() =>
-                                handleCommentLike(
-                                  reply._id,
-                                  true,
-                                  comment._id
-                                )
+                                handleCommentLike(reply._id, true, comment._id)
                               }
                               style={{ cursor: "pointer", display: "flex" }}
                             >
@@ -371,19 +369,23 @@ const ListingInteractionBox = ({
                                 {commentLikesCount(reply)}
                               </span>
                             </div>
-                            <div className="right">
-                              <TrashIcon
-                                onClick={() =>
-                                  handleDeleteComment(
-                                    listingId,
-                                    reply._id,
-                                    comment._id
-                                  )
-                                }
-                                style={{ cursor: "pointer" }}
-                                alt="Delete Reply"
-                              />
-                            </div>
+                            {currentUser &&
+                              String(currentUser._id) ===
+                                String(reply?.user?._id || reply?.user) && (
+                                <div className="right">
+                                  <TrashIcon
+                                    onClick={() =>
+                                      handleDeleteComment(
+                                        listingId,
+                                        reply._id,
+                                        comment._id
+                                      )
+                                    }
+                                    style={{ cursor: "pointer" }}
+                                    alt="Delete Reply"
+                                  />
+                                </div>
+                              )}
                           </div>
                         </div>
                       </div>
