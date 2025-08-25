@@ -8,18 +8,21 @@ import {
   handleCommentLike,
 } from "./functions/interactionFunctions";
 import "../styles/listings.css";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import profileplaceholder from "../assets/images/profileplaceholder.png";
 // importando o componente de interação
 import ListingInteractionBox from "./ListingInteractionBox";
 import { useUser } from "../context/UserContext";
+import { fetchAllAds } from "./functions/addComponentFuncitons";
+import { interleaveAds } from "../utils/interLeaveAds.js";
 
 const baseURL = process.env.REACT_APP_API_BASE_URL;
 
 const Listings = () => {
   const { currentUser } = useUser(); // Access the current user
   const [items, setItems] = useState([]); // Store the listings
+  const [ads, setAds] = useState([]); // Store the ads
   const [loading, setLoading] = useState(true); // Track loading state
   const [comment, setComments] = useState([]);
   const [votedPolls, setVotedPolls] = useState({});
@@ -28,10 +31,13 @@ const Listings = () => {
   const [openLeaderMenuId, setOpenLeaderMenuId] = useState(null);
   const [sharedListings, setSharedListings] = useState([]);
 
+    // Carrega ADS
+  useEffect(() => {
+    fetchAllAds(setAds);
+  }, []);
+
   // Logging whenever newCommentId changes
   useEffect(() => {
-    // console.log("trying to fetch the newCommentId");
-
     if (newCommentId) {
       console.log("New Comment ID set in state:", newCommentId);
     }
@@ -107,6 +113,13 @@ const Listings = () => {
 
     if (currentUser !== undefined) fetchListings();
   }, [currentUser]);
+
+    // ---- Mix: listings + ads em intervalos aleatórios ----
+  const feed = useMemo(() => {
+    if (!items.length) return [];
+    return interleaveAds(items, ads, { min: 4, max: 8 }); // ajuste o range se quiser
+  }, [items, ads]);
+
 
   // Use handleFetchComments, passing in setItems to manage comments
   const fetchCommentsForListing = (listingId) => {
@@ -333,11 +346,14 @@ const Listings = () => {
   };
 
   // Gera uma key única por "instância" no feed
+   // Keys (cobre 'ad' também)
   const keyForListing = (it) => {
+    if (it.type === "ad") {
+      return `ad_${it._id}_${it.__adIndex ?? 0}_${it.createdAt || ""}`;
+    }
     const rep = it.__feed?.reposter;
-    const repId = typeof rep === "object" ? rep?._id : rep || "orig"; // "orig" quando não é repost
+    const repId = typeof rep === "object" ? rep?._id : rep || "orig";
     const ts = it.__feed?.feedCreatedAt || it.createdAt || it.updatedAt || "";
-    // Sempre inclui o _id do listing + quem repostou + "momento" no feed
     return `${it._id}__${repId}__${ts}`;
   };
 
@@ -345,8 +361,44 @@ const Listings = () => {
     <div className="landingListingsContainer">
       {loading ? (
         <p>Loading listings...</p>
-      ) : items.length > 0 ? (
-        items.map((listing) => (
+      ) : feed.length > 0 ? (
+        feed.map((entry) => {
+          if (entry.type === "ad") {
+            const ad = entry;
+            return (
+              <div
+                key={keyForListing(ad)}
+                className="landingListingContainer adContainer"
+                style={{ border: "1px dashed #2a68d8", borderRadius: 8 }}
+              >
+                <a
+                  href={ad.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ textDecoration: "none", color: "inherit" }}
+                >
+                  <div className="listing-content">
+                    <div className="heading">
+                      <h2 style={{ marginBottom: 8 }}>{ad.title || "Anúncio"}</h2>
+                      {ad.description && <p style={{ textAlign: "justify" }}>{ad.description}</p>}
+                    </div>
+                    {ad.imageUrl && (
+                      <img
+                        src={ad.imageUrl}
+                        alt={ad.title || "Ad"}
+                        className="listingImage"
+                        style={{ width: "100%", height: "auto" }}
+                      />
+                    )}
+                  </div>
+                </a>
+                <div style={{ fontSize: 12, opacity: 0.7, marginTop: 6 }}>patrocinado</div>
+              </div>
+            );
+        } 
+        
+        const listing = entry;
+        return (
           <div
             key={keyForListing(listing)}
             className="landingListingContainer"
@@ -691,8 +743,9 @@ const Listings = () => {
               setItems={setItems}
             />
           </div>
-        ))
-      ) : (
+        );
+      })
+     ) : (
         <p>No listings available</p>
       )}
     </div>
