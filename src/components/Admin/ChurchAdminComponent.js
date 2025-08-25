@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useChurchesAdmin } from "./functions/ChurchesFunctions";
 import "../../styles/Admin.css";
+import Header from "../Header";
+import { useNavigate } from "react-router-dom";
 
 export const ChurchesAdmin = () => {
   const {
@@ -25,11 +27,18 @@ export const ChurchesAdmin = () => {
     geocodeAddress,
   } = useChurchesAdmin();
 
+  const navigate = useNavigate()
   const [selectedTab, setSelectedTab] = useState("");
 
   const API = process.env.REACT_APP_API_BASE_URL;
 
   return (
+    <>
+    <Header 
+      showBackArrow={true} 
+      navigate={navigate}
+      showProfileImage={false}
+    />
     <div className="adminPage grid md:grid-cols-2 gap-4">
       <select
         className="fwSellect"
@@ -465,5 +474,6 @@ export const ChurchesAdmin = () => {
         </div>
       )}
     </div>
+    </>
   );
 };

@@ -362,8 +362,9 @@ const BibleStudiesByTheme = () => {
   }, [q]);
 
   return (
-    <div>
+    <>
       <Header showProfileImage={false} navigate={navigate} />
+    <div className="landingListingsContainer">
       <div style={styles.container}>
         <h1 style={{ margin: "8px 0 4px" }}>Estudos por Temas</h1>
         <p style={{ margin: "0 0 12px", opacity: 0.9 }}>
@@ -398,6 +399,7 @@ const BibleStudiesByTheme = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 
