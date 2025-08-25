@@ -1,78 +1,93 @@
 // src/utils/interleaveAds.js
-const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const uniqueIncreasing = (arr, maxPos) => {
+  // garante ordem estritamente crescente e dentro do range
+  for (let i = 1; i < arr.length; i++) {
+    if (arr[i] <= arr[i - 1]) arr[i] = arr[i - 1] + 1;
+  }
+  // se estourar o limite, empurra para a esquerda
+  for (let i = arr.length - 1; i >= 0; i--) {
+    if (arr[i] > maxPos) arr[i] = maxPos - (arr.length - 1 - i);
+  }
+  return arr.map((x) => clamp(x, 1, maxPos));
+};
 
 /**
- * Intercala ads dentro de listings com intervalos aleatórios, adaptando para feeds curtos.
+ * Intercala todos os ads no feed.
+ * Regras:
+ *  - L <= 4  -> alterna listing/ad e depois coloca o resto dos ads.
+ *  - L >= 5  -> distribui todos os ads em posições quase uniformes (com jitter opcional),
+ *               evitando “cauda” (últimos N itens).
+ *
  * @param {Array} listings - itens do feed (listings normalizados)
  * @param {Array} ads - array de ads [{_id, title, description, imageUrl, link, createdBy, ...}]
- * @param {{min?:number, max?:number, avoidTail?:number, ensureAtLeastOne?:boolean, maxAds?:number}} opts
- *   min/max: intervalo alvo de distância entre anúncios
- *   avoidTail: quantos itens finais evitar para não deixar ad colado no fim (padrão: 1)
- *   ensureAtLeastOne: garante ao menos 1 anúncio se houver listings (padrão: true)
- *   maxAds: limite superior de anúncios no feed (padrão: Infinity)
- * @returns {Array} feed misto
+ * @param {{avoidTail?:number, jitter?:number}} opts
+ *    avoidTail: quantos itens finais evitar para não colar ad no fim (padrão: 1)
+ *    jitter: deslocamento aleatório máximo em torno das posições uniformes (padrão: 1)
+ * @returns {Array} feed misto (listings + ads com {type:"ad", __adIndex})
  */
-export function interleaveAds(
-  listings = [],
-  ads = [],
-  opts = {}
-) {
-  if (!Array.isArray(listings) || listings.length === 0) return [];
-  if (!Array.isArray(ads) || ads.length === 0) return listings;
+export function interleaveAds(listings = [], ads = [], opts = {}) {
+  const L = Array.isArray(listings) ? listings.length : 0;
+  const A = Array.isArray(ads) ? ads.length : 0;
 
-  const {
-    min = 5,
-    max = 9,
-    avoidTail = 1,
-    ensureAtLeastOne = true,
-    maxAds = Infinity,
-  } = opts;
+  if (L === 0 && A === 0) return [];
+  if (L === 0) {
+    // Se não há listagens, ainda assim mostre todos os ads.
+    return ads.map((ad, i) => ({ ...ad, type: "ad", __adIndex: i }));
+  }
+  if (A === 0) return listings;
 
-  const L = listings.length;
+  const { avoidTail = 1, jitter = 1 } = opts;
 
-  // Adapta os gaps para feeds curtos: pelo menos 1, no máx L-1
-  const effectiveMin = Math.max(1, Math.min(min, Math.ceil(L / 2)));
-  const effectiveMax = Math.max(effectiveMin, Math.min(max, Math.max(1, L - 1)));
+  // -------- Caso 1: poucas listagens (<= 4) -> alterna --------
+  if (L <= 4) {
+    const out = [];
+    const maxLen = Math.max(L, A);
+    for (let i = 0; i < maxLen; i++) {
+      if (i < L) out.push(listings[i]);
+      if (i < A) {
+        const ad = ads[i];
+        out.push({ ...ad, type: "ad", __adIndex: i });
+      }
+    }
+    return out;
+  }
 
+  // -------- Caso 2: 5+ listagens -> distribui todos os ads --------
+  // posições de inserção são "entre" itens: 1..(L - avoidTail)
+  const maxInsertPos = Math.max(1, L - avoidTail);
+
+  // Base uniformemente espaçada: pos ~ round((k+1) * (maxInsertPos+1) / (A+1))
+  let positions = Array.from({ length: A }, (_, k) => {
+    const base = Math.round(((k + 1) * (maxInsertPos + 1)) / (A + 1));
+    // aplica jitter leve (±jitter)
+    const delta = jitter > 0 ? Math.round((Math.random() * 2 - 1) * jitter) : 0;
+    return clamp(base + delta, 1, maxInsertPos);
+  });
+
+  positions = uniqueIncreasing(positions, maxInsertPos);
+
+  // constrói o feed inserindo após cada índice de listing correspondente
   const out = [];
   let adIdx = 0;
-  let adCount = 0;
-  let distance = 0; // distância desde o último ad inserido
-  let nextGap = randInt(effectiveMin, effectiveMax);
 
   for (let i = 0; i < L; i++) {
-    const it = listings[i];
-    out.push(it);
-    distance += 1;
+    out.push(listings[i]);
 
-    // Pode inserir ad aqui?
-    const notLastBlock = i < L - avoidTail; // evita cauda
-    const gapReached = distance >= nextGap;
-    const hasAdBudget = adCount < maxAds;
-
-    if (gapReached && notLastBlock && hasAdBudget) {
-      const ad = ads[adIdx % ads.length];
-      out.push({
-        ...ad,
-        type: "ad",
-        __adIndex: adIdx,
-      });
-      adIdx += 1;
-      adCount += 1;
-      distance = 0;
-      nextGap = randInt(effectiveMin, effectiveMax);
+    // após inserir o item na posição i (0-based), a "fenda" seguinte é i+1
+    while (adIdx < A && positions[adIdx] === i + 1) {
+      const ad = ads[adIdx];
+      out.push({ ...ad, type: "ad", __adIndex: adIdx });
+      adIdx++;
     }
   }
 
-  // Se nada foi inserido e queremos garantir ao menos 1 ad
-  if (adCount === 0 && ensureAtLeastOne) {
-    const insertAfter = Math.min(1, L - 1); // depois do primeiro item (se existir)
-    const ad = ads[0];
-    out.splice(insertAfter + insertAfter, 0, {
-      ...ad,
-      type: "ad",
-      __adIndex: 0,
-    });
+  // Se ainda sobraram ads (por causa de avoidTail/jitter), anexa no fim (conforme pedido)
+  while (adIdx < A) {
+    const ad = ads[adIdx];
+    out.push({ ...ad, type: "ad", __adIndex: adIdx });
+    adIdx++;
   }
 
   return out;
