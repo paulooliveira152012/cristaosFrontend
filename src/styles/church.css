@@ -29,7 +29,7 @@ img{ max-width:100%; display:block }
   align-items: flex-end;
   margin-bottom: 22px;
   width: 100%;
-  background-color: green;
+  background-color: #007bff;
 }
 .ch-hero__overlay{
   position:absolute; inset:0;

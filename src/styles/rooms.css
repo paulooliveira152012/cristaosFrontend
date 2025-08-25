@@ -107,7 +107,7 @@ body.dark-mode .landingLiveNewRoomContainer {
   top: 0;
   /* background-color: transparent; */
   border-radius: 20px;
-  background-color: green;
+  background-color: #007bff;
 }
 
 .leaveDMContainer {
