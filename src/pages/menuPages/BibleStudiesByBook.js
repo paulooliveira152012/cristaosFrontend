@@ -926,7 +926,7 @@ const BibleStudiesByBook = () => {
   }, [query, tab]);
 
   return (
-    <div>
+    <div className="screenWrapper">
       <Header showProfileImage={false} navigate={navigate} />
       <div style={styles.container}>
         <h1 style={styles.h1}>Estudos por Livro Bíblico</h1>
@@ -962,7 +962,6 @@ const BibleStudiesByBook = () => {
           ))}
         </div>
       </div>
-      <Footer />
     </div>
   );
 };

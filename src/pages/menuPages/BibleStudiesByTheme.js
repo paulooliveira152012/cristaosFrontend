@@ -397,7 +397,6 @@ const BibleStudiesByTheme = () => {
           </div>
         )}
       </div>
-      <Footer />
     </div>
   );
 };

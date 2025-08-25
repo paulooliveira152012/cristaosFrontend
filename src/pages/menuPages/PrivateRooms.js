@@ -403,7 +403,6 @@ const PrivateRooms = () => {
         )}
       </div>
 
-      <Footer />
 
       {showCreate && (
         <CreateRoomModal
