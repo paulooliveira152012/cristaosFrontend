@@ -108,6 +108,12 @@ const ListingInteractionBox = ({
   };
 
   const toggleShowComments = () => {
+    if(!currentUser) {
+      window.alert("Fazer login para interagir")
+      return
+    } ;
+
+
     setShowComments((prevShowComments) => !prevShowComments);
     setShowCommentBox((prevShowCommentBox) => !prevShowCommentBox);
   };
