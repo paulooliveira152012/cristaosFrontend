@@ -19,7 +19,9 @@ const SideMenuFullScreen = () => {
           <div
             className="sideMenuProfileImage"
             style={{
-              backgroundImage: `url(${currentUser?.profileImage || imagePlaceholder})`,
+              backgroundImage: `url(${
+                currentUser?.profileImage || imagePlaceholder
+              })`,
             }}
             onClick={() => navigate(`profile/${currentUser?._id}`)}
           />
@@ -29,18 +31,35 @@ const SideMenuFullScreen = () => {
       <div className="bottomFullScreen">
         {/* === Itens principais (igual ao SideMenu) === */}
         <ul className="menuOptionsFullScreen">
-          <li onClick={() => navigate("bibleStudies")}>Estudos Bíblico</li>
-          <li onClick={() => navigate("privateRooms")}>Salas de Reuniões Privadas</li>
-          <li onClick={() => navigate("counselingSessions")}>Sessões de Aconselhamento</li>
-          <li onClick={() => navigate("findGathering")}>Encontrar Reunião Próxima</li>
+          <li onClick={() => navigate("bibleStudiesBook")}>
+            Estudos Bíblicos (livros)
+          </li>
+          <li onClick={() => navigate("bibleStudiesTheme")}>
+            Estudos Bíblico (temas)
+          </li>
+          <li onClick={() => navigate("privateRooms")}>
+            Salas de Reuniões Privadas
+          </li>
+          <li onClick={() => navigate("counselingSessions")}>
+            Sessões de Aconselhamento
+          </li>
+          <li onClick={() => navigate("findGathering")}>
+            Encontrar Reunião Próxima
+          </li>
           <li onClick={() => navigate("promotions")}>Promoções</li>
-          <li onClick={() => navigate("communityForum")}>Fórum da Comunidade</li>
+          <li onClick={() => navigate("communityForum")}>
+            Fórum da Comunidade
+          </li>
         </ul>
 
         {/* === Secundários (igual ao SideMenu) === */}
         <ul className="secondaryMenuOptionsFullScreen">
-          <li onClick={() => navigate("guidelines")}>Diretrizes da Plataforma</li>
-          <li onClick={() => navigate("privacyPolicy")}>Política de Privacidade</li>
+          <li onClick={() => navigate("guidelines")}>
+            Diretrizes da Plataforma
+          </li>
+          <li onClick={() => navigate("privacyPolicy")}>
+            Política de Privacidade
+          </li>
           <li onClick={() => navigate("suggestions")}>Sugestões</li>
           <li onClick={() => navigate("contactUs")}>Fale Conosco</li>
           <li onClick={() => navigate("termsOfUse")}>Termos de Uso</li>
