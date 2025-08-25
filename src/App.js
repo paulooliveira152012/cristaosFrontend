@@ -2,6 +2,7 @@ import { useLocation } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { useNotification } from "./context/NotificationContext.js";
 import PTR from "pulltorefreshjs";
+import { ScrollToTop } from "./utils/ScrollToTop.js";
 
 // páginas
 import Landing from "./pages/landing";
@@ -157,6 +158,7 @@ const App = () => {
 const AppWithLocation = () => {
   const location = useLocation();
   const ptrRef = useRef(null);
+  const scrollRef = useRef(null);
 
   const shouldShowFooter =
     !location.pathname.startsWith("/mainChat") &&
@@ -279,7 +281,9 @@ const AppWithLocation = () => {
 
                 {/* 2nd main content */}
                 <div className="screenWrapper">
-                  <div className="scrollable">
+                  <div className="scrollable" ref={scrollRef}>
+                    <ScrollToTop targetRef={scrollRef} />
+
                     <div
                       style={{
                         flex: 1,
