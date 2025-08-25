@@ -23,6 +23,7 @@ import {
   submitMuralContent,
   getMuralContent,
   handleSaveBio,
+  coverSelected,
 } from "./functions/profilePageFunctions";
 import { useProfileLogic } from "./functions/useProfileLogic";
 
@@ -131,51 +132,7 @@ const Profile = () => {
   // adicione perto dos outros states
   const [uploading, setUploading] = useState(false);
 
-  // implemente um uploader simples (ajuste a URL conforme sua API)
-  // uploader simples (ajuste apiUrl se preciso)
-  // 1) Fazer upload e RETORNAR a URL (sem setar estado aqui)
-const uploadCover = async (file) => {
-  const fd = new FormData();
-  fd.append("file", file); // a rota espera "file"
-
-  const res = await fetch(`${apiUrl}/api/profile/coverImage`, {
-    method: "PUT",
-    body: fd,                  // NÃO coloque headers Content-Type aqui
-    credentials: "include",    // se o protect usa cookie
-  });
-
-  if (!res.ok) {
-    const t = await res.text().catch(() => "");
-    throw new Error(`Falha no upload (${res.status}) ${t}`);
-  }
-  const { url } = await res.json();
-  if (!url) throw new Error("Resposta sem URL");
-  return url;
-};
-
-  // 2) Tratar estado (uploading / setUser) apenas AQUI
-  const handleCoverSelected = async (e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  if (!file.type?.startsWith("image/")) {
-    alert("Escolha um arquivo de imagem."); e.target.value = ""; return;
-  }
-  if (file.size > 7 * 1024 * 1024) {
-    alert("Imagem muito grande (máx 7MB)."); e.target.value = ""; return;
-  }
-
-  try {
-    setUploading(true);
-    const url = await uploadCover(file);
-    setUser((u) => (u ? { ...u, profileBackgroundCover: url } : u));
-  } catch (err) {
-    console.error(err);
-    alert("Falha ao enviar a imagem.");
-  } finally {
-    setUploading(false);
-    e.target.value = "";
-  }
-};
+  
 
   const updateProfileBackground = () => {
     if (!isOwner) return;
@@ -265,6 +222,11 @@ const uploadCover = async (file) => {
     const res = await removeFriend(friendId);
     if (res.error) alert(res.error);
     else alert("Amigo removido.");
+  };
+
+  // utilizando função importada
+  const handleCoverSelected = (e) => {
+    coverSelected(e, setUploading, setUser);
   };
 
   const renderFriendAction = () => {
