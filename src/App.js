@@ -177,8 +177,10 @@ const AppWithLocation = () => {
       location.pathname.startsWith("/liveRoom") ||
       location.pathname.startsWith("/mainChat") ||
       location.pathname.startsWith("/privateChat");
+      location.pathname.startsWith("/globe"); // 👈 aqui
 
     if (disabled) return;
+
 
     // usa o contêiner que rola no seu layout
     const selector = ".scrollable";
