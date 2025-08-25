@@ -552,3 +552,19 @@ body.dark-mode .onlineStatus {
 html, body, #root {
   overscroll-behavior-y: contain;
 }
+
+/* quando o menu abre, congele o feed principal */
+.scrollable.no-scroll {
+  overflow: hidden;
+  touch-action: none;         /* evita gestos no feed enquanto o menu está aberto */
+  overscroll-behavior: contain;
+}
+
+/* a área rolável DENTRO do menu */
+.scrollableMenuContent {
+  max-height: calc(100vh - 120px); /* ajuste conforme seu header/footer do menu */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;    /* não “vaza” o bounce pro body/feed */
+  touch-action: pan-y;
+}

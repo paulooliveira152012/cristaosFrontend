@@ -192,8 +192,12 @@ const AppWithLocation = () => {
       distMax: 100,
       distReload: 70,
       refreshTimeout: 300,
+
       shouldPullToRefresh() {
-        // só ativa no topo do scroll
+        // ❌ não puxa para atualizar se o menu estiver aberto
+        if (document.body.dataset.menuOpen === "1") return false;
+
+        // ✅ só permite quando o feed principal está no topo
         return el.scrollTop === 0;
       },
       onRefresh() {

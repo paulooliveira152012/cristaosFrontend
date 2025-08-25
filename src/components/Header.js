@@ -34,7 +34,8 @@ const Header = ({
   const { currentUser } = useUser();
   const [newRoomTitle, setNewRoomTitle] = useState(roomTitle);
   const [showSideMenu, setShowSideMenu] = useState(false);
-  const [showPrivateMessagingSettings, setShowPrivateMessagingSettings] = useState(false);
+  const [showPrivateMessagingSettings, setShowPrivateMessagingSettings] =
+    useState(false);
 
   useEffect(() => {
     setNewRoomTitle(roomTitle || "");
@@ -43,11 +44,14 @@ const Header = ({
   const toggleSideMenu = () => setShowSideMenu((prev) => !prev);
 
   useEffect(() => {
-    const scrollEl = document.getElementById("scrollableContainer");
+    // mostra/esconde scroll do feed principal
+    const scrollEl = document.querySelector(".scrollable");
     if (scrollEl) {
-      if (showSideMenu) scrollEl.classList.add("no-scroll");
-      else scrollEl.classList.remove("no-scroll");
+      scrollEl.classList.toggle("no-scroll", showSideMenu);
     }
+
+    // sinal global pro app: menu aberto/fechado
+    document.body.dataset.menuOpen = showSideMenu ? "1" : "";
   }, [showSideMenu]);
 
   return (
@@ -80,7 +84,9 @@ const Header = ({
               className="headerProfileImage"
               onClick={toggleSideMenu}
               style={{
-                backgroundImage: `url(${currentUser?.profileImage || imagePlaceholder})`,
+                backgroundImage: `url(${
+                  currentUser?.profileImage || imagePlaceholder
+                })`,
               }}
             />
           )}
