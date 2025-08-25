@@ -6,7 +6,8 @@ import { useNavigate } from 'react-router-dom';
 const PlatformGuidelines = () => {
   const navigate = useNavigate()
   return (
-    <div className='screenWrapper'>
+    <>
+    <div className='landingListingsContainer'>
       <div className='scrollable'>
 
       <Header showProfileImage={false} navigate={navigate}/>
@@ -155,6 +156,7 @@ const PlatformGuidelines = () => {
         </section>
       </div>
     </div>
+    </>
   );
 };
 
