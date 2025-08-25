@@ -170,22 +170,12 @@ export const sendMessageUtil = ({
   }
 };
 
-export const handleDeleteMessageUtil = ({
-  socket,
-  messageId,
-  currentUser,
-  roomId,
-}) => {
-  if (!socket || typeof socket.emit !== "function") return;
-  if (!currentUser || !currentUser._id) return;
-  if (!messageId) return;
-
-  socket.emit("deleteMessage", {
-    messageId,
-    userId: currentUser._id,
-    roomId,
-  });
+export const handleDeleteMessageUtil = ({ socket, messageId }) => {
+  if (!socket?.emit || !messageId) return;
+  socket.emit("deleteMessage", { messageId: String(messageId) });
 };
+
+
 
 export const handleToggleMicrophoneUtil = async ({
   socket, // obrigatório
