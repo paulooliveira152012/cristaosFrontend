@@ -7,12 +7,13 @@ import Header from "../components/Header.js";
 import ChatComponent from "../components/ChatComponent.js";
 // todas as logicas importadas
 import {
-  updateRoomTitle,
+  handleSaveSettings,
+  updateRoomSettingsJson,
   deleteRoom,
   useJoinRoomEffect,
   useFetchRoomDataEffect,
   useJoinRoomListenersEffect,
-  useDebugCurrentUsersEffect,
+  useDebugCurrentUsersEffect, 
 } from "./functions/liveFuncitons.js";
 import "../styles/style.css";
 import "../styles/liveRoom.css";
@@ -50,6 +51,7 @@ const LiveRoom = () => {
   );
   const [isCreator, setIsCreator] = useState(false);
   const isRejoiningRef = useRef(false);
+  const [newCoverFile, setNewCoverFile] = useState(null); // File ou null
 
   const { handleLeaveRoom } = useRoom(); // ✅ CERTA
 
@@ -68,8 +70,27 @@ const LiveRoom = () => {
   // const { currentUsers } = useRoom()
   console.log("currentUsers:", currentUsers);
 
-  const handleUpdateRoomTitle = () =>
-    updateRoomTitle(roomId, newRoomTitle, setSala);
+  // 1) mantenha só ESTA função de salvar:
+const onSaveSettings = async () => {
+  try {
+    const updatedRoom = await handleSaveSettings({
+      baseUrl,
+      roomId,
+      title: newRoomTitle,
+      coverFile: newCoverFile,
+    });
+    setSala(updatedRoom);
+    setRoomTheme(`bem vindo a sala ${updatedRoom?.roomTitle}`);
+    setShowSettingsModal(false);
+    setNewCoverFile(null);
+  } catch (err) {
+    console.error(err);
+    alert("Não foi possível atualizar a sala.");
+  }
+};
+
+
+  
   const handleDeleteRoom = () => deleteRoom(roomId, navigate);
 
   if (!sala && !roomId) return <p>Error: Room information is missing!</p>;
@@ -137,14 +158,16 @@ const LiveRoom = () => {
       </div>
 
       {showSettingsModal && (
-        <RoomMenuModal 
+        <RoomMenuModal
           setShowSettingsModal={setShowSettingsModal}
-          setNewRoomTitle={setNewRoomTitle}
-          handleUpdateRoomTitle={handleUpdateRoomTitle}
+          newRoomTitle={newRoomTitle}
+          setNewRoomTitle={setNewRoomTitle} 
+           handleUpdateRoomTitle={onSaveSettings} 
           handleDeleteRoom={handleDeleteRoom}
+          onChooseCover={setNewCoverFile}
+          currentCoverUrl={sala?.coverUrl || ""} // URL atual p/ preview
         />
       )}
-      
     </div>
   );
 };

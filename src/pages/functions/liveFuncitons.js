@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import { uploadImageToS3 } from "../../utils/s3Upload";
+
 const baseUrl = process.env.REACT_APP_API_BASE_URL
 
 // Function to update room title using fetch
@@ -257,3 +259,31 @@ export const useDebugCurrentUsersEffect = (currentUsers) => {
     console.log("👥 Lista atual de ouvintes:", currentUsers);
   }, [currentUsers]);
 };
+
+// liveFuncitons.js
+export async function updateRoomSettingsJson(baseUrl, roomId, { title, coverUrl }) {
+  const res = await fetch(`${baseUrl}/api/rooms/update/${roomId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      ...(title ? { newTitle: title } : {}),
+      ...(coverUrl ? { coverUrl } : {}),
+    }),
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Falha ao atualizar sala: ${res.status} - ${txt}`);
+  }
+  const data = await res.json();
+  return data.room;
+}
+
+export async function handleSaveSettings({ baseUrl, roomId, title, coverFile }) {
+  let coverUrl;
+  if (coverFile) {
+    coverUrl = await uploadImageToS3(coverFile); // sobe no front e pega URL final
+  }
+  const room = await updateRoomSettingsJson(baseUrl, roomId, { title, coverUrl });
+  return room;
+}
