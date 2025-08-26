@@ -137,6 +137,11 @@ body.dark-mode .stickyHeader {
   z-index: 1000;
 }
 
+.modalLoadingContainer {
+  background-color: red;
+  position: absolute;
+}
+
 .modal-content {
   background: white;
   padding: 20px;

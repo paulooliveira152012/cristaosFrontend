@@ -23,6 +23,7 @@ import RoomMenuModal from "../components/liveRoom/RoomMenuModal.js";
 import VoiceComponent from "../components/VoiceComponent.js";
 import { handleBack } from "../components/functions/headerFunctions.js";
 import AudioContext from "../context/AudioContext.js";
+import { motion, AnimatePresence } from "framer-motion";
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
@@ -52,6 +53,7 @@ const LiveRoom = () => {
   const [isCreator, setIsCreator] = useState(false);
   const isRejoiningRef = useRef(false);
   const [newCoverFile, setNewCoverFile] = useState(null); // File ou null
+  const [isLoading, setIsLoading] = useState(false)
 
   const { handleLeaveRoom } = useRoom(); // ✅ CERTA
 
@@ -73,6 +75,7 @@ const LiveRoom = () => {
   // 1) mantenha só ESTA função de salvar:
 const onSaveSettings = async () => {
   try {
+     setIsLoading(true); // <- liga overlay
     const updatedRoom = await handleSaveSettings({
       baseUrl,
       roomId,
@@ -86,6 +89,8 @@ const onSaveSettings = async () => {
   } catch (err) {
     console.error(err);
     alert("Não foi possível atualizar a sala.");
+  } finally {
+    setIsLoading(false)
   }
 };
 
@@ -159,13 +164,14 @@ const onSaveSettings = async () => {
 
       {showSettingsModal && (
         <RoomMenuModal
-          setShowSettingsModal={setShowSettingsModal}
+          setShowSettingsModal={(v) => !isLoading && setShowSettingsModal(v)} // não fecha se loading
           newRoomTitle={newRoomTitle}
           setNewRoomTitle={setNewRoomTitle} 
-           handleUpdateRoomTitle={onSaveSettings} 
+          handleUpdateRoomTitle={onSaveSettings} 
           handleDeleteRoom={handleDeleteRoom}
           onChooseCover={setNewCoverFile}
           currentCoverUrl={sala?.coverUrl || ""} // URL atual p/ preview
+          isLoading={isLoading}    
         />
       )}
     </div>
