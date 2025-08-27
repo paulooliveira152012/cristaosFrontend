@@ -8,9 +8,13 @@ import "../styles/Login.css";
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
-/* Modal simples de Termos */
+/* Modal de Termos (reseta a caixa ao abrir) */
 const TermsModal = ({ open, onClose, onConfirm }) => {
   const [checked, setChecked] = useState(false);
+  useEffect(() => {
+    if (open) setChecked(false);
+  }, [open]);
+
   if (!open) return null;
 
   return (
@@ -23,7 +27,7 @@ const TermsModal = ({ open, onClose, onConfirm }) => {
             Ao continuar, você declara que leu e concorda com os{" "}
             <a href="/termsOfUse" target="_blank" rel="noreferrer">Termos de Uso</a>{" "}
             e a{" "}
-            <a href="/privacy" target="_blank" rel="noreferrer">Política de Privacidade</a>{" "}
+            <a href="/privacyPolicy" target="_blank" rel="noreferrer">Política de Privacidade</a>{" "}
             do Cristãos App.
           </p>
         </div>
@@ -53,15 +57,17 @@ const Login = () => {
   const { login } = useUser();
   const navigate = useNavigate();
 
-  // formulario (email/senha)
+  // formulário (email/senha)
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  // termos + google
+  // termos (modal) + pendências
   const [showTerms, setShowTerms] = useState(false);
-  const [pendingCred, setPendingCred] = useState(null); // guarda credential do Google
+  const [pendingCred, setPendingCred] = useState(null); // Google credential
+  const [pendingEmail, setPendingEmail] = useState(null); // { identifier, password }
   const [submittingGoogle, setSubmittingGoogle] = useState(false);
+  const [submittingEmail, setSubmittingEmail] = useState(false);
 
   useEffect(() => {
     if (window.google) {
@@ -76,27 +82,41 @@ const Login = () => {
     }
   }, []);
 
-  // ---- Login por e-mail/senha (sem termos aqui; se quiser, trate 428 também) ----
+  // ------- LOGIN EMAIL/SENHA -------
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
+    // primeira tentativa SEM acceptTerms
+    setPendingEmail({ identifier, password });
+    await submitPasswordLogin({ identifier, password }, false);
+  };
+
+  const submitPasswordLogin = async (creds, acceptTerms) => {
+    if (submittingEmail) return;
+    setSubmittingEmail(true);
     try {
       const response = await fetch(`${baseUrl}/api/users/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier, password }),
         credentials: "include",
+        body: JSON.stringify({
+          identifier: creds.identifier,
+          password: creds.password,
+          acceptTerms, // <- chave para registrar aceite
+        }),
       });
       const data = await response.json();
 
-      // dica: se seu /login também retornar 428 TERMS_REQUIRED,
-      // você pode abrir o mesmo modal e, ao confirmar, chamar um endpoint
-      // /users/accept-terms para marcar o aceite antes de completar o login.
-
       if (!response.ok) {
+        if (response.status === 428 && data?.code === "TERMS_REQUIRED") {
+          setShowTerms(true);
+          return;
+        }
         setError(data.message || "Login failed");
         return;
       }
 
+      // OK
       login(data.user);
       connectSocket(data.token);
       localStorage.setItem("auth:event", String(Date.now()));
@@ -104,23 +124,24 @@ const Login = () => {
     } catch (err) {
       console.error(err);
       setError("Something went wrong. Please try again.");
+    } finally {
+      setSubmittingEmail(false);
     }
   };
 
-  // ---- Google One Tap/Button ----
+  // ------- LOGIN GOOGLE -------
   const handleGoogleCallback = async (response) => {
     setError("");
     const cred = response?.credential;
     if (!cred) return;
 
-    // Primeiro tentamos logar SEM aceitar termos;
-    // se o backend exigir (428 TERMS_REQUIRED), abrimos o modal.
+    // primeira tentativa SEM acceptTerms
     setPendingCred(cred);
     await submitGoogleLogin(cred, false);
   };
 
   const submitGoogleLogin = async (credential, acceptTerms) => {
-    if (!credential || submittingGoogle) return;
+    if (submittingGoogle) return;
     setSubmittingGoogle(true);
 
     try {
@@ -134,7 +155,6 @@ const Login = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        // Se o backend exige aceite, abrimos o modal
         if (res.status === 428 && data?.code === "TERMS_REQUIRED") {
           setShowTerms(true);
           return;
@@ -156,29 +176,38 @@ const Login = () => {
     }
   };
 
-  // Confirmou termos no modal → reenviamos com acceptTerms: true
+  // ------- MODAL: confirmar/cancelar -------
   const confirmTermsAndContinue = async () => {
-    if (!pendingCred) return;
     setShowTerms(false);
-    await submitGoogleLogin(pendingCred, true);
-    setPendingCred(null);
+
+    // Se for Google, reenvia com acceptTerms: true
+    if (pendingCred) {
+      const cred = pendingCred;
+      setPendingCred(null);
+      await submitGoogleLogin(cred, true);
+      return;
+    }
+
+    // Se for email/senha, reenvia com acceptTerms: true
+    if (pendingEmail) {
+      const creds = pendingEmail;
+      setPendingEmail(null);
+      await submitPasswordLogin(creds, true);
+      return;
+    }
   };
 
   const closeTerms = () => {
     setShowTerms(false);
-    // se fechar, limpamos a credencial; o usuário pode clicar de novo no botão do Google
-    setPendingCred(null);
+    // não limpar pending* aqui para permitir confirmar depois se desejar
+    // (mas se preferir, pode limpar para obrigar o usuário a recomeçar o fluxo)
   };
 
   return (
     <div className="screenWrapper">
       <Header showLoginButton={false} showProfileImage={false} navigate={navigate} />
 
-      <TermsModal
-        open={showTerms}
-        onClose={closeTerms}
-        onConfirm={confirmTermsAndContinue}
-      />
+      <TermsModal open={showTerms} onClose={closeTerms} onConfirm={confirmTermsAndContinue} />
 
       <div className="loginContainer">
         <h2 className="title">Login</h2>
@@ -208,9 +237,11 @@ const Login = () => {
             />
           </div>
 
-          <button type="submit" className="button">Login</button>
+          <button type="submit" className="button" disabled={submittingEmail}>
+            {submittingEmail ? "Entrando..." : "Login"}
+          </button>
 
-          <div id="googleSignInDiv" style={{ marginTop: 20 }}></div>
+          <div id="googleSignInDiv" style={{ marginTop: 20 }} />
         </form>
 
         <p style={{ marginTop: 20 }}>
