@@ -167,7 +167,7 @@ const Footer = () => {
 
       <div className="notificationIcon" onClick={navigateToMainChat}>
         {location.pathname === "/chat" ? <MessageIconSolid className="icon" /> : <MessageIcon className="icon" />}
-        {total > 0 && <span className="notificationStatus">{total}</span>}
+        {currentUser && total > 0 && <span className="notificationStatus">{total}</span>}
       </div>
 
       {currentUser && (
@@ -179,7 +179,7 @@ const Footer = () => {
       <div className="notificationIcon" onClick={openNotifications}>
         <Link to="/notifications">
           {location.pathname === "/notifications" ? <BellIconSolid className="icon" /> : <BellIcon className="icon" />}
-          {unreadCount > 0 && <span className="notificationStatus">{unreadCount}</span>}
+          {currentUser && unreadCount > 0 && <span className="notificationStatus">{unreadCount}</span>}
         </Link>
       </div>
 
