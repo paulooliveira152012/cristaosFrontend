@@ -73,6 +73,10 @@ const AllUsersPage = () => {
 
   // 6) Enviar pedido (marca como pendente, não como amigo)
   const handleAddFriend = async (targetId) => {
+    if (!currentUser) {
+      window.alert("Voce precisa estar logado para solicitar amizade")
+      return
+    }
     try {
       setSending((s) => ({ ...s, [targetId]: true }));
       await sendFriendRequest(targetId);

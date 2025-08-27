@@ -321,6 +321,7 @@ export const rejectFriendRequest = async (requesterId) => {
 
 // 🔹 Remover amigo
 export const removeFriend = async (friendId) => {
+  console.log("removing friend...")
   try {
     const response = await fetch(
       `${baseUrl}/api/users/removeFriend/${friendId}`,
