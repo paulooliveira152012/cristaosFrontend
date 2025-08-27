@@ -7,6 +7,7 @@ import {
   markNotificationAsRead,
   acceptDmRequest,
   rejectDmRequest,
+  toggleNotificationsByEmail,
 } from "./functions/notificationsFunctions.js";
 import "../styles/notifications.css";
 import { useNavigate } from "react-router-dom";
@@ -33,7 +34,7 @@ const Avatar = ({ src, alt, size = 40 }) => {
       </div>
     );
   }
-  
+
   return (
     <img
       className="ntf-avatar"
@@ -64,66 +65,67 @@ const Loader = () => (
 );
 
 export const Notifications = () => {
-  const { socket } = useSocket();                   // ✅ desestrutura
+  const { socket } = useSocket(); // ✅ desestrutura
   const { currentUser } = useUser();
   const { setNotifications, setFromList, markAllSeen } = useNotification();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
+  const [notificationByEmail, setNotificationByEmail] = useState(false);
+  const [savingNotif, setSavingNotif] = useState(false);
   const navigate = useNavigate();
 
   // carregar + marcar lidas + limpar badge
   // carregar + marcar lidas + limpar badge
-useEffect(() => {
-  if (!currentUser) return;
+  useEffect(() => {
+    if (!currentUser) return;
 
-  markAllSeen(); // zera a badge na hora
-  let mounted = true;
+    markAllSeen(); // zera a badge na hora
+    let mounted = true;
 
-  (async () => {
-    try {
-      setLoading(true);
+    (async () => {
+      try {
+        setLoading(true);
 
-      // 👉 fetchNotifications deve retornar `null` em caso de erro/401
-      const allNotifs = await fetchNotifications();
+        // 👉 fetchNotifications deve retornar `null` em caso de erro/401
+        const allNotifs = await fetchNotifications();
 
-      if (allNotifs) {
-        const sorted = allNotifs
-          .filter(Boolean)
-          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        if (allNotifs) {
+          const sorted = allNotifs
+            .filter(Boolean)
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-        if (mounted) {
-          setItems(sorted);
-          setFromList(sorted);
+          if (mounted) {
+            setItems(sorted);
+            setFromList(sorted);
+          }
+
+          // Só marca como lidas se conseguiu buscar
+          try {
+            await markAllNotificationsAsRead();
+            markAllSeen();
+          } catch (e) {
+            console.warn("Falha ao marcar todas como lidas:", e);
+          }
+        } else {
+          // ❗ Falhou (ex.: 401) — NÃO sobrescreve estado local
+          console.warn("Não atualizando lista: fetchNotifications falhou.");
         }
-
-        // Só marca como lidas se conseguiu buscar
-        try {
-          await markAllNotificationsAsRead();
-          markAllSeen();
-        } catch (e) {
-          console.warn("Falha ao marcar todas como lidas:", e);
-        }
-      } else {
-        // ❗ Falhou (ex.: 401) — NÃO sobrescreve estado local
-        console.warn("Não atualizando lista: fetchNotifications falhou.");
+      } catch (e) {
+        console.error("Erro ao carregar notificações:", e);
+      } finally {
+        if (mounted) setLoading(false);
       }
-    } catch (e) {
-      console.error("Erro ao carregar notificações:", e);
-    } finally {
-      if (mounted) setLoading(false);
-    }
 
-    // Atualiza badge (usa headers com Bearer no footerFunctions)
-    setNotifications(false);
-    checkForNewNotifications(setNotifications);
-  })();
+      // Atualiza badge (usa headers com Bearer no footerFunctions)
+      setNotifications(false);
+      checkForNewNotifications(setNotifications);
+    })();
 
-  return () => {
-    mounted = false;
-  };
-}, [currentUser, setNotifications, markAllSeen, setFromList]);
-
+    return () => {
+      mounted = false;
+    };
+  }, [currentUser, setNotifications, markAllSeen, setFromList]);
 
   // push em tempo real: nova notificação enquanto está na tela
   useEffect(() => {
@@ -184,7 +186,10 @@ useEffect(() => {
 
   // util
   const resolveConversationId = (req) =>
-    req?.conversationId || req?.dmConversationId || req?.conversation?._id || null;
+    req?.conversationId ||
+    req?.dmConversationId ||
+    req?.conversation?._id ||
+    null;
 
   // DM
   const handleAcceptDm = async (request) => {
@@ -252,7 +257,9 @@ useEffect(() => {
 
     if (notif.type === "comment" || notif.type === "reply") {
       if (notif.listingId && notif.commentId) {
-        navigate(`/openListing/${notif.listingId}?commentId=${notif.commentId}`);
+        navigate(
+          `/openListing/${notif.listingId}?commentId=${notif.commentId}`
+        );
       } else if (notif.listingId) {
         navigate(`/openListing/${notif.listingId}`);
       }
@@ -274,10 +281,41 @@ useEffect(() => {
     );
   }
 
+  const handleToggleEmailNotification = async () => {
+    console.log("toggling email notification on page...");
+
+    const next = !notificationByEmail; // compute o PRÓXIMO valor
+    setNotificationByEmail(next); // otimista
+    setSavingNotif(true);
+
+    try {
+      const { notificationsByEmail } = await toggleNotificationsByEmail({
+        userId: currentUser._id,
+        enabled: next,
+      });
+      // garante que o estado reflete o valor confirmado pelo servidor
+      setNotificationByEmail(!!notificationsByEmail);
+    } catch (err) {
+      console.error(err);
+      // rollback
+      setNotificationByEmail(!next);
+      alert("Não foi possível atualizar sua preferência de e-mail.");
+    } finally {
+      setSavingNotif(false);
+    }
+  };
+
   return (
     <div className="ntf-screen">
       <div className="ntf-header">
         <h2>Notificações</h2>
+        <button onClick={handleToggleEmailNotification} disabled={savingNotif}>
+          {savingNotif
+            ? "salvando..."
+            : notificationByEmail
+            ? "ativado"
+            : "desativado"}
+        </button>
         <div className="ntf-header-actions">
           <span className="ntf-badge" title={`${items.length} no total`}>
             {items.length}
@@ -321,8 +359,15 @@ useEffect(() => {
                         title="Rejeitar"
                       >
                         {/* X icon */}
-                        <svg className="ntf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                          strokeLinecap="round" strokeLinejoin="round">
+                        <svg
+                          className="ntf-icon"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
                           <line x1="18" y1="6" x2="6" y2="18" />
                           <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
@@ -335,8 +380,15 @@ useEffect(() => {
                         title="Aceitar"
                       >
                         {/* check icon */}
-                        <svg className="ntf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                          strokeLinecap="round" strokeLinejoin="round">
+                        <svg
+                          className="ntf-icon"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
                       </button>
@@ -384,8 +436,15 @@ useEffect(() => {
                         aria-label="Rejeitar"
                         title="Rejeitar"
                       >
-                        <svg className="ntf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                          strokeLinecap="round" strokeLinejoin="round">
+                        <svg
+                          className="ntf-icon"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
                           <line x1="18" y1="6" x2="6" y2="18" />
                           <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
@@ -397,8 +456,15 @@ useEffect(() => {
                         aria-label="Aceitar"
                         title="Aceitar"
                       >
-                        <svg className="ntf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                          strokeLinecap="round" strokeLinejoin="round">
+                        <svg
+                          className="ntf-icon"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
                       </button>
@@ -422,11 +488,15 @@ useEffect(() => {
             {otherNotifications.map((notif) => (
               <article
                 key={notif._id}
-                className={`ntf-item clickable ${notif.isRead ? "read" : "unread"}`}
+                className={`ntf-item clickable ${
+                  notif.isRead ? "read" : "unread"
+                }`}
                 onClick={() => handleNotificationClick(notif)}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => e.key === "Enter" && handleNotificationClick(notif)}
+                onKeyDown={(e) =>
+                  e.key === "Enter" && handleNotificationClick(notif)
+                }
               >
                 <Avatar
                   src={notif.fromUser?.profileImage}
@@ -434,7 +504,9 @@ useEffect(() => {
                 />
                 <div className="ntf-item-body">
                   <div className="ntf-item-title">
-                    <strong>{notif.title || notif.fromUser?.username || "Notificação"}</strong>
+                    <strong>
+                      {notif.title || notif.fromUser?.username || "Notificação"}
+                    </strong>
                     <span className="ntf-dot" />
                     <span className="ntf-time">
                       {new Date(notif.createdAt).toLocaleString()}
