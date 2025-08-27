@@ -71,7 +71,7 @@ export const Notifications = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
-  const [notificationByEmail, setNotificationByEmail] = useState(false);
+  const [notificationByEmail, setNotificationByEmail] = useState(null);
   const [savingNotif, setSavingNotif] = useState(false);
   const navigate = useNavigate();
 
@@ -126,6 +126,18 @@ export const Notifications = () => {
       mounted = false;
     };
   }, [currentUser, setNotifications, markAllSeen, setFromList]);
+
+  // atualizar estado do botao de notificacoes com base no estado do backend
+  useEffect(() => {
+    if (!currentUser) return;
+    console.log("user:", currentUser)
+    // currentUser.notificationsByEmail = true ? setNotificationByEmail(true) : setNotificationByEmail(false)
+    setNotificationByEmail(
+      typeof currentUser.notificationByEmail === "boolean"
+      ? currentUser.notificationByEmail
+      : false
+    )
+  },[currentUser])
 
   // push em tempo real: nova notificação enquanto está na tela
   useEffect(() => {
