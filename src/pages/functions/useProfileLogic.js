@@ -205,6 +205,11 @@ export const useProfileLogic = ({
   };
   // handle share
   const handleShare = async (listingId) => {
+    if (!currentUser) {
+      window.alert("voce precisa estar logado para compartilhar")
+      return
+    } 
+
     const userId = currentUser._id;
 
     try {

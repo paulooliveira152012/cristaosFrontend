@@ -80,7 +80,7 @@ body.dark-mode .landingLiveNewRoomContainer {
   position: absolute; /* Usar fixed para garantir que o modal cubra a tela */
   left: 0;
   top: 0;
-  z-index: 10;
+  z-index: 10000;
   display: flex;
   justify-content: center; /* Centraliza verticalmente */
   align-items: center; /* Centraliza horizontalmente */

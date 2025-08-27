@@ -94,6 +94,7 @@ function normalizeDenomination(input = "") {
 const Profile = () => {
   const { socket } = useSocket();
   const { currentUser } = useUser();
+  const meId = currentUser?._id || null;
   const { userId } = useParams();
   const apiUrl = process.env.REACT_APP_API_BASE_URL;
   const navigate = useNavigate();
@@ -160,6 +161,7 @@ const Profile = () => {
     handleShare,
   } = useProfileLogic({
     currentUser,
+    currentUserId: meId,
     userListings,
     setUserListings,
     setSharedListings,
@@ -230,7 +232,7 @@ const Profile = () => {
   };
 
   const renderFriendAction = () => {
-    if (!currentUser || !user || currentUser._id === user._id) return null;
+    if (!currentUser || !user || isOwner) return null;
     const isFriend = currentUser.friends?.includes(user._id);
     const hasSentRequest = currentUser.sentFriendRequests?.includes(user._id);
     const hasReceivedRequest = currentUser.friendRequests?.includes(user._id);
@@ -277,7 +279,7 @@ const Profile = () => {
   const renderMoreMenu = () => (
     <div className="more-options">
       <ul>
-        {currentUser._id === user._id ? (
+        {isOwner ? (
           <li onClick={() => navigate("/settingsMenu")}>⚙️ Configurações</li>
         ) : (
           <>
@@ -343,6 +345,9 @@ const Profile = () => {
 
   return (
     <>
+    {/* <div className="modal">
+      <div className="modal-content"></div>
+    </div> */}
       <div className="profilePageBasicInfoContainer">
         <Header showProfileImage={false} navigate={navigate} />
         <div className="profilePageHeaderParentSection">
@@ -423,7 +428,7 @@ const Profile = () => {
                 <div className="bioSection">
                   {!bioEditing ? (
                     <>
-                      {currentUser._id == user._id ? (
+                      {isOwner? (
                         <p className={`bio ${bioLocal ? "" : "muted"}`}>
                           {bioText || "Escreva uma breve bio..."}
                         </p>
@@ -519,10 +524,9 @@ const Profile = () => {
 
               {/* ações à direita */}
               <div className="interactionButtons">
-                {(currentUser._id !== user._id ||
-                  currentUser._id === user._id) && (
+                {(currentUser) && (
                   <>
-                    {currentUser._id !== user._id && (
+                    {!isOwner && (
                       <button
                         className="chat-icon-button"
                         onClick={async () => {
@@ -629,7 +633,7 @@ const Profile = () => {
                 const isOpen = showListingMenu === listing._id;
                 return (
                   <div key={listing._id}>
-                    {currentUser._id === user._id && (
+                    {isOwner && (
                       <div className="listingUpdateBox">
                         <button
                           className="listingMenuTrigger"
