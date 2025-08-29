@@ -1,11 +1,9 @@
-// components/meetings/MeetingList.jsx
 import React from "react";
 
 function formatDateTime(iso) {
   if (!iso) return null;
   const d = new Date(iso);
   if (isNaN(d)) return null;
-  // pt-BR com data e hora curtinhas
   return new Intl.DateTimeFormat("pt-BR", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -21,19 +19,24 @@ export default function MeetingList({ items, onEdit, onDelete }) {
         const key = m._id || m.id;
         const title = m.name || m.title || "Sem título";
         const when = formatDateTime(m.meetingDate);
-        const hasCoords =
-          typeof m.lng === "number" &&
-          typeof m.lat === "number" &&
-          isFinite(m.lng) &&
-          isFinite(m.lat);
 
-        const coordsText = hasCoords
-          ? `${m.lat.toFixed(5)}, ${m.lng.toFixed(5)}`
-          : null;
+        // tenta pegar coords de m.lng/lat; se não tiver, pega de location
+        let lng = m.lng, lat = m.lat;
+        if (
+          (lng === undefined || lat === undefined) &&
+          m.location?.type === "Point" &&
+          Array.isArray(m.location.coordinates) &&
+          m.location.coordinates.length === 2
+        ) {
+          lng = m.location.coordinates[0];
+          lat = m.location.coordinates[1];
+        }
+        const nLng = Number(lng);
+        const nLat = Number(lat);
+        const hasCoords = Number.isFinite(nLng) && Number.isFinite(nLat);
 
-        const gmapsHref = hasCoords
-          ? `https://www.google.com/maps?q=${m.lat},${m.lng}`
-          : null;
+        const coordsText = hasCoords ? `${nLat.toFixed(5)}, ${nLng.toFixed(5)}` : null;
+        const gmapsHref = hasCoords ? `https://www.google.com/maps?q=${nLat},${nLng}` : null;
 
         return (
           <li
@@ -62,31 +65,21 @@ export default function MeetingList({ items, onEdit, onDelete }) {
                       📅 <span>{when}</span>
                     </div>
                   )}
-
                   {(m.address || hasCoords) && (
                     <div>
                       📍{" "}
-                      {m.address ? (
-                        <span>{m.address}</span>
-                      ) : (
-                        <span>{coordsText}</span>
-                      )}
+                      {m.address ? <span>{m.address}</span> : <span>{coordsText}</span>}
                       {gmapsHref && (
                         <>
                           {" "}
                           •{" "}
-                          <a
-                            href={gmapsHref}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
+                          <a href={gmapsHref} target="_blank" rel="noreferrer">
                             Ver no mapa
                           </a>
                         </>
                       )}
                     </div>
                   )}
-
                   {m.website && (
                     <div>
                       🔗{" "}
@@ -98,18 +91,13 @@ export default function MeetingList({ items, onEdit, onDelete }) {
                 </div>
 
                 {m.summary && (
-                  <div style={{ marginTop: 8, opacity: 0.95 }}>
-                    {m.summary}
-                  </div>
+                  <div style={{ marginTop: 8, opacity: 0.95 }}>{m.summary}</div>
                 )}
               </div>
 
               <div style={{ display: "flex", gap: 8, whiteSpace: "nowrap" }}>
                 <button onClick={() => onEdit?.(m)}>Editar</button>
-                <button
-                  onClick={() => onDelete?.(m)}
-                  style={{ color: "#b00020" }}
-                >
+                <button onClick={() => onDelete?.(m)} style={{ color: "#b00020" }}>
                   Deletar
                 </button>
               </div>

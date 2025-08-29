@@ -16,10 +16,10 @@ export const MeetingAdmin = () => {
   const [editing, setEditing] = useState(null);
   const [creating, setCreating] = useState(false);
 
-  const load = async () => {
+    const load = async () => {
     try {
       setLoading(true);
-      const arr = await getMeetings({ asArray: true }); // já vem array
+      const arr = await getMeetings(); // agora já vem normalizado
       setMeetings(arr);
     } catch (e) {
       console.error(e);

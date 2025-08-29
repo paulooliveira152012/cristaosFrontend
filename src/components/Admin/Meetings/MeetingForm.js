@@ -1,4 +1,4 @@
-// components/meetings/MeetingForm.jsx
+// components/Admin/Meetings/MeetingForm.jsx
 import React, { useState, useEffect } from "react";
 
 const EMPTY = {
@@ -6,12 +6,31 @@ const EMPTY = {
   summary: "",
   address: "",
   website: "",
-  meetingDate: "", // usado no <input type="datetime-local">
+  meetingDate: "", // string "YYYY-MM-DDThh:mm"
   lng: "",
   lat: "",
 };
 
-// Converte Date/ISO -> string "YYYY-MM-DDThh:mm" aceita pelo input datetime-local
+// ==== util: Mapbox geocoding (client-side) ====
+async function geocodeWithMapbox(address, token = process.env.REACT_APP_MAPBOX_TOKEN) {
+  if (!address?.trim()) throw new Error("Endereço vazio");
+  if (!token) throw new Error("MAPBOX token ausente (REACT_APP_MAPBOX_TOKEN)");
+
+  const base = "https://api.mapbox.com/geocoding/v5/mapbox.places";
+  const q = encodeURIComponent(address);
+  const params = new URLSearchParams({ access_token: token, limit: "1", country: "BR,US" });
+
+  const res = await fetch(`${base}/${q}.json?${params.toString()}`);
+  if (!res.ok) throw new Error(`Geocoding HTTP ${res.status}`);
+
+  const data = await res.json();
+  const f = data?.features?.[0];
+  if (!f?.center?.length) throw new Error("Endereço não encontrado");
+  const [lng, lat] = f.center;
+  return { lng, lat, place: f.place_name };
+}
+
+// Converte Date/ISO -> string "YYYY-MM-DDThh:mm"
 function toDatetimeLocalString(value) {
   if (!value) return "";
   const d = new Date(value);
@@ -33,16 +52,18 @@ export default function MeetingForm({
 }) {
   const [form, setForm] = useState(EMPTY);
 
+  // estados de geocoding
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [geoError, setGeoError] = useState("");
+
   useEffect(() => {
     if (!initialValues) {
       setForm(EMPTY);
       return;
     }
-
-    // base com valores padrões + dados recebidos
     const base = { ...EMPTY, ...initialValues };
 
-    // Se vier location GeoJSON do backend, extrai lng/lat
+    // se vier GeoJSON do backend
     if (
       initialValues.location?.type === "Point" &&
       Array.isArray(initialValues.location.coordinates) &&
@@ -52,7 +73,6 @@ export default function MeetingForm({
       base.lat = initialValues.location.coordinates[1];
     }
 
-    // Formata meetingDate (ISO) para o input datetime-local
     if (initialValues.meetingDate) {
       base.meetingDate = toDatetimeLocalString(initialValues.meetingDate);
     }
@@ -65,8 +85,27 @@ export default function MeetingForm({
     setForm((s) => ({ ...s, [name]: value }));
   };
 
+  // chama o Mapbox para preencher lng/lat a partir do endereço
+  const geocodeAddress = async () => {
+    if (!form.address?.trim()) return;
+    setGeoLoading(true);
+    setGeoError("");
+    try {
+      const { lng, lat, place } = await geocodeWithMapbox(form.address);
+      setForm((s) => ({
+        ...s,
+        lng: String(lng),
+        lat: String(lat),
+        address: place || s.address, // opcional: normaliza o texto
+      }));
+    } catch (e) {
+      setGeoError(e.message || "Falha ao geocodificar");
+    } finally {
+      setGeoLoading(false);
+    }
+  };
+
   const handleSubmit = (e) => {
-    console.log("submiring form 1")
     e.preventDefault();
 
     if (!form.name) {
@@ -74,11 +113,10 @@ export default function MeetingForm({
       return;
     }
     if (form.lng === "" || form.lat === "") {
-      alert("Preencha longitude e latitude.");
+      alert("Preencha longitude e latitude (ou use 'Buscar coords').");
       return;
     }
 
-    // Envia o objeto como está; o mapeamento final (GeoJSON/ISO) é feito na função create/update
     onSubmit(form);
   };
 
@@ -97,14 +135,35 @@ export default function MeetingForm({
         value={form.summary}
         onChange={handleChange}
         rows={3}
+        style={{width: "50%"}}
       />
 
-      <input
-        name="address"
-        placeholder="Endereço (texto livre)"
-        value={form.address}
-        onChange={handleChange}
-      />
+      {/* Endereço + buscar coords */}
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <input
+          name="address"
+          placeholder="Endereço (texto livre)"
+          value={form.address}
+          onChange={handleChange}
+          onBlur={geocodeAddress}          // <- dispara ao sair do campo
+          style={{ flex: 1 }}
+        />
+        <button
+          type="button"
+          onClick={geocodeAddress}
+          disabled={geoLoading || !form.address?.trim()}
+          style={{
+            padding: "8px 12px",
+            borderRadius: 8,
+            background: geoLoading ? "#ddd" : "#000",
+            color: "#fff",
+            width: "50%"
+          }}
+        >
+          {geoLoading ? "Buscando..." : "Buscar coords"}
+        </button>
+      </div>
+      {!!geoError && <div style={{ color: "#b00020", fontSize: 12 }}>{geoError}</div>}
 
       <input
         type="url"

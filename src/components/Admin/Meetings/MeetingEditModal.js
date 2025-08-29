@@ -1,4 +1,4 @@
-// components/meetings/MeetingEditModal.jsx
+// components/Admin/Meetings/MeetingEditModal.jsx
 import React from "react";
 
 export default function MeetingEditModal({ open, children, onClose, title = "Editar Reunião" }) {

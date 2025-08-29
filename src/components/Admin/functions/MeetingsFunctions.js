@@ -1,110 +1,120 @@
-// components/meetings/meetingApi.js
 const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
 
-// MeetingsFunctions.js
+/** Normaliza um doc vindo do back para o formato usado na UI */
+function normalizeMeeting(doc) {
+  // pode vir como { ... , location: { type:'Point', coordinates:[lng,lat] } }
+  let lng = doc.lng;
+  let lat = doc.lat;
+
+  if (
+    (lng === undefined || lat === undefined) &&
+    doc.location?.type === "Point" &&
+    Array.isArray(doc.location.coordinates) &&
+    doc.location.coordinates.length === 2
+  ) {
+    lng = doc.location.coordinates[0];
+    lat = doc.location.coordinates[1];
+  }
+
+  // coagir para número (o MeetingList testa typeof === 'number')
+  const nLng = Number(lng);
+  const nLat = Number(lat);
+
+  return {
+    _id: doc._id || doc.id,
+    name: doc.name || doc.title || "Sem título",
+    summary: doc.summary || doc.description || "",
+    address: doc.address || "",
+    website: doc.website || "",
+    meetingDate: doc.meetingDate || null,
+    lng: Number.isFinite(nLng) ? nLng : undefined,
+    lat: Number.isFinite(nLat) ? nLat : undefined,
+    // preserva location original caso precise
+    location: doc.location,
+  };
+}
 
 export const getMeetings = async () => {
-  console.log("fetching meetings...");
-  const res = await fetch(`${baseUrl}/api/intermeeting`, {
-    method: "GET",
-    // credentials: "include", // ative se sua API usa cookie auth
-  });
-
+  const res = await fetch(`${baseUrl}/api/intermeeting`, { method: "GET" });
   if (!res.ok) {
     const msg = await res.text().catch(() => "");
     throw new Error(`Falha ao carregar reuniões (HTTP ${res.status}) ${msg}`);
   }
+  const data = await res.json();
 
-  const data = await res.json(); // { meetings: [...] }
-  console.log("data:", data);
-  return Array.isArray(data.meetings) ? data.meetings : [];
+  // Aceita tanto { meetings: [...] } quanto [...] direto
+  const arr = Array.isArray(data) ? data : Array.isArray(data.meetings) ? data.meetings : [];
+  return arr.map(normalizeMeeting);
 };
 
-export function fcToArray(fc) {
-  if (!fc || !Array.isArray(fc.features)) return [];
-  return fc.features.map((f) => {
-    const [lng, lat] = f.geometry?.coordinates || [];
-    const p = f.properties || {};
-    return {
-      _id: p.id,
-      name: p.title,
-      summary: p.description,
-      address: p.address,
-      website: p.website,
-      meetingDate: p.meetingDate, // ISO string (converta no formulário se precisar)
-      url: p.url,
-      lng,
-      lat,
-    };
-  });
-}
+/** Converte o form do componente para o formato esperado pelo backend */
+function toApiPayload(form) {
+  const lng = Number(form.lng);
+  const lat = Number(form.lat);
 
-
-
-export async function createMeeting(form) {
-  console.log("criando um intermeeting");
-  console.log("form recebido:", form);
-  console.log("baseUrl:", baseUrl);
-
-  // Mapeia exatamente como o schema espera
-  const body = {
-    name: (form.name ?? form.title ?? "").trim(),                 // fallback para title
+  return {
+    name: (form.name ?? form.title ?? "").trim(),
     summary: (form.summary ?? form.description ?? "").trim(),
     address: (form.address ?? "").trim(),
     website: (form.website ?? "").trim(),
     meetingDate: form.meetingDate ? new Date(form.meetingDate).toISOString() : undefined,
-    location: {
-      type: "Point",
-      coordinates: [Number(form.lng), Number(form.lat)],          // [lng, lat]
-    },
+    location: Number.isFinite(lng) && Number.isFinite(lat)
+      ? { type: "Point", coordinates: [lng, lat] } // [lng, lat]
+      : undefined,
   };
+}
 
-  // Validações rápidas no cliente (opcional mas útil)
+export async function createMeeting(form) {
+  const body = toApiPayload(form);
+
   if (!body.name) throw new Error("Nome é obrigatório.");
-  if (!Number.isFinite(body.location.coordinates[0]) || !Number.isFinite(body.location.coordinates[1])) {
-    throw new Error("Longitude/latitude inválidas.");
-  }
+  if (!body.location) throw new Error("Longitude/latitude inválidas.");
 
-  const res = await fetch(`${baseUrl}/api/intermeeting/`, {
+  const res = await fetch(`${baseUrl}/api/intermeeting`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
     credentials: "include",
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    console.error("ERRO API createMeeting:", res.status, text);
     throw new Error(text || `Falha ao criar reunião (${res.status})`);
   }
 
-  // Backend retorna o doc direto
-  return res.json();
+  const created = await res.json();
+  return normalizeMeeting(created);
 }
 
+export async function updateMeeting(id, form) {
+  const body = toApiPayload(form);
+  if (!body.name) throw new Error("Nome é obrigatório.");
+  if (!body.location) throw new Error("Longitude/latitude inválidas.");
 
-export async function updateMeeting(id, payload) {
-  console.log("updating an existing meeting...")
-  console.log("payload:", payload)
   const res = await fetch(`${baseUrl}/api/intermeeting/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    credentials: "include",
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || `Falha ao atualizar reunião (${res.status})`);
+  }
+
+  const updated = await res.json();
+  return normalizeMeeting(updated);
+}
+
+export async function deleteMeeting(id) {
+  const res = await fetch(`${baseUrl}/api/intermeeting/${id}`, {
+    method: "DELETE",
     credentials: "include",
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    console.error("ERRO API createMeeting:", res.status, text);
-    throw new Error(text || `Falha ao criar reunião (${res.status})`);
+    throw new Error(text || `Falha ao excluir reunião (${res.status})`);
   }
-  return res.json(); // o backend devolve o doc direto
-}
-
-export async function deleteMeeting(id) {
-  const res = await fetch(`${baseUrl}/api/meetings/${id}`, {
-    method: "DELETE",
-    credentials: "include",
-  });
-  if (!res.ok) throw new Error("Falha ao excluir reunião");
   return res.json(); // { ok: true }
 }
