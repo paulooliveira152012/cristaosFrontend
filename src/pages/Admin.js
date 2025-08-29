@@ -5,8 +5,9 @@ import { MembersManager } from "../components/Admin/MemberAdminComponent";
 import { ListingAdmin } from "../components/Admin/ListingAdminComponent";
 import { StaffAdmin } from "../components/Admin/StaffAdminComponent";
 import { ReportAdmin } from "../components/Admin/ReportAdminComponent";
-import { MeetingAdmin } from "../components/Admin/MeetingAdminComponent";
+import { MeetingAdmin } from "../components/Admin/Meetings/MeetingAdmin";
 import { useNavigate } from "react-router-dom";
+
 import "../styles/Admin.css";
 
 
