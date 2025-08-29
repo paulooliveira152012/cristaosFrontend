@@ -84,7 +84,9 @@ export async function createMeeting(form) {
 
 
 export async function updateMeeting(id, payload) {
-  const res = await fetch(`${baseUrl}/api/meetings/${id}`, {
+  console.log("updating an existing meeting...")
+  console.log("payload:", payload)
+  const res = await fetch(`${baseUrl}/api/intermeeting/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
