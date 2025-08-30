@@ -35,7 +35,7 @@ function normalizeMeeting(doc) {
 }
 
 export const getMeetings = async () => {
-  const res = await fetch(`${baseUrl}/api/intermeeting`, { method: "GET" });
+  const res = await fetch(`${baseUrl}/api/intermeeting/geojson`, { method: "GET" });
   if (!res.ok) {
     const msg = await res.text().catch(() => "");
     throw new Error(`Falha ao carregar reuniões (HTTP ${res.status}) ${msg}`);
@@ -47,21 +47,33 @@ export const getMeetings = async () => {
   return arr.map(normalizeMeeting);
 };
 
-/** Converte o form do componente para o formato esperado pelo backend */
-function toApiPayload(form) {
-  const lng = Number(form.lng);
-  const lat = Number(form.lat);
 
-  return {
+
+/** Converte o form do componente para o formato esperado pelo backend */
+/** Converte o form do MeetingForm no payload que o back espera */
+function toApiPayload(form) {
+  const out = {
     name: (form.name ?? form.title ?? "").trim(),
     summary: (form.summary ?? form.description ?? "").trim(),
     address: (form.address ?? "").trim(),
     website: (form.website ?? "").trim(),
-    meetingDate: form.meetingDate ? new Date(form.meetingDate).toISOString() : undefined,
-    location: Number.isFinite(lng) && Number.isFinite(lat)
-      ? { type: "Point", coordinates: [lng, lat] } // [lng, lat]
+    meetingDate: form.meetingDate
+      ? new Date(form.meetingDate).toISOString()
       : undefined,
   };
+
+  // Lembre: o form guarda strings; convertemos para Number
+  const lng = Number(form.lng);
+  const lat = Number(form.lat);
+
+  if (Number.isFinite(lng) && Number.isFinite(lat)) {
+    // Envie nos dois formatos: facilita o back e mantém compatibilidade
+    out.location = { type: "Point", coordinates: [lng, lat] }; // [lng, lat]
+    out.lng = lng;
+    out.lat = lat;
+  }
+
+  return out;
 }
 
 export async function createMeeting(form) {
@@ -87,7 +99,9 @@ export async function createMeeting(form) {
 }
 
 export async function updateMeeting(id, form) {
+  console.log("updating meeting...")
   const body = toApiPayload(form);
+  console.log("form:", form)
   if (!body.name) throw new Error("Nome é obrigatório.");
   if (!body.location) throw new Error("Longitude/latitude inválidas.");
 

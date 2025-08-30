@@ -43,6 +43,7 @@ export const MeetingAdmin = () => {
   };
 
   const handleUpdate = async (payload) => {
+    console.log("atualizando...")
     try {
       const id = editing._id || editing.id;
       const updated = await updateMeeting(id, payload);
