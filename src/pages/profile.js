@@ -36,6 +36,10 @@ import {
 } from "react-icons/fi";
 import { useSocket } from "../context/SocketContext";
 
+import { 
+  banMember 
+} from "../functions/leaderFunctions.js";
+
 const imagePlaceholder = require("../assets/images/profileplaceholder.png");
 
 /* ---------------- helpers: normalização de denominação ---------------- */
@@ -130,10 +134,13 @@ const Profile = () => {
   const isOwner = String(currentUser?._id) === String(user?._id);
 
   const fileRef = useRef(null);
-  // adicione perto dos outros states
+
   const [uploading, setUploading] = useState(false);
 
-  
+  // is a leader
+  const isLeader = currentUser?.role === "leader";
+
+  console.log("is currentUser a leader?", isLeader);
 
   const updateProfileBackground = () => {
     if (!isOwner) return;
@@ -277,17 +284,29 @@ const Profile = () => {
   };
 
   const renderMoreMenu = () => (
-    <div className="more-options">
-      <ul>
-        {isOwner ? (
-          <li onClick={() => navigate("/settingsMenu")}>⚙️ Configurações</li>
-        ) : (
-          <>
-            <li>🚫 Bloquear</li>
-            <li>⚠️ Reportar</li>
-          </>
-        )}
-      </ul>
+    <div className="modal" onClick={() => setShowOptions(false)}>
+      <div className="modal-content">
+        <div className="more-options">
+          <ul>
+            {isOwner ? (
+              <li onClick={() => navigate("/settingsMenu")}>
+                ⚙️ Configurações
+              </li>
+            ) : (
+              <>
+                <li>🚫 Bloquear</li>
+                <li>⚠️ Reportar</li>
+                {isLeader && (
+                  <ul>
+                    <li onClick={() => handleBanMember()}>Banir</li>
+                    <li>Strike</li>
+                  </ul>
+                )}
+              </>
+            )}
+          </ul>
+        </div>
+      </div>
     </div>
   );
 
@@ -343,9 +362,23 @@ const Profile = () => {
     setOpenLeaderMenuId((prevId) => (prevId === listingId ? null : listingId));
   };
 
+  const handleBanMember = () => {
+    console.log("banning member")
+    console.log("isLeader?", isLeader)
+    console.log("userId:", userId)
+
+    banMember({ isLeader, userId })
+  }
+
+  // redirect to main page if user has been banned
+  if (user.isBanned) {
+    navigate("/") 
+    return
+  }
+
   return (
     <>
-    {/* <div className="modal">
+      {/* <div className="modal">
       <div className="modal-content"></div>
     </div> */}
       <div className="profilePageBasicInfoContainer">
@@ -428,7 +461,7 @@ const Profile = () => {
                 <div className="bioSection">
                   {!bioEditing ? (
                     <>
-                      {isOwner? (
+                      {isOwner ? (
                         <p className={`bio ${bioLocal ? "" : "muted"}`}>
                           {bioText || "Escreva uma breve bio..."}
                         </p>
@@ -524,7 +557,7 @@ const Profile = () => {
 
               {/* ações à direita */}
               <div className="interactionButtons">
-                {(currentUser) && (
+                {currentUser && (
                   <>
                     {!isOwner && (
                       <button
