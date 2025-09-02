@@ -375,12 +375,12 @@ const Profile = () => {
   }
 
   const handleStrike = ({ listingId, userId }) => {
-    console.log("initiating strike...")
-    console.log("listingId:", listingId)
-    console.log("userId:", userId)
+    console.log("initiating strike...");
+    console.log("listingId:", listingId);
+    console.log("userId:", userId);
 
-    strike({ listingId, userId })
-  }
+    strike({ listingId, userId });
+  };
 
   return (
     <>
@@ -824,7 +824,12 @@ const Profile = () => {
                                 //   strike({ listingId: listing._id, userId })
                                 // }
 
-                                onClick={() => handleStrike({ listingId: listing._id, userId })}
+                                onClick={() =>
+                                  handleStrike({
+                                    listingId: listing._id,
+                                    userId,
+                                  })
+                                }
                               >
                                 Strike
                               </button>
@@ -835,23 +840,42 @@ const Profile = () => {
                     )}
 
                     {listing.type === "image" && listing.imageUrl && (
+                      <Link to={`/openListing/${listing._id}`}>
                       <img
                         src={listing.imageUrl}
                         alt="Listing"
                         className="profile-listing-image"
                       />
+                      </Link>
                     )}
 
                     {listing.type === "blog" && (
-                      <div className="listing-content">
-                        <h2>{listing.blogTitle || ""}</h2>
-                        <p>
-                          {listing.blogContent?.slice(0, 150) || "No content."}
-                        </p>
-                      </div>
+                      <Link to={`/openListing/${listing._id}`}>
+                        <div className="listing-content">
+                          <h2>{listing.blogTitle || ""}</h2>
+                          <p>
+                            {listing.blogContent?.slice(0, 150) ||
+                              "No content."}
+                          </p>
+                          {listing.imageUrl && (
+                            <img
+                              src={listing.imageUrl}
+                              alt={`Listing image ${listing._id}`}
+                              className="listingImage"
+                              style={{
+                                width: "100%",
+                                maxWidth: "100%",
+                                height: "auto",
+                                // backgroundColor: "red",
+                              }}
+                            />
+                          )}
+                        </div>
+                      </Link>
                     )}
 
                     {listing.type === "poll" && listing.poll && (
+                      <Link to={`/openListing/${listing._id}`}>
                       <div className="poll-container">
                         <h3>{listing.poll.question}</h3>
                         <ul>
@@ -860,6 +884,7 @@ const Profile = () => {
                           ))}
                         </ul>
                       </div>
+                      </Link>
                     )}
 
                     {editingId === listing._id && (
