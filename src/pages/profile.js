@@ -374,6 +374,14 @@ const Profile = () => {
     return;
   }
 
+  const handleStrike = ({ listingId, userId }) => {
+    console.log("initiating strike...")
+    console.log("listingId:", listingId)
+    console.log("userId:", userId)
+
+    strike({ listingId, userId })
+  }
+
   return (
     <>
       {/* <div className="modal">
@@ -812,9 +820,11 @@ const Profile = () => {
                             </li>
                             <li>
                               <button
-                                onClick={() =>
-                                  strike({ listingId: listing._id, userId })
-                                }
+                                // onClick={() =>
+                                //   strike({ listingId: listing._id, userId })
+                                // }
+
+                                onClick={() => handleStrike({ listingId: listing._id, userId })}
                               >
                                 Strike
                               </button>
