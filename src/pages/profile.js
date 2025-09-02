@@ -36,9 +36,7 @@ import {
 } from "react-icons/fi";
 import { useSocket } from "../context/SocketContext";
 
-import { 
-  banMember 
-} from "../functions/leaderFunctions.js";
+import { banMember, strike } from "../functions/leaderFunctions.js";
 
 const imagePlaceholder = require("../assets/images/profileplaceholder.png");
 
@@ -363,17 +361,17 @@ const Profile = () => {
   };
 
   const handleBanMember = () => {
-    console.log("banning member")
-    console.log("isLeader?", isLeader)
-    console.log("userId:", userId)
+    console.log("banning member");
+    console.log("isLeader?", isLeader);
+    console.log("userId:", userId);
 
-    banMember({ isLeader, userId })
-  }
+    banMember({ isLeader, userId });
+  };
 
   // redirect to main page if user has been banned
   if (user.isBanned) {
-    navigate("/") 
-    return
+    navigate("/");
+    return;
   }
 
   return (
@@ -796,16 +794,33 @@ const Profile = () => {
                     </div>
 
                     {openLeaderMenuId === listing._id && (
-                      <div className="adminListingMenu">
-                        <ul>
-                          <li>
-                            <button
-                              onClick={() => handleDeleteListing(listing._id)}
-                            >
-                              delete
-                            </button>
-                          </li>
-                        </ul>
+                      <div
+                        className="modal"
+                        onClick={() => setOpenLeaderMenuId(false)}
+                      >
+                        <div
+                          className="modal-content"
+                          onClick={(e) => e.stopPropagation()} // 👈 impede o clique no fundo
+                        >
+                          <ul>
+                            <li>
+                              <button
+                                onClick={() => handleDeleteListing(listing._id)}
+                              >
+                                delete
+                              </button>
+                            </li>
+                            <li>
+                              <button
+                                onClick={() =>
+                                  strike({ listingId: listing._id, userId })
+                                }
+                              >
+                                Strike
+                              </button>
+                            </li>
+                          </ul>
+                        </div>
                       </div>
                     )}
 
