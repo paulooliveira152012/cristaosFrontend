@@ -17,8 +17,11 @@ const NewListing = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [listingType, setListingType] = useState("blog");
 
+  // blog
   const [blogTitle, setBlogTitle] = useState("");
   const [blogContent, setBlogContent] = useState("");
+  const [blogImage, setBlogImage] = useState("")
+
   const [image, setImage] = useState(null);
 
   // Reel
@@ -162,6 +165,10 @@ const NewListing = () => {
         imageUrl = await uploadImageToS3(image);
       }
 
+      if (listingType === "blog" && blogImage) {
+        imageUrl = await uploadImageToS3(blogImage)
+      }
+
       const listingData = {
         userId: currentUser._id,
         type: listingType,
@@ -296,13 +303,13 @@ const NewListing = () => {
                       setIsDragging(true);
                     }}
                     onDragLeave={() => setIsDragging(false)}
-                    onDrop={(e) => onDropFile(e, setImage)}
+                    onDrop={(e) => onDropFile(e, setBlogImage)}
                   >
                     <input
                       id="blogImage"
                       type="file"
                       accept="image/*"
-                      onChange={(e) => setImage(e.target.files[0])}
+                      onChange={(e) => setBlogImage(e.target.files[0])}
                     />
                     <span>Arraste uma imagem aqui ou clique para selecionar</span>
                   </div>
