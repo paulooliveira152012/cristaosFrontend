@@ -813,3 +813,7 @@ body.dark-mode .icon-btn svg {
   margin-top: 2px;
   
 }
+
+.strikeTextArea {
+  color: var(--fg-muted);
+}

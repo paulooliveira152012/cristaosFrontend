@@ -36,6 +36,8 @@ import {
 } from "react-icons/fi";
 import { useSocket } from "../context/SocketContext";
 
+// managing
+import { ManagingModal } from "../components/ManagingModal.js";
 import { banMember, strike } from "../functions/leaderFunctions.js";
 
 const imagePlaceholder = require("../assets/images/profileplaceholder.png");
@@ -127,7 +129,15 @@ const Profile = () => {
   const localBio = (bioLocal ?? "").trim();
   const bioText = userBio || localBio;
 
+  // principal modal de moderacão do lider
   const [openLeaderMenuId, setOpenLeaderMenuId] = useState(null);
+  // definir nivel de renderização do modal
+  const [leaderMenuLevel, setLeaderMenuLevel] = useState("1");
+  // modal renderizando opções de strike
+  const [strikeOptions, setStrikeOptions] = "submitStrike";
+
+  // moderação (refatoramento)
+  const [managingModal, setManagingModal] = useState(null);
 
   const isOwner = String(currentUser?._id) === String(user?._id);
 
@@ -137,6 +147,7 @@ const Profile = () => {
 
   // is a leader
   const isLeader = currentUser?.role === "leader";
+  const [strikeReason, setStrikeReason] = useState("");
 
   console.log("is currentUser a leader?", isLeader);
 
@@ -357,7 +368,7 @@ const Profile = () => {
   const friendsCount = Array.isArray(user.friends) ? user.friends.length : null;
 
   const toggleLeaderMenu = (listingId) => {
-    setOpenLeaderMenuId((prevId) => (prevId === listingId ? null : listingId));
+    setManagingModal((prevId) => (prevId === listingId ? null : listingId));
   };
 
   const handleBanMember = () => {
@@ -374,13 +385,18 @@ const Profile = () => {
     return;
   }
 
-  const handleStrike = ({ listingId, userId }) => {
+  const handleStrike = ({ listingId, userId, strikeReason }) => {
     console.log("initiating strike...");
     console.log("listingId:", listingId);
     console.log("userId:", userId);
 
-    strike({ listingId, userId });
+    // set current modal (displaying delete and Strike) false
+    setLeaderMenuLevel("1");
+    setOpenLeaderMenuId(false);
+    strike({ listingId, userId, strikeReason });
   };
+
+  console.log(strikeReason);
 
   return (
     <>
@@ -701,7 +717,7 @@ const Profile = () => {
                           </li>
                           <li
                             onClick={() =>
-                              handleDeleteListing(listing._id, setUserListings)
+                              handleDeleteListing(listing._id)
                             }
                           >
                             🗑️ Excluir
@@ -776,7 +792,7 @@ const Profile = () => {
                       </div>
 
                       {/* 2/2 … mantém o resto como já está (botões, menu, etc.) */}
-                      {currentUser?.leader == true && (
+                      {isLeader && (
                         <div>
                           <button
                             aria-label="Mais opções"
@@ -800,52 +816,37 @@ const Profile = () => {
                         </div>
                       )}
                     </div>
+                    {/* =============== Leader Menu ==================== */}
 
-                    {openLeaderMenuId === listing._id && (
-                      <div
-                        className="modal"
-                        onClick={() => setOpenLeaderMenuId(false)}
-                      >
-                        <div
-                          className="modal-content"
-                          onClick={(e) => e.stopPropagation()} // 👈 impede o clique no fundo
-                        >
-                          <ul>
-                            <li>
-                              <button
-                                onClick={() => handleDeleteListing(listing._id)}
-                              >
-                                delete
-                              </button>
-                            </li>
-                            <li>
-                              <button
-                                // onClick={() =>
-                                //   strike({ listingId: listing._id, userId })
-                                // }
+                    {managingModal === listing._id && (
+                      <ManagingModal 
+                        setManagingModal = {setManagingModal}
+                        setLeaderMenuLevel = {setLeaderMenuLevel}
+                        leaderMenuLevel = {leaderMenuLevel}
+                        userId = {user._id} // quem sofre a ação
+                        listingId = {listing._id} // qual listagem esta sendo gerenciada
+                        onDelete = {() => handleDeleteListing(listing._id)} // ação: deletar listagem
+                        onStrike={async (strikeReason) => {
+                          const { ok, error } = await strike({
+                            userId: user._id,
+                            listingId: listing._id,
+                            strikeReason
+                          });
+                           if (!ok) alert(error || "Falha ao registrar strike.");
+                        }}
 
-                                onClick={() =>
-                                  handleStrike({
-                                    listingId: listing._id,
-                                    userId,
-                                  })
-                                }
-                              >
-                                Strike
-                              </button>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
+                      />
                     )}
+
+                   
 
                     {listing.type === "image" && listing.imageUrl && (
                       <Link to={`/openListing/${listing._id}`}>
-                      <img
-                        src={listing.imageUrl}
-                        alt="Listing"
-                        className="profile-listing-image"
-                      />
+                        <img
+                          src={listing.imageUrl}
+                          alt="Listing"
+                          className="profile-listing-image"
+                        />
                       </Link>
                     )}
 
@@ -876,14 +877,14 @@ const Profile = () => {
 
                     {listing.type === "poll" && listing.poll && (
                       <Link to={`/openListing/${listing._id}`}>
-                      <div className="poll-container">
-                        <h3>{listing.poll.question}</h3>
-                        <ul>
-                          {listing.poll.options.map((option, i) => (
-                            <li key={i}>{option}</li>
-                          ))}
-                        </ul>
-                      </div>
+                        <div className="poll-container">
+                          <h3>{listing.poll.question}</h3>
+                          <ul>
+                            {listing.poll.options.map((option, i) => (
+                              <li key={i}>{option}</li>
+                            ))}
+                          </ul>
+                        </div>
                       </Link>
                     )}
 

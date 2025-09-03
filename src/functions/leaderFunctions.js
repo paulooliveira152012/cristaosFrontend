@@ -82,17 +82,19 @@ export const unbanMember = async ({ isLeader, userId }) => {
 };
 
 // leaderFunctions.js
-export const strike = async ({ listingId, userId }) => {
+export const strike = async ({ listingId, userId, strikeReason }) => {
   console.log("giving a strike on user");
   console.log("listingId:", listingId);
   console.log("userId:", userId);
+  console.log("strikeReason:", strikeReason)
   // TODO: chamada ao backend (exemplo):
   const res = await fetch(`${apiUrl}/api/adm/strike`, { 
     method: "PUT",
     headers: authHeaders(),
     body: JSON.stringify ({
       listingId,
-      userId
+      userId,
+      strikeReason
     })
    });
   return res.json();
