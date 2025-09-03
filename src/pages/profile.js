@@ -2,13 +2,17 @@
 import { useEffect, useState, useRef } from "react";
 import { useUser } from "../context/UserContext";
 import { useParams, useNavigate } from "react-router-dom";
+import { useSocket } from "../context/SocketContext";
+// =================== components
 import Header from "../components/Header";
 import ListingInteractionBox from "../components/ListingInteractionBox";
+import { ManagingModal } from "../components/ManagingModal.js";
+// =================== style
 import "../styles/profile.css";
 import coverPlaceholder from "../assets/coverPlaceholder.jpg";
 import { Link } from "react-router-dom";
 import profileplaceholder from "../assets/images/profileplaceholder.png";
-
+// =================== funções
 import {
   fetchUserData,
   fetchListingComments,
@@ -26,7 +30,8 @@ import {
   coverSelected,
 } from "./functions/profilePageFunctions";
 import { useProfileLogic } from "./functions/useProfileLogic";
-
+import { banMember, strike } from "../functions/leaderFunctions.js";
+// =================== icones
 import FiMessageCircle from "../assets/icons/FiMessageCircle.js";
 import {
   FiMoreVertical,
@@ -34,122 +39,78 @@ import {
   FiMapPin,
   FiEdit2,
 } from "react-icons/fi";
-import { useSocket } from "../context/SocketContext";
-
-// managing
-import { ManagingModal } from "../components/ManagingModal.js";
-import { banMember, strike } from "../functions/leaderFunctions.js";
+// =================== helpers
+import { normalizeDenomination } from "../utils/normalizeDenominations.js";
 
 const imagePlaceholder = require("../assets/images/profileplaceholder.png");
 
-/* ---------------- helpers: normalização de denominação ---------------- */
-const strip = (s = "") =>
-  s
-    .toString()
-    .trim()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase();
-
-function levenshtein(a, b) {
-  a = strip(a);
-  b = strip(b);
-  const m = Array.from({ length: a.length + 1 }, (_, i) => [i]);
-  for (let j = 1; j <= b.length; j++) m[0][j] = j;
-  for (let i = 1; i <= a.length; i++) {
-    for (let j = 1; j <= b.length; j++) {
-      m[i][j] = Math.min(
-        m[i - 1][j] + 1,
-        m[i][j - 1] + 1,
-        m[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
-      );
-    }
-  }
-  return m[a.length][b.length];
-}
-
-function normalizeDenomination(input = "") {
-  const s = strip(input);
-  if (!s) return "";
-  const targets = [
-    { key: "protestante", aliases: ["evangelico", "evangelica", "protestant"] },
-    { key: "católico", aliases: ["catolica", "catolico", "romana"] },
-    { key: "ortodoxo", aliases: ["ortodoxa"] },
-    { key: "anglicano", aliases: ["anglicana"] },
-    { key: "luterano", aliases: ["luterana"] },
-    { key: "presbiteriano", aliases: ["presbiteriana"] },
-    { key: "batista", aliases: [] },
-    { key: "pentecostal", aliases: [] },
-  ];
-  for (const t of targets) {
-    if (s.includes(t.key) || t.aliases.some((a) => s.includes(a))) return t.key;
-  }
-  let best = { key: "", d: Infinity };
-  for (const t of targets) {
-    [t.key, ...t.aliases].forEach((c) => {
-      const d = levenshtein(s, c);
-      if (d < best.d) best = { key: t.key, d };
-    });
-  }
-  return best.d <= 3 ? best.key : input;
-}
-/* --------------------------------------------------------------------- */
-
 const Profile = () => {
-  const { socket } = useSocket();
-  const { currentUser } = useUser();
-  const meId = currentUser?._id || null;
-  const { userId } = useParams();
-  const apiUrl = process.env.REACT_APP_API_BASE_URL;
-  const navigate = useNavigate();
+  // ─────────────────────────────────────────────────────
+// Contexto / roteamento
+// ─────────────────────────────────────────────────────
+const { socket } = useSocket();
+const { currentUser } = useUser();
+const { userId } = useParams();
+const navigate = useNavigate();
+// ─────────────────────────────────────────────────────
+// Flags derivadas do usuário atual
+// ─────────────────────────────────────────────────────
+const meId = currentUser?._id ?? null;
+const isLeader = currentUser?.role === "leader";
+// ─────────────────────────────────────────────────────
+// Dados principais
+// ─────────────────────────────────────────────────────
+const [user, setUser] = useState(null);
+const [userListings, setUserListings] = useState([]);
+const [sharedListings, setSharedListings] = useState([]);
+// ─────────────────────────────────────────────────────
+// UI global
+// ─────────────────────────────────────────────────────
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState(null);
+// ─────────────────────────────────────────────────────
+// Abas / menus
+// ─────────────────────────────────────────────────────
+const [currentTab, setCurrentTab] = useState("");          // "" | "mural"
+const [showOptions, setShowOptions] = useState(false);     // menu "mais" do perfil
+const [showListingMenu, setShowListingMenu] = useState(null); // id da listagem c/ menu aberto
+// ─────────────────────────────────────────────────────
+// Edição de listagem
+// ─────────────────────────────────────────────────────
+const [editingId, setEditingId] = useState(null);
+const [draft, setDraft] = useState({});
+// ─────────────────────────────────────────────────────
+// Mural
+// ─────────────────────────────────────────────────────
+const [muralMessages, setMuralMessages] = useState([]);
+const [newMuralMessage, setNewMuralMessage] = useState("");
+// ─────────────────────────────────────────────────────
+// Bio
+// ─────────────────────────────────────────────────────
+const [bioEditing, setBioEditing] = useState(false);
+const [bioLocal, setBioLocal] = useState("");
+const [bioDraft, setBioDraft] = useState("");
+// ─────────────────────────────────────────────────────
+// Moderação (líder)
+// ─────────────────────────────────────────────────────
+const [managingModal, setManagingModal] = useState(null); // id da listagem sendo gerenciada
+// Se ainda estiver usando o fluxo antigo, mantenha; caso contrário, remova:
+const [leaderMenuLevel, setLeaderMenuLevel] = useState("1");    // (LEGADO) nível do submenu
+// ─────────────────────────────────────────────────────
+// Upload de arquivos
+// ─────────────────────────────────────────────────────
+const fileRef = useRef(null);
+const [uploading, setUploading] = useState(false);
+// ─────────────────────────────────────────────────────
+/* Valores derivados (sempre depois dos estados que usam) */
+// ─────────────────────────────────────────────────────
+const isOwner = String(currentUser?._id) === String(user?._id);
+const userBio = (user?.bio ?? "").trim();
+const localBio = (bioLocal ?? "").trim();
+const bioText = userBio || localBio;
 
-  const [user, setUser] = useState(null);
-  const [userListings, setUserListings] = useState([]);
-  const [sharedListings, setSharedListings] = useState([]);
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const [currentTab, setCurrentTab] = useState("");
-  const [showOptions, setShowOptions] = useState(false);
-  const [showListingMenu, setShowListingMenu] = useState(null);
-
-  const [editingId, setEditingId] = useState(null);
-  const [draft, setDraft] = useState({});
-
-  const [muralMessages, setMuralMessages] = useState([]);
-  const [newMuralMessage, setNewMuralMessage] = useState("");
-
-  // bio (apenas front por enquanto)
-  const [bioEditing, setBioEditing] = useState(false);
-  const [bioLocal, setBioLocal] = useState("");
-  const [bioDraft, setBioDraft] = useState("");
-
-  const userBio = (user?.bio ?? "").trim();
-  const localBio = (bioLocal ?? "").trim();
-  const bioText = userBio || localBio;
-
-  // principal modal de moderacão do lider
-  const [openLeaderMenuId, setOpenLeaderMenuId] = useState(null);
-  // definir nivel de renderização do modal
-  const [leaderMenuLevel, setLeaderMenuLevel] = useState("1");
-  // modal renderizando opções de strike
-  const [strikeOptions, setStrikeOptions] = "submitStrike";
-
-  // moderação (refatoramento)
-  const [managingModal, setManagingModal] = useState(null);
-
-  const isOwner = String(currentUser?._id) === String(user?._id);
-
-  const fileRef = useRef(null);
-
-  const [uploading, setUploading] = useState(false);
-
-  // is a leader
-  const isLeader = currentUser?.role === "leader";
-  const [strikeReason, setStrikeReason] = useState("");
-
-  console.log("is currentUser a leader?", isLeader);
+// Debug (remova em produção)
+console.log("is currentUser a leader?", isLeader);
 
   const updateProfileBackground = () => {
     if (!isOwner) return;
@@ -385,18 +346,6 @@ const Profile = () => {
     return;
   }
 
-  const handleStrike = ({ listingId, userId, strikeReason }) => {
-    console.log("initiating strike...");
-    console.log("listingId:", listingId);
-    console.log("userId:", userId);
-
-    // set current modal (displaying delete and Strike) false
-    setLeaderMenuLevel("1");
-    setOpenLeaderMenuId(false);
-    strike({ listingId, userId, strikeReason });
-  };
-
-  console.log(strikeReason);
 
   return (
     <>
