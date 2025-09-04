@@ -31,7 +31,11 @@ import {
   coverSelected,
 } from "./functions/profilePageFunctions";
 import { useProfileLogic } from "./functions/useProfileLogic";
-import { banMember, strike } from "../functions/leaderFunctions.js";
+import { 
+  banMember, 
+  strike,
+  getStrikeHistory
+ } from "../functions/leaderFunctions.js";
 // =================== icones
 import FiMessageCircle from "../assets/icons/FiMessageCircle.js";
 import {
@@ -601,6 +605,7 @@ const Profile = () => {
                           });
                           if (!ok) alert(error || "Falha ao registrar strike.");
                         }}
+                        getStrikeHistory = {getStrikeHistory}
                       />
                     )}
 

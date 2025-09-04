@@ -4,7 +4,11 @@ const apiUrl = process.env.REACT_APP_API_BASE_URL || "";
 
 const isLeaderUser = (u) => u?.role === "leader" || u?.leader === true;
 
-export const getAllMembers = async ({ setMembers, setBannedMembers, isLeader }) => {
+export const getAllMembers = async ({
+  setMembers,
+  setBannedMembers,
+  isLeader,
+}) => {
   if (!isLeader) {
     console.log("Somente um líder pode buscar todos os membros para gerenciar");
     return { users: [], active: [], banned: [], leaders: [] };
@@ -23,10 +27,10 @@ export const getAllMembers = async ({ setMembers, setBannedMembers, isLeader }) 
 
   const payload = await res.json();
   // Suporta formatos: array direto OU { users, currentUserFriends }
-  const users = Array.isArray(payload) ? payload : (payload.users || []);
+  const users = Array.isArray(payload) ? payload : payload.users || [];
 
-  const active  = users.filter((u) => u?.isBanned !== true);
-  const banned  = users.filter((u) => u?.isBanned === true);
+  const active = users.filter((u) => u?.isBanned !== true);
+  const banned = users.filter((u) => u?.isBanned === true);
   const leaders = active.filter(isLeaderUser);
 
   setMembers?.(active);
@@ -86,16 +90,45 @@ export const strike = async ({ listingId, userId, strikeReason }) => {
   console.log("giving a strike on user");
   console.log("listingId:", listingId);
   console.log("userId:", userId);
-  console.log("strikeReason:", strikeReason)
+  console.log("strikeReason:", strikeReason);
   // TODO: chamada ao backend (exemplo):
-  const res = await fetch(`${apiUrl}/api/adm/strike`, { 
+  const res = await fetch(`${apiUrl}/api/adm/strike`, {
     method: "PUT",
     headers: authHeaders(),
-    body: JSON.stringify ({
+    body: JSON.stringify({
       listingId,
       userId,
-      strikeReason
-    })
-   });
+      strikeReason,
+    }),
+  });
   return res.json();
-}
+};
+
+export const getStrikeHistory = async ( userId ) => {
+  console.log("fetching strike history");
+
+  console.log("userId:", userId)
+
+  if (!userId) throw new Error("userId is needed");
+
+  try {
+    const response = await fetch(`${apiUrl}/api/adm/strikeHistory/${userId}`, {
+      method: "GET",
+      headers: authHeaders(),
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const txt = await response.text().catch(() => "");
+      throw new Error(`Falha ao buscar histórico (HTTP ${response.status}) ${txt}`);
+    }
+
+    const strikeHistory = await response.json();
+    console.log("🟢 historico de strike:", strikeHistory);
+
+    return strikeHistory;
+
+  } catch (err) {
+    console.log("Erro ao buscar historico de strike", err);
+  }
+};
