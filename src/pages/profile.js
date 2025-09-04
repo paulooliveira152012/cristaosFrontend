@@ -5,6 +5,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useSocket } from "../context/SocketContext";
 // =================== components
 import Header from "../components/Header";
+import { ProfileHeader } from "../components/Page_Profile/ProfileHeader.js";
 import ListingInteractionBox from "../components/ListingInteractionBox";
 import { ManagingModal } from "../components/ManagingModal.js";
 // =================== style
@@ -46,71 +47,71 @@ const imagePlaceholder = require("../assets/images/profileplaceholder.png");
 
 const Profile = () => {
   // ─────────────────────────────────────────────────────
-// Contexto / roteamento
-// ─────────────────────────────────────────────────────
-const { socket } = useSocket();
-const { currentUser } = useUser();
-const { userId } = useParams();
-const navigate = useNavigate();
-// ─────────────────────────────────────────────────────
-// Flags derivadas do usuário atual
-// ─────────────────────────────────────────────────────
-const meId = currentUser?._id ?? null;
-const isLeader = currentUser?.role === "leader";
-// ─────────────────────────────────────────────────────
-// Dados principais
-// ─────────────────────────────────────────────────────
-const [user, setUser] = useState(null);
-const [userListings, setUserListings] = useState([]);
-const [sharedListings, setSharedListings] = useState([]);
-// ─────────────────────────────────────────────────────
-// UI global
-// ─────────────────────────────────────────────────────
-const [loading, setLoading] = useState(true);
-const [error, setError] = useState(null);
-// ─────────────────────────────────────────────────────
-// Abas / menus
-// ─────────────────────────────────────────────────────
-const [currentTab, setCurrentTab] = useState("");          // "" | "mural"
-const [showOptions, setShowOptions] = useState(false);     // menu "mais" do perfil
-const [showListingMenu, setShowListingMenu] = useState(null); // id da listagem c/ menu aberto
-// ─────────────────────────────────────────────────────
-// Edição de listagem
-// ─────────────────────────────────────────────────────
-const [editingId, setEditingId] = useState(null);
-const [draft, setDraft] = useState({});
-// ─────────────────────────────────────────────────────
-// Mural
-// ─────────────────────────────────────────────────────
-const [muralMessages, setMuralMessages] = useState([]);
-const [newMuralMessage, setNewMuralMessage] = useState("");
-// ─────────────────────────────────────────────────────
-// Bio
-// ─────────────────────────────────────────────────────
-const [bioEditing, setBioEditing] = useState(false);
-const [bioLocal, setBioLocal] = useState("");
-const [bioDraft, setBioDraft] = useState("");
-// ─────────────────────────────────────────────────────
-// Moderação (líder)
-// ─────────────────────────────────────────────────────
-const [managingModal, setManagingModal] = useState(null); // id da listagem sendo gerenciada
-// Se ainda estiver usando o fluxo antigo, mantenha; caso contrário, remova:
-const [leaderMenuLevel, setLeaderMenuLevel] = useState("1");    // (LEGADO) nível do submenu
-// ─────────────────────────────────────────────────────
-// Upload de arquivos
-// ─────────────────────────────────────────────────────
-const fileRef = useRef(null);
-const [uploading, setUploading] = useState(false);
-// ─────────────────────────────────────────────────────
-/* Valores derivados (sempre depois dos estados que usam) */
-// ─────────────────────────────────────────────────────
-const isOwner = String(currentUser?._id) === String(user?._id);
-const userBio = (user?.bio ?? "").trim();
-const localBio = (bioLocal ?? "").trim();
-const bioText = userBio || localBio;
+  // Contexto / roteamento
+  // ─────────────────────────────────────────────────────
+  const { socket } = useSocket();
+  const { currentUser } = useUser();
+  const { userId } = useParams();
+  const navigate = useNavigate();
+  // ─────────────────────────────────────────────────────
+  // Flags derivadas do usuário atual
+  // ─────────────────────────────────────────────────────
+  const meId = currentUser?._id ?? null;
+  const isLeader = currentUser?.role === "leader";
+  // ─────────────────────────────────────────────────────
+  // Dados principais
+  // ─────────────────────────────────────────────────────
+  const [user, setUser] = useState(null);
+  const [userListings, setUserListings] = useState([]);
+  const [sharedListings, setSharedListings] = useState([]);
+  // ─────────────────────────────────────────────────────
+  // UI global
+  // ─────────────────────────────────────────────────────
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  // ─────────────────────────────────────────────────────
+  // Abas / menus
+  // ─────────────────────────────────────────────────────
+  const [currentTab, setCurrentTab] = useState(""); // "" | "mural"
+  const [showOptions, setShowOptions] = useState(false); // menu "mais" do perfil
+  const [showListingMenu, setShowListingMenu] = useState(null); // id da listagem c/ menu aberto
+  // ─────────────────────────────────────────────────────
+  // Edição de listagem
+  // ─────────────────────────────────────────────────────
+  const [editingId, setEditingId] = useState(null);
+  const [draft, setDraft] = useState({});
+  // ─────────────────────────────────────────────────────
+  // Mural
+  // ─────────────────────────────────────────────────────
+  const [muralMessages, setMuralMessages] = useState([]);
+  const [newMuralMessage, setNewMuralMessage] = useState("");
+  // ─────────────────────────────────────────────────────
+  // Bio
+  // ─────────────────────────────────────────────────────
+  const [bioEditing, setBioEditing] = useState(false);
+  const [bioLocal, setBioLocal] = useState("");
+  const [bioDraft, setBioDraft] = useState("");
+  // ─────────────────────────────────────────────────────
+  // Moderação (líder)
+  // ─────────────────────────────────────────────────────
+  const [managingModal, setManagingModal] = useState(null); // id da listagem sendo gerenciada
+  // Se ainda estiver usando o fluxo antigo, mantenha; caso contrário, remova:
+  const [leaderMenuLevel, setLeaderMenuLevel] = useState("1"); // (LEGADO) nível do submenu
+  // ─────────────────────────────────────────────────────
+  // Upload de arquivos
+  // ─────────────────────────────────────────────────────
+  const fileRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  // ─────────────────────────────────────────────────────
+  /* Valores derivados (sempre depois dos estados que usam) */
+  // ─────────────────────────────────────────────────────
+  const isOwner = String(currentUser?._id) === String(user?._id);
+  const userBio = (user?.bio ?? "").trim();
+  const localBio = (bioLocal ?? "").trim();
+  const bioText = userBio || localBio;
 
-// Debug (remova em produção)
-console.log("is currentUser a leader?", isLeader);
+  // Debug (remova em produção)
+  console.log("is currentUser a leader?", isLeader);
 
   const updateProfileBackground = () => {
     if (!isOwner) return;
@@ -346,7 +347,6 @@ console.log("is currentUser a leader?", isLeader);
     return;
   }
 
-
   return (
     <>
       {/* <div className="modal">
@@ -354,221 +354,43 @@ console.log("is currentUser a leader?", isLeader);
     </div> */}
       <div className="profilePageBasicInfoContainer">
         <Header showProfileImage={false} navigate={navigate} />
-        <div className="profilePageHeaderParentSection">
-          <>
-            <div
-              className="top"
-              onClick={updateProfileBackground}
-              role={isOwner ? "button" : undefined}
-              tabIndex={isOwner ? 0 : -1}
-              onKeyDown={(e) =>
-                isOwner &&
-                (e.key === "Enter" || e.key === " ") &&
-                updateProfileBackground()
-              }
-              style={{
-                backgroundImage: `url(${
-                  user?.profileCoverImage || coverPlaceholder
-                })`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-                height: 220,
-                cursor: isOwner ? "pointer" : "default",
-                position: "relative",
-              }}
-            >
-              {isOwner && (
-                <div
-                  style={{
-                    position: "absolute",
-                    right: 12,
-                    bottom: 12,
-                    padding: "6px 10px",
-                    borderRadius: 8,
-                    background: "rgba(0,0,0,0.5)",
-                    color: "#fff",
-                    fontSize: 12,
-                  }}
-                >
-                  {uploading ? "Enviando..." : "Trocar capa"}
-                </div>
-              )}
-            </div>
-
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              style={{ display: "none" }}
-              onChange={handleCoverSelected}
-            />
-          </>
-          <div className="bottom">
-            <div className="headerRow">
-              {/* avatar */}
-              <div className="imageColumn">
-                <div
-                  className="ProfileProfileImage"
-                  style={{
-                    backgroundImage: `url(${
-                      user?.profileImage || imagePlaceholder
-                    })`,
-                    backgroundPosition: "center",
-                  }}
-                />
-              </div>
-
-              {/* info principal */}
-              <div className="infoWrapper">
-                <div className="nameLine">
-                  <h2 className="profile-username">
-                    {user.firstName || ""} {user.lastName || ""}
-                  </h2>
-                  <span className="at">@{user.username}</span>
-                </div>
-
-                {/* Bio — todos veem; só o dono edita */}
-                <div className="bioSection">
-                  {!bioEditing ? (
-                    <>
-                      {isOwner ? (
-                        <p className={`bio ${bioLocal ? "" : "muted"}`}>
-                          {bioText || "Escreva uma breve bio..."}
-                        </p>
-                      ) : (
-                        <p className={`bio ${bioLocal ? "" : "muted"}`}>
-                          {bioText || ""}
-                        </p>
-                      )}
-
-                      {isOwner && (
-                        <button
-                          className="tiny ghost"
-                          onClick={() => setBioEditing(true)}
-                          aria-label="Editar bio"
-                          title="Editar bio"
-                        >
-                          <FiEdit2 size={14} /> Editar
-                        </button>
-                      )}
-                    </>
-                  ) : isOwner ? (
-                    <div className="bio-editor">
-                      <textarea
-                        rows={3}
-                        maxLength={220}
-                        value={bioDraft}
-                        onChange={(e) => setBioDraft(e.target.value)}
-                        placeholder="Escreva uma breve bio (até 220 caracteres)"
-                      />
-                      <div className="bio-actions">
-                        <button
-                          className="tiny"
-                          onClick={async () => {
-                            const trimmed = (bioDraft || "").trim();
-                            setBioLocal(trimmed); // atualiza visual na hora
-                            setBioEditing(false);
-                            try {
-                              // mantém sua assinatura atual:
-                              await handleSaveBio(trimmed);
-                              // otimismo: reflita no objeto user p/ evitar voltar a renderizar a antiga
-                              setUser((u) => (u ? { ...u, bio: trimmed } : u));
-                            } catch (e) {
-                              console.error(e);
-                              alert("Falha ao salvar bio");
-                              // opcional: reverter bioLocal se quiser
-                            }
-                          }}
-                        >
-                          Salvar
-                        </button>
-                        <button
-                          className="tiny ghost"
-                          onClick={() => {
-                            setBioDraft(bioLocal || ""); // garante string
-                            setBioEditing(false);
-                          }}
-                        >
-                          Cancelar
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-
-                {/* denominação – só o valor */}
-                {denomination && (
-                  <div className="denomination-value">{denomination}</div>
-                )}
-
-                {/* meta: local + amigos + adicionar */}
-                <div className="metaRow">
-                  {locationText && (
-                    <span className="locationChip">
-                      <FiMapPin size={14} /> {locationText}
-                    </span>
-                  )}
-
-                  <div className="metaActions">
-                    <span
-                      className="friends-link"
-                      onClick={() => navigate(`/profile/${user._id}/friends`)}
-                    >
-                      {friendsCount !== null
-                        ? `${friendsCount} ${
-                            friendsCount === 1 ? "amigo" : "amigos"
-                          }`
-                        : "Amigos"}
-                    </span>
-                    {renderFriendAction()}
-                  </div>
-                </div>
-              </div>
-
-              {/* ações à direita */}
-              <div className="interactionButtons">
-                {currentUser && (
-                  <>
-                    {!isOwner && (
-                      <button
-                        className="chat-icon-button"
-                        onClick={async () => {
-                          const res = await requestChat(
-                            currentUser?._id,
-                            user?._id
-                          );
-                          const convId =
-                            res?.conversationId || res?.conversation?._id;
-                          if (!convId) return; // nada a fazer se o backend não retornou id
-
-                          // (opcional) já entra na sala pelo socket
-                          socket?.emit?.("joinPrivateChat", {
-                            conversationId: convId,
-                          });
-
-                          // navega direto pra conversa; justInvited ajuda a mostrar "Aguardando..."
-                          navigate(`/privateChat/${convId}`, {
-                            state: { justInvited: res?.status === "pending" },
-                          });
-                        }}
-                      >
-                        <FiMessageCircle size={20} />
-                      </button>
-                    )}
-                    <button
-                      className="more-icon-button"
-                      onClick={() => setShowOptions(!showOptions)}
-                    >
-                      <FiMoreVertical size={20} className="more-icon-button" />
-                    </button>
-                  </>
-                )}
-                {showOptions && renderMoreMenu()}
-              </div>
-            </div>
-          </div>
-        </div>
+        <ProfileHeader
+          /* capa */
+          updateProfileBackground={() => isOwner && fileRef.current?.click()}
+          isOwner={isOwner}
+          user={user}
+          currentUser={currentUser}
+          setUser={setUser}
+          coverPlaceholder={coverPlaceholder}
+          uploading={uploading}
+          fileRef={fileRef}
+          handleCoverSelected={handleCoverSelected}
+          imagePlaceholder={imagePlaceholder} // importe isso no Profile.jsx
+          socket={socket}
+          /* bio */
+          bioLocal={bioLocal}
+          setBioLocal={setBioLocal}
+          bioEditing={bioEditing}
+          setBioEditing={setBioEditing}
+          bioDraft={bioDraft}
+          setBioDraft={setBioDraft}
+          bioText={bioText}
+          handleSaveBio={handleSaveBio} // do seu profilePageFunctions
+          /* funçõezinhas externas usadas dentro do header */
+          renderFriendAction={renderFriendAction}
+          navigate={navigate}
+          requestChat={requestChat}
+          /* estado/menus */
+          setShowOptions={setShowOptions}
+          showOptions={showOptions}
+          renderMoreMenu={renderMoreMenu} // defina como: const renderMoreMenu = () => (<div>...</div>)
+          /* meta */
+          locationText={user?.city || user?.state || ""}
+          denomination={denomination}
+          friendsCount={
+            Array.isArray(user?.friends) ? user.friends.length : null
+          }
+        />
       </div>
 
       {/* Abas */}
@@ -664,11 +486,7 @@ console.log("is currentUser a leader?", isLeader);
                           >
                             ✏️ Editar
                           </li>
-                          <li
-                            onClick={() =>
-                              handleDeleteListing(listing._id)
-                            }
-                          >
+                          <li onClick={() => handleDeleteListing(listing._id)}>
                             🗑️ Excluir
                           </li>
                         </ul>
@@ -768,26 +586,23 @@ console.log("is currentUser a leader?", isLeader);
                     {/* =============== Leader Menu ==================== */}
 
                     {managingModal === listing._id && (
-                      <ManagingModal 
-                        setManagingModal = {setManagingModal}
-                        setLeaderMenuLevel = {setLeaderMenuLevel}
-                        leaderMenuLevel = {leaderMenuLevel}
-                        userId = {user._id} // quem sofre a ação
-                        listingId = {listing._id} // qual listagem esta sendo gerenciada
-                        onDelete = {() => handleDeleteListing(listing._id)} // ação: deletar listagem
+                      <ManagingModal
+                        setManagingModal={setManagingModal}
+                        setLeaderMenuLevel={setLeaderMenuLevel}
+                        leaderMenuLevel={leaderMenuLevel}
+                        userId={user._id} // quem sofre a ação
+                        listingId={listing._id} // qual listagem esta sendo gerenciada
+                        onDelete={() => handleDeleteListing(listing._id)} // ação: deletar listagem
                         onStrike={async (strikeReason) => {
                           const { ok, error } = await strike({
                             userId: user._id,
                             listingId: listing._id,
-                            strikeReason
+                            strikeReason,
                           });
-                           if (!ok) alert(error || "Falha ao registrar strike.");
+                          if (!ok) alert(error || "Falha ao registrar strike.");
                         }}
-
                       />
                     )}
-
-                   
 
                     {listing.type === "image" && listing.imageUrl && (
                       <Link to={`/openListing/${listing._id}`}>
