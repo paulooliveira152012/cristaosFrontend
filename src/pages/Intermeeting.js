@@ -18,8 +18,9 @@ function Section({ title, children, actions }) {
   );
 }
 
+/* helpers */
 const normalizeWebsite = (w) =>
-  !w ? "" : w.startsWith("http") ? w : `https://${w}`;
+  !w ? "" : (w.startsWith("http://") || w.startsWith("https://")) ? w : `https://${w}`;
 
 const buildMapsUrl = (coords) => {
   if (!Array.isArray(coords) || coords.length !== 2) return "";
@@ -27,15 +28,19 @@ const buildMapsUrl = (coords) => {
   return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
 };
 
-const formatWhen = (dt) => {
-  if (!dt) return "";
-  try {
-    const d = typeof dt === "string" ? new Date(dt) : dt;
-    return d.toLocaleString();
-  } catch {
-    return String(dt);
-  }
+const pad2 = (n) => String(n).padStart(2, "0");
+const formatDateBR = (dt) => {
+  const d = new Date(dt);
+  if (isNaN(d)) return "";
+  return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
 };
+const formatTimeBR = (dt) => {
+  const d = new Date(dt);
+  if (isNaN(d)) return "";
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+};
+
+const avatarFallback = "/placeholder-avatar.png"; // ajuste se tiver outro asset
 
 const Intermeeting = () => {
   const { id } = useParams();
@@ -52,6 +57,7 @@ const Intermeeting = () => {
   const [imGoing, setImGoing] = useState(false);
   const [rsvpBusy, setRsvpBusy] = useState(false);
 
+  // carrega a reunião
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -69,41 +75,39 @@ const Intermeeting = () => {
     return () => { cancelled = true; };
   }, [id]);
 
-  // carrega lista de presença (precisa do usuário logado para saber imGoing)
+  // carrega lista de presença (se não logado, só não teremos imGoing)
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const out = await fetchMeetingAttendees(id, { limit: 30 });
         if (cancelled) return;
-        if (out?.ok) {
-          setAttendees(out.items || []);
-          setAttendeesCount(out.count || 0);
-          setImGoing(!!out.imGoing);
-        } else {
-          // caso GET sem protect: ainda dá pra mostrar a lista (sem imGoing)
-          setAttendees(out.items || []);
-          setAttendeesCount(out.count || 0);
-        }
+        setAttendees(Array.isArray(out?.items) ? out.items : []);
+        setAttendeesCount(Number(out?.count || 0));
+        setImGoing(!!out?.imGoing);
       } catch {
-        // se o endpoint exigir login e o usuário não estiver logado, ignore
+        // ignorar (ex.: rota exige auth e usuário é guest)
       }
     })();
     return () => { cancelled = true; };
   }, [id, currentUser?._id]);
 
+  // mapeia para a view
   const view = useMemo(() => {
     if (!meeting) return null;
-    const website = normalizeWebsite(meeting.website || "");
     const coords = meeting.location?.coordinates;
+    const website = normalizeWebsite(meeting.website || "");
     const mapsUrl = buildMapsUrl(coords);
+    const hasDate = !!meeting.meetingDate;
+
     return {
       id: meeting._id,
       name: meeting.name,
       summary: meeting.summary || "",
       address: meeting.address || "",
-      whenISO: meeting.meetingDate ? new Date(meeting.meetingDate).toISOString() : null,
-      whenText: meeting.meetingDate ? formatWhen(meeting.meetingDate) : "",
+      whenISO: hasDate ? new Date(meeting.meetingDate).toISOString() : null,
+      whenDate: hasDate ? formatDateBR(meeting.meetingDate) : "",
+      whenTime: hasDate ? formatTimeBR(meeting.meetingDate) : "",
       website,
       coords,
       mapsUrl,
@@ -120,16 +124,23 @@ const Intermeeting = () => {
     try {
       const out = await rsvpMeeting(id, !imGoing);
       if (out?.ok) {
-        setImGoing(!!out.going);
-        // atualiza o contador
-        setAttendeesCount(out.count ?? (out.going ? attendeesCount + 1 : Math.max(0, attendeesCount - 1)));
-        // otimista: atualiza a listinha (se for “vou”, insere meu user básico; se “cancelar”, remove)
-        if (out.going) {
-          const me = { _id: currentUser._id, username: currentUser.username, profileImage: currentUser.profileImage || "" };
-          // evita duplicata
-          setAttendees((prev) => (prev.some(u => String(u._id) === String(me._id)) ? prev : [me, ...prev].slice(0, 30)));
+        const goingNow = !!out.going;
+        setImGoing(goingNow);
+        setAttendeesCount(out.count ?? (goingNow ? attendeesCount + 1 : Math.max(0, attendeesCount - 1)));
+
+        if (goingNow) {
+          const me = {
+            _id: currentUser._id,
+            username: currentUser.username,
+            profileImage: currentUser.profileImage || "",
+          };
+          setAttendees((prev) =>
+            prev.some((u) => String(u._id) === String(me._id))
+              ? prev
+              : [me, ...prev].slice(0, 30)
+          );
         } else {
-          setAttendees((prev) => prev.filter(u => String(u._id) !== String(currentUser._id)));
+          setAttendees((prev) => prev.filter((u) => String(u._id) !== String(currentUser._id)));
         }
       } else {
         alert(out?.message || "Não foi possível atualizar sua presença.");
@@ -141,15 +152,9 @@ const Intermeeting = () => {
     }
   };
 
-  if (loading) {
-    return <div className="page"><p>Carregando reunião...</p></div>;
-  }
-  if (error) {
-    return <div className="page"><p style={{ color: "#c00" }}>{error}</p></div>;
-  }
-  if (!view) {
-    return <div className="page"><p>Reunião não encontrada.</p></div>;
-  }
+  if (loading) return <div className="page"><p>Carregando reunião...</p></div>;
+  if (error)   return <div className="page"><p style={{ color: "#c00" }}>{error}</p></div>;
+  if (!view)   return <div className="page"><p>Reunião não encontrada.</p></div>;
 
   return (
     <>
@@ -177,14 +182,16 @@ const Intermeeting = () => {
                 )}
               </div>
 
-              {/* Botão de RSVP */}
               <button
                 className="ch-btn"
                 onClick={handleToggleRsvp}
                 disabled={rsvpBusy}
                 style={{ minWidth: 180 }}
+                title={currentUser ? "" : "Entre para confirmar presença"}
               >
-                {imGoing && currentUser ? "Cancelar presença" : "Vou"}
+                {rsvpBusy
+                  ? "Atualizando…"
+                  : (imGoing && currentUser ? "Cancelar presença" : "Vou")}
               </button>
             </div>
           </div>
@@ -195,7 +202,14 @@ const Intermeeting = () => {
           <div className="ch-grid2">
             <div>
               <h3>Quando</h3>
-              {view.whenText ? <p>{view.whenText}</p> : <p className="ch-note">Data/horário não informados.</p>}
+              {view.whenDate ? (
+                <p>
+                  {view.whenDate}
+                  {view.whenTime && ` às ${view.whenTime}`}
+                </p>
+              ) : (
+                <p className="ch-note">Data/horário não informados.</p>
+              )}
             </div>
 
             <div>
@@ -227,18 +241,21 @@ const Intermeeting = () => {
             <div className="ch-note">Seja o primeiro a confirmar presença.</div>
           ) : (
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              {attendees.map((u) => (
-                <div key={u._id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <img
-                    src={u.profileImage || "/placeholder-avatar.png"}
-                    alt={u.username}
-                    width={36}
-                    height={36}
-                    style={{ borderRadius: "50%", objectFit: "cover" }}
-                  />
-                  <span>@{u.username}</span>
-                </div>
-              ))}
+              {attendees.map((u) => {
+                const isMe = currentUser && String(u._id) === String(currentUser._id);
+                return (
+                  <div key={u._id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <img
+                      src={u.profileImage || avatarFallback}
+                      alt={u.username}
+                      width={36}
+                      height={36}
+                      style={{ borderRadius: "50%", objectFit: "cover" }}
+                    />
+                    <span>@{u.username}{isMe ? " (você)" : ""}</span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </Section>
