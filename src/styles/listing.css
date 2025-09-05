@@ -9,7 +9,7 @@
 }
 
 .listing-image-container {
-    width: 100%;
+    width: 70%;
     margin: auto;
 }
 
@@ -25,7 +25,7 @@
 
 
 .listing-header h1 {
-    font-size: 28px;
+    font-size: 20px;
     /* margin-bottom: 20px; */
     text-align: center;
 }
@@ -42,11 +42,14 @@
 }
 
 .listing-content p { 
-    font-size: 16px; 
+    font-size: 17px; 
     margin: 10px;
     line-height: 1.6; 
     /* color: white;  */
 }
+
+
+
 
 .listing-content h2 { 
     font-size: 18px; 
@@ -54,6 +57,8 @@
     line-height: 1.6; 
     /* color: white;  */
 }
+
+
 
 /* celular até 768px */
 @media (max-width: 768px) {
@@ -84,12 +89,22 @@
     max-width: 70%;
     border-radius: 8px;
     margin: auto;
+    /* background-color: aqua; */
 }
 
 .listing-image img {
     max-width: 90%;
     border-radius: 8px;
 }
+
+
+.listing-image  img.listingImage {
+    max-width: 30%;
+    border-radius: 8px;
+    margin: auto;
+    /* background-color: aqua; */
+}
+
 
 .poll-container {
     margin: 20px 10px
