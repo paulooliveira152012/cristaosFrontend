@@ -332,15 +332,15 @@ background-color: transparent;
 
 /* dropdown header */
 .more-options {
-  position: absolute;
-  top: 38px;
-  right: 0;
+  /* position: absolute; */
+  /* top: 38px; */
+  /* right: 0; */
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .12);
+  /* box-shadow: 0 10px 30px rgba(0, 0, 0, .12); */
   min-width: 180px;
-  z-index: 15;
+  
   overflow: hidden;
 }
 
@@ -371,7 +371,7 @@ background-color: transparent;
 
 /* ===== Abas ===== */
 .profileOptions {
-  position: sticky;
+  /* position: sticky; */
   top: 0;
   z-index: 30;
   backdrop-filter: blur(10px);
@@ -812,4 +812,8 @@ body.dark-mode .icon-btn svg {
   /* color: #6b7280; */
   margin-top: 2px;
   
+}
+
+.strikeTextArea {
+  color: var(--fg-muted);
 }

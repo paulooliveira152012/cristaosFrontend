@@ -149,7 +149,7 @@ export const fetchChurchList = async ({
   setLoading?.(true);
   setError?.("");
   try {
-    const res = await fetch(`${API}/api/churches`, {
+    const res = await fetch(`${API}/api/church/getChurches`, {
       credentials: "include",
     });
     if (!res.ok) throw new Error(`Erro ${res.status}`);
@@ -260,6 +260,7 @@ export const useChurchesAdmin = () => {
   }, []);
 
   const startEdit = useCallback((c) => {
+    console.log("editar...")
     setSelected(c);
     setForm(mapChurchToForm(c));
   }, []);
@@ -347,7 +348,7 @@ export const useChurchesAdmin = () => {
         const body = formToRequestBody(localForm);
         const method = selected ? "PUT" : "POST";
         const url = selected
-          ? `${API}/api/churches/${selected._id}`
+          ? `${API}/api/admChurch/${selected._id}`
           : `${API}/api/admChurch/registerChurch`;
 
         const res = await fetch(url, {

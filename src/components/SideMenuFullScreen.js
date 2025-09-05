@@ -67,9 +67,11 @@ const SideMenuFullScreen = () => {
         </ul>
 
         {/* === Administração (3ª seção como no SideMenu) === */}
-        <ul className="secondaryMenuOptionsFullScreen">
-          <li onClick={() => navigate("admin")}>Administração</li>
-        </ul>
+        {currentUser?.leader && (
+            <ul className="secondaryMenuOptions">
+              <li onClick={() => navigate("admin")}>Administração</li>
+            </ul>
+          )}
 
         {/* === Logout (igual ao SideMenu) === */}
         {currentUser && (

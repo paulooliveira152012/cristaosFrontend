@@ -33,6 +33,10 @@
   box-sizing: border-box; /* Garante que padding seja incluído no cálculo da largura e altura */
 }
 
+.active {
+  background-color: red;
+}
+
 .mainParentContainer {
   /* background-color: orange; */
   display: flex;

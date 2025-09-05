@@ -1,150 +1,205 @@
-import { useState, useEffect, useCallback } from "react";
-const API = process.env.REACT_APP_API_BASE_URL;
+// components/Admin/Members/MembersManager.jsx
+import { useState, useEffect, useMemo } from "react";
+import { getAllMembers, banMember, unbanMember } from "../../functions/leaderFunctions";
+import { useUser } from "../../context/UserContext";
 
-export const MembersManager = ({ church, onClose = () => {} }) => {
-  const churchId = church?._id;
+export const MembersManager = () => {
+  const { currentUser } = useUser() ?? {};
+  const amLeader = !!(currentUser?.role === "leader" || currentUser?.leader);
+  const myId = currentUser?._id;
 
-  const [members, setMembers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState("");
-  const [role, setRole] = useState("member");
+  const [members, setMembers] = useState([]);           // ativos (não-banidos)
+  const [bannedMembers, setBannedMembers] = useState([]); // banidos
+  const [leaders, setLeaders] = useState([]);           // líderes ativos
+  const [selectedOption, setSelectedOption] = useState("allMembers");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [actingId, setActingId] = useState(null);       // bloqueia botão enquanto chama API
 
-  const load = useCallback(
-    async (id) => {
-      if (!id) return;           // guarda: sem churchId não faz nada
-      setLoading(true);
-      try {
-        const res = await fetch(`${API}/api/churches/${id}/members`, {
-          credentials: "include",
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        // aceita tanto array direto quanto { members: [...] }
-        setMembers(Array.isArray(data) ? data : data?.members || []);
-      } catch (err) {
-        console.error("Falha ao carregar membros:", err);
-        setMembers([]);
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
-
+  // carregamento inicial
   useEffect(() => {
-    if (!churchId) return;       // evita acessar church._id quando undefined
-    load(churchId);
-  }, [churchId, load]);
+    let alive = true;
+    const load = async () => {
+      if (!amLeader) return;
+      try {
+        setLoading(true);
+        setError("");
+        const { active, banned, leaders } = await getAllMembers({
+          setMembers,
+          setBannedMembers,
+          isLeader: amLeader,
+        });
+        if (!alive) return;
+        setMembers(active);
+        setBannedMembers(banned);
+        setLeaders(leaders);
+      } catch (e) {
+        if (alive) setError(e?.message || "Falha ao carregar membros");
+      } finally {
+        if (alive) setLoading(false);
+      }
+    };
+    load();
+    return () => { alive = false; };
+  }, [amLeader]);
 
-  const add = async (e) => {
-    e.preventDefault();
-    if (!churchId) return;       // guarda
-    const res = await fetch(`${API}/api/churches/${churchId}/members`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ userId, role }),
-    });
-    if (!res.ok) return alert("Falha ao adicionar");
-    setUserId("");
-    setRole("member");
-    load(churchId);
+  // lista a exibir
+  const listToShow = useMemo(() => {
+    switch (selectedOption) {
+      case "leaders": return leaders;
+      case "banned":  return bannedMembers;
+      default:        return members; // "allMembers"
+    }
+  }, [selectedOption, leaders, bannedMembers, members]);
+
+  // ações
+  const handleBan = async (u) => {
+    if (!amLeader) return;
+    if (!u?._id) return;
+    if (u._id === myId) return alert("Você não pode banir a si mesmo.");
+    if (u.role === "leader" || u.leader) return alert("Não é possível banir um líder.");
+
+    setActingId(u._id);
+    const prevMembers = members, prevBanned = bannedMembers, prevLeaders = leaders;
+    try {
+      // otimista: move u para banidos
+      setMembers((arr) => arr.filter((x) => x._id !== u._id));
+      setLeaders((arr) => arr.filter((x) => x._id !== u._id));
+      setBannedMembers((arr) => [{ ...u, isBanned: true }, ...arr]);
+
+      await banMember({ isLeader: amLeader, userId: u._id });
+    } catch (e) {
+      // desfaz em caso de erro
+      setMembers(prevMembers);
+      setBannedMembers(prevBanned);
+      setLeaders(prevLeaders);
+      alert(e?.message || "Erro ao banir membro.");
+    } finally {
+      setActingId(null);
+    }
   };
 
-  const remove = async (membershipId) => {
-    if (!window.confirm("Remover este membro?")) return;
-    const res = await fetch(`${API}/api/churches/members/${membershipId}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-    if (!res.ok) return alert("Falha ao remover");
-    load(churchId);
+  const handleUnban = async (u) => {
+    if (!amLeader) return;
+    if (!u?._id) return;
+
+    setActingId(u._id);
+    const prevMembers = members, prevBanned = bannedMembers, prevLeaders = leaders;
+    try {
+      // otimista: move u para ativos
+      setBannedMembers((arr) => arr.filter((x) => x._id !== u._id));
+      const unbanned = { ...u, isBanned: false };
+      setMembers((arr) => [unbanned, ...arr]);
+      // se ele era líder (campo pode vir do back), recoloca na lista de líderes
+      if (u.role === "leader" || u.leader) {
+        setLeaders((arr) => [unbanned, ...arr]);
+      }
+
+      await unbanMember({ isLeader: amLeader, userId: u._id });
+    } catch (e) {
+      setMembers(prevMembers);
+      setBannedMembers(prevBanned);
+      setLeaders(prevLeaders);
+      alert(e?.message || "Erro ao desbanir membro.");
+    } finally {
+      setActingId(null);
+    }
   };
 
-  // Se ainda não tem igreja selecionada, mostra um placeholder seguro
-  if (!churchId) {
+  if (!amLeader) {
     return (
-      <div className="mt-4 p-4 rounded-xl border border-gray-300 bg-white shadow-sm">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-lg">Membros — selecione uma igreja</h3>
-          <button className="text-sm underline" onClick={onClose}>fechar</button>
-        </div>
-        <p className="text-sm text-gray-600">Nenhuma igreja selecionada.</p>
+      <div style={{ padding: 16 }}>
+        <h2>Gerenciar Membros</h2>
+        <p style={{ color: "#b00020" }}>Apenas líderes podem acessar esta página.</p>
       </div>
     );
   }
 
   return (
-    <div className="mt-4 p-4 rounded-xl border border-gray-300 bg-white shadow-sm">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-lg">Membros — {church?.name}</h3>
-        <button className="text-sm underline" onClick={onClose}>fechar</button>
+    <div style={{ padding: 16 }}>
+      <h2>Gerenciar Membros</h2>
+
+      <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12 }}>
+        <label>
+          Visualizar:&nbsp;
+          <select
+            value={selectedOption}
+            onChange={(e) => setSelectedOption(e.target.value)}
+          >
+            <option value="allMembers">Todos</option>
+            <option value="leaders">Líderes</option>
+            <option value="banned">Banidos</option>
+          </select>
+        </label>
+
+        <div style={{ fontSize: 12, opacity: .8 }}>
+          Ativos: {members.length} • Líderes: {leaders.length} • Banidos: {bannedMembers.length}
+        </div>
       </div>
 
-      <form onSubmit={add} className="flex flex-wrap gap-2 mb-3">
-        <input
-          className="border p-2 rounded flex-1 min-w-[220px]"
-          placeholder="User ID"
-          value={userId}
-          onChange={(e) => setUserId(e.target.value)}
-          required
-        />
-        <select
-          className="border p-2 rounded"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-        >
-          <option value="member">member</option>
-          <option value="leader">leader</option>
-          <option value="pastor">pastor</option>
-          <option value="admin">admin</option>
-        </select>
-        <button className="px-4 py-2 rounded bg-black text-white">Adicionar</button>
-      </form>
+      {loading && <p>Carregando...</p>}
+      {error && <p style={{ color: "#b00020" }}>{error}</p>}
 
-      {loading ? (
-        <p>Carregando membros...</p>
-      ) : (
-        <div className="overflow-auto">
-          <table className="min-w-full text-sm border-collapse">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left p-2">Usuário</th>
-                <th className="text-left p-2">Papel</th>
-                <th className="text-left p-2">Desde</th>
-                <th className="text-left p-2"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((m) => (
-                <tr key={m._id} className="border-b">
-                  <td className="p-2">
-                    {m.user?.username || m.user?.name || m.user?._id || "—"}
-                  </td>
-                  <td className="p-2">{m.role || "—"}</td>
-                  <td className="p-2">
-                    {m.joinedAt ? new Date(m.joinedAt).toLocaleDateString() : "—"}
-                  </td>
-                  <td className="p-2">
-                    <button
-                      className="px-2 py-1 rounded bg-red-600 text-white"
-                      onClick={() => remove(m._id)}
-                    >
-                      Remover
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {!members.length && (
-                <tr>
-                  <td className="p-2" colSpan={4}>
-                    Nenhum membro.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+      {!loading && !error && (
+        <>
+          {!listToShow?.length ? (
+            <p>Nenhum usuário para exibir.</p>
+          ) : (
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 8 }}>
+              {listToShow.map((u) => {
+                const isMe = u._id === myId;
+                const isLeaderUser = u.role === "leader" || u.leader;
+                return (
+                  <li
+                    key={u._id}
+                    style={{
+                      border: "1px solid #eee",
+                      borderRadius: 8,
+                      padding: 12,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                    }}
+                  >
+                    <img
+                      src={u.profileImage || "/avatar-placeholder.png"}
+                      alt={u.username || "Usuário"}
+                      width={40}
+                      height={40}
+                      style={{ borderRadius: "50%", objectFit: "cover" }}
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600 }}>
+                        {u.username || "—"}{" "}
+                        {isLeaderUser && <span style={{ fontSize: 12, opacity: .7 }}>(líder)</span>}
+                        {isMe && <span style={{ fontSize: 12, opacity: .7 }}> — você</span>}
+                      </div>
+                    </div>
+
+                    {/* Ações */}
+                    {!u.isBanned ? (
+                      <button
+                        disabled={actingId === u._id || isLeaderUser || isMe}
+                        onClick={() => handleBan(u)}
+                        style={{ background: "#b00020", color: "#fff", borderRadius: 8, padding: "6px 10px", width: "20%" }}
+                      >
+                        {actingId === u._id ? "Banindo..." : "Banir"}
+                      </button>
+                    ) : (
+                      <button
+                        disabled={actingId === u._id}
+                        onClick={() => handleUnban(u)}
+                        style={{ background: "#0a7", color: "#fff", borderRadius: 8, padding: "6px 10px", width: "20%" }}
+                      >
+                        {actingId === u._id ? "Desbanindo..." : "Desbanir"}
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </>
       )}
     </div>
   );

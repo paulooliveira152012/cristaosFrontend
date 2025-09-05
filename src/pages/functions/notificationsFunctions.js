@@ -168,3 +168,25 @@ export const markNotificationAsRead = async (notifId) => {
     return null;
   }
 };
+
+export const toggleNotificationsByEmail = async ({ userId, enabled }) => {
+  console.log("toggling notification by email...", { userId, enabled });
+
+  const res = await fetch(
+    `${baseUrl}/api/notifications/${userId}/notifications/email`,
+    
+    {
+      method: "PUT",
+      headers:  authHeaders(),
+      credentials: "include", // se usar cookie/sessão
+      body: JSON.stringify({ enabled }), // manda o PRÓXIMO valor
+    }
+  );
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Falha ao alternar notificação por e-mail: ${res.status} - ${text}`);
+  }
+
+  return res.json(); // { notificationsByEmail: boolean }
+};

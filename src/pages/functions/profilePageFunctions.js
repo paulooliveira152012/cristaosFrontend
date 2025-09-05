@@ -321,6 +321,7 @@ export const rejectFriendRequest = async (requesterId) => {
 
 // 🔹 Remover amigo
 export const removeFriend = async (friendId) => {
+  console.log("removing friend...")
   try {
     const response = await fetch(
       `${baseUrl}/api/users/removeFriend/${friendId}`,
@@ -538,3 +539,49 @@ export const handleSaveBio = async (bioDraft) => {
     console.log("Erro ao salvar bio:", error);
   }
 }
+
+// implemente um uploader simples (ajuste a URL conforme sua API)
+  // uploader simples (ajuste apiUrl se preciso)
+  // 1) Fazer upload e RETORNAR a URL (sem setar estado aqui)
+export const uploadCover = async (file) => {
+  const fd = new FormData();
+  fd.append("file", file);
+
+  const res = await fetch(`${baseUrl}/api/profile/coverImage`, {
+    method: "PUT",
+    body: fd,
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`Falha no upload (${res.status}) ${t}`);
+  }
+  const { url } = await res.json();
+  if (!url) throw new Error("Resposta sem URL");
+  return url;
+};
+
+export const coverSelected = async (e, setUploading, setUser) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  if (!file.type?.startsWith("image/")) {
+    alert("Escolha um arquivo de imagem."); e.target.value = ""; return;
+  }
+  if (file.size > 7 * 1024 * 1024) {
+    alert("Imagem muito grande (máx 7MB)."); e.target.value = ""; return;
+  }
+
+  try {
+    setUploading(true);
+    const url = await uploadCover(file);
+    // use UM campo consistente com o resto do app/banco:
+    setUser((u) => (u ? { ...u, profileCoverImage: url } : u));
+  } catch (err) {
+    console.error(err);
+    alert("Falha ao enviar a imagem.");
+  } finally {
+    setUploading(false);
+    e.target.value = ""; // permite selecionar o mesmo arquivo novamente
+  }
+};

@@ -1,3 +1,4 @@
+import { makeAuthHeaders } from "../../utils/makeAuthHeaders";
 import { uploadImageToS3 } from "../../utils/s3Upload";
 
 // 📸 Picker de imagem de perfil
@@ -50,7 +51,7 @@ export const handleUpdate = async ({
       `${process.env.REACT_APP_API_BASE_URL}/api/users/update/${currentUser._id}`,
       {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+              headers: makeAuthHeaders("json"), // ✅ CHAME a função e use "json"
         credentials: "include",
         body: JSON.stringify(payload),
       }

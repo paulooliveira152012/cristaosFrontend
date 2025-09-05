@@ -8,18 +8,22 @@ import {
   handleCommentLike,
 } from "./functions/interactionFunctions";
 import "../styles/listings.css";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import profileplaceholder from "../assets/images/profileplaceholder.png";
 // importando o componente de interação
 import ListingInteractionBox from "./ListingInteractionBox";
 import { useUser } from "../context/UserContext";
+import { fetchAllAds } from "./functions/addComponentFuncitons";
+import { interleaveAds } from "../utils/interLeaveAds.js";
+import { useMediaQuery } from "../utils/useMediaQuery.js";
 
 const baseURL = process.env.REACT_APP_API_BASE_URL;
 
 const Listings = () => {
   const { currentUser } = useUser(); // Access the current user
   const [items, setItems] = useState([]); // Store the listings
+  const [ads, setAds] = useState([]); // Store the ads
   const [loading, setLoading] = useState(true); // Track loading state
   const [comment, setComments] = useState([]);
   const [votedPolls, setVotedPolls] = useState({});
@@ -27,11 +31,15 @@ const Listings = () => {
   const [newCommentId, setNewCommentId] = useState("");
   const [openLeaderMenuId, setOpenLeaderMenuId] = useState(null);
   const [sharedListings, setSharedListings] = useState([]);
+  const isNarrow = useMediaQuery("(max-width: 1024px)");
+
+  // Carrega ADS
+  useEffect(() => {
+    fetchAllAds(setAds);
+  }, []);
 
   // Logging whenever newCommentId changes
   useEffect(() => {
-    // console.log("trying to fetch the newCommentId");
-
     if (newCommentId) {
       console.log("New Comment ID set in state:", newCommentId);
     }
@@ -107,6 +115,18 @@ const Listings = () => {
 
     if (currentUser !== undefined) fetchListings();
   }, [currentUser]);
+
+  // ---- Mix: listings + ads em intervalos aleatórios ----
+    // já tem items e ads carregados...
+  const feed = useMemo(() => {
+    if (!items.length) return [];
+    if (isNarrow) {
+      // mobile/tablet: mistura todos os ads no meio do feed
+      return interleaveAds(items, ads, { avoidTail: 1, jitter: 1 });
+    }
+    // desktop: sem intercalar
+    return items;
+  }, [items, ads, isNarrow]);
 
   // Use handleFetchComments, passing in setItems to manage comments
   const fetchCommentsForListing = (listingId) => {
@@ -333,11 +353,14 @@ const Listings = () => {
   };
 
   // Gera uma key única por "instância" no feed
+  // Keys (cobre 'ad' também)
   const keyForListing = (it) => {
+    if (it.type === "ad") {
+      return `ad_${it._id}_${it.__adIndex ?? 0}_${it.createdAt || ""}`;
+    }
     const rep = it.__feed?.reposter;
-    const repId = typeof rep === "object" ? rep?._id : rep || "orig"; // "orig" quando não é repost
+    const repId = typeof rep === "object" ? rep?._id : rep || "orig";
     const ts = it.__feed?.feedCreatedAt || it.createdAt || it.updatedAt || "";
-    // Sempre inclui o _id do listing + quem repostou + "momento" no feed
     return `${it._id}__${repId}__${ts}`;
   };
 
@@ -345,146 +368,216 @@ const Listings = () => {
     <div className="landingListingsContainer">
       {loading ? (
         <p>Loading listings...</p>
-      ) : items.length > 0 ? (
-        items.map((listing) => (
-          <div
-            key={keyForListing(listing)}
-            className="landingListingContainer"
-          >
-            {/* container para userInfo e adm */}
-            <div className="listing header">
-              {/* 1 / 2 */}
-              {/* 1 / 2 */}
-              <div className="userInfo">
-                {listing.userId && (
-                  <>
-                    {/* Agrupamento de avatares */}
-                    <div className="avatarGroup">
-                      {/* Autor */}
-                      <Link
-                        to={`/profile/${listing.userId._id}`}
-                        className="avatar author"
-                        aria-label={`Ver perfil de ${listing.userId.username}`}
-                        style={{
-                          backgroundImage: `url(${
-                            listing.userId.profileImage || profileplaceholder
-                          })`,
-                        }}
+      ) : feed.length > 0 ? (
+        feed.map((entry) => {
+          if (entry.type === "ad") {
+            const ad = entry;
+            return (
+              <div
+                key={keyForListing(ad)}
+                className="landingListingContainer adContainer"
+              >
+                <a
+                  href={ad.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ textDecoration: "none", color: "inherit" }}
+                >
+                  <div className="listing-content">
+                    <div className="heading">
+                      <h2 style={{ marginBottom: 8 }}>
+                        {ad.title || "Anúncio"}
+                      </h2>
+                      {ad.description && (
+                        <p style={{ textAlign: "justify" }}>{ad.description}</p>
+                      )}
+                    </div>
+                    {ad.imageUrl && (
+                      <img
+                        src={ad.imageUrl}
+                        alt={ad.title || "Ad"}
+                        className="listingImage"
+                        style={{ width: "100%", height: "auto" }}
                       />
+                    )}
+                  </div>
+                </a>
+                <div className="sponsored-tag">Patrocinado</div>
+              </div>
+            );
+          }
 
-                      {/* Reposter, se houver */}
-                      {listing.__feed?.isRepost &&
-                        listing.__feed.reposter &&
-                        (() => {
-                          const rep = listing.__feed.reposter;
-                          const repId = typeof rep === "object" ? rep._id : rep;
-                          const repImg =
-                            typeof rep === "object" ? rep.profileImage : null;
-                          const repName =
-                            typeof rep === "object" ? rep.username : "alguém";
-                          return (
-                            <Link
-                              to={`/profile/${repId}`}
-                              className="avatar reposter"
-                              aria-label={`Repostado por ${repName}`}
-                              title={`Repostado por ${repName}`}
-                              onClick={(e) => e.stopPropagation()}
-                              style={{
-                                backgroundImage: `url(${
-                                  repImg || profileplaceholder
-                                })`,
-                              }}
-                            />
-                          );
-                        })()}
-                    </div>
+          const listing = entry;
+          return (
+            <div
+              key={keyForListing(listing)}
+              className="landingListingContainer"
+            >
+              {/* container para userInfo e adm */}
+              <div className="listing header">
+                {/* 1 / 2 */}
+                {/* 1 / 2 */}
+                <div className="userInfo">
+                  {listing.userId && (
+                    <>
+                      {/* Agrupamento de avatares */}
+                      <div className="avatarGroup">
+                        {/* Autor */}
+                        <Link
+                          to={`/profile/${listing.userId._id}`}
+                          className="avatar author"
+                          aria-label={`Ver perfil de ${listing.userId.username}`}
+                          style={{
+                            backgroundImage: `url(${
+                              listing.userId.profileImage || profileplaceholder
+                            })`,
+                          }}
+                        />
 
-                    {/* Nome + tag de repost */}
-                    <div className="nameBlock">
-                      <p className="userName">{listing.userId.username}</p>
-                      {listing.__feed?.isRepost &&
-                        listing.__feed.reposter &&
-                        (() => {
-                          const rep = listing.__feed.reposter;
-                          const repName =
-                            typeof rep === "object" ? rep.username : "alguém";
-                          return (
-                            <span className="repostTag">
-                              repostado por @{repName}
-                            </span>
-                          );
-                        })()}
-                    </div>
-                  </>
+                        {/* Reposter, se houver */}
+                        {listing.__feed?.isRepost &&
+                          listing.__feed.reposter &&
+                          (() => {
+                            const rep = listing.__feed.reposter;
+                            const repId =
+                              typeof rep === "object" ? rep._id : rep;
+                            const repImg =
+                              typeof rep === "object" ? rep.profileImage : null;
+                            const repName =
+                              typeof rep === "object" ? rep.username : "alguém";
+                            return (
+                              <Link
+                                to={`/profile/${repId}`}
+                                className="avatar reposter"
+                                aria-label={`Repostado por ${repName}`}
+                                title={`Repostado por ${repName}`}
+                                onClick={(e) => e.stopPropagation()}
+                                style={{
+                                  backgroundImage: `url(${
+                                    repImg || profileplaceholder
+                                  })`,
+                                }}
+                              />
+                            );
+                          })()}
+                      </div>
+
+                      {/* Nome + tag de repost */}
+                      <div className="nameBlock">
+                        <p className="userName">{listing.userId.username}</p>
+                        {listing.__feed?.isRepost &&
+                          listing.__feed.reposter &&
+                          (() => {
+                            const rep = listing.__feed.reposter;
+                            const repName =
+                              typeof rep === "object" ? rep.username : "alguém";
+                            return (
+                              <span className="repostTag">
+                                repostado por @{repName}
+                              </span>
+                            );
+                          })()}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 2/2 */}
+
+                {currentUser?.leader == true && (
+                  <div>
+                    <button
+                      aria-label="Mais opções"
+                      onClick={() => toggleLeaderMenu(listing._id)}
+                      style={{
+                        backgroundColor: "#2a68d8",
+                        color: "white",
+                        height: 30,
+                        width: 30,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        border: "none",
+                        borderRadius: 6,
+                        fontSize: 18,
+                        cursor: "pointer",
+                      }}
+                    >
+                      …
+                    </button>
+                  </div>
                 )}
               </div>
 
-              {/* 2/2 */}
-
-              {currentUser?.leader == true && (
-                <div>
-                  <button
-                    aria-label="Mais opções"
-                    onClick={() => toggleLeaderMenu(listing._id)}
-                    style={{
-                      backgroundColor: "#2a68d8",
-                      color: "white",
-                      height: 30,
-                      width: 30,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      border: "none",
-                      borderRadius: 6,
-                      fontSize: 18,
-                      cursor: "pointer",
-                    }}
-                  >
-                    …
-                  </button>
+              {openLeaderMenuId === listing._id && (
+                <div className="adminListingMenu">
+                  <ul>
+                    <li>
+                      <button onClick={() => handleDeleteListing(listing._id)}>
+                        delete
+                      </button>
+                    </li>
+                  </ul>
                 </div>
               )}
-            </div>
 
-            {openLeaderMenuId === listing._id && (
-              <div className="adminListingMenu">
-                <ul>
-                  <li>
-                    <button onClick={() => handleDeleteListing(listing._id)}>
-                      delete
-                    </button>
-                  </li>
-                </ul>
-              </div>
-            )}
+              {listing.type === "blog" && (
+                <Link
+                  to={`openListing/${listing._id}`}
+                  style={{
+                    textDecoration: "none",
+                    margin: "0px",
+                    backgroundColor: "green",
+                  }}
+                >
+                  <div className="listing-content">
+                    <div className="heading">
+                      <h2>{listing.blogTitle || ""}</h2>
 
-            {listing.type === "blog" && (
-              <Link
-                to={`openListing/${listing._id}`}
-                style={{
-                  textDecoration: "none",
-                  margin: "0px",
-                  backgroundColor: "green",
-                }}
-              >
-                <div className="listing-content">
-                  <div className="heading">
-                    <h2>{listing.blogTitle || ""}</h2>
+                      <p
+                        style={{ textDecoration: "none", textAlign: "justify" }}
+                      >
+                        {listing.blogContent
+                          ? listing.blogContent.split(" ").length > 100
+                            ? listing.blogContent
+                                .split(" ")
+                                .slice(0, 100)
+                                .join(" ") + "..."
+                            : listing.blogContent
+                          : "No content available."}
+                      </p>
+                    </div>
+                    {/*  */}
 
-                    <p style={{ textDecoration: "none", textAlign: "justify" }}>
-                      {listing.blogContent
-                        ? listing.blogContent.split(" ").length > 100
-                          ? listing.blogContent
-                              .split(" ")
-                              .slice(0, 100)
-                              .join(" ") + "..."
-                          : listing.blogContent
-                        : "No content available."}
-                    </p>
+                    {listing.imageUrl && (
+                      <img
+                        src={listing.imageUrl}
+                        alt={`Listing image ${listing._id}`}
+                        className="listingImage"
+                        style={{
+                          width: "100%",
+                          maxWidth: "100%",
+                          height: "auto",
+                          // backgroundColor: "red",
+                        }}
+                      />
+                    )}
                   </div>
-                  {/*  */}
+                </Link>
+              )}
 
-                  {listing.imageUrl && (
+              {listing.type === "image" && listing.imageUrl && (
+                <div
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Link
+                    to={`openListing/${listing._id}`}
+                    style={{ display: "flex", justifyContent: "center" }}
+                  >
                     <img
                       src={listing.imageUrl}
                       alt={`Listing image ${listing._id}`}
@@ -496,202 +589,177 @@ const Listings = () => {
                         // backgroundColor: "red",
                       }}
                     />
+                  </Link>
+                </div>
+              )}
+
+              {listing.type === "poll" && listing.poll && (
+                <div className="poll-container">
+                  <h2>{listing.poll.question}</h2>
+                  <ul>
+                    {listing.poll.options.map((option, index) => {
+                      const totalVotes = listing.poll.votes?.length || 0;
+                      const optionVotes =
+                        listing.poll.votes?.filter((v) => {
+                          return v.optionIndex === index;
+                        }).length || 0;
+
+                      const votedOption = votedPolls[listing._id];
+                      const percentage =
+                        totalVotes > 0
+                          ? ((optionVotes / totalVotes) * 100).toFixed(1)
+                          : 0;
+
+                      const voters =
+                        listing.poll.votes?.filter(
+                          (v) => v.optionIndex === index
+                        ) || [];
+
+                      return (
+                        <div key={index} style={{ marginBottom: "20px" }}>
+                          {/* Bloco de votação */}
+                          <li
+                            onClick={() =>
+                              votedOption === undefined &&
+                              handleVote(listing._id, index)
+                            }
+                            style={{
+                              cursor:
+                                votedOption === undefined
+                                  ? "pointer"
+                                  : "default",
+                              background:
+                                votedOption !== undefined
+                                  ? `linear-gradient(to right, #4caf50 ${percentage}%, #eee ${percentage}%)`
+                                  : "#f9f9f9",
+                              padding: "10px",
+                              borderRadius: "5px",
+                              border: "1px solid #ccc",
+                              listStyleType: "none",
+                            }}
+                          >
+                            <strong>{option}</strong>
+                            {votedOption !== undefined && (
+                              <span style={{ float: "right" }}>
+                                {percentage}%
+                              </span>
+                            )}
+                          </li>
+
+                          {/* Avatares fora da caixa */}
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: "6px",
+                              marginTop: "6px",
+                              paddingLeft: "10px",
+                            }}
+                          >
+                            {voters.map((v, idx) => (
+                              <Link to={`profile/${v.userId._id}`} key={idx}>
+                                <img
+                                  key={idx}
+                                  src={
+                                    v.userId?.profileImage || profileplaceholder
+                                  }
+                                  alt="voter"
+                                  title={v.userId?.username}
+                                  style={{
+                                    width: "22px",
+                                    height: "22px",
+                                    borderRadius: "50%",
+                                    objectFit: "cover",
+                                  }}
+                                />
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+
+              {listing.type === "link" && (
+                <div className="listing-link">
+                  {isYouTubeLink(listing.link) ? (
+                    <div>
+                      <iframe
+                        width="100%"
+                        height="220"
+                        src={`https://www.youtube.com/embed/${getYouTubeVideoId(
+                          listing.link
+                        )}`}
+                        title="YouTube preview"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        style={{ borderRadius: "8px", marginBottom: "10px" }}
+                      />
+                      <div>
+                        <p>{listing.linkDescription}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <a
+                      href={listing.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: "#2A68D8", textDecoration: "underline" }}
+                    >
+                      {listing.link}
+                    </a>
                   )}
                 </div>
-              </Link>
-            )}
+              )}
 
-            {listing.type === "image" && listing.imageUrl && (
-              <div
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  justifyContent: "center",
-                }}
-              >
-                <Link
-                  to={`openListing/${listing._id}`}
-                  style={{ display: "flex", justifyContent: "center" }}
-                >
-                  <img
-                    src={listing.imageUrl}
-                    alt={`Listing image ${listing._id}`}
-                    className="listingImage"
-                    style={{
-                      width: "100%",
-                      maxWidth: "100%",
-                      height: "auto",
-                      // backgroundColor: "red",
-                    }}
-                  />
-                </Link>
-              </div>
-            )}
-
-            {listing.type === "poll" && listing.poll && (
-              <div className="poll-container">
-                <h2>{listing.poll.question}</h2>
-                <ul>
-                  {listing.poll.options.map((option, index) => {
-                    const totalVotes = listing.poll.votes?.length || 0;
-                    const optionVotes =
-                      listing.poll.votes?.filter((v) => {
-                        return v.optionIndex === index;
-                      }).length || 0;
-
-                    const votedOption = votedPolls[listing._id];
-                    const percentage =
-                      totalVotes > 0
-                        ? ((optionVotes / totalVotes) * 100).toFixed(1)
-                        : 0;
-
-                    const voters =
-                      listing.poll.votes?.filter(
-                        (v) => v.optionIndex === index
-                      ) || [];
-
-                    return (
-                      <div key={index} style={{ marginBottom: "20px" }}>
-                        {/* Bloco de votação */}
-                        <li
-                          onClick={() =>
-                            votedOption === undefined &&
-                            handleVote(listing._id, index)
-                          }
-                          style={{
-                            cursor:
-                              votedOption === undefined ? "pointer" : "default",
-                            background:
-                              votedOption !== undefined
-                                ? `linear-gradient(to right, #4caf50 ${percentage}%, #eee ${percentage}%)`
-                                : "#f9f9f9",
-                            padding: "10px",
-                            borderRadius: "5px",
-                            border: "1px solid #ccc",
-                            listStyleType: "none",
-                          }}
-                        >
-                          <strong>{option}</strong>
-                          {votedOption !== undefined && (
-                            <span style={{ float: "right" }}>
-                              {percentage}%
-                            </span>
-                          )}
-                        </li>
-
-                        {/* Avatares fora da caixa */}
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: "6px",
-                            marginTop: "6px",
-                            paddingLeft: "10px",
-                          }}
-                        >
-                          {voters.map((v, idx) => (
-                            <Link to={`profile/${v.userId._id}`} key={idx}>
-                              <img
-                                key={idx}
-                                src={
-                                  v.userId?.profileImage || profileplaceholder
-                                }
-                                alt="voter"
-                                title={v.userId?.username}
-                                style={{
-                                  width: "22px",
-                                  height: "22px",
-                                  borderRadius: "50%",
-                                  objectFit: "cover",
-                                }}
-                              />
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </ul>
-              </div>
-            )}
-
-            {listing.type === "link" && (
-              <div className="listing-link">
-                {isYouTubeLink(listing.link) ? (
-                  <div>
-                    <iframe
-                      width="100%"
-                      height="220"
-                      src={`https://www.youtube.com/embed/${getYouTubeVideoId(
-                        listing.link
-                      )}`}
-                      title="YouTube preview"
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      style={{ borderRadius: "8px", marginBottom: "10px" }}
-                    />
-                    <div>
-                      <p>{listing.linkDescription}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <a
-                    href={listing.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: "#2A68D8", textDecoration: "underline" }}
-                  >
-                    {listing.link}
-                  </a>
-                )}
-              </div>
-            )}
-
-            <ListingInteractionBox
-              listingId={listing._id}
-              currentCommentId={newCommentId}
-              likesCount={listing.likes.length}
-              comments={listing.comments || []}
-              commentsCount={listing.comments ? listing.comments.length : 0}
-              sharesCount={listing.shares ? listing.shares.length : 0}
-              isLiked={
-                currentUser ? listing.likes.includes(currentUser._id) : false
-              }
-              currentUser={currentUser}
-              isSingleListing={false}
-              commentLikesCount={(comment) =>
-                comment.likes ? comment.likes.length : 0
-              }
-              isCommentLiked={(comment) =>
-                comment.likes && Array.isArray(comment.likes)
-                  ? comment.likes.includes(currentUser._id)
-                  : false
-              }
-              commentCommentsCount={(comment) =>
-                comment.replies ? comment.replies.length : 0
-              }
-              // Using imported functions for reply box
-              // Using function to fetch comments
-              handleFetchComments={fetchCommentsForListing} // Pass function as prop
-              // Using function to submit a comment
-              handleCommentSubmit={submitCommentForListing}
-              // Using function to submit a reply to a comment
-              handleReplySubmit={submitReplyForComment}
-              // Using function to delete a comment
-              handleDeleteComment={deleteCommentForListing}
-              // using funtion to like listing
-              handleLike={likeListing}
-              // using function to share listing
-              handleShare={shareListing}
-              // pass sharedListings
-              sharedListings={sharedListings}
-              // using function to like comments or replies
-              handleCommentLike={likeCommentOrReply}
-              // setItems
-              setItems={setItems}
-            />
-          </div>
-        ))
+              <ListingInteractionBox
+                listingId={listing._id}
+                currentCommentId={newCommentId}
+                likesCount={listing.likes.length}
+                comments={listing.comments || []}
+                commentsCount={listing.comments ? listing.comments.length : 0}
+                sharesCount={listing.shares ? listing.shares.length : 0}
+                isLiked={
+                  currentUser ? listing.likes.includes(currentUser._id) : false
+                }
+                currentUser={currentUser}
+                isSingleListing={false}
+                commentLikesCount={(comment) =>
+                  comment.likes ? comment.likes.length : 0
+                }
+                isCommentLiked={(comment) =>
+                  comment.likes && Array.isArray(comment.likes)
+                    ? comment.likes.includes(currentUser._id)
+                    : false
+                }
+                commentCommentsCount={(comment) =>
+                  comment.replies ? comment.replies.length : 0
+                }
+                // Using imported functions for reply box
+                // Using function to fetch comments
+                handleFetchComments={fetchCommentsForListing} // Pass function as prop
+                // Using function to submit a comment
+                handleCommentSubmit={submitCommentForListing}
+                // Using function to submit a reply to a comment
+                handleReplySubmit={submitReplyForComment}
+                // Using function to delete a comment
+                handleDeleteComment={deleteCommentForListing}
+                // using funtion to like listing
+                handleLike={likeListing}
+                // using function to share listing
+                handleShare={shareListing}
+                // pass sharedListings
+                sharedListings={sharedListings}
+                // using function to like comments or replies
+                handleCommentLike={likeCommentOrReply}
+                // setItems
+                setItems={setItems}
+              />
+            </div>
+          );
+        })
       ) : (
         <p>No listings available</p>
       )}

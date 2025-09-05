@@ -1,14 +1,19 @@
 // Perfil – layout responsivo com bio, denominação simplificada e localização única
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useUser } from "../context/UserContext";
 import { useParams, useNavigate } from "react-router-dom";
+import { useSocket } from "../context/SocketContext";
+// =================== components
 import Header from "../components/Header";
+import { ProfileHeader } from "../components/Page_Profile/ProfileHeader.js";
 import ListingInteractionBox from "../components/ListingInteractionBox";
+import { ManagingModal } from "../components/ManagingModal.js";
+// =================== style
 import "../styles/profile.css";
 import coverPlaceholder from "../assets/coverPlaceholder.jpg";
 import { Link } from "react-router-dom";
 import profileplaceholder from "../assets/images/profileplaceholder.png";
-
+// =================== funções
 import {
   fetchUserData,
   fetchListingComments,
@@ -23,9 +28,15 @@ import {
   submitMuralContent,
   getMuralContent,
   handleSaveBio,
+  coverSelected,
 } from "./functions/profilePageFunctions";
 import { useProfileLogic } from "./functions/useProfileLogic";
-
+import { 
+  banMember, 
+  strike,
+  getStrikeHistory
+ } from "../functions/leaderFunctions.js";
+// =================== icones
 import FiMessageCircle from "../assets/icons/FiMessageCircle.js";
 import {
   FiMoreVertical,
@@ -33,98 +44,83 @@ import {
   FiMapPin,
   FiEdit2,
 } from "react-icons/fi";
-import { useSocket } from "../context/SocketContext";
+// =================== helpers
+import { normalizeDenomination } from "../utils/normalizeDenominations.js";
 
 const imagePlaceholder = require("../assets/images/profileplaceholder.png");
 
-/* ---------------- helpers: normalização de denominação ---------------- */
-const strip = (s = "") =>
-  s
-    .toString()
-    .trim()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase();
-
-function levenshtein(a, b) {
-  a = strip(a);
-  b = strip(b);
-  const m = Array.from({ length: a.length + 1 }, (_, i) => [i]);
-  for (let j = 1; j <= b.length; j++) m[0][j] = j;
-  for (let i = 1; i <= a.length; i++) {
-    for (let j = 1; j <= b.length; j++) {
-      m[i][j] = Math.min(
-        m[i - 1][j] + 1,
-        m[i][j - 1] + 1,
-        m[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
-      );
-    }
-  }
-  return m[a.length][b.length];
-}
-
-function normalizeDenomination(input = "") {
-  const s = strip(input);
-  if (!s) return "";
-  const targets = [
-    { key: "protestante", aliases: ["evangelico", "evangelica", "protestant"] },
-    { key: "católico", aliases: ["catolica", "catolico", "romana"] },
-    { key: "ortodoxo", aliases: ["ortodoxa"] },
-    { key: "anglicano", aliases: ["anglicana"] },
-    { key: "luterano", aliases: ["luterana"] },
-    { key: "presbiteriano", aliases: ["presbiteriana"] },
-    { key: "batista", aliases: [] },
-    { key: "pentecostal", aliases: [] },
-  ];
-  for (const t of targets) {
-    if (s.includes(t.key) || t.aliases.some((a) => s.includes(a))) return t.key;
-  }
-  let best = { key: "", d: Infinity };
-  for (const t of targets) {
-    [t.key, ...t.aliases].forEach((c) => {
-      const d = levenshtein(s, c);
-      if (d < best.d) best = { key: t.key, d };
-    });
-  }
-  return best.d <= 3 ? best.key : input;
-}
-/* --------------------------------------------------------------------- */
-
 const Profile = () => {
+  // ─────────────────────────────────────────────────────
+  // Contexto / roteamento
+  // ─────────────────────────────────────────────────────
   const { socket } = useSocket();
   const { currentUser } = useUser();
   const { userId } = useParams();
   const navigate = useNavigate();
-
+  // ─────────────────────────────────────────────────────
+  // Flags derivadas do usuário atual
+  // ─────────────────────────────────────────────────────
+  const meId = currentUser?._id ?? null;
+  const isLeader = currentUser?.role === "leader";
+  // ─────────────────────────────────────────────────────
+  // Dados principais
+  // ─────────────────────────────────────────────────────
   const [user, setUser] = useState(null);
   const [userListings, setUserListings] = useState([]);
   const [sharedListings, setSharedListings] = useState([]);
-
+  // ─────────────────────────────────────────────────────
+  // UI global
+  // ─────────────────────────────────────────────────────
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const [currentTab, setCurrentTab] = useState("");
-  const [showOptions, setShowOptions] = useState(false);
-  const [showListingMenu, setShowListingMenu] = useState(null);
-
+  // ─────────────────────────────────────────────────────
+  // Abas / menus
+  // ─────────────────────────────────────────────────────
+  const [currentTab, setCurrentTab] = useState(""); // "" | "mural"
+  const [showOptions, setShowOptions] = useState(false); // menu "mais" do perfil
+  const [showListingMenu, setShowListingMenu] = useState(null); // id da listagem c/ menu aberto
+  // ─────────────────────────────────────────────────────
+  // Edição de listagem
+  // ─────────────────────────────────────────────────────
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState({});
-
+  // ─────────────────────────────────────────────────────
+  // Mural
+  // ─────────────────────────────────────────────────────
   const [muralMessages, setMuralMessages] = useState([]);
   const [newMuralMessage, setNewMuralMessage] = useState("");
-
-  // bio (apenas front por enquanto)
+  // ─────────────────────────────────────────────────────
+  // Bio
+  // ─────────────────────────────────────────────────────
   const [bioEditing, setBioEditing] = useState(false);
   const [bioLocal, setBioLocal] = useState("");
   const [bioDraft, setBioDraft] = useState("");
-
+  // ─────────────────────────────────────────────────────
+  // Moderação (líder)
+  // ─────────────────────────────────────────────────────
+  const [managingModal, setManagingModal] = useState(null); // id da listagem sendo gerenciada
+  // Se ainda estiver usando o fluxo antigo, mantenha; caso contrário, remova:
+  const [leaderMenuLevel, setLeaderMenuLevel] = useState("1"); // (LEGADO) nível do submenu
+  // ─────────────────────────────────────────────────────
+  // Upload de arquivos
+  // ─────────────────────────────────────────────────────
+  const fileRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  // ─────────────────────────────────────────────────────
+  /* Valores derivados (sempre depois dos estados que usam) */
+  // ─────────────────────────────────────────────────────
+  const isOwner = String(currentUser?._id) === String(user?._id);
   const userBio = (user?.bio ?? "").trim();
   const localBio = (bioLocal ?? "").trim();
   const bioText = userBio || localBio;
 
-  const [openLeaderMenuId, setOpenLeaderMenuId] = useState(null);
+  // Debug (remova em produção)
+  console.log("is currentUser a leader?", isLeader);
 
-  const isOwner = String(currentUser?._id) === String(user?._id);
+  const updateProfileBackground = () => {
+    if (!isOwner) return;
+    fileRef.current?.click();
+  };
 
   // quando trocar de usuário (ou quando o backend retornar nova bio), sincronize
   useEffect(() => {
@@ -147,6 +143,7 @@ const Profile = () => {
     handleShare,
   } = useProfileLogic({
     currentUser,
+    currentUserId: meId,
     userListings,
     setUserListings,
     setSharedListings,
@@ -211,8 +208,13 @@ const Profile = () => {
     else alert("Amigo removido.");
   };
 
+  // utilizando função importada
+  const handleCoverSelected = (e) => {
+    coverSelected(e, setUploading, setUser);
+  };
+
   const renderFriendAction = () => {
-    if (!currentUser || !user || currentUser._id === user._id) return null;
+    if (!currentUser || !user || isOwner) return null;
     const isFriend = currentUser.friends?.includes(user._id);
     const hasSentRequest = currentUser.sentFriendRequests?.includes(user._id);
     const hasReceivedRequest = currentUser.friendRequests?.includes(user._id);
@@ -257,17 +259,29 @@ const Profile = () => {
   };
 
   const renderMoreMenu = () => (
-    <div className="more-options">
-      <ul>
-        {currentUser._id === user._id ? (
-          <li onClick={() => navigate("/settingsMenu")}>⚙️ Configurações</li>
-        ) : (
-          <>
-            <li>🚫 Bloquear</li>
-            <li>⚠️ Reportar</li>
-          </>
-        )}
-      </ul>
+    <div className="modal" onClick={() => setShowOptions(false)}>
+      <div className="modal-content">
+        <div className="more-options">
+          <ul>
+            {isOwner ? (
+              <li onClick={() => navigate("/settingsMenu")}>
+                ⚙️ Configurações
+              </li>
+            ) : (
+              <>
+                <li>🚫 Bloquear</li>
+                <li>⚠️ Reportar</li>
+                {isLeader && (
+                  <ul>
+                    <li onClick={() => handleBanMember()}>Banir</li>
+                    <li>Strike</li>
+                  </ul>
+                )}
+              </>
+            )}
+          </ul>
+        </div>
+      </div>
     </div>
   );
 
@@ -320,192 +334,67 @@ const Profile = () => {
   const friendsCount = Array.isArray(user.friends) ? user.friends.length : null;
 
   const toggleLeaderMenu = (listingId) => {
-    setOpenLeaderMenuId((prevId) => (prevId === listingId ? null : listingId));
+    setManagingModal((prevId) => (prevId === listingId ? null : listingId));
   };
+
+  const handleBanMember = () => {
+    console.log("banning member");
+    console.log("isLeader?", isLeader);
+    console.log("userId:", userId);
+
+    banMember({ isLeader, userId });
+  };
+
+  // redirect to main page if user has been banned
+  if (user.isBanned) {
+    navigate("/");
+    return;
+  }
 
   return (
     <>
+      {/* <div className="modal">
+      <div className="modal-content"></div>
+    </div> */}
       <div className="profilePageBasicInfoContainer">
         <Header showProfileImage={false} navigate={navigate} />
-        <div className="profilePageHeaderParentSection">
-          <div
-            className="top"
-            style={{
-              backgroundImage: `url(${
-                user?.profileBackgroundCover || coverPlaceholder
-              })`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
-              height: 220,
-            }}
-          />
-          <div className="bottom">
-            <div className="headerRow">
-              {/* avatar */}
-              <div className="imageColumn">
-                <div
-                  className="ProfileProfileImage"
-                  style={{
-                    backgroundImage: `url(${
-                      user?.profileImage || imagePlaceholder
-                    })`,
-                    backgroundPosition: "center",
-                  }}
-                />
-              </div>
-
-              {/* info principal */}
-              <div className="infoWrapper">
-                <div className="nameLine">
-                  <h2 className="profile-username">
-                    {user.firstName || ""} {user.lastName || ""}
-                  </h2>
-                  <span className="at">@{user.username}</span>
-                </div>
-
-                {/* Bio — todos veem; só o dono edita */}
-                <div className="bioSection">
-                  {!bioEditing ? (
-                    <>
-                      {currentUser._id == user._id ? (
-                        <p className={`bio ${bioLocal ? "" : "muted"}`}>
-                          {bioText || "Escreva uma breve bio..."}
-                        </p>
-                      ) : (
-                        <p className={`bio ${bioLocal ? "" : "muted"}`}>
-                          {bioText || ""}
-                        </p>
-                      )}
-
-                      {isOwner && (
-                        <button
-                          className="tiny ghost"
-                          onClick={() => setBioEditing(true)}
-                          aria-label="Editar bio"
-                          title="Editar bio"
-                        >
-                          <FiEdit2 size={14} /> Editar
-                        </button>
-                      )}
-                    </>
-                  ) : isOwner ? (
-                    <div className="bio-editor">
-                      <textarea
-                        rows={3}
-                        maxLength={220}
-                        value={bioDraft}
-                        onChange={(e) => setBioDraft(e.target.value)}
-                        placeholder="Escreva uma breve bio (até 220 caracteres)"
-                      />
-                      <div className="bio-actions">
-                        <button
-                          className="tiny"
-                          onClick={async () => {
-                            const trimmed = (bioDraft || "").trim();
-                            setBioLocal(trimmed); // atualiza visual na hora
-                            setBioEditing(false);
-                            try {
-                              // mantém sua assinatura atual:
-                              await handleSaveBio(trimmed);
-                              // otimismo: reflita no objeto user p/ evitar voltar a renderizar a antiga
-                              setUser((u) => (u ? { ...u, bio: trimmed } : u));
-                            } catch (e) {
-                              console.error(e);
-                              alert("Falha ao salvar bio");
-                              // opcional: reverter bioLocal se quiser
-                            }
-                          }}
-                        >
-                          Salvar
-                        </button>
-                        <button
-                          className="tiny ghost"
-                          onClick={() => {
-                            setBioDraft(bioLocal || ""); // garante string
-                            setBioEditing(false);
-                          }}
-                        >
-                          Cancelar
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-
-                {/* denominação – só o valor */}
-                {denomination && (
-                  <div className="denomination-value">{denomination}</div>
-                )}
-
-                {/* meta: local + amigos + adicionar */}
-                <div className="metaRow">
-                  {locationText && (
-                    <span className="locationChip">
-                      <FiMapPin size={14} /> {locationText}
-                    </span>
-                  )}
-
-                  <div className="metaActions">
-                    <span
-                      className="friends-link"
-                      onClick={() => navigate(`/profile/${user._id}/friends`)}
-                    >
-                      {friendsCount !== null
-                        ? `${friendsCount} ${
-                            friendsCount === 1 ? "amigo" : "amigos"
-                          }`
-                        : "Amigos"}
-                    </span>
-                    {renderFriendAction()}
-                  </div>
-                </div>
-              </div>
-
-              {/* ações à direita */}
-              <div className="interactionButtons">
-                {(currentUser._id !== user._id ||
-                  currentUser._id === user._id) && (
-                  <>
-                    {currentUser._id !== user._id && (
-                      <button
-                        className="chat-icon-button"
-                        onClick={async () => {
-                          const res = await requestChat(
-                            currentUser?._id,
-                            user?._id
-                          );
-                          const convId =
-                            res?.conversationId || res?.conversation?._id;
-                          if (!convId) return; // nada a fazer se o backend não retornou id
-
-                          // (opcional) já entra na sala pelo socket
-                          socket?.emit?.("joinPrivateChat", {
-                            conversationId: convId,
-                          });
-
-                          // navega direto pra conversa; justInvited ajuda a mostrar "Aguardando..."
-                          navigate(`/privateChat/${convId}`, {
-                            state: { justInvited: res?.status === "pending" },
-                          });
-                        }}
-                      >
-                        <FiMessageCircle size={20} />
-                      </button>
-                    )}
-                    <button
-                      className="more-icon-button"
-                      onClick={() => setShowOptions(!showOptions)}
-                    >
-                      <FiMoreVertical size={20} className="more-icon-button" />
-                    </button>
-                  </>
-                )}
-                {showOptions && renderMoreMenu()}
-              </div>
-            </div>
-          </div>
-        </div>
+        <ProfileHeader
+          /* capa */
+          updateProfileBackground={() => isOwner && fileRef.current?.click()}
+          isOwner={isOwner}
+          user={user}
+          currentUser={currentUser}
+          setUser={setUser}
+          coverPlaceholder={coverPlaceholder}
+          uploading={uploading}
+          fileRef={fileRef}
+          handleCoverSelected={handleCoverSelected}
+          imagePlaceholder={imagePlaceholder} // importe isso no Profile.jsx
+          socket={socket}
+          /* bio */
+          bioLocal={bioLocal}
+          setBioLocal={setBioLocal}
+          bioEditing={bioEditing}
+          setBioEditing={setBioEditing}
+          bioDraft={bioDraft}
+          setBioDraft={setBioDraft}
+          bioText={bioText}
+          handleSaveBio={handleSaveBio} // do seu profilePageFunctions
+          /* funçõezinhas externas usadas dentro do header */
+          renderFriendAction={renderFriendAction}
+          navigate={navigate}
+          requestChat={requestChat}
+          /* estado/menus */
+          setShowOptions={setShowOptions}
+          showOptions={showOptions}
+          renderMoreMenu={renderMoreMenu} // defina como: const renderMoreMenu = () => (<div>...</div>)
+          /* meta */
+          locationText={user?.city || user?.state || ""}
+          denomination={denomination}
+          friendsCount={
+            Array.isArray(user?.friends) ? user.friends.length : null
+          }
+        />
       </div>
 
       {/* Abas */}
@@ -574,7 +463,7 @@ const Profile = () => {
                 const isOpen = showListingMenu === listing._id;
                 return (
                   <div key={listing._id}>
-                    {currentUser._id === user._id && (
+                    {isOwner && (
                       <div className="listingUpdateBox">
                         <button
                           className="listingMenuTrigger"
@@ -601,11 +490,7 @@ const Profile = () => {
                           >
                             ✏️ Editar
                           </li>
-                          <li
-                            onClick={() =>
-                              handleDeleteListing(listing._id, setUserListings)
-                            }
-                          >
+                          <li onClick={() => handleDeleteListing(listing._id)}>
                             🗑️ Excluir
                           </li>
                         </ul>
@@ -678,7 +563,7 @@ const Profile = () => {
                       </div>
 
                       {/* 2/2 … mantém o resto como já está (botões, menu, etc.) */}
-                      {currentUser?.leader == true && (
+                      {isLeader && (
                         <div>
                           <button
                             aria-label="Mais opções"
@@ -702,47 +587,74 @@ const Profile = () => {
                         </div>
                       )}
                     </div>
+                    {/* =============== Leader Menu ==================== */}
 
-                    {openLeaderMenuId === listing._id && (
-                      <div className="adminListingMenu">
-                        <ul>
-                          <li>
-                            <button
-                              onClick={() => handleDeleteListing(listing._id)}
-                            >
-                              delete
-                            </button>
-                          </li>
-                        </ul>
-                      </div>
-                    )}
-
-                    {listing.type === "image" && listing.imageUrl && (
-                      <img
-                        src={listing.imageUrl}
-                        alt="Listing"
-                        className="profile-listing-image"
+                    {managingModal === listing._id && (
+                      <ManagingModal
+                        setManagingModal={setManagingModal}
+                        setLeaderMenuLevel={setLeaderMenuLevel}
+                        leaderMenuLevel={leaderMenuLevel}
+                        userId={user._id} // quem sofre a ação
+                        listingId={listing._id} // qual listagem esta sendo gerenciada
+                        onDelete={() => handleDeleteListing(listing._id)} // ação: deletar listagem
+                        onStrike={async (strikeReason) => {
+                          const { ok, error } = await strike({
+                            userId: user._id,
+                            listingId: listing._id,
+                            strikeReason,
+                          });
+                          if (!ok) alert(error || "Falha ao registrar strike.");
+                        }}
+                        getStrikeHistory = {getStrikeHistory}
                       />
                     )}
 
+                    {listing.type === "image" && listing.imageUrl && (
+                      <Link to={`/openListing/${listing._id}`}>
+                        <img
+                          src={listing.imageUrl}
+                          alt="Listing"
+                          className="profile-listing-image"
+                        />
+                      </Link>
+                    )}
+
                     {listing.type === "blog" && (
-                      <div className="listing-content">
-                        <h2>{listing.blogTitle || ""}</h2>
-                        <p>
-                          {listing.blogContent?.slice(0, 150) || "No content."}
-                        </p>
-                      </div>
+                      <Link to={`/openListing/${listing._id}`}>
+                        <div className="listing-content">
+                          <h2>{listing.blogTitle || ""}</h2>
+                          <p>
+                            {listing.blogContent?.slice(0, 150) ||
+                              "No content."}
+                          </p>
+                          {listing.imageUrl && (
+                            <img
+                              src={listing.imageUrl}
+                              alt={`Listing image ${listing._id}`}
+                              className="listingImage"
+                              style={{
+                                width: "100%",
+                                maxWidth: "100%",
+                                height: "auto",
+                                // backgroundColor: "red",
+                              }}
+                            />
+                          )}
+                        </div>
+                      </Link>
                     )}
 
                     {listing.type === "poll" && listing.poll && (
-                      <div className="poll-container">
-                        <h3>{listing.poll.question}</h3>
-                        <ul>
-                          {listing.poll.options.map((option, i) => (
-                            <li key={i}>{option}</li>
-                          ))}
-                        </ul>
-                      </div>
+                      <Link to={`/openListing/${listing._id}`}>
+                        <div className="poll-container">
+                          <h3>{listing.poll.question}</h3>
+                          <ul>
+                            {listing.poll.options.map((option, i) => (
+                              <li key={i}>{option}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </Link>
                     )}
 
                     {editingId === listing._id && (
