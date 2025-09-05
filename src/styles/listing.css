@@ -13,7 +13,7 @@
     margin: auto;
 }
 
-@media screen and (max-width: 500px) {
+@media screen and (max-width: 769px) {
     .listing-page-container{
         margin: 0;
         padding: 0;
