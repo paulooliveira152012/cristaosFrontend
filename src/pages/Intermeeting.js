@@ -184,7 +184,7 @@ const Intermeeting = () => {
                 disabled={rsvpBusy}
                 style={{ minWidth: 180 }}
               >
-                {imGoing ? "Cancelar presença" : "Vou"}
+                {imGoing && currentUser ? "Cancelar presença" : "Vou"}
               </button>
             </div>
           </div>
