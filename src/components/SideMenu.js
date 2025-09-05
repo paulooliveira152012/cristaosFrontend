@@ -5,23 +5,55 @@ import { useDarkMode } from "../context/DarkModeContext";
 import imagePlaceholder from "../assets/images/profileplaceholder.png";
 import { useNavigate } from "react-router-dom";
 import { handleLogout } from "./functions/headerFunctions";
-import MoonIcon from "../assets/icons/darkModeIcon.js";
-import SunIcon from "../assets/icons/lightModeIcon.js";
-import ArrowLeftIcon from "../assets/icons/ArrowLeftIcon.js";
+
+import {
+  Moon, Sun,
+  BookOpen, Layers, Users, MessageSquare, MapPin, Tag, Globe,
+  FileText, Lock, Edit3, Phone, Settings, Shield
+} from "lucide-react";
 
 const SideMenu = ({ closeMenu, isOpen }) => {
   const { currentUser, logout } = useUser();
   const { darkMode, setDarkMode } = useDarkMode();
   const navigate = useNavigate();
 
-  // console.log("currentUser on side menu:", currentUser)
+  // Ícones que precisam de traço mais grosso (ajuste fino por label)
+  const thickerIcons = new Set([
+    "Diretrizes da Plataforma",
+    "Política de Privacidade",
+    "Sugestões",
+    "Fale Conosco",
+    "Termos de Uso",
+  ]);
+
+  const iconSize = 20;
+  const getStroke = (label) => (thickerIcons.has(label) ? 2.5 : 2);
+
+  const primaryItems = [
+    { label: "Estudos por livros", path: "bibleStudiesBook", Icon: BookOpen },
+    { label: "Estudos por temas", path: "bibleStudiesTheme", Icon: Layers },
+    { label: "Reuniões Privadas", path: "privateRooms", Icon: Users },
+    { label: "Aconselhamento", path: "counselingSessions", Icon: MessageSquare },
+    { label: "Encontrar reunião próxima", path: "findGathering", Icon: MapPin },
+    { label: "Promoções", path: "promotions", Icon: Tag },
+    { label: "Fórum da comunidade", path: "communityForum", Icon: Globe },
+  ];
+
+  const secondaryItems = [
+    { label: "Diretrizes da Plataforma", path: "guidelines", Icon: FileText },
+    { label: "Política de Privacidade", path: "privacyPolicy", Icon: Lock },
+    { label: "Sugestões", path: "suggestions", Icon: Edit3 },
+    { label: "Fale Conosco", path: "contactUs", Icon: Phone },
+    { label: "Termos de Uso", path: "termsOfUse", Icon: Settings },
+    { label: "Igrejas Registradas", path: "globe", Icon: Globe },
+  ];
 
   return (
     <>
       <div
         className={`sideMenuOverlay ${isOpen ? "visible" : ""}`}
         onClick={closeMenu}
-      ></div>
+      />
 
       <div className={`sideMenu ${isOpen ? "open" : ""}`}>
         <div className="top">
@@ -32,55 +64,52 @@ const SideMenu = ({ closeMenu, isOpen }) => {
                 style={{
                   backgroundImage: `url(${currentUser?.profileImage || imagePlaceholder})`,
                 }}
-                onClick={() => navigate(`profile/${currentUser._id}`)}
-              ></div>
+                onClick={() => {
+                  if (currentUser?._id) navigate(`profile/${currentUser._id}`);
+                }}
+              />
             </div>
 
             <button
               className="viewProfileButton"
               onClick={() => {
-                navigate(`profile/${currentUser._id}`);
+                if (currentUser?._id) navigate(`profile/${currentUser._id}`);
                 closeMenu();
               }}
             >
               Ver Perfil
             </button>
           </div>
-
-          {/* <div onClick={closeMenu} className="closeBtn">
-            <ArrowLeftIcon />
-          </div> */}
         </div>
 
         <div className="scrollableMenuContent">
-          {/* Primeira seção de links */}
           <ul className="menuOptions">
-            <li onClick={() => navigate("bibleStudiesBook")}>Estudos Bíblicos (livros)</li>
-            <li onClick={() => navigate("bibleStudiesTheme")}>Estudos Bíblico (temas)</li>
-            <li onClick={() => navigate("privateRooms")}>Salas de Reuniões Privadas</li>
-            <li onClick={() => navigate("counselingSessions")}>Sessões de Aconselhamento</li>
-            <li onClick={() => navigate("findGathering")}>Encontrar Reunião Próxima</li>
-            <li onClick={() => navigate("promotions")}>Promoções</li>
-            <li onClick={() => navigate("communityForum")}>Fórum da Comunidade</li>
+            {primaryItems.map(({ label, path, Icon }) => (
+              <li key={path} onClick={() => navigate(path)}>
+                <Icon size={iconSize} strokeWidth={getStroke(label)} aria-hidden="true" />
+                <span>{label}</span>
+              </li>
+            ))}
           </ul>
 
-          {/* Divisor visual e segunda seção */}
           <ul className="secondaryMenuOptions">
-            <li onClick={() => navigate("guidelines")}>Diretrizes da Plataforma</li>
-            <li onClick={() => navigate("privacyPolicy")}>Política de Privacidade</li>
-            <li onClick={() => navigate("suggestions")}>Sugestões</li>
-            <li onClick={() => navigate("contactUs")}>Fale Conosco</li>
-            <li onClick={() => navigate("termsOfUse")}>Termos de Uso</li>
-            <li onClick={() => navigate("globe")}>Igrejas Registradas</li>
+            {secondaryItems.map(({ label, path, Icon }) => (
+              <li key={path} onClick={() => navigate(path)}>
+                <Icon size={iconSize} strokeWidth={getStroke(label)} aria-hidden="true" />
+                <span>{label}</span>
+              </li>
+            ))}
           </ul>
 
           {currentUser?.leader && (
             <ul className="secondaryMenuOptions">
-              <li onClick={() => navigate("admin")}>Administração</li>
+              <li onClick={() => navigate("admin")}>
+                <Shield size={iconSize} strokeWidth={2.3} aria-hidden="true" />
+                <span>Administração</span>
+              </li>
             </ul>
           )}
 
-          {/* Botão de logout */}
           {currentUser && (
             <button
               onClick={() => {
@@ -99,8 +128,9 @@ const SideMenu = ({ closeMenu, isOpen }) => {
             onClick={() => setDarkMode(!darkMode)}
             className="themeToggleBtn"
             title={darkMode ? "Modo Claro" : "Modo Escuro"}
+            aria-label={darkMode ? "Ativar modo claro" : "Ativar modo escuro"}
           >
-            {darkMode ? <SunIcon /> : <MoonIcon />}
+            {darkMode ? <Sun size={20} strokeWidth={2.3} /> : <Moon size={20} strokeWidth={2.3} />}
           </button>
         </div>
       </div>
