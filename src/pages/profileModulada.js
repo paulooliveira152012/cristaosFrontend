@@ -127,7 +127,6 @@ export default function Profile() {
               </li>
             ) : (
               <>
-                <li>🚫 Bloquear</li>
                 <li>⚠️ Reportar</li>
                 {isLeader && (
                   <ul>
