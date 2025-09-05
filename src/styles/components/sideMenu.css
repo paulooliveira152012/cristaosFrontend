@@ -47,7 +47,6 @@ body.dark-mode .sideMenu {
 .secondaryMenuOptions li svg { 
   stroke-width: 2; }
 
-
 /* Topo */
 .top {
   display: flex;
@@ -248,4 +247,18 @@ body.dark-mode .bottomFixedTheme {
   gap: 10px;
   /* espaço entre ícone e texto */
   cursor: pointer;
+}
+
+.menuOptions li,
+.secondaryMenuOptions li {
+  display: flex;
+  align-items: center;   /* alinha ícone e texto na mesma linha */
+  flex-direction: row;   /* força lado a lado */
+  gap: 10px;
+}
+
+.menuOptions li span,
+.secondaryMenuOptions li span {
+  flex: none;            /* não ocupa 100% da largura */
+  display: inline-block; /* mantém lado a lado */
 }
