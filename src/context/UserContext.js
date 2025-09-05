@@ -42,17 +42,17 @@ export const UserProvider = ({ children }) => {
 
   // ✅ ÚNICO effect para "connect": addUser + getOnlineUsers
   useEffect(() => {
-  if (!socket) return;
+    if (!socket) return;
 
-  const onConnect = () => {
-    if (currentUser) socket.emit("addUser"); // só se estiver logado
-    socket.emit("getOnlineUsers");           // SEMPRE (guest ou logado)
-  };
+    const onConnect = () => {
+      if (currentUser) socket.emit("addUser"); // só se estiver logado
+      socket.emit("getOnlineUsers"); // SEMPRE (guest ou logado)
+    };
 
-  socket.on("connect", onConnect);
-  if (socket.connected) onConnect(); // cobre reconexão instantânea
-  return () => socket.off("connect", onConnect);
-}, [socket, currentUser]);
+    socket.on("connect", onConnect);
+    if (socket.connected) onConnect(); // cobre reconexão instantânea
+    return () => socket.off("connect", onConnect);
+  }, [socket, currentUser]);
 
   // Restaura user e acorda socket (primeiro load)
   useEffect(() => {
@@ -107,9 +107,9 @@ export const UserProvider = ({ children }) => {
             credentials: "include",
           });
           if (!res.ok) {
-            console.log("Usuário não autenticado.")
+            console.log("Usuário não autenticado.");
             throw new Error("Usuário não autenticado.");
-          } 
+          }
           const verified = await res.json();
           setCurrentUser(verified);
           localStorage.setItem("user", JSON.stringify(verified));
@@ -192,7 +192,7 @@ export const UserProvider = ({ children }) => {
     if (!socket?.connected) connectSocket?.();
   };
 
-  const logout = async () => {
+  const logout = async ({ reason } = {}) => {
     const userId = currentUser?._id;
 
     // avisa o servidor — novo padrão
@@ -218,7 +218,8 @@ export const UserProvider = ({ children }) => {
 
     const finish = () => {
       socket?.disconnect?.();
-      navigate("/");
+      // navigate("/");
+      navigate(reason ? `/login?reason=${encodeURIComponent(reason)}` : "/");
     };
 
     // tenta atualizar a lista e depois fecha
@@ -238,6 +239,18 @@ export const UserProvider = ({ children }) => {
       finish();
     }
   };
+
+    useEffect(() => {
+    if (!socket) return;
+    const onForceLogout = ({ reason } = {}) => {
+      logout({ reason: reason || "BANNED" });
+    };
+    socket.off("force-logout", onForceLogout); // evita duplicar listeners
+    socket.on("force-logout", onForceLogout);
+    return () => {
+      socket.off("force-logout", onForceLogout);
+    };
+  }, [socket, logout]);
 
   return (
     <UserContext.Provider
