@@ -219,7 +219,16 @@ body.dark-mode .submitCommentBtn {
   /* alinha tudo à esquerda */
   gap: 40px;
   /* opcional: define o espacinho entre os itens */
-  margin-left: 10px;
+  margin: 20px;
+  /* background-color: thistle; */
+  align-items: center; 
+}
+
+.interactionIcons span{
+  
+  /* background-color: rgb(123, 173, 255); */
+  font-size: 13px;
+   align-items: center; 
 }
 
 .interactionIcons * {
@@ -247,6 +256,15 @@ body.dark-mode .submitCommentBtn {
   display: flex;
   /* align-items: center; */
   cursor: pointer;
+  /* background-color: pink; */
+}
+
+.iconsContainer  svg {
+  display: flex;
+  /* align-items: center; */
+  cursor: pointer;
+  width: 19px;
+  height: 19px;
   /* background-color: pink; */
 }
 

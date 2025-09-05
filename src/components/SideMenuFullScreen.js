@@ -4,13 +4,49 @@ import { useDarkMode } from "../context/DarkModeContext";
 import imagePlaceholder from "../assets/images/profileplaceholder.png";
 import { useNavigate } from "react-router-dom";
 import { handleLogout } from "./functions/headerFunctions";
-import MoonIcon from "../assets/icons/darkModeIcon";
-import SunIcon from "../assets/icons/lightModeIcon";
+
+import {
+  Moon, Sun,
+  BookOpen, Layers, Users, MessageSquare, MapPin, Tag, Globe,
+  FileText, Lock, Edit3, Phone, Settings, Shield
+} from "lucide-react";
 
 const SideMenuFullScreen = () => {
   const { currentUser, logout } = useUser();
   const { darkMode, setDarkMode } = useDarkMode();
   const navigate = useNavigate();
+
+  const thickerIcons = new Set([
+    "Diretrizes da Plataforma",
+    "Política de Privacidade",
+    "Sugestões",
+    "Fale Conosco",
+    "Termos de Uso",
+  ]);
+
+  const iconSize = 22;
+  const defaultStroke = 2;
+  const thickStroke = 2.6;
+  const getStroke = (label) => (thickerIcons.has(label) ? thickStroke : defaultStroke);
+
+  const primaryItems = [
+    { label: "Estudos por livros", path: "bibleStudiesBook", Icon: BookOpen },
+    { label: "Estudos por temas", path: "bibleStudiesTheme", Icon: Layers },
+    { label: "Reuniões Privadas", path: "privateRooms", Icon: Users },
+    { label: "Aconselhamento", path: "counselingSessions", Icon: MessageSquare },
+    { label: "Encontrar reunião próxima", path: "findGathering", Icon: MapPin },
+    { label: "Promoções", path: "promotions", Icon: Tag },
+    { label: "Fórum da comunidade", path: "communityForum", Icon: Globe },
+  ];
+
+  const secondaryItems = [
+    { label: "Diretrizes da Plataforma", path: "guidelines", Icon: FileText },
+    { label: "Política de Privacidade", path: "privacyPolicy", Icon: Lock },
+    { label: "Sugestões", path: "suggestions", Icon: Edit3 },
+    { label: "Fale Conosco", path: "contactUs", Icon: Phone },
+    { label: "Termos de Uso", path: "termsOfUse", Icon: Settings },
+    { label: "Igrejas Registradas", path: "globe", Icon: Globe },
+  ];
 
   return (
     <div className="sideMenuFullScreen">
@@ -29,51 +65,37 @@ const SideMenuFullScreen = () => {
       </div>
 
       <div className="bottomFullScreen">
-        {/* === Itens principais (igual ao SideMenu) === */}
+        {/* === Itens principais === */}
         <ul className="menuOptionsFullScreen">
-          <li onClick={() => navigate("bibleStudiesBook")}>
-            Estudos Bíblicos (livros)
-          </li>
-          <li onClick={() => navigate("bibleStudiesTheme")}>
-            Estudos Bíblico (temas)
-          </li>
-          <li onClick={() => navigate("privateRooms")}>
-            Salas de Reuniões Privadas
-          </li>
-          <li onClick={() => navigate("counselingSessions")}>
-            Sessões de Aconselhamento
-          </li>
-          <li onClick={() => navigate("findGathering")}>
-            Encontrar Reunião Próxima
-          </li>
-          <li onClick={() => navigate("promotions")}>Promoções</li>
-          <li onClick={() => navigate("communityForum")}>
-            Fórum da Comunidade
-          </li>
+          {primaryItems.map(({ label, path, Icon }) => (
+            <li key={path} onClick={() => navigate(path)}>
+              <Icon size={iconSize} strokeWidth={getStroke(label)} />
+              <span>{label}</span>
+            </li>
+          ))}
         </ul>
 
-        {/* === Secundários (igual ao SideMenu) === */}
+        {/* === Secundários === */}
         <ul className="secondaryMenuOptionsFullScreen">
-          <li onClick={() => navigate("guidelines")}>
-            Diretrizes da Plataforma
-          </li>
-          <li onClick={() => navigate("privacyPolicy")}>
-            Política de Privacidade
-          </li>
-          <li onClick={() => navigate("suggestions")}>Sugestões</li>
-          <li onClick={() => navigate("contactUs")}>Fale Conosco</li>
-          <li onClick={() => navigate("termsOfUse")}>Termos de Uso</li>
-          <li onClick={() => navigate("globe")}>Igrejas Registradas</li>
+          {secondaryItems.map(({ label, path, Icon }) => (
+            <li key={path} onClick={() => navigate(path)}>
+              <Icon size={iconSize} strokeWidth={getStroke(label)} />
+              <span>{label}</span>
+            </li>
+          ))}
         </ul>
 
-        {/* === Administração (3ª seção como no SideMenu) === */}
+        {/* === Administração === */}
         {currentUser?.leader && (
-            <ul className="secondaryMenuOptions">
-              <li onClick={() => navigate("admin")}>Administração</li>
-            </ul>
-          )}
+          <ul className="secondaryMenuOptionsFullScreen">
+            <li onClick={() => navigate("admin")}>
+              <Shield size={iconSize} strokeWidth={2.3} />
+              <span>Administração</span>
+            </li>
+          </ul>
+        )}
 
-        {/* === Logout (igual ao SideMenu) === */}
+        {/* === Logout === */}
         {currentUser && (
           <button
             onClick={() => handleLogout(logout, navigate)}
@@ -83,14 +105,18 @@ const SideMenuFullScreen = () => {
           </button>
         )}
 
-        {/* === Toggle de Tema no rodapé === */}
+        {/* === Toggle Tema === */}
         <div className="themeToggleBtnFullScreenContainer">
           <button
             onClick={() => setDarkMode(!darkMode)}
             className="themeToggleBtnFullScreen"
             aria-label="Alternar tema"
           >
-            {darkMode ? <SunIcon /> : <MoonIcon />}
+            {darkMode ? (
+              <Sun size={22} strokeWidth={2.3} />
+            ) : (
+              <Moon size={22} strokeWidth={2.3} />
+            )}
           </button>
         </div>
       </div>

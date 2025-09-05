@@ -19,6 +19,10 @@ body.dark-mode .landingListingsContainer {
   width: 100%;
   /* background-color: #9f3939; */
 
+ 
+  
+
+
   margin: 20px 20px 0 20px;
   /* padding: 20px; */
 
@@ -145,6 +149,33 @@ body.dark-mode .listing-content {
   object-fit: cover;
   width: 100%;
 }
+
+/* Padrão (desktop) */
+img.listingImage,
+.listing-content img.listingImage {
+  margin: 0 20px;       /* espaço fora da imagem */
+  max-height: 800px;
+  max-width: 800px;     /* corrigido: 00px não funciona */
+  object-fit: cover;
+  width: 50%;
+  border-radius: 20px;
+  display: block;
+  background-color: #2a68d8;
+
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  img.listingImage,
+  .listing-content img.listingImage {
+    width: 100%;       /* ocupa toda a tela */
+    margin-left: 0;
+    margin-right: 0;
+    border-radius: 0;  /* sem borda arredondada */
+  }
+}
+
+
 
 .adContainer .sponsored-tag {
   margin-top: 10px;

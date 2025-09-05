@@ -175,3 +175,30 @@ body.dark-mode .themeToggleBtnFullScreen:hover {
 .logout-buttonFullScreen:hover {
   opacity: 0.9;
 }
+
+/* Ícone + texto lado a lado (fullscreen menu) */
+.menuOptionsFullScreen li,
+.secondaryMenuOptionsFullScreen li {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  gap: 10px;
+}
+
+/* Tamanho/encaixe dos ícones */
+.menuOptionsFullScreen li svg,
+.secondaryMenuOptionsFullScreen li svg {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+  vertical-align: middle;
+}
+
+/* Texto sem forçar quebra de linha do ícone */
+.menuOptionsFullScreen li span,
+.secondaryMenuOptionsFullScreen li span {
+  display: inline-block;
+  line-height: 1.2;
+  flex: none;
+}
