@@ -29,6 +29,7 @@ import DeleteAd from "./pages/DeleteAd.js";
 import ViewAds from "./pages/ViewAds.js";
 import GlobeChurches from "./pages/Globo.js";
 import FriendsList from "./pages/FriendsList.js";
+import Intermeeting from "./pages/Intermeeting.js";
 
 // páginas do menu
 import BibleStudiesByBook from "./pages/menuPages/BibleStudiesByBook.js";
@@ -426,6 +427,11 @@ const AppWithLocation = () => {
                           }
                         />
                         <Route path="/globe" element={<GlobeChurches />} />
+
+                        <Route path="/intermeeting/:id" element={<Intermeeting />} />
+                        
+
+
                         <Route path="/church/:id" element={<Church />} />
                         <Route
                           path="/admin"
