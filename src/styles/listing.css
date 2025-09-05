@@ -22,6 +22,8 @@
     }
 }
 
+
+
 .listing-header h1 {
     font-size: 28px;
     /* margin-bottom: 20px; */
@@ -36,13 +38,39 @@
 
 .heading {
     padding: 0 10px;
+    
 }
 
-.listing-content p {
-    font-size: 18px;
-    line-height: 1.6;
-    /* color: white; */
+.listing-content p { 
+    font-size: 16px; 
+    margin: 10px;
+    line-height: 1.6; 
+    /* color: white;  */
 }
+
+.listing-content h2 { 
+    font-size: 18px; 
+    margin: 10px;
+    line-height: 1.6; 
+    /* color: white;  */
+}
+
+/* celular até 768px */
+@media (max-width: 768px) {
+    .listing-content p {
+      font-size: 16px;   /* ajusta pra mobile */
+      line-height: 1.5;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .listing-content h2 {
+      font-size: 18px;   /* ajusta pra mobile */
+      line-height: 1.5;
+    }
+  }
+  
+  
 
 
 .blogContent {
