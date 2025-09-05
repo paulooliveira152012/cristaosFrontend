@@ -20,6 +20,7 @@ export const MeetingAdmin = () => {
     try {
       setLoading(true);
       const arr = await getMeetings(); // agora já vem normalizado
+      console.log("arr:", arr)
       setMeetings(arr);
     } catch (e) {
       console.error(e);

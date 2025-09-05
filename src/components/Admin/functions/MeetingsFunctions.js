@@ -35,12 +35,15 @@ function normalizeMeeting(doc) {
 }
 
 export const getMeetings = async () => {
-  const res = await fetch(`${baseUrl}/api/intermeeting/geojson`, { method: "GET" });
+  console.log("fetching meetings...")
+  const res = await fetch(`${baseUrl}/api/intermeeting/intermeetings`, { method: "GET" });
   if (!res.ok) {
     const msg = await res.text().catch(() => "");
     throw new Error(`Falha ao carregar reuniões (HTTP ${res.status}) ${msg}`);
   }
   const data = await res.json();
+
+  console.log("reunioes:", data)
 
   // Aceita tanto { meetings: [...] } quanto [...] direto
   const arr = Array.isArray(data) ? data : Array.isArray(data.meetings) ? data.meetings : [];
