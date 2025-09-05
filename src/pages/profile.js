@@ -29,6 +29,7 @@ import {
   getMuralContent,
   handleSaveBio,
   coverSelected,
+  reportUser
 } from "./functions/profilePageFunctions";
 import { useProfileLogic } from "./functions/useProfileLogic";
 import { 
@@ -106,6 +107,10 @@ const Profile = () => {
   // ─────────────────────────────────────────────────────
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
+  // ─────────────────────────────────────────────────────
+  // erporting
+  // ─────────────────────────────────────────────────────
+  const [reporting, setReporting] = useState(false);
   // ─────────────────────────────────────────────────────
   /* Valores derivados (sempre depois dos estados que usam) */
   // ─────────────────────────────────────────────────────
@@ -213,6 +218,48 @@ const Profile = () => {
     coverSelected(e, setUploading, setUser);
   };
 
+  const handleReportUser = async () => {
+  if (!currentUser?._id || !userId) return;
+  if (String(currentUser._id) === String(userId)) {
+    alert("Você não pode reportar a si mesmo.");
+    return;
+  }
+  if (reporting) return;
+
+  const reason = window.prompt("Descreva rapidamente o motivo do reporte:", "");
+  if (reason == null) return; // cancelou
+  const trimmed = reason.trim();
+  if (!trimmed) {
+    alert("Por favor, informe um motivo.");
+    return;
+  }
+
+  try {
+    setReporting(true);
+    const resp = await reportUser({
+      // NÃO envie reporterId — o servidor pega do JWT (req.user._id)
+      targetId: userId,
+      reason: trimmed,
+      source: "profile",
+      context: { url: window.location.href }, // opcional, ajuda no admin
+    });
+
+    if (resp?.deduped) {
+      alert("Já recebemos um reporte igual recentemente. Obrigado!");
+    } else {
+      alert("Obrigado! Seu reporte foi enviado para análise.");
+    }
+
+    setShowOptions(false);
+  } catch (err) {
+    alert(err?.message || "Não foi possível enviar o reporte.");
+  } finally {
+    setReporting(false);
+  }
+};
+
+
+
   const renderFriendAction = () => {
     if (!currentUser || !user || isOwner) return null;
     const isFriend = currentUser.friends?.includes(user._id);
@@ -269,7 +316,7 @@ const Profile = () => {
               </li>
             ) : (
               <>
-                <li>⚠️ Reportar</li>
+                <li onClick={handleReportUser}>⚠️ Reportar</li>
                 {isLeader && (
                   <ul>
                     <li onClick={() => handleBanMember()}>Banir</li>

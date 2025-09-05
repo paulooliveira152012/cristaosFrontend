@@ -585,3 +585,33 @@ export const coverSelected = async (e, setUploading, setUser) => {
     e.target.value = ""; // permite selecionar o mesmo arquivo novamente
   }
 };
+
+// profilePageFunctions.js (ou onde você centraliza fetches)
+export async function reportUser({ targetId, reason, source, context }) {
+  const res = await fetch(`${baseUrl}/api/users/reports`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      ...authHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      targetId,
+      reason: String(reason || "").trim(),
+      source: String(source || "unknown"),
+      context: context || null, // ex.: { url: window.location.href }
+    }),
+  });
+
+  // tenta parsear o body (até em erro)
+  let data = null;
+  try { data = await res.json(); } catch {}
+
+  if (!res.ok) {
+    const msg = data?.message || data?.error || `Falha (HTTP ${res.status})`;
+    throw new Error(msg);
+  }
+
+  // pode vir algo como { ok: true, reportId, deduped: false }
+  return data;
+}
