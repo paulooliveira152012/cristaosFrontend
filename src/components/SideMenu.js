@@ -30,6 +30,7 @@ const SideMenu = ({ closeMenu, isOpen }) => {
   const getStroke = (label) => (thickerIcons.has(label) ? 2.5 : 2);
 
   const primaryItems = [
+    { label: "Mapa", path: "globe", Icon: Globe },
     { label: "Estudos por livros", path: "bibleStudiesBook", Icon: BookOpen },
     { label: "Estudos por temas", path: "bibleStudiesTheme", Icon: Layers },
     { label: "Reuniões Privadas", path: "privateRooms", Icon: Users },
@@ -45,7 +46,6 @@ const SideMenu = ({ closeMenu, isOpen }) => {
     { label: "Sugestões", path: "suggestions", Icon: Edit3 },
     { label: "Fale Conosco", path: "contactUs", Icon: Phone },
     { label: "Termos de Uso", path: "termsOfUse", Icon: Settings },
-    { label: "Igrejas Registradas", path: "globe", Icon: Globe },
   ];
 
   return (
