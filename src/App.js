@@ -34,6 +34,9 @@ import Intermeeting from "./pages/Intermeeting.js";
 // páginas do menu
 import BibleStudiesByBook from "./pages/menuPages/BibleStudiesByBook.js";
 import BibleStudiesByTheme from "./pages/menuPages/BibleStudiesByTheme.js";
+import StudyBook from "./pages/menuPages/study/StudyBook.js";
+import StudyChapter from "./pages/menuPages/study/StudyChapter.js";
+
 import ChurchSupport from "./pages/menuPages/ChurchSupport.js";
 import CommunityForum from "./pages/menuPages/CommunityForum.js";
 import ContactUs from "./pages/menuPages/ContactUs.js";
@@ -50,6 +53,7 @@ import PrivacyPolicy from "./pages/menuPages/PrivacyPolicy.js";
 import TermsOfUse from "./pages/menuPages/TermsOfUse.js";
 import Church from "./pages/Church.js";
 import Admin from "./pages/Admin.js";
+
 
 // router/contexts
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
@@ -347,6 +351,8 @@ const AppWithLocation = () => {
                           path="/bibleStudiesTheme"
                           element={<BibleStudiesByTheme />}
                         />
+                        <Route path="/study/:bookId" element={<StudyBook />} />
+                        <Route path="/study/:bookId/:chapter" element={<StudyChapter />} />
                         <Route
                           path="/privateRooms"
                           element={<PrivateRooms />}

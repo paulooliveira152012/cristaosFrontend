@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 /**
  * Dados dos 66 livros — descrição curtinha + 5 pontos essenciais.
@@ -889,12 +890,27 @@ const BookCard = ({ book }) => {
   const [open, setOpen] = useState(false);
   return (
     <div className="book-card" style={styles.card}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-        <div>
+      <div
+        style={{ display: "flex", justifyContent: "space-between", gap: 12 }}
+      >
+        {/* Link só no bloco de texto */}
+        <Link
+          to={`/study/${book.id}`} // <<< AQUI
+          style={{ textDecoration: "none", color: "inherit", flex: 1 }}
+          state={{ name: book.name }} // opcional
+        >
           <h3 style={styles.title}>{book.name}</h3>
           <p style={styles.desc}>{book.desc}</p>
-        </div>
-        <button style={styles.toggle} onClick={() => setOpen((v) => !v)}>
+        </Link>
+
+        {/* Botão não navega, só abre/fecha os pontos */}
+        <button
+          style={styles.toggle}
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen((v) => !v);
+          }}
+        >
           {open ? "–" : "+"}
         </button>
       </div>
@@ -928,42 +944,44 @@ const BibleStudiesByBook = () => {
   return (
     <>
       <Header showProfileImage={false} navigate={navigate} />
-    <div className="landingListingsContainer">
-      <div style={styles.container}>
-        <h1 style={styles.h1}>Estudos por Livro Bíblico</h1>
-        <p style={styles.p}>Selecione um livro para ver um resumo e 5 pontos-chave.</p>
+      <div className="landingListingsContainer">
+        <div style={styles.container}>
+          <h1 style={styles.h1}>Estudos por Livro Bíblico</h1>
+          <p style={styles.p}>
+            Selecione um livro para ver um resumo e 5 pontos-chave.
+          </p>
 
-        <div style={styles.toolbar}>
-          <input
-            type="text"
-            placeholder="Buscar livro..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            style={styles.input}
-          />
-          <div style={styles.tabs}>
-            {TESTAMENTS.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                style={{
-                  ...styles.tabBtn,
-                  ...(tab === t.id ? styles.tabActive : {}),
-                }}
-              >
-                {t.label}
-              </button>
+          <div style={styles.toolbar}>
+            <input
+              type="text"
+              placeholder="Buscar livro..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              style={styles.input}
+            />
+            <div style={styles.tabs}>
+              {TESTAMENTS.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  style={{
+                    ...styles.tabBtn,
+                    ...(tab === t.id ? styles.tabActive : {}),
+                  }}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={styles.grid}>
+            {filtered.map((book) => (
+              <BookCard key={book.id} book={book} />
             ))}
           </div>
         </div>
-
-        <div style={styles.grid}>
-          {filtered.map((book) => (
-            <BookCard key={book.id} book={book} />
-          ))}
-        </div>
       </div>
-    </div>
     </>
   );
 };
@@ -972,16 +990,48 @@ const styles = {
   container: { maxWidth: 1000, margin: "0 auto", padding: "16px" },
   h1: { margin: "8px 0 4px" },
   p: { margin: "0 0 16px", opacity: 0.9 },
-  toolbar: { display: "flex", gap: 12, alignItems: "center", marginBottom: 16, flexWrap: "wrap" },
-  input: { padding: "10px 12px", border: "1px solid #ddd", borderRadius: 8, minWidth: 220 },
+  toolbar: {
+    display: "flex",
+    gap: 12,
+    alignItems: "center",
+    marginBottom: 16,
+    flexWrap: "wrap",
+  },
+  input: {
+    padding: "10px 12px",
+    border: "1px solid #ddd",
+    borderRadius: 8,
+    minWidth: 220,
+  },
   tabs: { display: "flex", gap: 8, flexWrap: "wrap" },
-  tabBtn: { padding: "8px 12px", borderRadius: 999, border: "1px solid #e2e2e2", background: "#fff", cursor: "pointer" },
+  tabBtn: {
+    padding: "8px 12px",
+    borderRadius: 999,
+    border: "1px solid #e2e2e2",
+    background: "#fff",
+    cursor: "pointer",
+  },
   tabActive: { background: "#111", color: "#fff", borderColor: "#111" },
-  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 },
-  card: { border: "1px solid #eee", borderRadius: 12, padding: 12, background: "#fff" },
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+    gap: 12,
+  },
+  card: {
+    border: "1px solid #eee",
+    borderRadius: 12,
+    padding: 12,
+    background: "#fff",
+  },
   title: { margin: "0 0 6px" },
   desc: { margin: 0, opacity: 0.9 },
-  toggle: { borderRadius: 10, border: "1px solid #ddd", height: 36, width: 36, cursor: "pointer" },
+  toggle: {
+    borderRadius: 10,
+    border: "1px solid #ddd",
+    height: 36,
+    width: 36,
+    cursor: "pointer",
+  },
   list: { margin: "10px 0 0 18px" },
   li: { marginBottom: 6 },
 };
