@@ -52,6 +52,7 @@ const ListingPage = () => {
         }
 
         const data = await response.json();
+        console.log("🚨✅ data:", data)
         setItems([data.listing]); // Wrap the single listing in an array
       } catch (error) {
         console.error("Error fetching listing details:", error);
@@ -156,10 +157,22 @@ const ListingPage = () => {
     }
   };
 
+  const isYouTubeLink = (url) =>
+    url.includes("youtube.com") || url.includes("youtu.be");
+
+  const getYouTubeVideoId = (url) => {
+    const regExp =
+      /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+  };
+
   if (loading) return <p>Loading listing details...</p>;
   if (items.length === 0) return <p>Listing not found.</p>;
 
   const listing = items[0];
+
+  console.log(listing.type)
 
   return (
     <div className="screenWrapper">
@@ -202,9 +215,45 @@ const ListingPage = () => {
               </div>
             )}
 
+            {listing.type === "link" && listing.link && (
+              <div className="listing-content">
+                <div className="listing-link">
+                  {isYouTubeLink(listing.link) ? (
+                    <div>
+                      <iframe
+                        width="100%"
+                        // height="520px"
+                        src={`https://www.youtube.com/embed/${getYouTubeVideoId(
+                          listing.link
+                        )}`}
+                        title="YouTube preview"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                         style={{ width: "100%", aspectRatio:"1.8", border: 0, borderRadius: 8, marginBottom: 10 }}
+                      />
+                      <div>
+                        <p>{listing.linkDescription}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <a
+                      href={listing.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: "#2A68D8", textDecoration: "underline" }}
+                    >
+                      {listing.link}
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
             <ListingInteractionBox
               listingId={listing._id}
               currentCommentId={newCommentId}
+              likes={listing.likes}
               likesCount={listing.likes.length}
               comments={listing.comments || []}
               commentsCount={listing.comments ? listing.comments.length : 0}

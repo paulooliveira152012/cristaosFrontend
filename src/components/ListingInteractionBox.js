@@ -147,6 +147,8 @@ const ListingInteractionBox = ({
     return null;
   };
 
+  console.log("likes testing on openListing page:", likes)
+
   return (
     <div className="interactionBoxContainer">
       {/* Linha de curtidas (apenas prévia com 2 nomes + "+N") */}
