@@ -13,6 +13,7 @@ import { ArrowRight } from "lucide-react";
 const ListingInteractionBox = ({
   listingId,
   handleLike,
+  likes,
   likesCount,
   comments = [],
   commentsCount,
@@ -44,6 +45,8 @@ const ListingInteractionBox = ({
   const location = useLocation();
   const [pendingHighlightId, setPendingHighlightId] = useState(null);
   const [showCommentBox, setShowCommentBox] = useState(false);
+
+  console.log("✅✅likes:", likes)
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -132,7 +135,18 @@ const ListingInteractionBox = ({
 
   return (
     <div className="interactionBoxContainer">
+      <div>
+            
+            {likes.map((u) => (
+              <Link key={u._id} to={`/profile/${u._id}`}>
+                <span>{[u.username, " "]}</span>
+              </Link>
+              
+            ))}
+            <span>{ likesCount}</span>
+          </div>
       <div className="interactionIcons">
+        
         <div className="iconsContainer" onClick={() => handleLike(listingId)}>
           {isLiked ? (
             <LikedIcon alt="Liked" className="shared-feedback" />

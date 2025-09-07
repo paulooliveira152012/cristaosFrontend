@@ -408,6 +408,7 @@ const Listings = () => {
           }
 
           const listing = entry;
+          console.log("🚨✅ listing:", listing )
           return (
             <div
               key={keyForListing(listing)}
@@ -718,6 +719,7 @@ const Listings = () => {
                 listingId={listing._id}
                 currentCommentId={newCommentId}
                 likesCount={listing.likes.length}
+                likes={listing.likes}
                 comments={listing.comments || []}
                 commentsCount={listing.comments ? listing.comments.length : 0}
                 sharesCount={listing.shares ? listing.shares.length : 0}

@@ -389,3 +389,8 @@ replyInteractionContainer
   cursor: not-allowed;
   opacity: .7;
 }
+
+.likesContainer {
+  display: flex;
+  flex-direction: column;
+}
