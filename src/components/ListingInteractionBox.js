@@ -165,10 +165,21 @@ const ListingInteractionBox = ({
                 <Fragment key={u._id || i}>
                   {label ? (
                     <Link to={`/profile/${u._id}`}>
-                      {label}
+                      <div 
+                        style={{
+                          backgroundImage: `url(${u.profileImage || "/placeholder-avatar.png"})`,
+                          height: "25px",
+                          width: "25px",
+                          borderRadius: "30%",
+                          backgroundSize: "cover",
+                          // backgroundColor: "red",
+                          backgroundPositionY: "center"
+                        }}
+                      />
+                      {/* {label} */}
                     </Link>
                   ) : null}
-                  {i < firstTwo.length - 1 && <span style={{marginRight: "5px"}}>, </span>}
+                  {i < firstTwo.length - 1 && <span style={{marginRight: "5px"}}> </span>}
                 </Fragment>
               );
             })}
