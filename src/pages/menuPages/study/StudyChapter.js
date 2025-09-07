@@ -58,6 +58,7 @@ export default function StudyChapter() {
         chapter: Number(chapter),
         title: title.trim() || `${bookName} ${chapter}`,
         content: content.trim(),
+        author: currentUser._id
       };
       const out = await upsertStudy(payload); // cria ou atualiza
       if (!out?.ok) throw new Error(out?.message || "Falha ao salvar.");

@@ -18,6 +18,8 @@ export async function fetchBookChapters(bookId) {
 
 // pega o estudo de um capítulo
 export async function fetchStudyByChapter(bookId, chapter) {
+  console.log(`buscando estudo de ${bookId} capitulo ${chapter} `)
+  console.log("apiUrl:", apiUrl)
   const res = await fetch(`${apiUrl}/api/studies/${bookId}/${chapter}`, {
     credentials: "include",
     headers: { ...authHeaders(), Accept: "application/json" },
@@ -28,12 +30,18 @@ export async function fetchStudyByChapter(bookId, chapter) {
 }
 
 // cria/atualiza estudo (líder)
-export async function upsertStudy({ bookId, chapter, title, content }) {
+export async function upsertStudy({ bookId, chapter, title, content, author }) {
   const res = await fetch(`${apiUrl}/api/studies`, {
     method: "POST",
     credentials: "include",
     headers: { ...authHeaders(), "Content-Type": "application/json" },
-    body: JSON.stringify({ bookId, chapter, title, content }),
+    body: JSON.stringify({ 
+      bookId, 
+      chapter, 
+      title, 
+      content,
+      author
+    }),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json(); // { ok:true, item:{...} }
