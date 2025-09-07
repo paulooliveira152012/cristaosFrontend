@@ -394,3 +394,11 @@ replyInteractionContainer
   display: flex;
   flex-direction: column;
 }
+
+.likesListContainer {
+  margin: 20px;
+}
+
+.likes {
+  display: flex;
+}

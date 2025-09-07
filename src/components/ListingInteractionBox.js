@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import { useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
 import LikeIcon from "../assets/icons/likeIcon";
@@ -45,8 +45,22 @@ const ListingInteractionBox = ({
   const location = useLocation();
   const [pendingHighlightId, setPendingHighlightId] = useState(null);
   const [showCommentBox, setShowCommentBox] = useState(false);
+  const [showAllLikes, setShowAllLikes] = useState(false);
+  console.log("✅✅likes:", likes);
 
-  console.log("✅✅likes:", likes)
+  // helper para garantir estrutura { _id, username, profileImage } mesmo se vier id puro
+  const normLikes = Array.isArray(likes)
+    ? likes.map((u) =>
+        typeof u === "string" || typeof u === "number"
+          ? { _id: String(u), username: null, profileImage: "" }
+          : u || {}
+      )
+    : [];
+
+  const totalLikes =
+    typeof likesCount === "number" ? likesCount : normLikes.length;
+  const firstTwo = normLikes.slice(0, 2);
+  const hasMore = totalLikes > firstTwo.length;
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -135,18 +149,133 @@ const ListingInteractionBox = ({
 
   return (
     <div className="interactionBoxContainer">
-      <div>
-            
-            {likes.map((u) => (
-              <Link key={u._id} to={`/profile/${u._id}`}>
-                <span>{[u.username, " "]}</span>
-              </Link>
-              
-            ))}
-            <span>{ likesCount}</span>
+      {/* Linha de curtidas (apenas prévia com 2 nomes + "+N") */}
+      <div 
+        className="likesListContainer"
+        style={{ marginBottom: 8 }}
+      >
+        {totalLikes === 0 ? (
+          <span className="muted">ninguém curtiu ainda</span>
+        ) : (
+          <div className="likes">
+            {/* até 2 nomes (se disponíveis) */}
+            {firstTwo.map((u, i) => {
+              const label = u.username || null; // se não tiver username, não mostra nome
+              return (
+                <Fragment key={u._id || i}>
+                  {label ? (
+                    <Link to={`/profile/${u._id}`}>
+                      {label}
+                    </Link>
+                  ) : null}
+                  {i < firstTwo.length - 1 && <span style={{marginRight: "5px"}}>, </span>}
+                </Fragment>
+              );
+            })}
+
+            {/* +N se houver mais curtidas */}
+            {hasMore && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowAllLikes(true)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "white",
+                    cursor: "pointer",
+                    padding: 0,
+                    textAlign: "start",
+                    width: "auto",
+                    backgroundColor: "rgb(42, 104, 216)",
+                    padding: "0px 5px",
+                    marginLeft: "5px"
+
+                  }}
+                >
+                  +{totalLikes - firstTwo.length}
+                </button>
+              </>
+            )}
           </div>
+        )}
+      </div>
+
+      {/* Modal: lista completa de curtidores */}
+      {showAllLikes && (
+        <div
+          onClick={() => setShowAllLikes(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,.45)",
+            display: "grid",
+            placeItems: "center",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "min(520px, 95vw)",
+              maxHeight: "80vh",
+              overflow: "auto",
+              background: "#fff",
+              borderRadius: 12,
+              padding: 16,
+              boxShadow: "0 10px 30px rgba(0,0,0,.25)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 8,
+              }}
+            >
+              <h3 style={{ margin: 0 }}>Quem curtiu</h3>
+              <button onClick={() => setShowAllLikes(false)}>Fechar</button>
+            </div>
+
+            {normLikes.length ? (
+              <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                {normLikes.map((u, idx) => (
+                  <li
+                    key={u._id || idx}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "8px 0",
+                      borderTop: "1px solid #eee",
+                    }}
+                  >
+                    <img
+                      src={u.profileImage || "/placeholder-avatar.png"}
+                      alt={u.username || "usuário"}
+                      width={32}
+                      height={32}
+                      style={{ borderRadius: "50%", objectFit: "cover" }}
+                    />
+                    {u._id ? (
+                      <Link to={`/profile/${u._id}`}>
+                        {u.username || u._id}
+                      </Link>
+                    ) : (
+                      <span>@{u.username || "usuário"}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>Ninguém curtiu ainda.</p>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="interactionIcons">
-        
         <div className="iconsContainer" onClick={() => handleLike(listingId)}>
           {isLiked ? (
             <LikedIcon alt="Liked" className="shared-feedback" />
