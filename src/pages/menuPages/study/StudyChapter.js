@@ -3,7 +3,11 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import Header from "../../../components/Header";
 import { useUser } from "../../../context/UserContext";
-import { fetchStudyByChapter, upsertStudy, deleteStudy } from "../../functions/studyFunctions";
+import {
+  fetchStudyByChapter,
+  upsertStudy,
+  deleteStudy,
+} from "../../functions/studyFunctions";
 
 export default function StudyChapter() {
   const { currentUser } = useUser();
@@ -48,7 +52,9 @@ export default function StudyChapter() {
         if (!stop) setLoading(false);
       }
     })();
-    return () => { stop = true; };
+    return () => {
+      stop = true;
+    };
   }, [bookId, chapter]);
 
   const handleSave = async () => {
@@ -58,7 +64,7 @@ export default function StudyChapter() {
         chapter: Number(chapter),
         title: title.trim() || `${bookName} ${chapter}`,
         content: content.trim(),
-        author: currentUser._id
+        author: currentUser._id,
       };
       const out = await upsertStudy(payload); // cria ou atualiza
       if (!out?.ok) throw new Error(out?.message || "Falha ao salvar.");
@@ -88,70 +94,92 @@ export default function StudyChapter() {
 
   return (
     <>
-      <Header showProfileImage={false} onBack={() => navigate(-1)} />
-      <div className="landingListingsContainer" style={{ padding: 16 }}>
-        <p>
-          <Link to={`/study/${bookId}`} state={{ name: bookName }}>
-            ← {bookName}
-          </Link>
-        </p>
-        <h2>{bookName} {chapter}</h2>
+      <div className="landingListingsContainer">
+        <div className="scrollable">
+          <Header showProfileImage={false} onBack={() => navigate(-1)} />
+          <div className="landingListingsContainer" style={{ padding: 16 }}>
 
-        {loading && <p>Carregando…</p>}
-        {err && <p style={{ color: "crimson" }}>{err}</p>}
+            <h2>
+              {bookName} {chapter}
+            </h2>
 
-        {!loading && !err && (
-          <>
-            {!editing ? (
+            {loading && <p>Carregando…</p>}
+            {err && <p style={{ color: "crimson" }}>{err}</p>}
+
+            {!loading && !err && (
               <>
-                {study ? (
+                {!editing ? (
                   <>
-                    <h3 style={{ marginTop: 8 }}>{study.title}</h3>
-                    <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
-                      {study.content}
-                    </div>
-                    {study.author && (
-                      <p style={{ opacity: .7, marginTop: 12 }}>
-                        por @{study.author?.username || "líder"}
+                    {study ? (
+                      <>
+                        <h3 style={{ marginTop: 8 }}>{study.title}</h3>
+                        <div
+                          style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}
+                        >
+                          {study.content}
+                        </div>
+                        {study.author && (
+                          <p style={{ opacity: 0.7, marginTop: 12 }}>
+                            por @{study.author?.username || "líder"}
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <p className="ch-note">
+                        Ainda não há estudo para este capítulo.
                       </p>
+                    )}
+
+                    {isLeader && (
+                      <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                        <button
+                          onClick={() => {
+                            setEditing(true);
+                          }}
+                        >
+                          {study ? "Editar" : "Criar estudo"}
+                        </button>
+                        {study && (
+                          <button onClick={handleDelete}>Excluir</button>
+                        )}
+                      </div>
                     )}
                   </>
                 ) : (
-                  <p className="ch-note">Ainda não há estudo para este capítulo.</p>
-                )}
-
-                {isLeader && (
-                  <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-                    <button onClick={() => { setEditing(true); }}>
-                      {study ? "Editar" : "Criar estudo"}
-                    </button>
-                    {study && <button onClick={handleDelete}>Excluir</button>}
+                  <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
+                    <input
+                      placeholder="Título do estudo"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      style={{
+                        padding: "10px 12px",
+                        border: "1px solid #ddd",
+                        borderRadius: 8,
+                      }}
+                    />
+                    <textarea
+                      placeholder="Conteúdo do estudo (pode colar seu texto aqui)"
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      rows={12}
+                      style={{
+                        padding: 12,
+                        border: "1px solid #ddd",
+                        borderRadius: 8,
+                      }}
+                    />
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={handleSave}>Salvar</button>
+                      <button onClick={() => setEditing(false)}>
+                        Cancelar
+                      </button>
+                    </div>
                   </div>
                 )}
               </>
-            ) : (
-              <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
-                <input
-                  placeholder="Título do estudo"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  style={{ padding: "10px 12px", border: "1px solid #ddd", borderRadius: 8 }}
-                />
-                <textarea
-                  placeholder="Conteúdo do estudo (pode colar seu texto aqui)"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  rows={12}
-                  style={{ padding: 12, border: "1px solid #ddd", borderRadius: 8 }}
-                />
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={handleSave}>Salvar</button>
-                  <button onClick={() => setEditing(false)}>Cancelar</button>
-                </div>
-              </div>
             )}
-          </>
-        )}
+          </div>
+        </div>
       </div>
     </>
   );
