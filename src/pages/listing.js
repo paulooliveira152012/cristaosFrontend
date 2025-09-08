@@ -15,13 +15,12 @@ import {
   handleLike,
   handleShare,
   handleCommentLike,
-  
 } from "../components/functions/interactionFunctions";
 
 import { handleVote } from "./functions/listingInteractions";
 
 import { Link } from "react-router-dom";
-import profileplaceholder from "../assets/images/profileplaceholder.png"
+import profileplaceholder from "../assets/images/profileplaceholder.png";
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
@@ -60,7 +59,7 @@ const ListingPage = () => {
         }
 
         const data = await response.json();
-        console.log("🚨✅ data:", data)
+        console.log("🚨✅ data:", data);
         setItems([data.listing]); // Wrap the single listing in an array
       } catch (error) {
         console.error("Error fetching listing details:", error);
@@ -133,46 +132,45 @@ const ListingPage = () => {
   };
 
   // Extrai um id "comparável" de qualquer formato de like
-const getLikeId = (u) => {
-  if (!u) return null;
-  if (typeof u === "string" || typeof u === "number") return String(u);
-  if (typeof u === "object") return String(u._id || u.user || u.id || "");
-  return null;
-};
+  const getLikeId = (u) => {
+    if (!u) return null;
+    if (typeof u === "string" || typeof u === "number") return String(u);
+    if (typeof u === "object") return String(u._id || u.user || u.id || "");
+    return null;
+  };
 
-// Like a ser adicionado de forma otimista (com avatar/nome p/ já aparecer)
-const makeOptimisticLike = (meId, currentUser) => ({
-  _id: String(meId),
-  username: currentUser?.username || null,
-  profileImage: currentUser?.profileImage || "",
-});
+  // Like a ser adicionado de forma otimista (com avatar/nome p/ já aparecer)
+  const makeOptimisticLike = (meId, currentUser) => ({
+    _id: String(meId),
+    username: currentUser?.username || null,
+    profileImage: currentUser?.profileImage || "",
+  });
 
   // Verifica se o usuário já curtiu
-const hasLiked = (likes, meId) => {
-  const me = String(meId || "");
-  return Array.isArray(likes) && likes.some((u) => getLikeId(u) === me);
-};
-
+  const hasLiked = (likes, meId) => {
+    const me = String(meId || "");
+    return Array.isArray(likes) && likes.some((u) => getLikeId(u) === me);
+  };
 
   // Retorna um novo array de likes com toggle otimista
-const toggleLikesArray = (likes, meId, currentUser) => {
-  const me = String(meId || "");
-  const safeLikes = Array.isArray(likes) ? likes : [];
-  const already = hasLiked(safeLikes, me);
-  if (already) {
-    // remove meu like, independentemente do formato
-    return safeLikes.filter((u) => getLikeId(u) !== me);
-  }
-  // adiciona meu like com dados p/ avatar surgir já na hora
-  return [...safeLikes, makeOptimisticLike(me, currentUser)];
-};
+  const toggleLikesArray = (likes, meId, currentUser) => {
+    const me = String(meId || "");
+    const safeLikes = Array.isArray(likes) ? likes : [];
+    const already = hasLiked(safeLikes, me);
+    if (already) {
+      // remove meu like, independentemente do formato
+      return safeLikes.filter((u) => getLikeId(u) !== me);
+    }
+    // adiciona meu like com dados p/ avatar surgir já na hora
+    return [...safeLikes, makeOptimisticLike(me, currentUser)];
+  };
 
   const likeListing = async (listingId) => {
     if (!currentUser?._id) {
       alert("Você precisa estar logado para curtir.");
       return;
     }
-  
+
     // 1) Toggle otimista no estado
     let previous; // para rollback
     setItems((prev) => {
@@ -186,7 +184,7 @@ const toggleLikesArray = (likes, meId, currentUser) => {
       });
       return next;
     });
-  
+
     // 2) Chama backend
     try {
       await handleLike(listingId, currentUser, items, setItems);
@@ -245,21 +243,22 @@ const toggleLikesArray = (likes, meId, currentUser) => {
 
   const listing = items[0];
 
-  console.log(listing.type)
+  console.log(listing.type);
 
   const isLikedByMe = (likes, meId) => {
-  if (!meId) return false;
-  const me = String(meId);
-  return (Array.isArray(likes) ? likes : []).some((u) => {
-    if (!u) return false;
-    if (typeof u === "string" || typeof u === "number") return String(u) === me;
-    if (typeof u === "object") {
-      // cobre { _id }, { user }, { id }
-      return [u._id, u.user, u.id].some((v) => v && String(v) === me);
-    }
-    return false;
-  });
-};
+    if (!meId) return false;
+    const me = String(meId);
+    return (Array.isArray(likes) ? likes : []).some((u) => {
+      if (!u) return false;
+      if (typeof u === "string" || typeof u === "number")
+        return String(u) === me;
+      if (typeof u === "object") {
+        // cobre { _id }, { user }, { id }
+        return [u._id, u.user, u.id].some((v) => v && String(v) === me);
+      }
+      return false;
+    });
+  };
 
   return (
     <div className="screenWrapper">
@@ -317,7 +316,13 @@ const toggleLikesArray = (likes, meId, currentUser) => {
                         frameBorder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
-                         style={{ width: "100%", aspectRatio:"1.8", border: 0, borderRadius: 8, marginBottom: 10 }}
+                        style={{
+                          width: "100%",
+                          aspectRatio: "1.8",
+                          border: 0,
+                          borderRadius: 8,
+                          marginBottom: 10,
+                        }}
                       />
                       <div>
                         <p>{listing.linkDescription}</p>
@@ -338,92 +343,90 @@ const toggleLikesArray = (likes, meId, currentUser) => {
             )}
 
             {listing.type === "poll" && listing.poll && (
-                            <div className="poll-container">
-                              <h2>{listing.poll.question}</h2>
-                              <ul>
-                                {listing.poll.options.map((option, index) => {
-                                  const totalVotes = listing.poll.votes?.length || 0;
-                                  const optionVotes =
-                                    listing.poll.votes?.filter((v) => {
-                                      return v.optionIndex === index;
-                                    }).length || 0;
-            
-                                  const votedOption = votedPolls[listing._id];
-                                  const percentage =
-                                    totalVotes > 0
-                                      ? ((optionVotes / totalVotes) * 100).toFixed(1)
-                                      : 0;
-            
-                                  const voters =
-                                    listing.poll.votes?.filter(
-                                      (v) => v.optionIndex === index
-                                    ) || [];
-            
-                                  return (
-                                    <div key={index} style={{ marginBottom: "20px" }}>
-                                      {/* Bloco de votação */}
-                                      <li
-                                        onClick={() =>
-                                          votedOption === undefined &&
-                                          handleVote(listing._id, index)
-                                        }
-                                        style={{
-                                          cursor:
-                                            votedOption === undefined
-                                              ? "pointer"
-                                              : "default",
-                                          background:
-                                            votedOption !== undefined
-                                              ? `linear-gradient(to right, #4caf50 ${percentage}%, #eee ${percentage}%)`
-                                              : "#f9f9f9",
-                                          padding: "10px",
-                                          borderRadius: "5px",
-                                          border: "1px solid #ccc",
-                                          listStyleType: "none",
-                                        }}
-                                      >
-                                        <strong>{option}</strong>
-                                        {votedOption !== undefined && (
-                                          <span style={{ float: "right" }}>
-                                            {percentage}%
-                                          </span>
-                                        )}
-                                      </li>
-            
-                                      {/* Avatares fora da caixa */}
-                                      <div
-                                        style={{
-                                          display: "flex",
-                                          gap: "6px",
-                                          marginTop: "6px",
-                                          paddingLeft: "10px",
-                                        }}
-                                      >
-                                        {voters.map((v, idx) => (
-                                          <Link to={`profile/${v.userId._id}`} key={idx}>
-                                            <img
-                                              key={idx}
-                                              src={
-                                                v.userId?.profileImage || profileplaceholder
-                                              }
-                                              alt="voter"
-                                              title={v.userId?.username}
-                                              style={{
-                                                width: "22px",
-                                                height: "22px",
-                                                borderRadius: "50%",
-                                                objectFit: "cover",
-                                              }}
-                                            />
-                                          </Link>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </ul>
-                            </div>
+              <div className="poll-container">
+                <h2>{listing.poll.question}</h2>
+                <ul>
+                  {listing.poll.options.map((option, index) => {
+                    const totalVotes = listing.poll.votes?.length || 0;
+                    const optionVotes =
+                      listing.poll.votes?.filter((v) => {
+                        return v.optionIndex === index;
+                      }).length || 0;
+
+                    const votedOption = votedPolls[listing._id];
+                    const percentage =
+                      totalVotes > 0
+                        ? ((optionVotes / totalVotes) * 100).toFixed(1)
+                        : 0;
+
+                    const voters =
+                      listing.poll.votes?.filter(
+                        (v) => v.optionIndex === index
+                      ) || [];
+
+                    return (
+                      <div key={index} style={{ marginBottom: "20px" }}>
+                        {/* Bloco de votação */}
+                        <li
+                          onClick={() =>
+                            votedOption === undefined &&
+                            handleVote(listing._id, index)
+                          }
+                          style={{
+                            cursor:
+                              votedOption === undefined ? "pointer" : "default",
+                            background:
+                              votedOption !== undefined
+                                ? `linear-gradient(to right, #4caf50 ${percentage}%, #eee ${percentage}%)`
+                                : "#f9f9f9",
+                            padding: "10px",
+                            borderRadius: "5px",
+                            border: "1px solid #ccc",
+                            listStyleType: "none",
+                          }}
+                        >
+                          <strong>{option}</strong>
+                          {votedOption !== undefined && (
+                            <span style={{ float: "right" }}>
+                              {percentage}%
+                            </span>
                           )}
+                        </li>
+
+                        {/* Avatares fora da caixa */}
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "6px",
+                            marginTop: "6px",
+                            paddingLeft: "10px",
+                          }}
+                        >
+                          {voters.map((v, idx) => (
+                            <Link to={`profile/${v.userId._id}`} key={idx}>
+                              <img
+                                key={idx}
+                                src={
+                                  v.userId?.profileImage || profileplaceholder
+                                }
+                                alt="voter"
+                                title={v.userId?.username}
+                                style={{
+                                  width: "22px",
+                                  height: "22px",
+                                  borderRadius: "50%",
+                                  objectFit: "cover",
+                                }}
+                              />
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
 
             <ListingInteractionBox
               listingId={listing._id}
@@ -432,7 +435,7 @@ const toggleLikesArray = (likes, meId, currentUser) => {
               likesCount={listing.likes.length}
               comments={listing.comments || []}
               commentsCount={listing.comments ? listing.comments.length : 0}
-              sharesCount={listing.shares ? listing.shares.length : 0}  
+              sharesCount={listing.shares ? listing.shares.length : 0}
               isLiked={isLikedByMe(listing.likes, currentUser?._id)}
               currentUser={currentUser}
               isSingleListing={true}
