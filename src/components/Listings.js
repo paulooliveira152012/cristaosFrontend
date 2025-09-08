@@ -595,6 +595,7 @@ const Listings = () => {
               )}
 
               {listing.type === "poll" && listing.poll && (
+                <Link to={`openListing/${listing._id}`}>
                 <div className="poll-container">
                   <h2>{listing.poll.question}</h2>
                   <ul>
@@ -680,6 +681,7 @@ const Listings = () => {
                     })}
                   </ul>
                 </div>
+                </Link>
               )}
 
               {listing.type === "link" && (

@@ -17,6 +17,11 @@ import {
   handleCommentLike,
 } from "../components/functions/interactionFunctions";
 
+import { handleVote } from "./functions/listingInteractions";
+
+import { Link } from "react-router-dom";
+import profileplaceholder from "../assets/images/profileplaceholder.png"
+
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 const ListingPage = () => {
@@ -30,6 +35,8 @@ const ListingPage = () => {
 
   const [searchParams] = useSearchParams();
   const commentId = searchParams.get("commentId");
+
+  const [votedPolls, setVotedPolls] = useState({});
 
   useEffect(() => {
     if (commentId) {
@@ -249,6 +256,94 @@ const ListingPage = () => {
                 </div>
               </div>
             )}
+
+            {listing.type === "poll" && listing.poll && (
+                            <div className="poll-container">
+                              <h2>{listing.poll.question}</h2>
+                              <ul>
+                                {listing.poll.options.map((option, index) => {
+                                  const totalVotes = listing.poll.votes?.length || 0;
+                                  const optionVotes =
+                                    listing.poll.votes?.filter((v) => {
+                                      return v.optionIndex === index;
+                                    }).length || 0;
+            
+                                  const votedOption = votedPolls[listing._id];
+                                  const percentage =
+                                    totalVotes > 0
+                                      ? ((optionVotes / totalVotes) * 100).toFixed(1)
+                                      : 0;
+            
+                                  const voters =
+                                    listing.poll.votes?.filter(
+                                      (v) => v.optionIndex === index
+                                    ) || [];
+            
+                                  return (
+                                    <div key={index} style={{ marginBottom: "20px" }}>
+                                      {/* Bloco de votação */}
+                                      <li
+                                        onClick={() =>
+                                          votedOption === undefined &&
+                                          handleVote(listing._id, index)
+                                        }
+                                        style={{
+                                          cursor:
+                                            votedOption === undefined
+                                              ? "pointer"
+                                              : "default",
+                                          background:
+                                            votedOption !== undefined
+                                              ? `linear-gradient(to right, #4caf50 ${percentage}%, #eee ${percentage}%)`
+                                              : "#f9f9f9",
+                                          padding: "10px",
+                                          borderRadius: "5px",
+                                          border: "1px solid #ccc",
+                                          listStyleType: "none",
+                                        }}
+                                      >
+                                        <strong>{option}</strong>
+                                        {votedOption !== undefined && (
+                                          <span style={{ float: "right" }}>
+                                            {percentage}%
+                                          </span>
+                                        )}
+                                      </li>
+            
+                                      {/* Avatares fora da caixa */}
+                                      <div
+                                        style={{
+                                          display: "flex",
+                                          gap: "6px",
+                                          marginTop: "6px",
+                                          paddingLeft: "10px",
+                                        }}
+                                      >
+                                        {voters.map((v, idx) => (
+                                          <Link to={`profile/${v.userId._id}`} key={idx}>
+                                            <img
+                                              key={idx}
+                                              src={
+                                                v.userId?.profileImage || profileplaceholder
+                                              }
+                                              alt="voter"
+                                              title={v.userId?.username}
+                                              style={{
+                                                width: "22px",
+                                                height: "22px",
+                                                borderRadius: "50%",
+                                                objectFit: "cover",
+                                              }}
+                                            />
+                                          </Link>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          )}
 
             <ListingInteractionBox
               listingId={listing._id}
