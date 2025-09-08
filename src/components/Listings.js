@@ -342,45 +342,115 @@ const Listings = () => {
   };
 
   const handleVote = async (listingId, optionIndex) => {
-    if (!currentUser) {
-      alert("Você precisa estar logado para votar.");
-      return;
-    }
+  if (!currentUser) {
+    alert("Você precisa estar logado para votar.");
+    return;
+  }
 
-    try {
-      const res = await fetch(`${baseURL}/api/listings/${listingId}/vote`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          userId: currentUser._id,
-          optionIndex,
+  // ✅ OTIMISTA: adiciona/atualiza meu voto já com objeto userId (com avatar)
+  setItems((prev) =>
+    prev.map((it) =>
+      it._id === listingId
+        ? {
+            ...it,
+            poll: {
+              ...it.poll,
+              votes: [
+                ...(it.poll?.votes || []).filter(
+                  (v) =>
+                    String(v.userId?._id || v.userId) !==
+                    String(currentUser._id)
+                ),
+                {
+                  userId: {
+                    _id: currentUser._id,
+                    username: currentUser.username || null,
+                    profileImage: currentUser.profileImage || "",
+                  },
+                  optionIndex,
+                },
+              ],
+            },
+          }
+        : it
+    )
+  );
+
+  // também marca como votado já no cliente
+  setVotedPolls((prev) => ({ ...prev, [listingId]: optionIndex }));
+
+  try {
+    const res = await fetch(`${baseURL}/api/listings/${listingId}/vote`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ userId: currentUser._id, optionIndex }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Erro ao votar.");
+
+    // ✅ Hidrata resposta do backend: se meu userId veio como string, injeta meu objeto (mantém avatar)
+    if (data.updatedPoll) {
+      const hydrated = {
+        ...data.updatedPoll,
+        votes: (data.updatedPoll.votes || []).map((v) => {
+          const uid =
+            typeof v.userId === "object" && v.userId
+              ? v.userId._id
+              : v.userId;
+          if (
+            String(uid) === String(currentUser._id) &&
+            typeof v.userId !== "object"
+          ) {
+            return {
+              ...v,
+              userId: {
+                _id: currentUser._id,
+                username: currentUser.username || null,
+                profileImage: currentUser.profileImage || "",
+              },
+            };
+          }
+          return v;
         }),
-      });
+      };
 
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || "Erro ao votar.");
-
-      // Atualiza o estado local com o novo resultado da enquete
-      setItems((prevItems) =>
-        prevItems.map((item) =>
-          item._id === listingId ? { ...item, poll: data.updatedPoll } : item
+      setItems((prev) =>
+        prev.map((it) =>
+          it._id === listingId ? { ...it, poll: hydrated } : it
         )
       );
-
-      // Marca que o usuário votou
-      setVotedPolls((prev) => ({
-        ...prev,
-        [listingId]: optionIndex,
-      }));
-    } catch (err) {
-      console.error("Erro ao votar:", err);
-      alert(err.message || "Erro ao votar");
     }
-  };
+  } catch (err) {
+    // ❌ rollback do otimista
+    setItems((prev) =>
+      prev.map((it) =>
+        it._id === listingId
+          ? {
+              ...it,
+              poll: {
+                ...it.poll,
+                votes: (it.poll?.votes || []).filter(
+                  (v) =>
+                    String(v.userId?._id || v.userId) !==
+                    String(currentUser._id)
+                ),
+              },
+            }
+          : it
+      )
+    );
+    setVotedPolls((prev) => {
+      const copy = { ...prev };
+      delete copy[listingId];
+      return copy;
+    });
+    console.error("Erro ao votar:", err);
+    alert(err.message || "Erro ao votar");
+  }
+};
+
 
   // Gera uma key única por "instância" no feed
   // Keys (cobre 'ad' também)
@@ -674,7 +744,7 @@ const Listings = () => {
               )}
 
               {listing.type === "poll" && listing.poll && (
-                <Link to={`openListing/${listing._id}`}>
+                // <Link to={`openListing/${listing._id}`}>
                   <div className="poll-container">
                     <h2>{listing.poll.question}</h2>
                     <ul>
@@ -761,7 +831,7 @@ const Listings = () => {
                       })}
                     </ul>
                   </div>
-                </Link>
+                // </Link>
               )}
 
               {listing.type === "link" && (
