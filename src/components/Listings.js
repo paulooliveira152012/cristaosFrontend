@@ -207,7 +207,10 @@ const Listings = () => {
   };
 
   const likeListing = (listingId) => {
+    console.log("1 chamando handleLike")
     handleLike(listingId, currentUser, items, setItems);
+
+    // optimistically update 
   };
 
   const shareListing = async (listingId) => {

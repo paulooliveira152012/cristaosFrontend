@@ -231,7 +231,7 @@ export const handleDeleteComment = async (
 };
 
 export const handleLike = async (listingId, currentUser, items = [], setItems) => {
-  console.log("Liking listing");
+  console.log("2 Liking listing");
 
   if (!currentUser) {
     alert("You must be logged in to like a listing.");

@@ -58,8 +58,9 @@ const ListingInteractionBox = ({
       )
     : [];
 
-  const totalLikes =
-    typeof likesCount === "number" ? likesCount : normLikes.length;
+  const totalLikes = normLikes.length; // sempre pelo array
+
+
   const firstTwo = normLikes.slice(0, 2);
   const hasMore = totalLikes > firstTwo.length;
 
@@ -304,7 +305,8 @@ const ListingInteractionBox = ({
           ) : (
             <LikeIcon alt="Like" />
           )}
-          <span style={{ marginLeft: "5px" }}>{likesCount}</span>
+          <span style={{ marginLeft: "5px" }}>{totalLikes}</span>
+
         </div>
 
         <div className="iconsContainer">
