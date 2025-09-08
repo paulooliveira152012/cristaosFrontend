@@ -260,6 +260,8 @@ const ListingPage = () => {
     });
   };
 
+  console.log("Listing no listing.js:", listing);
+
   return (
     <div className="screenWrapper">
       <div className="scrollable">
@@ -364,6 +366,8 @@ const ListingPage = () => {
                         (v) => v.optionIndex === index
                       ) || [];
 
+                    console.log("voters:", voters);
+
                     return (
                       <div key={index} style={{ marginBottom: "20px" }}>
                         {/* Bloco de votação */}
@@ -402,24 +406,29 @@ const ListingPage = () => {
                             paddingLeft: "10px",
                           }}
                         >
-                          {voters.map((v, idx) => (
-                            <Link to={`profile/${v.userId._id}`} key={idx}>
-                              <img
-                                key={idx}
-                                src={
-                                  v.userId?.profileImage || profileplaceholder
-                                }
-                                alt="voter"
-                                title={v.userId?.username}
-                                style={{
-                                  width: "22px",
-                                  height: "22px",
-                                  borderRadius: "50%",
-                                  objectFit: "cover",
-                                }}
-                              />
-                            </Link>
-                          ))}
+                          {voters.map((v, idx) => {
+                            const isObj =
+                              typeof v.userId === "object" && v.userId !== null;
+                            const uid = isObj ? v.userId._id : v.userId; // cobre string ou objeto
+                            const uimg = isObj ? v.userId.profileImage : null;
+                            const uname = isObj ? v.userId.username : null;
+
+                            return (
+                              <Link to={`/profile/${uid}`} key={uid || idx}>
+                                <img
+                                  src={uimg || profileplaceholder} // fallback quando não populado
+                                  alt={uname || "voter"}
+                                  title={uname || uid}
+                                  style={{
+                                    width: 22,
+                                    height: 22,
+                                    borderRadius: "50%",
+                                    objectFit: "cover",
+                                  }}
+                                />
+                              </Link>
+                            );
+                          })}
                         </div>
                       </div>
                     );
