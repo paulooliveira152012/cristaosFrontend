@@ -7,6 +7,7 @@ import {
   fetchStudyByChapter,
   upsertStudy,
   deleteStudy,
+  updateStudy
 } from "../../functions/studyFunctions";
 
 export default function StudyChapter() {
@@ -66,7 +67,7 @@ export default function StudyChapter() {
         content: content.trim(),
         author: currentUser._id,
       };
-      const out = await upsertStudy(payload); // cria ou atualiza
+      const out = await updateStudy(payload); // cria ou atualiza
       if (!out?.ok) throw new Error(out?.message || "Falha ao salvar.");
       setStudy(out.item);
       setEditing(false);
@@ -91,6 +92,8 @@ export default function StudyChapter() {
       alert(e?.message || "Erro ao excluir estudo.");
     }
   };
+
+  
 
   return (
     <>
