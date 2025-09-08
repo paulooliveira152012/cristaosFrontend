@@ -15,6 +15,7 @@ const ListingInteractionBox = ({
   handleLike,
   likes,
   likesCount,
+  isLikedByMe,
   comments = [],
   commentsCount,
   sharesCount,
@@ -148,6 +149,14 @@ const ListingInteractionBox = ({
   };
 
   console.log("likes testing on openListing page:", likes)
+
+  console.log("isLiked:", isLiked)
+
+  const liked = React.useMemo(() => {
+  if (typeof isLiked === "boolean") return isLiked;
+  return isLikedByMe(likes, currentUser?._id);
+}, [isLiked, likes, currentUser?._id]);
+
 
   return (
     <div className="interactionBoxContainer">
@@ -287,10 +296,10 @@ const ListingInteractionBox = ({
           </div>
         </div>
       )}
-
+      
       <div className="interactionIcons">
         <div className="iconsContainer" onClick={() => handleLike(listingId)}>
-          {isLiked ? (
+          {liked ? (
             <LikedIcon alt="Liked" className="shared-feedback" />
           ) : (
             <LikeIcon alt="Like" />

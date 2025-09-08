@@ -364,6 +364,21 @@ const Listings = () => {
     return `${it._id}__${repId}__${ts}`;
   };
 
+  const isLikedByMe = (likes, meId) => {
+  if (!meId) return false;
+  const me = String(meId);
+  return (Array.isArray(likes) ? likes : []).some((u) => {
+    if (!u) return false;
+    if (typeof u === "string" || typeof u === "number") return String(u) === me;
+    if (typeof u === "object") {
+      // cobre { _id }, { user }, { id }
+      return [u._id, u.user, u.id].some((v) => v && String(v) === me);
+    }
+    return false;
+  });
+};
+
+
   return (
     <div className="landingListingsContainer">
       {loading ? (
@@ -727,9 +742,7 @@ const Listings = () => {
                 comments={listing.comments || []}
                 commentsCount={listing.comments ? listing.comments.length : 0}
                 sharesCount={listing.shares ? listing.shares.length : 0}
-                isLiked={
-                  currentUser ? listing.likes.includes(currentUser._id) : false
-                }
+                isLiked={isLikedByMe(listing.likes, currentUser?._id)}
                 currentUser={currentUser}
                 isSingleListing={false}
                 commentLikesCount={(comment) =>
