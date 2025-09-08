@@ -6,6 +6,7 @@ import Footer from "../components/Footer";
 import ListingInteractionBox from "../components/ListingInteractionBox";
 import { useUser } from "../context/UserContext";
 import { useSearchParams } from "react-router-dom";
+import { useMemo } from "react";
 
 import {
   handleFetchComments,
@@ -37,6 +38,116 @@ const ListingPage = () => {
   const commentId = searchParams.get("commentId");
 
   const [votedPolls, setVotedPolls] = useState({});
+
+  const listing = items[0]; // <= declare antes de qualquer uso
+
+  const myVoteIndex = useMemo(() => {
+    if (!currentUser?._id) return undefined;
+    const votes = listing?.poll?.votes || [];
+    const mine = votes.find((v) => {
+      const uid =
+        typeof v.userId === "object" && v.userId ? v.userId._id : v.userId;
+      return String(uid) === String(currentUser._id);
+    });
+    return typeof mine?.optionIndex === "number" ? mine.optionIndex : undefined;
+  }, [listing?.poll?.votes, currentUser?._id]);
+
+  const voteOnListing = async (id, optionIndex) => {
+    if (!currentUser) {
+      alert("Você precisa estar logado para votar.");
+      return;
+    }
+
+    // (opcional) otimista: adiciona meu voto já na UI
+    setItems((prev) =>
+      prev.map((it) =>
+        it._id === id
+          ? {
+              ...it,
+              poll: {
+                ...it.poll,
+                votes: [
+                  // remove voto anterior do mesmo usuário, se existir
+                  ...(it.poll?.votes || []).filter(
+                    (v) =>
+                      String(v.userId?._id || v.userId) !==
+                      String(currentUser._id)
+                  ),
+                  {
+                    userId: {
+                      _id: currentUser._id,
+                      username: currentUser.username || null,
+                      profileImage: currentUser.profileImage || "",
+                    },
+                    optionIndex,
+                  },
+                ],
+              },
+            }
+          : it
+      )
+    );
+
+    try {
+      const res = await fetch(`${baseUrl}/api/listings/${id}/vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ userId: currentUser._id, optionIndex }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Erro ao votar.");
+
+      // ✅ garante consistência com o backend
+      // ✅ garante consistência com o backend + mantém avatar do meu voto
+if (data.updatedPoll) {
+  const hydrated = {
+    ...data.updatedPoll,
+    votes: (data.updatedPoll.votes || []).map((v) => {
+      const uid = typeof v.userId === "object" ? v.userId._id : v.userId;
+      // se é o meu voto e veio sem populate, injeta meus dados
+      if (String(uid) === String(currentUser._id) && typeof v.userId !== "object") {
+        return {
+          ...v,
+          userId: {
+            _id: currentUser._id,
+            username: currentUser.username || null,
+            profileImage: currentUser.profileImage || "",
+          },
+        };
+      }
+      return v;
+    }),
+  };
+
+  setItems((prev) =>
+    prev.map((it) => (it._id === id ? { ...it, poll: hydrated } : it))
+  );
+}
+
+    } catch (e) {
+      // rollback do otimista (remove meu voto)
+      setItems((prev) =>
+        prev.map((it) =>
+          it._id === id
+            ? {
+                ...it,
+                poll: {
+                  ...it.poll,
+                  votes: (it.poll?.votes || []).filter(
+                    (v) =>
+                      String(v.userId?._id || v.userId) !==
+                      String(currentUser._id)
+                  ),
+                },
+              }
+            : it
+        )
+      );
+      console.error(e);
+      alert("Erro ao votar");
+    }
+  };
 
   useEffect(() => {
     if (commentId) {
@@ -241,8 +352,6 @@ const ListingPage = () => {
   if (loading) return <p>Loading listing details...</p>;
   if (items.length === 0) return <p>Listing not found.</p>;
 
-  const listing = items[0];
-
   console.log(listing.type);
 
   const isLikedByMe = (likes, meId) => {
@@ -355,7 +464,8 @@ const ListingPage = () => {
                         return v.optionIndex === index;
                       }).length || 0;
 
-                    const votedOption = votedPolls[listing._id];
+                    const votedOption = myVoteIndex; // em vez de votedPolls[listing._id]
+
                     const percentage =
                       totalVotes > 0
                         ? ((optionVotes / totalVotes) * 100).toFixed(1)
@@ -373,14 +483,14 @@ const ListingPage = () => {
                         {/* Bloco de votação */}
                         <li
                           onClick={() =>
-                            votedOption === undefined &&
-                            handleVote(listing._id, index)
+                            myVoteIndex === undefined &&
+                            voteOnListing(listing._id, index)
                           }
                           style={{
                             cursor:
-                              votedOption === undefined ? "pointer" : "default",
+                              myVoteIndex === undefined ? "pointer" : "default",
                             background:
-                              votedOption !== undefined
+                              myVoteIndex !== undefined
                                 ? `linear-gradient(to right, #4caf50 ${percentage}%, #eee ${percentage}%)`
                                 : "#f9f9f9",
                             padding: "10px",
