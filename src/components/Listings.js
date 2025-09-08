@@ -117,7 +117,7 @@ const Listings = () => {
   }, [currentUser]);
 
   // ---- Mix: listings + ads em intervalos aleatórios ----
-    // já tem items e ads carregados...
+  // já tem items e ads carregados...
   const feed = useMemo(() => {
     if (!items.length) return [];
     if (isNarrow) {
@@ -207,39 +207,38 @@ const Listings = () => {
   };
 
   const likeListing = async (listingId) => {
-  if (!currentUser?._id) {
-    alert("Você precisa estar logado para curtir.");
-    return;
-  }
-
-  // 1) Toggle otimista no estado
-  let previous; // para rollback
-  setItems((prev) => {
-    const next = prev.map((item) => {
-      if (item._id !== listingId) return item;
-      previous = item; // captura snapshot para possível rollback
-      return {
-        ...item,
-        likes: toggleLikesArray(item.likes, currentUser._id, currentUser),
-      };
-    });
-    return next;
-  });
-
-  // 2) Chama backend
-  try {
-    await handleLike(listingId, currentUser, items, setItems);
-  } catch (err) {
-    console.error("Falha no like, revertendo:", err);
-    // 3) Rollback se der erro
-    if (previous) {
-      setItems((prev) =>
-        prev.map((it) => (it._id === listingId ? previous : it))
-      );
+    if (!currentUser?._id) {
+      alert("Você precisa estar logado para curtir.");
+      return;
     }
-  }
-};
 
+    // 1) Toggle otimista no estado
+    let previous; // para rollback
+    setItems((prev) => {
+      const next = prev.map((item) => {
+        if (item._id !== listingId) return item;
+        previous = item; // captura snapshot para possível rollback
+        return {
+          ...item,
+          likes: toggleLikesArray(item.likes, currentUser._id, currentUser),
+        };
+      });
+      return next;
+    });
+
+    // 2) Chama backend
+    try {
+      await handleLike(listingId, currentUser, items, setItems);
+    } catch (err) {
+      console.error("Falha no like, revertendo:", err);
+      // 3) Rollback se der erro
+      if (previous) {
+        setItems((prev) =>
+          prev.map((it) => (it._id === listingId ? previous : it))
+        );
+      }
+    }
+  };
 
   const shareListing = async (listingId) => {
     if (!currentUser) {
@@ -396,55 +395,53 @@ const Listings = () => {
   };
 
   const isLikedByMe = (likes, meId) => {
-  if (!meId) return false;
-  const me = String(meId);
-  return (Array.isArray(likes) ? likes : []).some((u) => {
-    if (!u) return false;
-    if (typeof u === "string" || typeof u === "number") return String(u) === me;
-    if (typeof u === "object") {
-      // cobre { _id }, { user }, { id }
-      return [u._id, u.user, u.id].some((v) => v && String(v) === me);
-    }
-    return false;
+    if (!meId) return false;
+    const me = String(meId);
+    return (Array.isArray(likes) ? likes : []).some((u) => {
+      if (!u) return false;
+      if (typeof u === "string" || typeof u === "number")
+        return String(u) === me;
+      if (typeof u === "object") {
+        // cobre { _id }, { user }, { id }
+        return [u._id, u.user, u.id].some((v) => v && String(v) === me);
+      }
+      return false;
+    });
+  };
+
+  // Extrai um id "comparável" de qualquer formato de like
+  const getLikeId = (u) => {
+    if (!u) return null;
+    if (typeof u === "string" || typeof u === "number") return String(u);
+    if (typeof u === "object") return String(u._id || u.user || u.id || "");
+    return null;
+  };
+
+  // Verifica se o usuário já curtiu
+  const hasLiked = (likes, meId) => {
+    const me = String(meId || "");
+    return Array.isArray(likes) && likes.some((u) => getLikeId(u) === me);
+  };
+
+  // Like a ser adicionado de forma otimista (com avatar/nome p/ já aparecer)
+  const makeOptimisticLike = (meId, currentUser) => ({
+    _id: String(meId),
+    username: currentUser?.username || null,
+    profileImage: currentUser?.profileImage || "",
   });
-};
 
-
-// Extrai um id "comparável" de qualquer formato de like
-const getLikeId = (u) => {
-  if (!u) return null;
-  if (typeof u === "string" || typeof u === "number") return String(u);
-  if (typeof u === "object") return String(u._id || u.user || u.id || "");
-  return null;
-};
-
-// Verifica se o usuário já curtiu
-const hasLiked = (likes, meId) => {
-  const me = String(meId || "");
-  return Array.isArray(likes) && likes.some((u) => getLikeId(u) === me);
-};
-
-// Like a ser adicionado de forma otimista (com avatar/nome p/ já aparecer)
-const makeOptimisticLike = (meId, currentUser) => ({
-  _id: String(meId),
-  username: currentUser?.username || null,
-  profileImage: currentUser?.profileImage || "",
-});
-
-// Retorna um novo array de likes com toggle otimista
-const toggleLikesArray = (likes, meId, currentUser) => {
-  const me = String(meId || "");
-  const safeLikes = Array.isArray(likes) ? likes : [];
-  const already = hasLiked(safeLikes, me);
-  if (already) {
-    // remove meu like, independentemente do formato
-    return safeLikes.filter((u) => getLikeId(u) !== me);
-  }
-  // adiciona meu like com dados p/ avatar surgir já na hora
-  return [...safeLikes, makeOptimisticLike(me, currentUser)];
-};
-
-
+  // Retorna um novo array de likes com toggle otimista
+  const toggleLikesArray = (likes, meId, currentUser) => {
+    const me = String(meId || "");
+    const safeLikes = Array.isArray(likes) ? likes : [];
+    const already = hasLiked(safeLikes, me);
+    if (already) {
+      // remove meu like, independentemente do formato
+      return safeLikes.filter((u) => getLikeId(u) !== me);
+    }
+    // adiciona meu like com dados p/ avatar surgir já na hora
+    return [...safeLikes, makeOptimisticLike(me, currentUser)];
+  };
 
   return (
     <div className="landingListingsContainer">
@@ -490,7 +487,7 @@ const toggleLikesArray = (likes, meId, currentUser) => {
           }
 
           const listing = entry;
-          console.log("🚨✅ listing:", listing )
+          console.log("🚨✅ listing:", listing);
           return (
             <div
               key={keyForListing(listing)}
@@ -678,126 +675,130 @@ const toggleLikesArray = (likes, meId, currentUser) => {
 
               {listing.type === "poll" && listing.poll && (
                 <Link to={`openListing/${listing._id}`}>
-                <div className="poll-container">
-                  <h2>{listing.poll.question}</h2>
-                  <ul>
-                    {listing.poll.options.map((option, index) => {
-                      const totalVotes = listing.poll.votes?.length || 0;
-                      const optionVotes =
-                        listing.poll.votes?.filter((v) => {
-                          return v.optionIndex === index;
-                        }).length || 0;
+                  <div className="poll-container">
+                    <h2>{listing.poll.question}</h2>
+                    <ul>
+                      {listing.poll.options.map((option, index) => {
+                        const totalVotes = listing.poll.votes?.length || 0;
+                        const optionVotes =
+                          listing.poll.votes?.filter((v) => {
+                            return v.optionIndex === index;
+                          }).length || 0;
 
-                      const votedOption = votedPolls[listing._id];
-                      const percentage =
-                        totalVotes > 0
-                          ? ((optionVotes / totalVotes) * 100).toFixed(1)
-                          : 0;
+                        const votedOption = votedPolls[listing._id];
+                        const percentage =
+                          totalVotes > 0
+                            ? ((optionVotes / totalVotes) * 100).toFixed(1)
+                            : 0;
 
-                      const voters =
-                        listing.poll.votes?.filter(
-                          (v) => v.optionIndex === index
-                        ) || [];
+                        const voters =
+                          listing.poll.votes?.filter(
+                            (v) => v.optionIndex === index
+                          ) || [];
 
-                      return (
-                        <div key={index} style={{ marginBottom: "20px" }}>
-                          {/* Bloco de votação */}
-                          <li
-                            onClick={() =>
-                              votedOption === undefined &&
-                              handleVote(listing._id, index)
-                            }
-                            style={{
-                              cursor:
-                                votedOption === undefined
-                                  ? "pointer"
-                                  : "default",
-                              background:
-                                votedOption !== undefined
-                                  ? `linear-gradient(to right, #4caf50 ${percentage}%, #eee ${percentage}%)`
-                                  : "#f9f9f9",
-                              padding: "10px",
-                              borderRadius: "5px",
-                              border: "1px solid #ccc",
-                              listStyleType: "none",
-                            }}
-                          >
-                            <strong>{option}</strong>
-                            {votedOption !== undefined && (
-                              <span style={{ float: "right" }}>
-                                {percentage}%
-                              </span>
-                            )}
-                          </li>
+                        return (
+                          <div key={index} style={{ marginBottom: "20px" }}>
+                            {/* Bloco de votação */}
+                            <li
+                              onClick={() =>
+                                votedOption === undefined &&
+                                handleVote(listing._id, index)
+                              }
+                              style={{
+                                cursor:
+                                  votedOption === undefined
+                                    ? "pointer"
+                                    : "default",
+                                background:
+                                  votedOption !== undefined
+                                    ? `linear-gradient(to right, #4caf50 ${percentage}%, #eee ${percentage}%)`
+                                    : "#f9f9f9",
+                                padding: "10px",
+                                borderRadius: "5px",
+                                border: "1px solid #ccc",
+                                listStyleType: "none",
+                              }}
+                            >
+                              <strong>{option}</strong>
+                              {votedOption !== undefined && (
+                                <span style={{ float: "right" }}>
+                                  {percentage}%
+                                </span>
+                              )}
+                            </li>
 
-                          {/* Avatares fora da caixa */}
-                          <div
-                            style={{
-                              display: "flex",
-                              gap: "6px",
-                              marginTop: "6px",
-                              paddingLeft: "10px",
-                            }}
-                          >
-                            {voters.map((v, idx) => (
-                              <Link to={`profile/${v.userId._id}`} key={idx}>
-                                <img
-                                  key={idx}
-                                  src={
-                                    v.userId?.profileImage || profileplaceholder
-                                  }
-                                  alt="voter"
-                                  title={v.userId?.username}
-                                  style={{
-                                    width: "22px",
-                                    height: "22px",
-                                    borderRadius: "50%",
-                                    objectFit: "cover",
-                                  }}
-                                />
-                              </Link>
-                            ))}
+                            {/* Avatares fora da caixa */}
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: "6px",
+                                marginTop: "6px",
+                                paddingLeft: "10px",
+                              }}
+                            >
+                              {voters.map((v, idx) => (
+                                <Link to={`profile/${v.userId._id}`} key={idx}>
+                                  <img
+                                    key={idx}
+                                    src={
+                                      v.userId?.profileImage ||
+                                      profileplaceholder
+                                    }
+                                    alt="voter"
+                                    title={v.userId?.username}
+                                    style={{
+                                      width: "22px",
+                                      height: "22px",
+                                      borderRadius: "50%",
+                                      objectFit: "cover",
+                                    }}
+                                  />
+                                </Link>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </ul>
-                </div>
+                        );
+                      })}
+                    </ul>
+                  </div>
                 </Link>
               )}
 
               {listing.type === "link" && (
                 <Link to={`openListing/${listing._id}`}>
-                <div className="listing-link">
-                  {isYouTubeLink(listing.link) ? (
-                    <div>
-                      <iframe
-                        width="100%"
-                        height="220"
-                        src={`https://www.youtube.com/embed/${getYouTubeVideoId(
-                          listing.link
-                        )}`}
-                        title="YouTube preview"
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        style={{ borderRadius: "8px", marginBottom: "10px" }}
-                      />
+                  <div className="listing-link">
+                    {isYouTubeLink(listing.link) ? (
                       <div>
-                        <p>{listing.linkDescription}</p>
+                        <iframe
+                          width="100%"
+                          height="220"
+                          src={`https://www.youtube.com/embed/${getYouTubeVideoId(
+                            listing.link
+                          )}`}
+                          title="YouTube preview"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          style={{ borderRadius: "8px", marginBottom: "10px" }}
+                        />
+                        <div>
+                          <p>{listing.linkDescription}</p>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <a
-                      href={listing.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: "#2A68D8", textDecoration: "underline" }}
-                    >
-                      {listing.link}
-                    </a>
-                  )}
-                </div>
+                    ) : (
+                      <a
+                        href={listing.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          color: "#2A68D8",
+                          textDecoration: "underline",
+                        }}
+                      >
+                        {listing.link}
+                      </a>
+                    )}
+                  </div>
                 </Link>
               )}
 
