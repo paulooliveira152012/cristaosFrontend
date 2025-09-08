@@ -685,6 +685,7 @@ const Listings = () => {
               )}
 
               {listing.type === "link" && (
+                <Link to={`openListing/${listing._id}`}>
                 <div className="listing-link">
                   {isYouTubeLink(listing.link) ? (
                     <div>
@@ -715,6 +716,7 @@ const Listings = () => {
                     </a>
                   )}
                 </div>
+                </Link>
               )}
 
               <ListingInteractionBox
