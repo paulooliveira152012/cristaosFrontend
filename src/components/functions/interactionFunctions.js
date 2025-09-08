@@ -252,14 +252,14 @@ export const handleLike = async (listingId, currentUser, items = [], setItems) =
     const data = await response.json();
     console.log("Like updated successfully:", data);
 
-    if (setItems) {
-      // Update the items state for Listings.js
-      setItems((prevItems) =>
-        prevItems.map((item) =>
-          item._id === listingId ? { ...item, likes: data.likes } : item
-        )
-      );
-    }
+    // Update the items state for Listings.js
+    // if (setItems) {
+    //   setItems((prevItems) =>
+    //     prevItems.map((item) =>
+    //       item._id === listingId ? { ...item, likes: data.likes } : item
+    //     )
+    //   );
+    // }
 
     return data; // Return the updated data for further handling in Listing.js
   } catch (error) {

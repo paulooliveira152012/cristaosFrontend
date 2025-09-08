@@ -206,12 +206,40 @@ const Listings = () => {
     handleDeleteComment(listingId, commentId, parentCommentId, items, setItems);
   };
 
-  const likeListing = (listingId) => {
-    console.log("1 chamando handleLike")
-    handleLike(listingId, currentUser, items, setItems);
+  const likeListing = async (listingId) => {
+  if (!currentUser?._id) {
+    alert("Você precisa estar logado para curtir.");
+    return;
+  }
 
-    // optimistically update 
-  };
+  // 1) Toggle otimista no estado
+  let previous; // para rollback
+  setItems((prev) => {
+    const next = prev.map((item) => {
+      if (item._id !== listingId) return item;
+      previous = item; // captura snapshot para possível rollback
+      return {
+        ...item,
+        likes: toggleLikesArray(item.likes, currentUser._id, currentUser),
+      };
+    });
+    return next;
+  });
+
+  // 2) Chama backend
+  try {
+    await handleLike(listingId, currentUser, items, setItems);
+  } catch (err) {
+    console.error("Falha no like, revertendo:", err);
+    // 3) Rollback se der erro
+    if (previous) {
+      setItems((prev) =>
+        prev.map((it) => (it._id === listingId ? previous : it))
+      );
+    }
+  }
+};
+
 
   const shareListing = async (listingId) => {
     if (!currentUser) {
@@ -380,6 +408,42 @@ const Listings = () => {
     return false;
   });
 };
+
+
+// Extrai um id "comparável" de qualquer formato de like
+const getLikeId = (u) => {
+  if (!u) return null;
+  if (typeof u === "string" || typeof u === "number") return String(u);
+  if (typeof u === "object") return String(u._id || u.user || u.id || "");
+  return null;
+};
+
+// Verifica se o usuário já curtiu
+const hasLiked = (likes, meId) => {
+  const me = String(meId || "");
+  return Array.isArray(likes) && likes.some((u) => getLikeId(u) === me);
+};
+
+// Like a ser adicionado de forma otimista (com avatar/nome p/ já aparecer)
+const makeOptimisticLike = (meId, currentUser) => ({
+  _id: String(meId),
+  username: currentUser?.username || null,
+  profileImage: currentUser?.profileImage || "",
+});
+
+// Retorna um novo array de likes com toggle otimista
+const toggleLikesArray = (likes, meId, currentUser) => {
+  const me = String(meId || "");
+  const safeLikes = Array.isArray(likes) ? likes : [];
+  const already = hasLiked(safeLikes, me);
+  if (already) {
+    // remove meu like, independentemente do formato
+    return safeLikes.filter((u) => getLikeId(u) !== me);
+  }
+  // adiciona meu like com dados p/ avatar surgir já na hora
+  return [...safeLikes, makeOptimisticLike(me, currentUser)];
+};
+
 
 
   return (
