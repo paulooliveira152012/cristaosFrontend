@@ -32,10 +32,11 @@ import FriendsList from "./pages/FriendsList.js";
 import Intermeeting from "./pages/Intermeeting.js";
 
 // páginas do menu
-import BibleStudiesByBook from "./pages/menuPages/BibleStudiesByBook.js";
-import BibleStudiesByTheme from "./pages/menuPages/BibleStudiesByTheme.js";
+import BibleStudiesByBook from "./pages/menuPages/study/BibleStudiesByBook.js";
+import BibleStudiesByTheme from "./pages/menuPages/study/BibleStudiesByTheme.js";
 import StudyBook from "./pages/menuPages/study/StudyBook.js";
 import StudyChapter from "./pages/menuPages/study/StudyChapter.js";
+import StudyTheme from "./pages/menuPages/study/StudyTheme.js";
 
 import ChurchSupport from "./pages/menuPages/ChurchSupport.js";
 import CommunityForum from "./pages/menuPages/CommunityForum.js";
@@ -53,7 +54,6 @@ import PrivacyPolicy from "./pages/menuPages/PrivacyPolicy.js";
 import TermsOfUse from "./pages/menuPages/TermsOfUse.js";
 import Church from "./pages/Church.js";
 import Admin from "./pages/Admin.js";
-
 
 // router/contexts
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
@@ -184,10 +184,9 @@ const AppWithLocation = () => {
       location.pathname.startsWith("/liveRoom") ||
       location.pathname.startsWith("/mainChat") ||
       location.pathname.startsWith("/privateChat");
-      location.pathname.startsWith("/globe"); // 👈 aqui
+    location.pathname.startsWith("/globe"); // 👈 aqui
 
     if (disabled) return;
-
 
     // usa o contêiner que rola no seu layout
     const selector = ".scrollable";
@@ -352,7 +351,12 @@ const AppWithLocation = () => {
                           element={<BibleStudiesByTheme />}
                         />
                         <Route path="/study/:bookId" element={<StudyBook />} />
-                        <Route path="/study/:bookId/:chapter" element={<StudyChapter />} />
+                        <Route
+                          path="/study/:bookId/:chapter"
+                          element={<StudyChapter />}
+                        />
+                        <Route path="/themeStudy/:id" element={<StudyTheme />} />
+
                         <Route
                           path="/privateRooms"
                           element={<PrivateRooms />}
@@ -434,9 +438,10 @@ const AppWithLocation = () => {
                         />
                         <Route path="/globe" element={<GlobeChurches />} />
 
-                        <Route path="/intermeeting/:id" element={<Intermeeting />} />
-                        
-
+                        <Route
+                          path="/intermeeting/:id"
+                          element={<Intermeeting />}
+                        />
 
                         <Route path="/church/:id" element={<Church />} />
                         <Route
