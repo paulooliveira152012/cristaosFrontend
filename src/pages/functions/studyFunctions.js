@@ -115,3 +115,8 @@ export async function deleteStudy(id) {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json(); // { ok:true }
 }
+
+
+export const listMyThemeStudies = () => {
+  console.log("listando estudo...")
+}

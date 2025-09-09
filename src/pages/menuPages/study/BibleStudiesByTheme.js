@@ -122,6 +122,7 @@ const BibleStudiesByTheme = () => {
           <p style={{ margin: "0 0 12px", opacity: 0.9 }}>
             Explore estudos bíblicos aprovados, organizados por temas.
           </p>
+          <button onClick={() => navigate("/manageStudies")}>Gerenciar Estudos</button>
 
           <div className="toolbar">
             <select

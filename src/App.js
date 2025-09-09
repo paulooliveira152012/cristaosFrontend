@@ -37,6 +37,8 @@ import BibleStudiesByTheme from "./pages/menuPages/study/BibleStudiesByTheme.js"
 import StudyBook from "./pages/menuPages/study/StudyBook.js";
 import StudyChapter from "./pages/menuPages/study/StudyChapter.js";
 import StudyTheme from "./pages/menuPages/study/StudyTheme.js";
+// import NewStudy  from "./pages/menuPages/study/NewStudy.js";
+import  ManageStudies  from "./pages/menuPages/study/ManageStudies.js";
 
 import ChurchSupport from "./pages/menuPages/ChurchSupport.js";
 import CommunityForum from "./pages/menuPages/CommunityForum.js";
@@ -459,6 +461,11 @@ const AppWithLocation = () => {
                         <Route
                           path="/profile/:userId/friends"
                           element={<FriendsList />}
+                        />
+
+                        <Route
+                          path="/manageStudies"
+                          element={<ManageStudies />}
                         />
                       </Routes>
 
