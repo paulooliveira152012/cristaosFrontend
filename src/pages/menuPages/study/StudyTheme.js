@@ -65,7 +65,6 @@ const StudyTheme = () => {
           )}
         </div>
       </div>
-      <Footer />
     </>
   );
 };

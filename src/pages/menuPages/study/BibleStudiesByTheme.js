@@ -180,7 +180,6 @@ const BibleStudiesByTheme = () => {
           )}
         </div>
       </div>
-      <Footer />
     </>
   );
 };

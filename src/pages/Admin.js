@@ -6,7 +6,9 @@ import { ListingAdmin } from "../components/Admin/ListingAdminComponent";
 import { StaffAdmin } from "../components/Admin/StaffAdminComponent";
 import { ReportAdmin } from "../components/Admin/ReportAdminComponent";
 import { MeetingAdmin } from "../components/Admin/Meetings/MeetingAdmin";
+import { PendingStudies } from "../components/Admin/PendingStudiesComponent"
 import { useNavigate } from "react-router-dom";
+import { useUser } from "../context/UserContext";
 
 import "../styles/Admin.css";
 
@@ -16,7 +18,16 @@ const API = process.env.REACT_APP_API_BASE_URL;
 
 const Admin = () => {
   const [tab, setTab] = useState("churches");
+  const { currentUser } = useUser()
   const navigate = useNavigate()
+
+  console.log("currentUser in Admin page:", currentUser)
+
+  const isLeader = currentUser.role === "leader"
+  const isRevisor = currentUser.role === "proofReader"
+
+  console.log("isLeader?", isLeader)
+  console.log("isRevisor?", isRevisor)
 
   return (
     <div
@@ -33,6 +44,7 @@ const Admin = () => {
         <option value="staff">Staff</option>
         <option value="posts">Postagens</option>
         <option value="reports">Relatórios</option>
+        <option value="studies">Estudos Pendentes</option>
       </select>
 
       {tab === "churches" && <ChurchesAdmin />}
@@ -41,6 +53,7 @@ const Admin = () => {
       {tab === "staff" && <StaffAdmin />}
       {tab === "posts" && <ListingAdmin />}
       {tab === "reports" && <ReportAdmin />}
+      {tab === "studies" && <PendingStudies/>}
     </div>
   );
 };
