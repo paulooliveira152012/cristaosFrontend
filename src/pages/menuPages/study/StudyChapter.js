@@ -7,7 +7,7 @@ import {
   fetchStudyByChapter,
   upsertStudy,
   deleteStudy,
-  updateStudy
+  updateStudy,
 } from "../../functions/studyFunctions";
 
 export default function StudyChapter() {
@@ -93,15 +93,12 @@ export default function StudyChapter() {
     }
   };
 
-  
-
   return (
     <>
+      <Header showProfileImage={false} onBack={() => navigate(-1)} />
       <div className="landingListingsContainer">
         <div className="scrollable">
-          <Header showProfileImage={false} onBack={() => navigate(-1)} />
           <div className="landingListingsContainer" style={{ padding: 16 }}>
-
             <h2>
               {bookName} {chapter}
             </h2>
