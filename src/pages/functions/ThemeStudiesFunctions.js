@@ -217,5 +217,3 @@ export async function getThemeStudyPublic(id) {
     return { ok: false, message: e?.message || "Falha de rede ao buscar estudo." };
   }
 }
-
-
