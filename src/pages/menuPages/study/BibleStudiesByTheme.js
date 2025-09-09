@@ -197,7 +197,7 @@ const BibleStudiesByTheme = () => {
           )}
         </div>
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </>
   );
 };

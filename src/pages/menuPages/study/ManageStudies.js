@@ -236,7 +236,6 @@ const ManageStudies = () => {
           )}
         </div>
       </div>
-      <Footer />
     </>
   );
 };
