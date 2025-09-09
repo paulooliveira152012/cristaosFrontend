@@ -160,20 +160,26 @@ export const deleteThemeStudy = async (id) => {
 
 // LISTA PÚBLICA (sem token/cookies)
 // GET /api/studies/themeStudy/public/list?theme=&q=&page=&limit=&sort=new|old
-export const listThemeStudiesPublic = async ({opts = {}}) => {
+// GET /api/studies/themeStudy/public/list?theme=&q=&page=&limit=&sort=
+export const listThemeStudiesPublic = async ({
+  theme,
+  q,
+  page = 1,
+  limit = 12,
+  sort = "new",
+} = {}) => {
   const qs = new URLSearchParams();
-  if (opts.theme) qs.set("theme", opts.theme);        // ex.: "theology"
-  if (opts.q) qs.set("q", opts.q);                    // busca full-text
-  if (opts.page) qs.set("page", String(opts.page));   // default 1
-  if (opts.limit) qs.set("limit", String(opts.limit)); // default 10
-  if (opts.sort) qs.set("sort", opts.sort);           // "new" | "old"
+  if (theme && theme.trim()) qs.set("theme", theme.trim().toLowerCase());
+  if (q && q.trim()) qs.set("q", q.trim());
+  if (page) qs.set("page", String(page));
+  if (limit) qs.set("limit", String(limit));
+  if (sort) qs.set("sort", sort);
 
-  const url = `${apiUrl}/api/studies/themeStudy/public/list`;
+  const url = `${apiUrl}/api/studies/themeStudy/public/list?${qs.toString()}`;
 
   const res = await fetch(url, {
     method: "GET",
     headers: { Accept: "application/json" },
-    credentials: "omit", // público
   });
 
   const data = await res.json().catch(() => ({}));
@@ -183,9 +189,10 @@ export const listThemeStudiesPublic = async ({opts = {}}) => {
       message: data?.message || `Falha ao carregar. (HTTP ${res.status})`,
       status: res.status,
     };
-  } 
+  }
   return data; // { ok:true, items, total, page, pageSize }
 };
+
 
 // src/functions/ThemeStudiesFunctions.js
 // src/functions/ThemeStudiesFunctions.js

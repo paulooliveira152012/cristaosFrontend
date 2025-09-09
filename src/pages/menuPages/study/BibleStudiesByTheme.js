@@ -6,11 +6,26 @@ import { useNavigate } from "react-router-dom";
 import { listThemeStudiesPublic } from "../../functions/ThemeStudiesFunctions";
 import "../../../styles/Study.css";
 
+// opções exatamente compatíveis com THEME_ENUM do backend
+const THEME_OPTIONS = [
+  { value: "", label: "Todos os temas" },
+  { value: "theology", label: "Theology" },
+  { value: "apologetics", label: "Apologetics" },
+  { value: "historic", label: "Historic" },
+  { value: "ecclesiastical", label: "Ecclesiastical" },
+  { value: "doctrinary", label: "Doctrinary" },
+  { value: "pastoral", label: "Pastoral" },
+  { value: "devotional", label: "Devotional" },
+  { value: "missions", label: "Missions" },
+  { value: "ethics", label: "Ethics" },
+  { value: "hermeneutics", label: "Hermeneutics" },
+  { value: "other", label: "Other" },
+];
+
 // ====== UI ======
 const ThemeCard = ({ item, query = "" }) => {
   const navigate = useNavigate();
 
-  // destaque no título ao buscar
   const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const mark = (text) => {
     if (!query) return text;
@@ -36,7 +51,6 @@ const ThemeCard = ({ item, query = "" }) => {
         Tema: <strong>{item.theme}</strong>
         {item.author?.username ? <> · por <strong>@{item.author.username}</strong></> : null}
       </p>
-      {/* Nada de conteúdo/preview aqui — só título/metadados */}
     </button>
   );
 };
@@ -46,7 +60,7 @@ const BibleStudiesByTheme = () => {
   const navigate = useNavigate();
 
   const [q, setQ] = useState("");
-  const [theme, setTheme] = useState(""); // vazio = todos
+  const [theme, setTheme] = useState(""); // slug ou vazio
   const [page, setPage] = useState(1);
   const [limit] = useState(12);
 
@@ -55,6 +69,7 @@ const BibleStudiesByTheme = () => {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
+  // carrega da API quando filtros mudam (debounce p/ q)
   useEffect(() => {
     let stop = false;
     setLoading(true);
@@ -63,8 +78,8 @@ const BibleStudiesByTheme = () => {
     const t = setTimeout(async () => {
       try {
         const out = await listThemeStudiesPublic({
-          theme: theme || undefined,
-          q: q.trim() || undefined,
+          theme: theme || undefined,          // garante que só envia quando tiver
+          q: q.trim() || undefined,           // busca em title/content/theme (text index)
           page,
           limit,
           sort: "new",
@@ -78,7 +93,7 @@ const BibleStudiesByTheme = () => {
       } finally {
         if (!stop) setLoading(false);
       }
-    }, 350);
+    }, 350); // debounce só na pesquisa
 
     return () => {
       stop = true;
@@ -86,6 +101,7 @@ const BibleStudiesByTheme = () => {
     };
   }, [q, theme, page, limit]);
 
+  // ao mudar filtros, volta p/ página 1
   useEffect(() => {
     setPage(1);
   }, [q, theme]);
@@ -94,6 +110,8 @@ const BibleStudiesByTheme = () => {
     () => Math.max(1, Math.ceil(total / limit)),
     [total, limit]
   );
+
+  console.log("themes:", items)
 
   return (
     <>
@@ -112,27 +130,25 @@ const BibleStudiesByTheme = () => {
               className="select"
               aria-label="Filtrar tema"
             >
-              <option value="">Todos os temas</option>
-              <option value="theology">Theology</option>
-              <option value="doctrinary">Doctrinary</option>
-              <option value="ecclesiastical">Ecclesiastical</option>
-              <option value="pastoral">Pastoral</option>
-              <option value="ethics">Ethics</option>
-              <option value="missions">Missions</option>
+              {THEME_OPTIONS.map((opt) => (
+                <option key={opt.value || "all"} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
 
             <input
               type="text"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Buscar por título..."
+              placeholder="Buscar por título ou conteúdo..."
               className="input"
             />
-            {q && (
+            {(q || theme) && (
               <button
                 className="clearBtn"
-                onClick={() => setQ("")}
-                aria-label="Limpar busca"
+                onClick={() => { setQ(""); setTheme(""); }}
+                aria-label="Limpar filtros"
               >
                 Limpar
               </button>
@@ -180,6 +196,7 @@ const BibleStudiesByTheme = () => {
           )}
         </div>
       </div>
+      <Footer />
     </>
   );
 };
