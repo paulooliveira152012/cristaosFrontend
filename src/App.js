@@ -186,8 +186,8 @@ const AppWithLocation = () => {
     const disabled =
       location.pathname.startsWith("/liveRoom") ||
       location.pathname.startsWith("/mainChat") ||
-      location.pathname.startsWith("/privateChat");
-    location.pathname.startsWith("/globe"); // 👈 aqui
+      location.pathname.startsWith("/privateChat") ||
+      location.pathname.startsWith("/globe"); // 👈 aqui
 
     if (disabled) return;
 
@@ -207,7 +207,6 @@ const AppWithLocation = () => {
       shouldPullToRefresh() {
         // ❌ não puxa para atualizar se o menu estiver aberto
         if (document.body.dataset.menuOpen === "1") return false;
-        if (location === "globe") return false
 
         // ✅ só permite quando o feed principal está no topo
         return el.scrollTop === 0;
