@@ -207,6 +207,7 @@ const AppWithLocation = () => {
       shouldPullToRefresh() {
         // ❌ não puxa para atualizar se o menu estiver aberto
         if (document.body.dataset.menuOpen === "1") return false;
+        if (location === "globe") return false
 
         // ✅ só permite quando o feed principal está no topo
         return el.scrollTop === 0;
