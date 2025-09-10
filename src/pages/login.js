@@ -25,9 +25,9 @@ const TermsModal = ({ open, onClose, onConfirm }) => {
         <div style={{ maxHeight: 220, overflow: "auto", margin: "12px 0" }}>
           <p>
             Ao continuar, você declara que leu e concorda com os{" "}
-            <a href="/termsOfUse" target="_blank" rel="noreferrer">Termos de Uso</a>{" "}
+            <a href="/termsOfUse" target="_blank" rel="noreferrer" style={{color: "yellow"}}>Termos de Uso</a>{" "}
             e a{" "}
-            <a href="/privacyPolicy" target="_blank" rel="noreferrer">Política de Privacidade</a>{" "}
+            <a href="/privacyPolicy" target="_blank" rel="noreferrer" style={{color: "yellow"}}>Política de Privacidade</a>{" "}
             do Cristãos App.
           </p>
         </div>
