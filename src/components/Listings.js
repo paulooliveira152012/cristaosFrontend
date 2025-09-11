@@ -557,7 +557,7 @@ const Listings = () => {
           }
 
           const listing = entry;
-          console.log("🚨✅ listing:", listing);
+          // console.log("🚨✅ listing:", listing);
           return (
             <div
               key={keyForListing(listing)}

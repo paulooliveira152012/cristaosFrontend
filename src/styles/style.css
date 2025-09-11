@@ -165,6 +165,28 @@ body.dark-mode .landingContainer {
   border-radius: 50px;
 }
 
+@keyframes neonBorder {
+  0% {
+    border-color: #39ff14;
+    box-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14;
+  }
+  50% {
+    border-color: #00ffff;
+    box-shadow: 0 0 15px #00ffff, 0 0 30px #00ffff;
+  }
+  100% {
+    border-color: #39ff14;
+    box-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14;
+  }
+}
+
+.landingLiveImage.neon {
+  border: 2px solid #39ff14;
+  border-radius: 50px;
+  animation: neonBorder 2s infinite alternate;
+}
+
+
 .landingLiveTitle {
   width: 100%;
   overflow: hidden;

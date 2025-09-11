@@ -47,7 +47,7 @@ const ListingInteractionBox = ({
   const [pendingHighlightId, setPendingHighlightId] = useState(null);
   const [showCommentBox, setShowCommentBox] = useState(false);
   const [showAllLikes, setShowAllLikes] = useState(false);
-  console.log("✅✅likes:", likes);
+  // console.log("✅✅likes:", likes);
 
   // helper para garantir estrutura { _id, username, profileImage } mesmo se vier id puro
   const normLikes = Array.isArray(likes)
@@ -149,9 +149,9 @@ const ListingInteractionBox = ({
     return null;
   };
 
-  console.log("likes testing on openListing page:", likes)
+  // console.log("likes testing on openListing page:", likes)
 
-  console.log("isLiked:", isLiked)
+  // console.log("isLiked:", isLiked)
 
   const liked = React.useMemo(() => {
   if (typeof isLiked === "boolean") return isLiked;

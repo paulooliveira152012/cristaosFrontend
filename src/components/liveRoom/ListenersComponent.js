@@ -1,5 +1,5 @@
 // src/components/liveRoom/ListenersComponent.js
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { useRoom } from "../../context/RoomContext";
 import { Link } from "react-router-dom";
 

@@ -25,6 +25,12 @@ export const RoomProvider = ({ children }) => {
   const [currentUsersSpeaking, setCurrentUsersSpeaking] = useState([]);
   const [roomReady, setRoomReady] = useState(false);
 
+  // Normaliza speakers vindos do back (Room.speakers) para o estado atual
+  const setSpeakersFromRoom = (room) => {
+    const arr = Array.isArray(room?.speakers) ? room.speakers : [];
+    setCurrentUsersSpeaking(arr);
+  };
+
   /* -------------------------------- API helpers (opcionais) ------------------- */
   const addCurrentUser = async (roomId, user, baseUrl) => {
     if (!roomId || !user?._id) return;
@@ -58,8 +64,13 @@ export const RoomProvider = ({ children }) => {
 
     const onLiveUsers = (payload) => {
       if (!payload) return;
-      const { roomId: rid, users = [], speakers } =
-        Array.isArray(payload) ? { roomId: currentRoomId, users: payload } : payload;
+      const {
+        roomId: rid,
+        users = [],
+        speakers,
+      } = Array.isArray(payload)
+        ? { roomId: currentRoomId, users: payload }
+        : payload;
 
       // evita aplicar updates de outra sala
       if (currentRoomId && rid && String(rid) !== String(currentRoomId)) return;
@@ -161,27 +172,41 @@ export const RoomProvider = ({ children }) => {
     // await addCurrentUser(roomId, user, baseUrl);
   };
 
-  const handleLeaveRoom = async (roomId, user, baseUrl, leaveChannel, navigate) => {
+  const handleLeaveRoom = async (
+    roomId,
+    user,
+    baseUrl,
+    leaveChannel,
+    navigate,
+    ownerId,
+    isSpeaker
+  ) => {
     if (!roomId) return;
+
+    // 0) Se for o LÍDER da sala: encerra a live no backend
+    try {
+      if (ownerId && user?._id && String(ownerId) === String(user._id)) {
+        await fetch(`${baseUrl}/api/rooms/${roomId}/live/stop`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user._id }),
+        });
+      } else if (isSpeaker) {
+        // Se não é líder mas está no palco, desce do palco
+        await fetch(`${baseUrl}/api/rooms/${roomId}/speakers/leave`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user._id }),
+        });
+      }
+    } catch (e) {
+      console.error("Erro ao encerrar/descer do palco:", e);
+    }
 
     // 1) WS (faz a remoção e o broadcast no back)
     emitLeaveRoom(roomId);
-
-    // 2) (opcional) REST — se seu back NÃO atualizar o DB no removeUserFromRoom:
-    // try {
-    //   await fetch(`${baseUrl}/api/rooms/removeMember`, {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify({ roomId, userId: user?._id }),
-    //   });
-    // } catch (err) {
-    //   console.error("❌ Erro ao remover do banco:", err);
-    // }
-
-    // 3) (opcional) otimismo local, caso queira ver sumir na hora:
-    // setCurrentUsers((prev) => prev.filter((u) => String(u._id) !== String(user?._id)));
-    // setCurrentUsersSpeaking((prev) => prev.filter((u) => String(u._id) !== String(user?._id)));
-
     // 4) UI/voz
     clearMinimizedRoom();
     setHasJoinedBefore(false);
@@ -212,10 +237,10 @@ export const RoomProvider = ({ children }) => {
         joinRoomListeners,
         emitLeaveRoom,
         emitJoinAsSpeaker,
-        addCurrentUser,     // opcionais
-        removeCurrentUser,  // opcionais
-        addSpeaker,         // opcionais
-        removeSpeaker,      // opcionais
+        addCurrentUser, // opcionais
+        removeCurrentUser, // opcionais
+        addSpeaker, // opcionais
+        removeSpeaker, // opcionais
         handleJoinRoom,
         handleLeaveRoom,
       }}

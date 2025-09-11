@@ -223,7 +223,15 @@ export const useJoinRoomEffect = (roomId, currentUser, handleJoinRoom, baseUrl) 
   }, [roomId, currentUser]);
 };
 
-export const useFetchRoomDataEffect = (roomId, currentUser, setSala, setNewRoomTitle, setIsCreator, baseUrl) => {
+export const useFetchRoomDataEffect = (
+  roomId,
+  currentUser, 
+  setSala, 
+  setNewRoomTitle, 
+  setIsCreator, 
+  baseUrl,
+  setCurrentUsersSpeaking
+) => {
   useEffect(() => {
     const fetchRoomData = async () => {
       if (!roomId || !currentUser) return;
@@ -234,6 +242,8 @@ export const useFetchRoomDataEffect = (roomId, currentUser, setSala, setNewRoomT
           setSala(data);
           setNewRoomTitle(data.roomTitle);
           setIsCreator(data.createdBy?._id === currentUser._id);
+          // ⚡️ normaliza speakers -> estado usado no front
+         setCurrentUsersSpeaking(Array.isArray(data.speakers) ? data.speakers : []);
         } else {
           console.error("Erro ao buscar dados da sala:", data.error || "Erro desconhecido");
         }

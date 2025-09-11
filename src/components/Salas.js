@@ -4,6 +4,9 @@ import "../styles/rooms.css";
 import { useNavigate } from "react-router-dom";
 import { uploadImageToS3 } from "../utils/s3Upload"; // Importing your S3 upload utility
 import { useUser } from "../context/UserContext";
+import { useSocket } from "../context/SocketContext";
+
+import { handleCreateRoom } from "./functions/liveRoomFunctions";
 
 import NewChat from "../assets/icons/newchatIcon";
 
@@ -11,6 +14,7 @@ const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 const Salas = () => {
   const { currentUser } = useUser();
+  const { socket } = useSocket();
   const navigate = useNavigate();
   const [roomTitle, setRoomTitle] = useState("");
   const [roomImageFile, setRoomImageFile] = useState(null);
@@ -35,7 +39,15 @@ const Salas = () => {
         }
 
         const data = await response.json();
-        setRooms(data); // Store fetched rooms in state
+        // normaliza: se backend não mandar isLive, derive de speakers
+        const normalized = (data || []).map((r) => ({
+          ...r,
+          isLive:
+            typeof r.isLive === "boolean"
+              ? r.isLive
+              : !!(r.currentUsersSpeaking && r.currentUsersSpeaking.length),
+        }));
+        setRooms(normalized);
         // console.log("Fetched rooms:", data); // Log fetched rooms
       } catch (error) {
         console.error("Error fetching rooms:", error);
@@ -44,6 +56,20 @@ const Salas = () => {
 
     fetchRooms(); // Call the function to fetch rooms
   }, []); // Empty dependency array to ensure fetch only runs once on mount
+
+  // 🔔 Ouve mudanças de live via socket e atualiza o array
+  useEffect(() => {
+    if (!socket || typeof socket.on !== "function") return;
+    const onLive = ({ roomId, isLive, speakersCount }) => {
+      setRooms((prev) =>
+        prev.map((r) =>
+          r._id === roomId ? { ...r, isLive, speakersCount } : r
+        )
+      );
+    };
+    socket.on("room:live", onLive);
+    return () => socket.off("room:live", onLive);
+  }, [socket]);
 
   // Toggle modal visibility
   const toggleModal = () => {
@@ -64,65 +90,6 @@ const Salas = () => {
     const file = event.target.files[0];
     if (file) {
       setRoomImageFile(file);
-    }
-  };
-
-  // Handle creating the room
-  const handleCreateRoom = async () => {
-    if (!roomTitle || !roomImageFile) {
-      alert("Por favor, forneça um título e selecione uma imagem.");
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // Upload image to S3
-      const imageUrl = await uploadImageToS3(roomImageFile);
-      console.log("Image uploaded to S3, URL:", imageUrl);
-
-      // Prepare the room data
-      const roomData = {
-        roomTitle: roomTitle,
-        roomImage: imageUrl,
-        createdBy: currentUser,
-      };
-
-      // Send POST request to create a new room
-      const response = await fetch(`${baseUrl}/api/rooms/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(roomData),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log("Room created successfully:", result);
-
-        // Update rooms state with the new room
-        setRooms((prevRooms) => [...prevRooms, result]);
-
-        // Close the modal
-        toggleModal();
-
-        // Reset the form
-        setRoomTitle("");
-        setRoomImageFile(null);
-        // navigate imediatly to the created room
-        // navigate(`/liveRoom/${result._id}`, { state: {userId: currentUser._id} })
-        // navigate(`/liveRoom/${result._id}`)
-        // call navigation function with result as parameter
-        console.log("result is:", result);
-        openLive(result);
-      } else {
-        console.error("Error creating the room:", response.statusText);
-      }
-    } catch (error) {
-      console.error("Error during room creation:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -181,9 +148,24 @@ const Salas = () => {
                 placeholder="Enter room title"
               />
 
-              
+              <div
+                className="button"
+                onClick={() =>
+                  handleCreateRoom({
+                    roomTitle,
+                    roomImageFile,
+                    setIsLoading,
+                    uploadImageToS3,
+                    currentUser,
+                    setRooms,
 
-              <div className="button" onClick={handleCreateRoom}>
+                    toggleModal,
+                    setRoomTitle,
+                    setRoomImageFile,
+                    openLive,
+                  })
+                }
+              >
                 <p>{isLoading ? "Criando Sala..." : "Criar Sala"}</p>
               </div>
             </form>
@@ -206,7 +188,7 @@ const Salas = () => {
           >
             {/* div for the image */}
             <div
-              className="landingLiveImage"
+              className={`landingLiveImage ${sala.isLive ? "neon" : ""}`} // 👈 pinta neon
               style={{
                 backgroundImage: `url(${sala.roomImage})`,
                 backgroundSize: "cover",
