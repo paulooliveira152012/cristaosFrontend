@@ -594,3 +594,24 @@ html, body, #root {
   overscroll-behavior: contain;    /* não “vaza” o bounce pro body/feed */
   touch-action: pan-y;
 }
+
+
+/* src/styles/ads.css */
+.ad-slot {
+  max-width: 100%;
+  margin: 12px auto;
+}
+
+.adsbygoogle {
+  width: 100%;
+  /* Evita qualquer “overflow” que possa sobrepor a área de rolagem */
+  overflow: hidden;
+}
+
+/* Tamanhos mínimos diferentes por breakpoint (opcional) */
+@media (min-width: 768px) {
+  .adsbygoogle { min-height: 250px; }
+}
+@media (min-width: 1024px) {
+  .adsbygoogle { min-height: 280px; }
+}
