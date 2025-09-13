@@ -6,19 +6,16 @@ import { useRoom } from "../context/RoomContext";
 import { addSpeakerToRoom } from "../pages/functions/liveRoomFunctions";
 import { removeSpeakerFromRoom } from "../pages/functions/liveRoomFunctions";
 
-const baseUrl = process.env.REACT_APP_API_BASE_URL;
+
 
 const VoiceComponent = ({ isMinimized }) => {
   const { roomId } = useParams();
   const { currentUser } = useUser();
   const { emitJoinAsSpeaker } = useRoom();
-  const { testSocketConnection } = useRoom();
-
+  
   const {
     joinChannel,
-    leaveChannel,
     toggleMicrophone,
-    remoteUsers,
     isInCall,
     agoraClient,
     micState,

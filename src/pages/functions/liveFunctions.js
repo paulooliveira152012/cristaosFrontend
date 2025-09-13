@@ -270,7 +270,7 @@ export const useDebugCurrentUsersEffect = (currentUsers) => {
   }, [currentUsers]);
 };
 
-// liveFuncitons.js
+// liveFunctions.js
 export async function updateRoomSettingsJson(baseUrl, roomId, { title, coverUrl }) {
   const res = await fetch(`${baseUrl}/api/rooms/update/${roomId}`, {
     method: "PUT",

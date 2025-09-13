@@ -14,7 +14,7 @@ import {
   useFetchRoomDataEffect,
   useJoinRoomListenersEffect,
   useDebugCurrentUsersEffect,
-} from "./functions/liveFuncitons.js";
+} from "./functions/liveFunctions.js";
 import "../styles/style.css";
 import "../styles/liveRoom.css";
 import Speakers from "../components/liveRoom/SpeakersComponent.js";
