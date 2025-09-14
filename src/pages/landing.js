@@ -1,6 +1,7 @@
 import "../styles/style.css";
 import { useNavigate } from "react-router-dom";
-import Salas from "../components/Salas";
+// import Salas from "../components/Salas";
+import Salas2 from "../components/liveRoom/Salas2";
 import Liveusers from "../components/Liveusers";
 import Listings from "../components/Listings";
 import Header from "../components/Header";
@@ -25,14 +26,14 @@ const Landing = () => {
           showCloseIcon={false}
           navigate={navigate}
         />
-      <SupportUs />
-      
-      <Salas />
-      <Liveusers />
-      <Listings />
-      <GoogleAd />
+        <SupportUs />
 
-      {/* <Footer /> */}
+        <Salas2 />
+        <Liveusers />
+        <Listings />
+        <GoogleAd />
+
+        {/* <Footer /> */}
       </div>
     </div>
   );

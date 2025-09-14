@@ -8,6 +8,7 @@ import { ScrollToTop } from "./utils/ScrollToTop.js";
 import Landing from "./pages/landing";
 import OpenListing from "./pages/listing";
 import LiveRoom from "./pages/liveRoom";
+import liveRoom2 from "./pages/liveRoom2.js";
 import MainChat from "./pages/mainChat.js";
 import Chat from "./pages/chat.js";
 import Login from "./pages/login";
@@ -309,6 +310,10 @@ const AppWithLocation = () => {
                         />
                         <Route
                           path="/liveRoom/:roomId"
+                          element={<LiveRoom />}
+                        />
+                        <Route
+                          path="/liveRoom2/:roomId"
                           element={<LiveRoom />}
                         />
                         <Route path="/chat" element={<Chat />} />

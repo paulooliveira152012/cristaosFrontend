@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import "../../styles/liveRoom.css";
+// functions
+
 
 const RoomMenuModal = ({
   setShowSettingsModal,
@@ -113,6 +115,7 @@ const RoomMenuModal = ({
           onChange={(e) => setNewRoomTitle(e.target.value)}
           placeholder="Enter new room title"
           disabled={isLoading}
+          style={{color: "black"}}
         />
 
         <div style={{ margin: "12px 0" }}>
