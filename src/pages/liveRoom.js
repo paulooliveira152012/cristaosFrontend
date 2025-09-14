@@ -17,8 +17,8 @@ import {
 } from "./functions/liveFunctions.js";
 import "../styles/style.css";
 import "../styles/liveRoom.css";
-import Speakers from "../components/liveRoom/SpeakersComponent.js";
-import Listeners from "../components/liveRoom/ListenersComponent.js";
+import Speakers from "../components/liveRoom/roomScreen/SpeakersComponent.js";
+import Listeners from "../components/liveRoom/roomScreen/ListenersComponent.js";
 import RoomMenuModal from "../components/liveRoom/RoomMenuModal.js";
 import VoiceComponent from "../components/VoiceComponent.js";
 import { handleBack } from "../components/functions/headerFunctions.js";

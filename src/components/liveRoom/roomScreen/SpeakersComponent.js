@@ -1,4 +1,4 @@
-import { useRoom } from "../../context/RoomContext";
+import { useRoom } from "../../../context/RoomContext";
 import { Link } from "react-router-dom";
 
 const Speakers = () => {

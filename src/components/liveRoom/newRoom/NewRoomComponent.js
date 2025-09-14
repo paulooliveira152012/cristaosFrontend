@@ -1,8 +1,9 @@
 // NewRoomComponent.jsx
 import React, { useState } from "react";
-import NewChat from "../../assets/icons/newchatIcon";
+import NewChat from "../../../assets/icons/newchatIcon";
+// import { NewRoomModal } from "../../NewRoomModal";
 import { NewRoomModal } from "./NewRoomModal";
-import { useUser } from "../../context/UserContext";
+import { useUser } from "../../../context/UserContext";
 
 export const NewRoomComponent = ({ rooms, setRooms }) => {
   const { currentUser } = useUser();

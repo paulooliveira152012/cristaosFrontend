@@ -5,7 +5,8 @@ import "../../styles/rooms.css";
 // functions
 import { fetchRooms, openLive } from "../../pages/functions/liveRoomFunctions2";
 // components
-import { NewRoomComponent } from "./NewRoomComponent";
+// import { NewRoomComponent } from "./NewRoomComponent";
+import { NewRoomComponent } from "./newRoom/NewRoomComponent";
 
 const Salas2 = () => {
   const { currentUser } = useUser();

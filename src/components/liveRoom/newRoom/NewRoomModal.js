@@ -1,7 +1,7 @@
 import React from "react";
-import { handleCreateRoom } from "../../pages/functions/liveRoomFunctions2";
-import { uploadImageToS3 } from "../../utils/s3Upload";
-import "../../styles/rooms.css";
+import { handleCreateRoom } from "../../../pages/functions/liveRoomFunctions2";
+import { uploadImageToS3 } from "../../../utils/s3Upload";
+import "../../../styles/rooms.css";
 
 export const NewRoomModal = ({
   currentUser,

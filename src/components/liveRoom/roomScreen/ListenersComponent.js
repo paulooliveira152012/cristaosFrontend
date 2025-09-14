@@ -1,6 +1,6 @@
 // src/components/liveRoom/ListenersComponent.js
 import React, { useMemo, useEffect } from "react";
-import { useRoom } from "../../context/RoomContext";
+import { useRoom } from "../../../context/RoomContext";
 import { Link } from "react-router-dom";
 
 const FALLBACK_AVATAR = "/images/avatar-placeholder.png";
@@ -51,7 +51,9 @@ const Listeners = React.memo(function Listeners() {
                 <div
                   className="liveMemberProfileImage"
                   style={{
-                    backgroundImage: `url(${member.profileImage || FALLBACK_AVATAR})`,
+                    backgroundImage: `url(${
+                      member.profileImage || FALLBACK_AVATAR
+                    })`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                     backgroundColor: "#ddd",
@@ -61,7 +63,9 @@ const Listeners = React.memo(function Listeners() {
                   aria-label={`Perfil de ${member.username || "usuário"}`}
                 />
               </Link>
-              <p className="liveRoomUsername">{member.username || "Anonymous"}</p>
+              <p className="liveRoomUsername">
+                {member.username || "Anonymous"}
+              </p>
             </div>
           </div>
         </div>
