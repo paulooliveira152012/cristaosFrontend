@@ -14,7 +14,7 @@ import { Link } from "react-router-dom";
 import "../styles/components/chat.css"; // ⬅️ novo caminho
 import MicOn from "../assets/icons/microphone/micOn.js";
 import MicOff2 from "../assets/icons/microphone/micOff2.js";
-import AudioContext from "../context/AudioContext.js";
+import { useAudio } from "../context/AudioContext.js";
 import SendIcon from "../assets/icons/send.js";
 import profilePlaceholder from "../assets/images/profileplaceholder.png";
 import { useLocation } from "react-router-dom";
@@ -36,7 +36,7 @@ import {
 const ChatComponent = ({ roomId }) => {
   const { socket } = useSocket();
   const { currentUser } = useUser();
-  const { toggleMicrophone, micState } = useContext(AudioContext);
+  const { toggleMicrophone, micState } = useAudio();
 
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");

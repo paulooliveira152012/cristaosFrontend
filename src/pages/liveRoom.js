@@ -22,7 +22,7 @@ import Listeners from "../components/liveRoom/roomScreen/ListenersComponent.js";
 import RoomMenuModal from "../components/liveRoom/RoomMenuModal.js";
 import VoiceComponent from "../components/VoiceComponent.js";
 import { handleBack } from "../components/functions/headerFunctions.js";
-import AudioContext from "../context/AudioContext.js";
+import { useAudio } from "../context/AudioContext.js";
 import { motion, AnimatePresence } from "framer-motion";
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
@@ -39,7 +39,7 @@ const LiveRoom = () => {
   } = useRoom();
 
   const { joinChannel, leaveChannel, toggleMicrophone, micState } =
-    useContext(AudioContext);
+    useAudio();
   const { socket } = useSocket(); // 👈 ouvir room:live
   const location = useLocation();
   const navigate = useNavigate();

@@ -1,12 +1,10 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useParams } from "react-router-dom";
 import { useUser } from "../context/UserContext";
-import AudioContext from "../context/AudioContext";
+import { useAudio } from "../context/AudioContext";
 import { useRoom } from "../context/RoomContext";
 import { addSpeakerToRoom } from "../pages/functions/liveRoomFunctions";
 import { removeSpeakerFromRoom } from "../pages/functions/liveRoomFunctions";
-
-
 
 const VoiceComponent = ({ isMinimized }) => {
   const { roomId } = useParams();
@@ -19,7 +17,7 @@ const VoiceComponent = ({ isMinimized }) => {
     isInCall,
     agoraClient,
     micState,
-  } = useContext(AudioContext);
+  } = useAudio();
 
   const [localError, setLocalError] = useState("");
   const [isSpeaker, setIsSpeaker] = useState(false);

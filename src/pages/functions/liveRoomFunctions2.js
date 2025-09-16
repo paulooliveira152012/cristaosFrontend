@@ -33,7 +33,7 @@ export const fetchRooms = async () => {
 export const openLive = ({ currentUser, sala, navigate }) => {
   if (currentUser) {
     console.log("Opening live room:", sala);
-    navigate(`/liveRoom/${sala._id}`, { state: { sala } });
+    navigate(`/liveRoomNew/${sala._id}`, { state: { sala } });
   } else {
     window.alert("Por favor fazer login para acessar a sala");
     return;
@@ -50,7 +50,7 @@ export const handleCreateRoom = async ({
   setRoomTitle,
   setRoomImageFile,
   openLive,
-  setShowModal
+  setShowModal,
 }) => {
   if (!roomTitle || !roomImageFile) {
     alert("Por favor, forneça um título e selecione uma imagem.");
@@ -74,7 +74,11 @@ export const handleCreateRoom = async ({
     // Send POST request to create a new room
     const response = await fetch(`${apiUrl}/api/rooms/create`, {
       method: "POST",
-      headers: { ...authHeaders(), "Content-Type": "application/json", Accept: "application/json" },
+      headers: {
+        ...authHeaders(),
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
       body: JSON.stringify(roomData),
     });
 
@@ -86,8 +90,8 @@ export const handleCreateRoom = async ({
       setRooms((prevRooms) => [...prevRooms, result]);
 
       // Close the modal
-    //   toggleModal();
-        setShowModal(false)
+      //   toggleModal();
+      setShowModal(false);
 
       // Reset the form
       setRoomTitle("");
@@ -108,8 +112,101 @@ export const handleCreateRoom = async ({
   }
 };
 
-
 // =============================================================
 // functions related to creating rooms PAGE
 // =============================================================
 
+// fetch room data
+// mais simples: recebe um objeto e RETORNA os dados
+export const fetchRoomData = async ({ roomId, userId, baseUrl, setSala }) => {
+  console.log("fetching sala...");
+  if (!roomId || !userId || !baseUrl) {
+    console.log("🚨 roomId:", roomId, "userId:", userId, "baseUrl:", baseUrl);
+    return null;
+  }
+
+  const res = await fetch(`${baseUrl}/api/rooms/fetchRoomData/${roomId}`, {
+    credentials: "include",
+  });
+  const data = await res.json();
+  setSala(data)
+
+  if (!res.ok) {
+    console.error("Erro ao buscar dados da sala:", data?.error || "desconhecido");
+    return null;
+  }
+
+  return data; // { roomTitle, createdBy, speakers, ... }
+};
+
+// add user to room automatically at room enter
+export const joinRoomEffect = ({
+  roomId,
+  currentUser,
+  handleJoinRoom,
+  baseUrl,
+}) => {
+  console.log("joining room...");
+  if (!roomId || !currentUser || !baseUrl) {
+    console.log("🚨 missing roomId", roomId, "or currentUser", currentUser, "or baseUrl:", baseUrl);
+    return;
+  }
+  handleJoinRoom(roomId, currentUser, baseUrl);
+};
+
+// add user to speaker list
+export const joinAsSpeaker = async (
+  joinChannel,
+  roomId,
+  currentUser,
+  setIsSpeaker
+) => {
+  console.log("joining speakers...");
+  if (!roomId || !currentUser) {
+    console.log("missing roomId or currentUser");
+    return;
+  }
+  try {
+    const res = await fetch(`${apiUrl}/api/rooms/${roomId}/speakers/join`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: currentUser._id }),
+    });
+    if (!res.ok) throw new Error("falha ao subir ao palco");
+    await joinChannel(roomId, currentUser._id);
+    setIsSpeaker(true);
+  } catch (e) {
+    console.error(e);
+    alert("Não foi possível subir ao palco.");
+  }
+};
+
+export const verifyCanStartLive = (currentUser, sala, setCanStartRoom) => {
+  if (!currentUser || !sala) return false;
+  const me = String(currentUser._id);
+  if (me) {
+    setCanStartRoom(true);
+  }
+  if (String(sala.owner?._id) === me) return true;
+  return (sala.admins || []).some((a) => String(a._id) === me);
+};
+
+
+
+// export const leaveStage = async () => {
+//     try {
+//       const res = await fetch(`${apiUrl}/api/rooms/${roomId}/speakers/leave`, {
+//         method: "POST",
+//         credentials: "include",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ userId: currentUser._id }),
+//       });
+//       if (!res.ok) throw new Error("falha ao descer do palco");
+//       await leaveChannel(roomId);
+//       setIsSpeaker(false);
+//     } catch (e) {
+//       console.error(e);
+//       alert("Não foi possível descer do palco.");
+//     }
+//   };
