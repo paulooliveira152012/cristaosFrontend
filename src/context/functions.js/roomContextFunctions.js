@@ -1,20 +1,41 @@
 // src/pages/functions/liveRoomFunctions2.js
-export const fetchRoomData = async ({ roomId, baseUrl }) => {
+export const fetchRoomData = async ({
+  roomId,
+  baseUrl,
+  currentUser,
+  setIsCreator,
+}) => {
   if (!roomId || !baseUrl) return null;
 
   const res = await fetch(`${baseUrl}/api/rooms/fetchRoomData/${roomId}`, {
     method: "GET",
     credentials: "include",
-    headers: { "Accept": "application/json" },
+    headers: { Accept: "application/json" },
   });
 
   if (!res.ok) {
     let msg = "Erro ao buscar sala";
-    try { msg = (await res.json())?.error || msg; } catch {}
+    try {
+      msg = (await res.json())?.error || msg;
+    } catch {}
     throw new Error(msg);
   }
 
-  return res.json(); // deve retornar { roomTitle, createdBy, owner, speakers, ... }
+  const data = await res.json();
+
+  console.log("res para verificar dono da sala:", data);
+  console.log("currentUser:", currentUser);
+
+  const roomCreator = data.createdBy._id;
+
+  const isCreator = currentUser._id == roomCreator;
+  console.log("isCreator na busca da sala?", isCreator);
+
+  if (isCreator) {
+    setIsCreator(true);
+  }
+
+  return data; // deve retornar { roomTitle, createdBy, owner, speakers, ... }
 };
 
 // ============= start a new live
@@ -24,7 +45,7 @@ export const startLiveCore = async ({
   baseUrl,
   currentUser,
   roomId,
-  joinChannel,           // função
+  joinChannel, // função
 }) => {
   if (!baseUrl || !currentUser?._id || !roomId) {
     return { ok: false, reason: "missing_params" };
@@ -39,11 +60,17 @@ export const startLiveCore = async ({
 
   if (!res.ok) {
     const msg = await res.text().catch(() => "");
-    return { ok: false, status: res.status, message: msg || "falha ao iniciar" };
+    return {
+      ok: false,
+      status: res.status,
+      message: msg || "falha ao iniciar",
+    };
   }
 
   let data = null;
-  try { data = await res.json(); } catch {}
+  try {
+    data = await res.json();
+  } catch {}
 
   // entra no canal (mutado por padrão)
   await joinChannel(roomId, currentUser._id);

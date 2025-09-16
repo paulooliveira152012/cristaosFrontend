@@ -1,3 +1,4 @@
+import { uploadImageToS3 } from "../../utils/s3Upload";
 const apiUrl = process.env.REACT_APP_API_BASE_URL;
 
 export const authHeaders = () => {
@@ -129,10 +130,13 @@ export const fetchRoomData = async ({ roomId, userId, baseUrl, setSala }) => {
     credentials: "include",
   });
   const data = await res.json();
-  setSala(data)
+  setSala(data);
 
   if (!res.ok) {
-    console.error("Erro ao buscar dados da sala:", data?.error || "desconhecido");
+    console.error(
+      "Erro ao buscar dados da sala:",
+      data?.error || "desconhecido"
+    );
     return null;
   }
 
@@ -148,7 +152,14 @@ export const joinRoomEffect = ({
 }) => {
   console.log("joining room...");
   if (!roomId || !currentUser || !baseUrl) {
-    console.log("🚨 missing roomId", roomId, "or currentUser", currentUser, "or baseUrl:", baseUrl);
+    console.log(
+      "🚨 missing roomId",
+      roomId,
+      "or currentUser",
+      currentUser,
+      "or baseUrl:",
+      baseUrl
+    );
     return;
   }
   handleJoinRoom(roomId, currentUser, baseUrl);
@@ -192,24 +203,116 @@ export const verifyCanStartLive = (currentUser, sala, setCanStartRoom) => {
   return (sala.admins || []).some((a) => String(a._id) === me);
 };
 
-
 export const leaveStage = async (roomId, currentUser) => {
-  console.log("leaveStage function external")
-  console.log("roomId:", roomId)
-  console.log("currentUser:", currentUser)
+  console.log("leaveStage function external");
+  console.log("roomId:", roomId);
+  console.log("currentUser:", currentUser);
 
-    try {
-      const res = await fetch(`${apiUrl}/api/rooms/${roomId}/speakers/leave`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: currentUser._id }),
-      });
-      if (!res.ok) throw new Error("falha ao descer do palco");
-      // await leaveChannel(roomId);
-      // setIsSpeaker(false);
-    } catch (e) {
-      console.error(e);
-      alert("Não foi possível descer do palco.");
+  try {
+    const res = await fetch(`${apiUrl}/api/rooms/${roomId}/speakers/leave`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: currentUser._id }),
+    });
+    if (!res.ok) throw new Error("falha ao descer do palco");
+    // await leaveChannel(roomId);
+    // setIsSpeaker(false);
+  } catch (e) {
+    console.error(e);
+    alert("Não foi possível descer do palco.");
+  }
+};
+
+export async function updateRoomSettingsJson(
+  baseUrl,
+  roomId,
+  { title, coverUrl }
+) {
+  const res = await fetch(`${baseUrl}/api/rooms/update/${roomId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      ...(title ? { newTitle: title } : {}),
+      ...(coverUrl ? { coverUrl } : {}),
+    }),
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Falha ao atualizar sala: ${res.status} - ${txt}`);
+  }
+  const data = await res.json();
+  return data.room;
+}
+
+export const deleteRoom = async (roomId, navigate) => {
+  try {
+    const response = await fetch(`${apiUrl}/api/rooms/delete/${roomId}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete room. Status: ${response.status}`);
     }
-  };
+
+    console.log("Room deleted successfully");
+    navigate("/"); // Navigate to the landing page after deletion
+  } catch (error) {
+    console.error("Error deleting room:", error.message || error);
+  }
+};
+
+export async function handleSaveSettings({
+  baseUrl,
+  roomId,
+  title,
+  coverFile,
+}) {
+  let coverUrl;
+  if (coverFile) {
+    coverUrl = await uploadImageToS3(coverFile); // sobe no front e pega URL final
+  }
+  const room = await updateRoomSettingsJson(baseUrl, roomId, {
+    title,
+    coverUrl,
+  });
+  return room;
+}
+
+// saaveChanges
+// 1) mantenha só ESTA função de salvar:
+export const onSaveSettings = async ({
+  setIsLoading,
+  baseUrl,
+  roomId,
+  newRoomTitle,
+  newCoverFile,
+  setSala,
+  setRoomTheme,
+  setShowSettingsModal,
+  setNewCoverFile,
+}) => {
+  console.log("saving room updates...");
+  try {
+    setIsLoading(true); // <- liga overlay
+    const updatedRoom = await handleSaveSettings({
+      baseUrl,
+      roomId,
+      title: newRoomTitle,
+      coverFile: newCoverFile,
+    });
+    setSala(updatedRoom);
+    setRoomTheme(`bem vindo a sala ${updatedRoom?.roomTitle}`);
+    setShowSettingsModal(false);
+    setNewCoverFile(null);
+  } catch (err) {
+    console.error(err);
+    alert("Não foi possível atualizar a sala.");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+// deleteRoom
+export const handleDeleteRoom = (roomId, navigate) => deleteRoom(roomId, navigate);

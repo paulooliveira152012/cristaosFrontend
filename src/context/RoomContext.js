@@ -32,7 +32,8 @@ export const RoomProvider = ({ children }) => {
   const [currentUsers, setCurrentUsers] = useState([]);
   const [currentUsersSpeaking, setCurrentUsersSpeaking] = useState([]);
   const [roomReady, setRoomReady] = useState(false);
-  const [isRoomLive, setIsRoomLive] = useState(false)
+  const [isRoomLive, setIsRoomLive] = useState(false);
+  const [isCreator, setIsCreator] = useState(false)
 
   // ==================================================================
   // 👇 verifica se um userId está em currentUsersSpeaking (sem normalização elaborada)
@@ -67,7 +68,7 @@ export const RoomProvider = ({ children }) => {
     async (rid = currentRoomId) => {
       if (!rid || !baseUrl) return null;
       try {
-        const data = await fetchRoomData({ roomId: rid, baseUrl });
+        const data = await fetchRoomData({ roomId: rid, baseUrl, currentUser, setIsCreator });
         if (data) {
           setRoom(data);
           setSpeakersFromRoom(data);
@@ -139,6 +140,7 @@ export const RoomProvider = ({ children }) => {
   useEffect(() => {
     if (currentRoomId) refreshRoom(currentRoomId);
   }, [currentRoomId, refreshRoom]);
+
 
   // ==================== useEffects
   // Buscar quando a sala atual muda
@@ -402,6 +404,7 @@ export const RoomProvider = ({ children }) => {
         emitJoinAsSpeaker,
         handleJoinRoom,
         handleLeaveRoom,
+        isCreator,
       }}
     >
       {children}
