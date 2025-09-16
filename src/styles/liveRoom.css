@@ -202,3 +202,49 @@ input[disabled] {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.startRoomButton {
+  background-color: transparent;
+  color: #3b82f6;
+  width: 200px;
+  height: 40px;
+  border: 1px solid #3b82f6;
+  border-radius: 40px;
+  text-align: center;
+  margin: auto;
+  line-height: 0;
+
+}
+
+
+.startRoomButtonContainer {
+  /* background-color: aquamarine; */
+  display: flex;
+}
+
+.backToListenerBtn {
+  background-color: transparent;
+  color: #3b82f6;
+  width: 150px;
+  height: 30px;
+  border: 1px solid #3b82f6;
+  border-radius: 40px;
+  text-align: center;
+  margin: auto;
+  line-height: 0;
+  font-size: 13px;
+}
+
+
+.joinSpeakers {
+  background-color: #3b82f6;
+  color: #ffffff;
+  width: 150px;
+  height: 30px;
+  border: 1px solid #3b82f6;
+  border-radius: 40px;
+  text-align: center;
+  margin: auto;
+  line-height: 0;
+  font-size: 13px;
+}

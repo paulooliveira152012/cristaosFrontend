@@ -154,7 +154,7 @@ const LiveRoomNew = () => {
             </p>
 
             {/* 🔘 Barra de controles de áudio para inicialização de sala */}
-            <div
+            <div 
               style={{
                 // display: "flex",
                 gap: 8,
@@ -163,7 +163,8 @@ const LiveRoomNew = () => {
               }}
             >
               {canStartRoom && !isLive && (
-                <button
+                <div className="startRoomButtonContainer"> <button 
+                className="startRoomButton"
                   onClick={() =>
                     startLive({
                       roomId,
@@ -174,15 +175,18 @@ const LiveRoomNew = () => {
                 >
                   Iniciar sala de áudio
                 </button>
+                </div>
               )}
 
               {/* speakers */}
               {/* speakers */}
               {showSpeakers && <Speakers />}
               {isCurrentUserSpeaker && (
-                <button onClick={() => leaveStage(roomId, currentUser)}>
+                <button 
+                  className="backToListenerBtn"
+                  onClick={() => leaveStage(roomId, currentUser)}>
                   Descer do palco
-                </button>
+                </button >
               )}
             </div>
 
@@ -198,13 +202,17 @@ const LiveRoomNew = () => {
 
             {isLive && !isCurrentUserSpeaker && (
               <button
+              className="joinSpeakers"
                 onClick={() =>
                   joinAsSpeaker(joinChannel, roomId, currentUser, setIsSpeaker)
                 }
               >
-                Subir ao palco (mic mutado)
+                Subir para falar
               </button>
             )}
+
+          
+
           </div>
         </div>{" "}
         {/* first shild close*/}
