@@ -1,8 +1,8 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useRoom } from "../../../context/RoomContext";
 import { Link } from "react-router-dom";
 
-const Speakers = () => {
+const Speakers = ( setDisplaySpeakers ) => {
   const { currentUsersSpeaking, currentUsers } = useRoom();
 
   console.log("speakers component")

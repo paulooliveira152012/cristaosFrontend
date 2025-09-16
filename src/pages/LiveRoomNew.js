@@ -1,5 +1,6 @@
-import React, { useState, useContext, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "react-router-dom";
+import "../styles/liveRoom.css";
 // context
 import { useUser } from "../context/UserContext";
 import { useRoom } from "../context/RoomContext";
@@ -34,11 +35,14 @@ const LiveRoomNew = () => {
     startLive,
     minimizeRoom,
     joinRoomListeners,
+    currentUsersSpeaking,
     setCurrentUsersSpeaking,
     currentUsers, // ✅ já incluído aqui
     handleJoinRoom,
     handleLeaveRoom,
+    isCurrentUserSpeaker,
     roomReady,
+    room,
   } = useRoom();
 
   const { joinChannel, leaveChannel, toggleMicrophone, micState } = useAudio();
@@ -57,9 +61,19 @@ const LiveRoomNew = () => {
     sala?.roomTitle ? `bem vindo a sala ${sala.roomTitle}` : "Carregando sala…"
   );
   const [canStartRoom, setCanStartRoom] = useState(false); //can start the room?
-  const [isLive, setIsLive] = useState(false);
+
   const isRejoiningRef = useRef(false); //user is rejoining?
   const [microphoneOn, setMicrophoneOn] = useState(false);
+
+  const isLive = !!room?.isLive; // ⬅️ derive daqui
+
+  const hasSpeakers =
+    Array.isArray(currentUsersSpeaking) && currentUsersSpeaking.length > 0;
+
+  // versão otimista: mostra se eu já sou speaker mesmo que a lista ainda não tenha sincronizado
+  const showSpeakers = hasSpeakers || isCurrentUserSpeaker;
+  // se quiser só quando o backend confirmar, use:
+  // const showSpeakers = roomReady && hasSpeakers;
 
   // =============== useEffects
   // fetchRoomData
@@ -87,18 +101,23 @@ const LiveRoomNew = () => {
     verifyCanStartLive(currentUser, sala, setCanStartRoom);
   }, [currentUser?._id, sala?.roomTitle]);
 
-  // Sempre verificar status da sala com backend
-  useEffect(() => {
-    console.log("✅ sala atualizada:", sala);
-    setIsLive(sala.isLive);
-  }, [sala]);
+  // Ouve 'room:live' para esta sala
+  // ================================= PARTE QUE ESTOU ME REFERINDO
+  // useEffect(() => {
+  //   socket.on("room:live");
+  // }, [socket, roomId]);
+  // ================================= FINAL DA PARTE QUE ESTOU REFERINDO
 
-  console.log("currentUser:", currentUser);
-  console.log("sala:", sala);
+  // local function handlers
+
+  // verificar se usuario atual ja e um falante
+  console.log("showSpeakers", showSpeakers);
 
   return (
-    <div className="screenWrapper">
+    <div className="screenWrapper liveRoom">
       <div className="liveRoomContent">
+        <div className={isLive? "firstChildLiveOn" : "firstChild"}> {/* first shild open*/}
+      
         <Header
           navigate={navigate}
           showProfileImage={false}
@@ -111,7 +130,7 @@ const LiveRoomNew = () => {
               leaveChannel,
               navigate,
               ownerId: sala?.owner?._id,
-              isSpeaker,
+              isSpeaker: isCurrentUserSpeaker,
             })
           }
           onBack={() =>
@@ -129,52 +148,62 @@ const LiveRoomNew = () => {
           roomId={roomId}
         />
 
-        <p
-          style={{
-            textAlign: "center",
-            marginBottom: "10px",
-            fontStyle: "italic",
-          }}
-        >
-          {roomTheme}
-        </p>
+        <div className="roomTitleSpeakersButtons">
+          <p
+            style={{
+              textAlign: "center",
+              marginBottom: "10px",
+              fontStyle: "italic",
+            }}
+          >
+            {roomTheme}
+          </p>
 
-        {/* 🔘 Barra de controles de áudio para inicialização de sala */}
-        <div
-          style={{
-            // display: "flex",
-            gap: 8,
-            justifyContent: "center",
-            marginBottom: 12,
-          }}
-        >
-          {canStartRoom && !isLive && (
-            <button
-              onClick={() =>
-                startLive({
-                  roomId,
-                  baseUrl,
-                  currentUser,
-                  roomId,
-                  joinChannel,
-                  setIsSpeaker,
-                  setIsLive,
-                })
-              }
-            >
-              Iniciar sala de áudio
-            </button>
-          )}
+          {/* 🔘 Barra de controles de áudio para inicialização de sala */}
+          <div
+            style={{
+              // display: "flex",
+              gap: 8,
+              justifyContent: "center",
+              marginBottom: 12,
+            }}
+          >
+            {canStartRoom && !isLive && (
+              <button
+                onClick={() =>
+                  startLive({
+                    roomId,
+                    joinChannel,
+                    setIsSpeaker,
+                  })
+                }
+              >
+                Iniciar sala de áudio
+              </button>
+            )}
 
-          {/* speakers */}
-          <Speakers />
+            {/* speakers */}
+            {/* speakers */}
+            {showSpeakers && <Speakers />}
+            {isCurrentUserSpeaker && (
+              <button onClick={() => leaveStage(roomId, currentUser)}>
+                Descer do palco
+              </button>
+            )}
+          </div>
+
           {/* listeners */}
           <Listeners />
           {/* voice */}
-          <VoiceComponent />
+          <VoiceComponent
+            microphoneOn={microphoneOn}
+            roomId={roomId}
+            keepAlive={true}
+            setCurrentUsersSpeaking={setCurrentUsersSpeaking}
+          />
 
 
-          {isLive && !isSpeaker && (
+          {isLive && !isCurrentUserSpeaker && (
             <button
               onClick={() =>
                 joinAsSpeaker(joinChannel, roomId, currentUser, setIsSpeaker)
@@ -183,6 +212,10 @@ const LiveRoomNew = () => {
               Subir ao palco (mic mutado)
             </button>
           )}
+        </div>
+        </div> {/* first shild close*/}
+         <div className={isLive ? "secondChildLiveOn" : "secondChild"}>  {/* secondChild  open */}
+        <ChatComponent roomId={roomId} />  {/* secondChild  close */}
         </div>
       </div>
     </div>

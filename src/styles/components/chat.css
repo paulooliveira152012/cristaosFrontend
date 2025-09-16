@@ -6,9 +6,11 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
+    /* height: 56dvh; */
     height: 100%;
     background: var(--bg);
     color: var(--text);
+    /* background-color: blue; */
   }
   
   /* Área rolável das mensagens */
@@ -105,17 +107,17 @@
   
   /* Botão de ação (lixeira etc.) */
   .iconBtn {
-    display: inline-grid;
-    place-items: center;
+    /* display: inline-grid;
+    place-items: center; */
     width: 38px;
     height: 38px;
-    border-radius: 10px;
+    /* border-radius: 10px;
     border: 1px solid var(--border);
     background: var(--card);
     color: var(--text);
     cursor: pointer;
     transition: transform .06s ease, box-shadow .2s ease, border-color .2s ease;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-sm); */
   }
   .iconBtn:hover {
     border-color: var(--accent);

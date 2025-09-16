@@ -5,6 +5,7 @@ import React, {
   useContext,
   useEffect,
   useCallback,
+  useMemo
 } from "react";
 import { useSocket } from "./SocketContext";
 import { useUser } from "./UserContext";
@@ -31,6 +32,29 @@ export const RoomProvider = ({ children }) => {
   const [currentUsers, setCurrentUsers] = useState([]);
   const [currentUsersSpeaking, setCurrentUsersSpeaking] = useState([]);
   const [roomReady, setRoomReady] = useState(false);
+  const [isRoomLive, setIsRoomLive] = useState(false)
+
+  // ==================================================================
+  // 👇 verifica se um userId está em currentUsersSpeaking (sem normalização elaborada)
+  // ==================================================================
+  const isUserSpeaker = useCallback(
+    (userId) => {
+      if (!userId || !Array.isArray(currentUsersSpeaking)) return false;
+      return currentUsersSpeaking.some(
+        (s) => String(s?._id || s?.userId || s?.user?._id) === String(userId)
+      );
+    },
+    [currentUsersSpeaking]
+  );
+
+  // 👇 booleano pronto pro usuário atual
+  const isCurrentUserSpeaker = useMemo(
+    () => isUserSpeaker(currentUser?._id),
+    [isUserSpeaker, currentUser?._id]
+  );
+
+  // ==================================================================
+  // ==================================================================
 
   // Normaliza speakers vindos do back (Room.speakers) para o estado atual
   const setSpeakersFromRoom = (roomObj) => {
@@ -73,6 +97,7 @@ export const RoomProvider = ({ children }) => {
         if (room?._id === roomId && room?.isLive) {
           setIsSpeaker?.(true);
           setIsLive?.(true);
+          setIsRoomLive(true)
           return { ok: true, already: true };
         }
 
@@ -354,6 +379,7 @@ export const RoomProvider = ({ children }) => {
     <RoomContext.Provider
       value={{
         room,
+        isRoomLive,
         startLive,
         refreshRoom,
         roomReady,
@@ -363,6 +389,8 @@ export const RoomProvider = ({ children }) => {
         currentRoomId,
         currentUsers,
         currentUsersSpeaking,
+        isUserSpeaker,
+        isCurrentUserSpeaker,
         setCurrentUsersSpeaking,
         setCurrentUsers,
         minimizeRoom,

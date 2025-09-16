@@ -6,6 +6,7 @@ import React, {
   useCallback,
 } from "react";
 import { useUser } from "../context/UserContext";
+import { useRoom } from "../context/RoomContext.js";
 import { useSocket } from "../context/SocketContext";
 
 import TrashIcon from "../assets/icons/trashcan";
@@ -48,6 +49,8 @@ const ChatComponent = ({ roomId }) => {
 
   const currentScreen = useLocation();
   console.log("currentScreen:", currentScreen.pathname);
+
+  const { room } = useRoom();
 
   // ✅ função estável para rolar ao fim — não muda entre renders
   const scrollToBottom = useCallback(
@@ -120,6 +123,9 @@ const ChatComponent = ({ roomId }) => {
       currentUser,
       socket,
     });
+
+  console.log("MicIcons:", { MicOn, MicOff2 });
+  console.log("room ChatComponent:", room);
 
   return (
     <div className="chatComponent">
@@ -200,12 +206,20 @@ const ChatComponent = ({ roomId }) => {
           className="composerInput"
         />
 
-        {currentScreen.pathname.startsWith("/liveRoom") && (
+        {room?.isLive && (
           <button
             className="iconBtn"
             onClick={onToggleMic}
             aria-label={micState ? "Desativar microfone" : "Ativar microfone"}
             title={micState ? "Microfone ligado" : "Microfone desligado"}
+            style={{
+              width: 40,
+              height: 40,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 0,
+            }}
           >
             {micState ? <MicOn /> : <MicOff2 />}
           </button>

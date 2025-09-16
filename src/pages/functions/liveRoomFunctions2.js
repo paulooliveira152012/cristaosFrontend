@@ -193,20 +193,23 @@ export const verifyCanStartLive = (currentUser, sala, setCanStartRoom) => {
 };
 
 
+export const leaveStage = async (roomId, currentUser) => {
+  console.log("leaveStage function external")
+  console.log("roomId:", roomId)
+  console.log("currentUser:", currentUser)
 
-// export const leaveStage = async () => {
-//     try {
-//       const res = await fetch(`${apiUrl}/api/rooms/${roomId}/speakers/leave`, {
-//         method: "POST",
-//         credentials: "include",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify({ userId: currentUser._id }),
-//       });
-//       if (!res.ok) throw new Error("falha ao descer do palco");
-//       await leaveChannel(roomId);
-//       setIsSpeaker(false);
-//     } catch (e) {
-//       console.error(e);
-//       alert("Não foi possível descer do palco.");
-//     }
-//   };
+    try {
+      const res = await fetch(`${apiUrl}/api/rooms/${roomId}/speakers/leave`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUser._id }),
+      });
+      if (!res.ok) throw new Error("falha ao descer do palco");
+      // await leaveChannel(roomId);
+      // setIsSpeaker(false);
+    } catch (e) {
+      console.error(e);
+      alert("Não foi possível descer do palco.");
+    }
+  };

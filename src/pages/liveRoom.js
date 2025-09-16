@@ -78,6 +78,7 @@ const LiveRoom = () => {
   useEffect(() => {
     if (sala && typeof sala.isLive === "boolean") setIsLive(sala.isLive);
   }, [sala]);
+
   // Ouve 'room:live' para esta sala
   useEffect(() => {
     if (!socket || typeof socket.on !== "function") return;
@@ -87,6 +88,8 @@ const LiveRoom = () => {
     socket.on("room:live", onLive);
     return () => socket.off("room:live", onLive);
   }, [socket, roomId]);
+
+  
   // checagem de permissão (owner/admin)
   const canStart = (() => {
     if (!currentUser || !sala) return false;

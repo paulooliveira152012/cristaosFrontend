@@ -9,7 +9,12 @@ import { removeSpeakerFromRoom } from "../pages/functions/liveRoomFunctions";
 const VoiceComponent = ({ isMinimized }) => {
   const { roomId } = useParams();
   const { currentUser } = useUser();
-  const { emitJoinAsSpeaker } = useRoom();
+  // =============== contexto da sala
+  const { 
+    emitJoinAsSpeaker,
+    isCurrentUserSpeaker,
+    isRoomLive
+   } = useRoom();
   
   const {
     joinChannel,
@@ -73,21 +78,26 @@ const VoiceComponent = ({ isMinimized }) => {
     setIsSpeaker(true);
   };
 
+  console.log("isCurrentUserSpeaker no VoiceComponent:", isCurrentUserSpeaker )
+  console.log("✅ isRoomLive:", isRoomLive)
+
   return (
     <div id="container">
       {localError && <div>{localError}</div>}
 
-      {!isSpeaker ? (
-        <button onClick={handleJoinAsSpeaker}>Subir ao palco</button>
-      ) : (
-        <button
-          onClick={() =>
-            toggleMicrophone(!micState, currentUser._id, roomId)
-          }
-        >
-          {micState ? "Desligar microfone" : "Ligar microfone"}
-        </button>
-      )}
+      {!isCurrentUserSpeaker && isRoomLive && (
+        <button onClick={handleJoinAsSpeaker}>Subir ao palco1</button>
+      ) 
+      // : (
+      //   <button
+      //     onClick={() =>
+      //       toggleMicrophone(!micState, currentUser._id, roomId)
+      //     }
+      //   >
+      //     {micState ? "Desligar microfone" : "Ligar microfone"}
+      //   </button>
+      // )
+      }
     </div>
   );
 };
