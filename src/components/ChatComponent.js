@@ -185,6 +185,16 @@ const ChatComponent = ({ roomId }) => {
                     onClick={() => onDeleteMessage(msg._id)}
                     aria-label="Apagar mensagem"
                     title="Apagar"
+                    style={{
+                      width: 40,
+                      height: 40,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: 0,
+                      border: "1px solid #2a68d8",
+                      borderRadius: "10px",
+                    }}
                   >
                     <TrashIcon />
                   </button>

@@ -5,7 +5,6 @@ import "../styles/liveRoom.css";
 import { useUser } from "../context/UserContext";
 import { useRoom } from "../context/RoomContext";
 import { useAudio } from "../context/AudioContext";
-import { useSocket } from "../context/SocketContext";
 
 // components
 import Header from "../components/Header";
@@ -32,25 +31,20 @@ const LiveRoomNew = () => {
   const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
 
   // =============== variaveis contextuais
-  const { socket } = useSocket();
   const { currentUser } = useUser();
   const {
     startLive,
     minimizeRoom,
-    joinRoomListeners,
     currentUsersSpeaking,
     setCurrentUsersSpeaking,
-    currentUsers, // ✅ já incluído aqui
     handleJoinRoom,
     handleLeaveRoom,
     isCurrentUserSpeaker,
-    roomReady,
     room,
     isCreator,
   } = useRoom();
 
-  const { joinChannel, leaveChannel, toggleMicrophone, micState } = useAudio();
-
+  const { joinChannel, leaveChannel } = useAudio();
   const { roomId } = useParams();
 
   // =============== funcionalidades react
@@ -107,15 +101,7 @@ const LiveRoomNew = () => {
     verifyCanStartLive(currentUser, sala, setCanStartRoom);
   }, [currentUser?._id, sala?.roomTitle]);
 
-  // Ouve 'room:live' para esta sala
-  // ================================= PARTE QUE ESTOU ME REFERINDO
-  // useEffect(() => {
-  //   socket.on("room:live");
-  // }, [socket, roomId]);
-  // ================================= FINAL DA PARTE QUE ESTOU REFERINDO
-
   // local function handlers
-
   // verificar se usuario atual ja e um falante
   console.log("showSpeakers", showSpeakers);
 

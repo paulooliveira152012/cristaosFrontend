@@ -7,7 +7,7 @@ import { ScrollToTop } from "./utils/ScrollToTop.js";
 // páginas
 import Landing from "./pages/landing";
 import OpenListing from "./pages/listing";
-import LiveRoom from "./pages/liveRoom";
+import LiveRoom from "./pages/liveRoomNOTINUSE.js";
 import LiveRoomNew from "./pages/LiveRoomNew.js";
 import MainChat from "./pages/mainChat.js";
 import Chat from "./pages/chat.js";
