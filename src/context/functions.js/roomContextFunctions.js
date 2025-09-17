@@ -23,13 +23,13 @@ export const fetchRoomData = async ({
 
   const data = await res.json();
 
-  console.log("res para verificar dono da sala:", data);
-  console.log("currentUser:", currentUser);
+  // console.log("res para verificar dono da sala:", data);
+  // console.log("currentUser:", currentUser);
 
   const roomCreator = data.createdBy._id;
 
   const isCreator = currentUser._id == roomCreator;
-  console.log("isCreator na busca da sala?", isCreator);
+  // console.log("isCreator na busca da sala?", isCreator);
 
   if (isCreator) {
     setIsCreator(true);

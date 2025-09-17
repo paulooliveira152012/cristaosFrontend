@@ -65,11 +65,11 @@ const VoiceComponent = ({ isMinimized }) => {
   }, [micState, isSpeaker]);
 
   const handleJoinAsSpeaker = () => {
-    console.log("1️⃣")
-    console.log("1 -> funcao chamada para subir ao palco")
-    console.log("roomId:", roomId)
-    console.log("currentUser:", currentUser)
-    console.log("micState", micState)
+    // console.log("1️⃣")
+    // console.log("1 -> funcao chamada para subir ao palco")
+    // console.log("roomId:", roomId)
+    // console.log("currentUser:", currentUser)
+    // console.log("micState", micState)
 
   // chamar funcao que acessa rota para adicionar ao banco de dados
     // addSpeakerToRoom(roomId, currentUser, baseUrl)
@@ -78,8 +78,8 @@ const VoiceComponent = ({ isMinimized }) => {
     setIsSpeaker(true);
   };
 
-  console.log("isCurrentUserSpeaker no VoiceComponent:", isCurrentUserSpeaker )
-  console.log("✅ isRoomLive:", isRoomLive)
+  // console.log("isCurrentUserSpeaker no VoiceComponent:", isCurrentUserSpeaker )
+  // console.log("✅ isRoomLive:", isRoomLive)
 
   return (
     <div id="container">

@@ -20,7 +20,7 @@ const Salas2 = () => {
       setRooms(data);
     };
     loadRooms();
-    console.log("✅ rooms:", rooms);
+    // console.log("✅ rooms:", rooms);
   }, []); // dependencia vazia para garantir que rode apensa uma vez quando montar
 
   return (

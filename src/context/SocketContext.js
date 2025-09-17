@@ -43,7 +43,7 @@ export const SocketProvider = ({ children }) => {
     });
 
     const onConnect = () => {
-      console.log("✅ [Socket] conectado:", socket.id);
+      // console.log("✅ [Socket] conectado:", socket.id);
     };
 
     const onDisconnect = (reason) => {
@@ -82,7 +82,7 @@ export const SocketProvider = ({ children }) => {
     // se já estava conectado (ex.: guest), force novo handshake autenticado
     if (socket.connected) socket.disconnect();
 
-    console.log("🌐 [Socket] conectando em:", baseUrl);
+    // console.log("🌐 [Socket] conectando em:", baseUrl);
     socket.connect();
     return socket;
   };

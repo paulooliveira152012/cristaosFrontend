@@ -48,7 +48,7 @@ const ChatComponent = ({ roomId }) => {
   const [isAtBottom, setIsAtBottom] = useState(true);
 
   const currentScreen = useLocation();
-  console.log("currentScreen:", currentScreen.pathname);
+  // console.log("currentScreen:", currentScreen.pathname);
 
   const { room } = useRoom();
 
@@ -124,8 +124,8 @@ const ChatComponent = ({ roomId }) => {
       socket,
     });
 
-  console.log("MicIcons:", { MicOn, MicOff2 });
-  console.log("room ChatComponent:", room);
+  // console.log("MicIcons:", { MicOn, MicOff2 });
+  // console.log("room ChatComponent:", room);
 
   return (
     <div className="chatComponent">

@@ -12,7 +12,7 @@ export const authHeaders = () => {
 
 // =================== fetch all rooms
 export const fetchRooms = async () => {
-  console.log("✅ fetching all rooms...");
+  // console.log("✅ fetching all rooms...");
   try {
     const response = await fetch(`${apiUrl}/api/rooms`, {
       // especificando o metodo
@@ -22,7 +22,7 @@ export const fetchRooms = async () => {
     // Lê o corpo da resposta (JSON) e faz parse para objeto JavaScript
     const data = await response.json();
 
-    console.log("✅ ✅  response:", data);
+    // console.log("✅ ✅  response:", data);
 
     // devolve os dados para quem chamou a função
     return data;

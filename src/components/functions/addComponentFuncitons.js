@@ -1,7 +1,7 @@
 export const fetchAllAds = async (setAds) => {
-    console.log("🥳🥳🥳x🥳🥳🥳 Fetching all ads...");
+    // console.log("🥳🥳🥳x🥳🥳🥳 Fetching all ads...");
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
-    console.log("API Base URL:", process.env.REACT_APP_API_BASE_URL);
+    // console.log("API Base URL:", process.env.REACT_APP_API_BASE_URL);
 
   try {
     const response = await fetch(`${baseUrl}/api/adm/admFetchAds`, {

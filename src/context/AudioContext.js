@@ -1,6 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import AgoraRTC from "agora-rtc-sdk-ng";
 import io from "socket.io-client";
+
+// 0=NONE, 1=ERROR, 2=WARN, 3=INFO, 4=DEBUG
+AgoraRTC.setLogLevel(1);          // ✅ só erros do Agora no console
+AgoraRTC.enableLogUpload?.(false); // evita enviar logs pra Agora
 
 const AudioContext = createContext(null); // mantém o objeto do contexto
 

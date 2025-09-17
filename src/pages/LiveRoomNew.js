@@ -90,9 +90,9 @@ const LiveRoomNew = () => {
       return;
     }
     const userId = currentUser._id;
-    console.log("chamando fetchRoomData com", roomId, currentUser, baseUrl);
+    // console.log("chamando fetchRoomData com", roomId, currentUser, baseUrl);
     fetchRoomData({ roomId, userId, baseUrl, setSala }); //fetch room data
-    console.log("sala:", sala);
+    // console.log("sala:", sala);
     joinRoomEffect({ roomId, currentUser, handleJoinRoom, baseUrl }); //join
   }, [roomId, currentUser?._id]);
 
@@ -103,7 +103,7 @@ const LiveRoomNew = () => {
 
   // local function handlers
   // verificar se usuario atual ja e um falante
-  console.log("showSpeakers", showSpeakers);
+  // console.log("showSpeakers", showSpeakers);
 
   return (
     <div className="screenWrapper liveRoom">
