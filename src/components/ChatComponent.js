@@ -50,7 +50,10 @@ const ChatComponent = ({ roomId }) => {
   const currentScreen = useLocation();
   // console.log("currentScreen:", currentScreen.pathname);
 
-  const { room } = useRoom();
+  const { 
+    room,
+    roomMessages,
+   } = useRoom();
 
   // ✅ função estável para rolar ao fim — não muda entre renders
   const scrollToBottom = useCallback(
@@ -135,7 +138,7 @@ const ChatComponent = ({ roomId }) => {
         onScroll={onScroll}
       >
         <div className="messages">
-          {messages.map((msg, index) => {
+          {roomMessages.map((msg, index) => {
             if (!usernameColors.current[msg.username]) {
               usernameColors.current[msg.username] = getRandomDarkColor();
             }

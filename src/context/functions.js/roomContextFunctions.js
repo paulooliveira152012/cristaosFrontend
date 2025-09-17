@@ -77,3 +77,35 @@ export const startLiveCore = async ({
 
   return { ok: true, data };
 };
+
+export const fetchMessages = async ({ currentUser, roomId, baseUrl }) => {
+  console.log("fetching messages")
+
+  if (!currentUser || ! roomId || !baseUrl) {
+    console.log("🚨 missing currentUser or roomId")
+    return []
+  }
+
+  console.log("currentUser:", currentUser)
+  console.log("roomId:", roomId)
+  console.log("baseUrl:", baseUrl)
+
+  try {
+    const response = await fetch(`${baseUrl}/api/rooms/fetchRoomMessages/${roomId}`, {
+      method: "GET",
+    })
+
+    if(!response.ok) {
+      console.log(console.log("erro ao buscar mensagens", response))
+    }
+
+    const data = await response.json()
+    console.log("fetched messages from roomCOntextFunctions:", data)
+
+    return(data)
+
+  } catch (err) {
+    console.log("🚨 Erro ao buscar mensagens:", err)
+  }
+
+}

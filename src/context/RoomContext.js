@@ -5,13 +5,14 @@ import React, {
   useContext,
   useEffect,
   useCallback,
-  useMemo
+  useMemo,
 } from "react";
 import { useSocket } from "./SocketContext";
 import { useUser } from "./UserContext";
 import {
   startLiveCore,
   fetchRoomData,
+  fetchMessages,
 } from "./functions.js/roomContextFunctions";
 
 const RoomContext = createContext();
@@ -25,6 +26,7 @@ export const RoomProvider = ({ children }) => {
     process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || "";
 
   const [room, setRoom] = useState(null);
+  const [roomMessages, setRoomMessages] = useState([]);
   const [minimizedRoom, setMinimizedRoom] = useState(null);
   const [hasJoinedBefore, setHasJoinedBefore] = useState(false);
   const [micOpen, setMicOpen] = useState(false);
@@ -33,7 +35,7 @@ export const RoomProvider = ({ children }) => {
   const [currentUsersSpeaking, setCurrentUsersSpeaking] = useState([]);
   const [roomReady, setRoomReady] = useState(false);
   const [isRoomLive, setIsRoomLive] = useState(false);
-  const [isCreator, setIsCreator] = useState(false)
+  const [isCreator, setIsCreator] = useState(false);
 
   // ==================================================================
   // 👇 verifica se um userId está em currentUsersSpeaking (sem normalização elaborada)
@@ -65,23 +67,55 @@ export const RoomProvider = ({ children }) => {
 
   // ⬇️ Função única para buscar a sala do backend e sincronizar estados
   const refreshRoom = useCallback(
-    async (rid = currentRoomId) => {
-      if (!rid || !baseUrl) return null;
-      try {
-        const data = await fetchRoomData({ roomId: rid, baseUrl, currentUser, setIsCreator });
-        if (data) {
-          setRoom(data);
-          setSpeakersFromRoom(data);
-          setRoomReady(true);
-        }
-        return data;
-      } catch (e) {
-        console.error("refreshRoom error:", e);
-        return null;
+  async (rid = currentRoomId) => {
+    console.log("refreshing pagina");
+    const roomId = rid;
+    if (!roomId || !baseUrl) return null;
+    console.log("rId e baseUrl presentes...");
+
+    try {
+      // Busca sala e mensagens em paralelo
+      const [roomData, msgsRaw] = await Promise.all([
+        fetchRoomData({
+          roomId,
+          baseUrl,
+          currentUser,
+          setIsCreator,
+        }),
+        // 🔽 usa a função importada
+        fetchMessages({
+          currentUser,
+          roomId,
+          baseUrl,
+        }),
+      ]);
+
+      // Se o usuário trocou de sala no meio da requisição, não aplica
+      // if (!sameId(roomId, currentRoomId)) {
+      //   return { room: roomData, messages: msgsRaw };
+      // }
+
+      // Atualiza estado da sala
+      if (roomData) {
+        setRoom(roomData);
+        setSpeakersFromRoom(roomData);
+        setRoomReady(true);
       }
-    },
-    [currentRoomId, baseUrl]
-  );
+
+      // Normaliza e atualiza mensagens
+      const normalized =
+        Array.isArray(msgsRaw) ? msgsRaw : (msgsRaw?.messages || []);
+      setRoomMessages(normalized);
+
+      return { room: roomData, messages: normalized };
+    } catch (e) {
+      console.error("refreshRoom error:", e);
+      return null;
+    }
+  },
+  // inclua dependências que afetam a chamada
+  [currentRoomId, baseUrl, currentUser, setIsCreator]
+);
 
   const startLive = useCallback(
     async ({ roomId, joinChannel, setIsSpeaker, setIsLive }) => {
@@ -98,7 +132,7 @@ export const RoomProvider = ({ children }) => {
         if (room?._id === roomId && room?.isLive) {
           setIsSpeaker?.(true);
           setIsLive?.(true);
-          setIsRoomLive(true)
+          setIsRoomLive(true);
           return { ok: true, already: true };
         }
 
@@ -138,9 +172,15 @@ export const RoomProvider = ({ children }) => {
 
   // Buscar quando a sala atual muda
   useEffect(() => {
+    console.log("refresh de pagina");
+    if (!currentRoomId) {
+      console.log("currentRoomId not loaded yet");
+      return;
+    }
+    console.log("currentRoomId loaded now:", currentRoomId);
+
     if (currentRoomId) refreshRoom(currentRoomId);
   }, [currentRoomId, refreshRoom]);
-
 
   // ==================== useEffects
   // Buscar quando a sala atual muda
@@ -377,10 +417,13 @@ export const RoomProvider = ({ children }) => {
     }
   };
 
+  console.log("🥳 roomMessages:", roomMessages)
+
   return (
     <RoomContext.Provider
       value={{
         room,
+        roomMessages,
         isRoomLive,
         startLive,
         refreshRoom,
