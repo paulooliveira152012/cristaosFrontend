@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useContext,
-  useCallback,
-} from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useUser } from "../context/UserContext";
 import { useRoom } from "../context/RoomContext.js";
 import { useSocket } from "../context/SocketContext";
@@ -21,16 +15,10 @@ import profilePlaceholder from "../assets/images/profileplaceholder.png";
 import { useLocation } from "react-router-dom";
 
 import {
-  useSocketConnectionLogger,
-  useJoinRoomChat,
-  useReceiveMessage,
-  useListenMessageDeleted,
   useAutoScrollToBottom,
   getRandomDarkColor,
   handleScrollUtil,
   scrollToBottomUtil,
-  sendMessageUtil,
-  handleDeleteMessageUtil,
   handleToggleMicrophoneUtil,
 } from "./functions/chatComponentFunctions";
 
@@ -44,16 +32,13 @@ const ChatComponent = ({ roomId }) => {
   const usernameColors = useRef({});
   const [isAtBottom, setIsAtBottom] = useState(true);
 
-  const currentScreen = useLocation();
-  // console.log("currentScreen:", currentScreen.pathname);
-
   const {
     room,
     messages,
     newMessage,
     setNewMessage,
     onSendMessage,
-    setMessages,
+    onDeleteMessage,
   } = useRoom();
 
   // ✅ função estável para rolar ao fim — não muda entre renders
@@ -62,50 +47,9 @@ const ChatComponent = ({ roomId }) => {
     []
   );
 
-  useSocketConnectionLogger(socket);
-
-  useJoinRoomChat(socket, roomId, currentUser, setMessages, scrollToBottom);
-  useReceiveMessage(socket, setMessages, roomId);
-
-  useListenMessageDeleted(socket, roomId, setMessages);
   useAutoScrollToBottom(messages, isAtBottom, scrollToBottom);
 
   const onScroll = () => handleScrollUtil(messagesContainerRef, setIsAtBottom);
-
-  // (opcional) ouça erros para “desfazer”
-  useEffect(() => {
-    if (!socket) return;
-    const onErr = (msg) => {
-      console.warn("[errorMessage]", msg);
-      // se quiser, refaça o fetch do histórico ou mostre um toast e recarregue
-    };
-    socket.on("errorMessage", onErr);
-    return () => socket.off("errorMessage", onErr);
-  }, [socket]);
-
-  // continuar ouvindo messageDeleted como você já faz
-  useEffect(() => {
-    if (!socket) return;
-    const onDeleted = ({ messageId }) => {
-      setMessages((prev) =>
-        prev.filter((m) => String(m._id) !== String(messageId))
-      );
-    };
-    socket.on("messageDeleted", onDeleted);
-    return () => socket.off("messageDeleted", onDeleted);
-  }, [socket]);
-
-  // onde você clica na lixeira:
-  // 🗑️ emitir deleção
-  // no componente:
-  const onDeleteMessage = (messageId) => {
-    // otimista
-    setMessages((prev) =>
-      prev.filter((m) => String(m._id) !== String(messageId))
-    );
-
-    handleDeleteMessageUtil({ socket, messageId });
-  };
 
   const onToggleMic = () =>
     handleToggleMicrophoneUtil({
@@ -115,9 +59,6 @@ const ChatComponent = ({ roomId }) => {
       currentUser,
       socket,
     });
-
-  // console.log("MicIcons:", { MicOn, MicOff2 });
-  // console.log("room ChatComponent:", room);
 
   return (
     <div className="chatComponent">

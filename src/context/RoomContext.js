@@ -28,7 +28,17 @@ export const RoomProvider = ({ children }) => {
 
   const [room, setRoom] = useState(null);
 
-  const CHAT_MSG_EVENT = "sendMessage"; // ajuste se seu back usar outro nome
+  const EV = {
+  CHAT_JOIN: "joinRoomChat",
+  CHAT_LEAVE: "leaveRoomChat",
+  CHAT_HISTORY_REQ: "requestChatHistory",
+  CHAT_HISTORY: "chatHistory",
+  CHAT_SEND: "sendMessage",        // <— o que seu server ESCUTA
+  CHAT_MSG: "chat:message",        // <— o que seu server BROADCASTA
+  CHAT_DELETE_REQ: "deleteMessage",
+  CHAT_DELETE: "messageDeleted",
+};
+
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("")
 
@@ -321,6 +331,49 @@ export const RoomProvider = ({ children }) => {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [socket, currentRoomId, currentUser?._id]);
 
+  
+  useEffect(() => {
+  if (!socket || !currentRoomId || !currentUser?._id) return;
+
+  // entra no chat e, após ACK, pede histórico
+  const doJoin = () => {
+    socket.emit(EV.CHAT_JOIN, { roomId: currentRoomId, user: currentUser }, () => {
+      socket.emit(EV.CHAT_HISTORY_REQ, { roomId: currentRoomId });
+    });
+  };
+
+  doJoin();
+  socket.on("connect", doJoin);
+
+  const onHistory = (payload) => {
+    const list = Array.isArray(payload) ? payload : payload?.messages;
+    setMessages(Array.isArray(list) ? list : []);
+  };
+
+  const onMsg = (msg) => {
+    if (String(msg?.roomId) !== String(currentRoomId)) return;
+    setMessages((prev) => [...prev, msg]);
+  };
+
+  const onDel = ({ messageId, roomId }) => {
+    if (String(roomId) !== String(currentRoomId)) return;
+    setMessages((prev) => prev.filter((m) => String(m._id) !== String(messageId)));
+  };
+
+  socket.on(EV.CHAT_HISTORY, onHistory);
+  socket.on(EV.CHAT_MSG, onMsg);
+  socket.on(EV.CHAT_DELETE, onDel);
+
+  return () => {
+    socket.emit(EV.CHAT_LEAVE, { roomId: currentRoomId });
+    socket.off("connect", doJoin);
+    socket.off(EV.CHAT_HISTORY, onHistory);
+    socket.off(EV.CHAT_MSG, onMsg);
+    socket.off(EV.CHAT_DELETE, onDel);
+  };
+}, [socket, currentRoomId, currentUser?._id]);
+
+
   /* ----------------------------- Orquestração --------------------------------- */
   const handleJoinRoom = async (roomId, user, baseUrl) => {
     console.log("✅ adicionando usuario na sala pelo RoomContext");
@@ -449,12 +502,12 @@ export const RoomProvider = ({ children }) => {
     // 2) Emissão via util
     const saved = await sendMessageUtil({
       socket,
-      event: CHAT_MSG_EVENT,
+      event: EV.CHAT_SEND,
       payload: msg,
     });
 
     // 3) Reconciliação se o servidor devolver a msg persistida
-    if (saved?. _id) {
+    if (saved?._id) {
       setMessages((prev) => prev.map((m) => (m._id === tempId ? saved : m)));
     }
   } catch (err) {
@@ -463,6 +516,28 @@ export const RoomProvider = ({ children }) => {
     console.warn("Falha ao enviar mensagem:", err);
   }
 }, [newMessage, socket, currentRoomId, currentUser?._id, setMessages]);
+
+const onDeleteMessage = useCallback(async (messageId) => {
+  if (!socket || !currentRoomId) return;
+
+  // otimista
+  const backup = messages; // simples; se preferir, use ref
+  setMessages((prev) => prev.filter((m) => String(m._id) !== String(messageId)));
+
+  try {
+    await new Promise((resolve, reject) => {
+      socket.emit(EV.CHAT_DELETE_REQ, { messageId, roomId: currentRoomId }, (ack) => {
+        if (!ack || ack.ok !== false) return resolve(ack);
+        reject(ack);
+      });
+    });
+  } catch (err) {
+    console.warn("Falha ao deletar, revertendo:", err);
+    setMessages(backup); // rollback
+    // ou chame refreshRoom(currentRoomId) se preferir recarregar do back
+  }
+}, [socket, currentRoomId, messages]);
+
 
   console.log("🥳 roomMessages:", messages);
 
@@ -475,6 +550,7 @@ export const RoomProvider = ({ children }) => {
         newMessage, // input controlado
         setNewMessage, // input controlado
         onSendMessage, // ação de enviar
+        onDeleteMessage,
 
         isRoomLive,
         startLive,
