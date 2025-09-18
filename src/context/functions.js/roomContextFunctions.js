@@ -109,3 +109,16 @@ export const fetchMessages = async ({ currentUser, roomId, baseUrl }) => {
   }
 
 }
+
+// roomContextFunctions.js
+export const sendMessageUtil = ({ socket, event = "chat:message", payload }) =>
+  new Promise((resolve, reject) => {
+    if (!socket?.emit) return reject(new Error("Socket indisponível"));
+    socket.emit(event, payload, (ack) => {
+      // se seu back não usa ack, resolve sem nada
+      if (!ack) return resolve(null);
+      // se seu back retorna erro padronizado
+      if (ack?.ok === false) return reject(ack);
+      return resolve(ack); // ideal: o back devolve a msg persistida
+    });
+  });

@@ -39,9 +39,6 @@ const ChatComponent = ({ roomId }) => {
   const { currentUser } = useUser();
   const { toggleMicrophone, micState } = useAudio();
 
-  const [messages, setMessages] = useState([]);
-  const [message, setMessage] = useState("");
-
   const messagesContainerRef = useRef(null);
   const inputRef = useRef(null);
   const usernameColors = useRef({});
@@ -50,10 +47,14 @@ const ChatComponent = ({ roomId }) => {
   const currentScreen = useLocation();
   // console.log("currentScreen:", currentScreen.pathname);
 
-  const { 
+  const {
     room,
-    roomMessages,
-   } = useRoom();
+    messages,
+    newMessage,
+    setNewMessage,
+    onSendMessage,
+    setMessages,
+  } = useRoom();
 
   // ✅ função estável para rolar ao fim — não muda entre renders
   const scrollToBottom = useCallback(
@@ -70,18 +71,6 @@ const ChatComponent = ({ roomId }) => {
   useAutoScrollToBottom(messages, isAtBottom, scrollToBottom);
 
   const onScroll = () => handleScrollUtil(messagesContainerRef, setIsAtBottom);
-
-  const onSendMessage = () =>
-    sendMessageUtil({
-      currentUser,
-      message,
-      roomId,
-      socket,
-      setMessages,
-      setMessage,
-      scrollToBottom,
-      inputRef,
-    });
 
   // (opcional) ouça erros para “desfazer”
   useEffect(() => {
@@ -138,7 +127,7 @@ const ChatComponent = ({ roomId }) => {
         onScroll={onScroll}
       >
         <div className="messages">
-          {roomMessages.map((msg, index) => {
+          {messages.map((msg, index) => {
             if (!usernameColors.current[msg.username]) {
               usernameColors.current[msg.username] = getRandomDarkColor();
             }
@@ -212,9 +201,14 @@ const ChatComponent = ({ roomId }) => {
         <input
           ref={inputRef}
           type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && onSendMessage()}
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              onSendMessage();
+            }
+          }}
           placeholder="Escreva uma mensagem..."
           className="composerInput"
         />

@@ -13,6 +13,7 @@ import {
   startLiveCore,
   fetchRoomData,
   fetchMessages,
+  sendMessageUtil
 } from "./functions.js/roomContextFunctions";
 
 const RoomContext = createContext();
@@ -26,7 +27,11 @@ export const RoomProvider = ({ children }) => {
     process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || "";
 
   const [room, setRoom] = useState(null);
-  const [roomMessages, setRoomMessages] = useState([]);
+
+  const CHAT_MSG_EVENT = "sendMessage"; // ajuste se seu back usar outro nome
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("")
+
   const [minimizedRoom, setMinimizedRoom] = useState(null);
   const [hasJoinedBefore, setHasJoinedBefore] = useState(false);
   const [micOpen, setMicOpen] = useState(false);
@@ -67,55 +72,56 @@ export const RoomProvider = ({ children }) => {
 
   // ⬇️ Função única para buscar a sala do backend e sincronizar estados
   const refreshRoom = useCallback(
-  async (rid = currentRoomId) => {
-    console.log("refreshing pagina");
-    const roomId = rid;
-    if (!roomId || !baseUrl) return null;
-    console.log("rId e baseUrl presentes...");
+    async (rid = currentRoomId) => {
+      console.log("refreshing pagina");
+      const roomId = rid;
+      if (!roomId || !baseUrl) return null;
+      console.log("rId e baseUrl presentes...");
 
-    try {
-      // Busca sala e mensagens em paralelo
-      const [roomData, msgsRaw] = await Promise.all([
-        fetchRoomData({
-          roomId,
-          baseUrl,
-          currentUser,
-          setIsCreator,
-        }),
-        // 🔽 usa a função importada
-        fetchMessages({
-          currentUser,
-          roomId,
-          baseUrl,
-        }),
-      ]);
+      try {
+        // Busca sala e mensagens em paralelo
+        const [roomData, msgsRaw] = await Promise.all([
+          fetchRoomData({
+            roomId,
+            baseUrl,
+            currentUser,
+            setIsCreator,
+          }),
+          // 🔽 usa a função importada
+          fetchMessages({
+            currentUser,
+            roomId,
+            baseUrl,
+          }),
+        ]);
 
-      // Se o usuário trocou de sala no meio da requisição, não aplica
-      // if (!sameId(roomId, currentRoomId)) {
-      //   return { room: roomData, messages: msgsRaw };
-      // }
+        // Se o usuário trocou de sala no meio da requisição, não aplica
+        // if (!sameId(roomId, currentRoomId)) {
+        //   return { room: roomData, messages: msgsRaw };
+        // }
 
-      // Atualiza estado da sala
-      if (roomData) {
-        setRoom(roomData);
-        setSpeakersFromRoom(roomData);
-        setRoomReady(true);
+        // Atualiza estado da sala
+        if (roomData) {
+          setRoom(roomData);
+          setSpeakersFromRoom(roomData);
+          setRoomReady(true);
+        }
+
+        // Normaliza e atualiza mensagens
+        const normalized = Array.isArray(msgsRaw)
+          ? msgsRaw
+          : msgsRaw?.messages || [];
+        setMessages(normalized);
+
+        return { room: roomData, messages: normalized };
+      } catch (e) {
+        console.error("refreshRoom error:", e);
+        return null;
       }
-
-      // Normaliza e atualiza mensagens
-      const normalized =
-        Array.isArray(msgsRaw) ? msgsRaw : (msgsRaw?.messages || []);
-      setRoomMessages(normalized);
-
-      return { room: roomData, messages: normalized };
-    } catch (e) {
-      console.error("refreshRoom error:", e);
-      return null;
-    }
-  },
-  // inclua dependências que afetam a chamada
-  [currentRoomId, baseUrl, currentUser, setIsCreator]
-);
+    },
+    // inclua dependências que afetam a chamada
+    [currentRoomId, baseUrl, currentUser, setIsCreator]
+  );
 
   const startLive = useCallback(
     async ({ roomId, joinChannel, setIsSpeaker, setIsLive }) => {
@@ -169,6 +175,8 @@ export const RoomProvider = ({ children }) => {
     },
     [baseUrl, currentUser?._id, room?._id, room?.isLive, refreshRoom]
   );
+
+  // ===================== useEffects
 
   // Buscar quando a sala atual muda
   useEffect(() => {
@@ -417,13 +425,57 @@ export const RoomProvider = ({ children }) => {
     }
   };
 
-  console.log("🥳 roomMessages:", roomMessages)
+  // enviar mensagem vindo do ChatComponent
+  const onSendMessage = useCallback(async () => {
+  const text = newMessage?.trim();
+  if (!text || !socket || !currentRoomId || !currentUser?._id) return;
+
+  const tempId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const msg = {
+    _id: tempId,                // id otimista
+    roomId: currentRoomId,
+    userId: currentUser._id,
+    username: currentUser.username || currentUser.firstName || "Usuário",
+    profileImage: currentUser.profileImage || "",
+    message: text,
+    timestamp: Date.now(),      // padronize (number ms ou ISO)
+  };
+
+  // 1) Otimismo
+  setMessages((prev) => [...prev, msg]);
+  setNewMessage("");
+
+  try {
+    // 2) Emissão via util
+    const saved = await sendMessageUtil({
+      socket,
+      event: CHAT_MSG_EVENT,
+      payload: msg,
+    });
+
+    // 3) Reconciliação se o servidor devolver a msg persistida
+    if (saved?. _id) {
+      setMessages((prev) => prev.map((m) => (m._id === tempId ? saved : m)));
+    }
+  } catch (err) {
+    // 4) Rollback em caso de erro
+    setMessages((prev) => prev.filter((m) => m._id !== tempId));
+    console.warn("Falha ao enviar mensagem:", err);
+  }
+}, [newMessage, socket, currentRoomId, currentUser?._id, setMessages]);
+
+  console.log("🥳 roomMessages:", messages);
 
   return (
     <RoomContext.Provider
       value={{
         room,
-        roomMessages,
+        messages, // render
+        setMessages,
+        newMessage, // input controlado
+        setNewMessage, // input controlado
+        onSendMessage, // ação de enviar
+
         isRoomLive,
         startLive,
         refreshRoom,
