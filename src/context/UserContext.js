@@ -24,6 +24,9 @@ export const UserProvider = ({ children }) => {
   const hasFetchedUserRef = useRef(false);
   const navigate = useNavigate();
   const API = process.env.REACT_APP_API_BASE_URL;
+  // knobs de teste (10s idle, 5s ping)
+  const HEARTBEAT_MS = process.env.REACT_APP_HEARTBEAT_MS || 5000;
+  const IDLE_AFTER_MS = process.env.REACT_APP_IDLE_AFTER_MS || 10000;
 
   // ---- helpers ----
 
@@ -75,17 +78,107 @@ export const UserProvider = ({ children }) => {
   }, [socket, currentUser]);
 
   // Heartbeat (seu endpoint; se não existir, apenas ignora o erro)
+  // Heartbeat + presença baseada em visibilidade e inatividade
   useEffect(() => {
     if (!currentUser?._id) return;
-    const id = setInterval(() => {
-      if (document.visibilityState !== "visible" || !socket?.connected) return;
+
+    let hbInterval = null; // intervalo do heartbeat
+    let idleTimer = null; // timer de inatividade
+    let isIdle = false; // flag local
+
+    const ping = () => {
       fetch(`${API}/api/presence/heartbeat`, {
         method: "POST",
         credentials: "include",
       }).catch(() => {});
-    }, 30000);
-    return () => clearInterval(id);
-  }, [API, currentUser?._id, socket?.connected]);
+    };
+
+    const startHeartbeat = () => {
+      ping(); // manda um já
+      if (hbInterval) clearInterval(hbInterval);
+      hbInterval = setInterval(() => {
+        if (!document.hidden && socket?.connected && !isIdle) {
+          ping();
+        }
+      }, HEARTBEAT_MS);
+      socket?.emit?.("presence:active");
+      socket?.emit?.("getOnlineUsers");
+    };
+
+    const stopHeartbeat = () => {
+      if (hbInterval) clearInterval(hbInterval);
+      hbInterval = null;
+    };
+
+    const goIdle = () => {
+      if (isIdle) return;
+      isIdle = true;
+      stopHeartbeat();
+      socket?.emit?.("presence:idle");
+      socket?.emit?.("getOnlineUsers");
+    };
+
+    const goActive = () => {
+      if (!isIdle && hbInterval) return; // já ativo com HB rodando
+      isIdle = false;
+      startHeartbeat();
+    };
+
+    const resetIdleTimer = () => {
+      if (idleTimer) clearTimeout(idleTimer);
+      if (!document.hidden) {
+        idleTimer = setTimeout(goIdle, IDLE_AFTER_MS);
+      }
+    };
+
+    const onActivity = () => {
+      if (document.hidden) return;
+      if (isIdle) goActive();
+      resetIdleTimer();
+    };
+
+    const onVisibility = () => {
+      if (document.hidden) {
+        goIdle();
+      } else {
+        goActive();
+        resetIdleTimer();
+      }
+    };
+
+    // bootstrap
+    if (!document.hidden) {
+      goActive();
+      resetIdleTimer();
+    } else {
+      goIdle();
+    }
+
+    // listeners
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", onVisibility);
+    window.addEventListener("blur", onVisibility);
+    window.addEventListener("mousemove", onActivity, { passive: true });
+    window.addEventListener("keydown", onActivity);
+    window.addEventListener("click", onActivity);
+    window.addEventListener("touchstart", onActivity, { passive: true });
+
+    const onPageHide = () => socket?.emit?.("presence:idle");
+    window.addEventListener("pagehide", onPageHide);
+
+    return () => {
+      stopHeartbeat();
+      if (idleTimer) clearTimeout(idleTimer);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onVisibility);
+      window.removeEventListener("blur", onVisibility);
+      window.removeEventListener("mousemove", onActivity);
+      window.removeEventListener("keydown", onActivity);
+      window.removeEventListener("click", onActivity);
+      window.removeEventListener("touchstart", onActivity);
+      window.removeEventListener("pagehide", onPageHide);
+    };
+  }, [API, currentUser?._id, socket?.connected, HEARTBEAT_MS, IDLE_AFTER_MS]);
 
   // Valida cookie e reenvia presença (primeira hidratação com socket já disponível)
   // Valida cookie e reconecta — NÃO precisa emitir addUser aqui
@@ -240,7 +333,7 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-    useEffect(() => {
+  useEffect(() => {
     if (!socket) return;
     const onForceLogout = ({ reason } = {}) => {
       logout({ reason: reason || "BANNED" });
