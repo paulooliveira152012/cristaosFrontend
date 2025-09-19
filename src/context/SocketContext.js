@@ -1,5 +1,11 @@
 // src/context/SocketContext.js
-import React, { createContext, useContext, useMemo, useEffect, useRef } from "react";
+import React, {
+  createContext,
+  useContext,
+  useMemo,
+  useEffect,
+  useRef,
+} from "react";
 import { io } from "socket.io-client";
 
 const Ctx = createContext({
@@ -21,8 +27,8 @@ export const SocketProvider = ({ children }) => {
   const socketRef = useRef(null);
   if (!socketRef.current) {
     socketRef.current = io(baseUrl, {
-      autoConnect: false,         // 👈 importantíssimo
-      withCredentials: true,      // manda cookies no polling
+      autoConnect: false, // 👈 importantíssimo
+      withCredentials: true, // manda cookies no polling
       transports: ["websocket", "polling"],
       reconnection: true,
       // path: "/socket.io",      // só se tiver mudado no servidor
@@ -31,15 +37,17 @@ export const SocketProvider = ({ children }) => {
   const socket = socketRef.current;
 
   useEffect(() => {
-    const getToken = () => localStorage.getItem("authToken") || "";
+    const getToken = () => localStorage.getItem("authToken");
 
     // Em qualquer tentativa de reconexão, injeta o token mais recente
     // (no Manager e também no próprio socket)
     socket.io.on("reconnect_attempt", () => {
-      socket.auth = { token: getToken() };
+      const t = getToken();
+      socket.auth = t ? { token: t } : {};
     });
     socket.on("reconnect_attempt", () => {
-      socket.auth = { token: getToken() };
+      const t = getToken();
+      socket.auth = t ? { token: t } : {};
     });
 
     const onConnect = () => {
@@ -53,7 +61,8 @@ export const SocketProvider = ({ children }) => {
     const onError = (err) => {
       console.error("⛔ [Socket] connect_error:", err?.message || err, err);
       // garante que a próxima tentativa já leve o token atual
-      socket.auth = { token: getToken() };
+      const t = getToken();
+      socket.auth = t ? { token: t } : {};
     };
 
     socket.on("connect", onConnect);
@@ -66,7 +75,9 @@ export const SocketProvider = ({ children }) => {
       socket.off("disconnect", onDisconnect);
       socket.off("connect_error", onError);
       socket.off("reconnect_attempt");
-      try { socket.disconnect(); } catch {}
+      try {
+        socket.disconnect();
+      } catch {}
     };
   }, [socket]);
 

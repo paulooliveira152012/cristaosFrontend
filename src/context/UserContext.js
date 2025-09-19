@@ -17,7 +17,7 @@ export const useUser = () => useContext(UserContext);
 export const useUsers = () => useContext(UsersContext);
 
 export const UserProvider = ({ children }) => {
-  const { socket, connectSocket } = useSocket(); // ✅ desestruturação correta
+  const { socket, connectSocket, disconnectSocket } = useSocket(); // ✅ desestruturação correta
   const [darkMode, setDarkMode] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
@@ -33,15 +33,17 @@ export const UserProvider = ({ children }) => {
   const wakeServerAndConnectSocket = useCallback(async () => {
     try {
       await fetch(`${API}/api/users/ping`).catch(() => {});
-      if (!socket?.connected) connectSocket?.(); // evita chamada redundante
+      if (currentUser && !socket?.connected) connectSocket?.();
     } catch (err) {
       console.error("❌ Erro ao acordar servidor:", err);
     }
   }, [API, connectSocket, socket?.connected]);
 
   useEffect(() => {
-    if (!socket?.connected) connectSocket?.(); // conecta como guest também
-  }, [socket, connectSocket]);
+    if (!socket) return;
+    if (currentUser && !socket.connected) connectSocket?.();
+    if (!currentUser && socket.connected) socket.disconnect();
+  }, [socket, connectSocket, currentUser]);
 
   // ✅ ÚNICO effect para "connect": addUser + getOnlineUsers
   useEffect(() => {
@@ -327,13 +329,15 @@ export const UserProvider = ({ children }) => {
   const logout = async ({ reason } = {}) => {
     const userId = currentUser?._id;
 
+    localStorage.removeItem("user");
+    localStorage.removeItem("auth:event");
+    localStorage.removeItem("refreshToken");
+
+    // avisa outras abas que houve mudança de auth
+    localStorage.setItem("auth:event", String(Date.now()));
+
     // avisa o servidor — novo padrão
     socket?.emit?.("removeSocket");
-    // fallback antigo (se ainda existir no back)
-    socket?.emit?.("userLoggedOut", {
-      _id: userId,
-      username: currentUser?.username,
-    });
 
     try {
       // alinhe com seu back: você tem /api/users/signout (não /api/auth/logout)
@@ -345,11 +349,13 @@ export const UserProvider = ({ children }) => {
 
     setOnlineUsers([]); // limpa lista local imediatamente
     setCurrentUser(null);
-    localStorage.removeItem("user");
-    localStorage.setItem("auth:event", String(Date.now()));
 
     const finish = () => {
-      socket?.disconnect?.();
+      // garante handshake sem auth e encerra conexão
+      socket.auth = {};
+      try {
+        disconnectSocket?.(); // limpa token + desconecta
+      } catch {}
       // navigate("/");
       navigate(reason ? `/login?reason=${encodeURIComponent(reason)}` : "/");
     };

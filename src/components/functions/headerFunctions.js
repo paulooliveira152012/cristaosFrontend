@@ -93,7 +93,7 @@ export const handleLogout = async (logout, navigate, socket) => {
     socket.disconnect();
   }
   // opcional: disparar "auth event" pros listeners em outras abas
-  try { localStorage.setItem("auth: event", String(Date.now())); } catch {}
+  try { localStorage.removeItem("auth: event", String(Date.now())); } catch {}
   logout();
   navigate("/");
 };
