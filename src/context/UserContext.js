@@ -68,14 +68,53 @@ export const UserProvider = ({ children }) => {
   }, [wakeServerAndConnectSocket]);
 
   // onlineUsers listener (opcional: ping inicial se já conectado)
+  // onlineUsers listener (mantém HB e tudo mais como está)
   useEffect(() => {
     if (!socket) return;
-    const handleOnlineUsers = (users) => setOnlineUsers(users);
+
+    const handleOnlineUsers = (users = []) => {
+      if (!Array.isArray(users)) return;
+
+      // filtra apenas os ativos e válidos
+      const activeUsers = users.filter(
+        (u) => u && u._id && u.presenceStatus === "active"
+      );
+
+      // remove duplicados
+      const seen = new Set();
+      const filtered = [];
+
+      for (const u of activeUsers) {
+        const key = String(u._id);
+        if (seen.has(key)) continue;
+        seen.add(key);
+
+        filtered.push({
+          _id: u._id,
+          username: u.username,
+          profileImage: u.profileImage,
+          presenceStatus: u.presenceStatus, // sempre "active"
+          lastHeartbeat: u.lastHeartbeat,
+        });
+      }
+
+      // ordena por lastHeartbeat (mais recente primeiro)
+      filtered.sort((a, b) => {
+        const aTime = a.lastHeartbeat ? new Date(a.lastHeartbeat).getTime() : 0;
+        const bTime = b.lastHeartbeat ? new Date(b.lastHeartbeat).getTime() : 0;
+        return bTime - aTime;
+      });
+
+      setOnlineUsers(filtered);
+    };
+
     socket.on("onlineUsers", handleOnlineUsers);
 
-    if (socket.connected && currentUser?._id) socket.emit("getOnlineUsers");
+    // sempre pede a lista atual ao conectar / trocar user
+    if (socket.connected) socket.emit("getOnlineUsers");
+
     return () => socket.off("onlineUsers", handleOnlineUsers);
-  }, [socket, currentUser]);
+  }, [socket, currentUser?._id]);
 
   // Heartbeat (seu endpoint; se não existir, apenas ignora o erro)
   // Heartbeat + presença baseada em visibilidade e inatividade
@@ -298,7 +337,7 @@ export const UserProvider = ({ children }) => {
 
     try {
       // alinhe com seu back: você tem /api/users/signout (não /api/auth/logout)
-      await fetch(`${API}/api/users/signout`, {
+      await fetch(`${API}/api/users/signout/${userId}`, {
         method: "POST",
         credentials: "include",
       });
@@ -344,6 +383,8 @@ export const UserProvider = ({ children }) => {
       socket.off("force-logout", onForceLogout);
     };
   }, [socket, logout]);
+
+  console.log("onlineUsers:", onlineUsers);
 
   return (
     <UserContext.Provider
