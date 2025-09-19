@@ -33,7 +33,8 @@ export const UserProvider = ({ children }) => {
   const wakeServerAndConnectSocket = useCallback(async () => {
     try {
       await fetch(`${API}/api/users/ping`).catch(() => {});
-      if (currentUser && !socket?.connected) connectSocket?.();
+      // ✅ connect as guest if needed
+      if (!socket?.connected) connectSocket?.();
     } catch (err) {
       console.error("❌ Erro ao acordar servidor:", err);
     }
@@ -41,8 +42,10 @@ export const UserProvider = ({ children }) => {
 
   useEffect(() => {
     if (!socket) return;
-    if (currentUser && !socket.connected) connectSocket?.();
-    if (!currentUser && socket.connected) socket.disconnect();
+    // ✅ Always keep a socket connection (guest or logged-in)
+    if (!socket.connected) connectSocket?.();
+    // if (currentUser && !socket.connected) connectSocket?.();
+    // if (!currentUser && socket.connected) socket.disconnect();
   }, [socket, connectSocket, currentUser]);
 
   // ✅ ÚNICO effect para "connect": addUser + getOnlineUsers
@@ -310,7 +313,11 @@ export const UserProvider = ({ children }) => {
         wakeServerAndConnectSocket();
       } else {
         setCurrentUser(null);
-        socket?.disconnect?.();
+        // ✅ drop auth and reconnect as guest
+        try {
+          disconnectSocket?.();
+        } catch {}
+        connectSocket?.();
       }
     };
     window.addEventListener("storage", onStorage);
@@ -354,7 +361,8 @@ export const UserProvider = ({ children }) => {
       // garante handshake sem auth e encerra conexão
       socket.auth = {};
       try {
-        disconnectSocket?.(); // limpa token + desconecta
+        disconnectSocket?.(); // remove token + disconnect
+        connectSocket?.(); // ✅ reconnect as guest so the online list keeps updating
       } catch {}
       // navigate("/");
       navigate(reason ? `/login?reason=${encodeURIComponent(reason)}` : "/");
