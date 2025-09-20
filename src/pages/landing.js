@@ -8,6 +8,7 @@ import Header from "../components/Header";
 import SupportUs from "../components/SupportUs";
 import PullToRefresh from "react-pull-to-refresh";
 import GoogleAd from "../ads/GoogleAd";
+import SuggestionsComponent from "../components/SuggestionsComponent";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -29,6 +30,7 @@ const Landing = () => {
         <SupportUs />
 
         <Salas2 />
+        <SuggestionsComponent />
         <Liveusers />
         <Listings />
         <GoogleAd />

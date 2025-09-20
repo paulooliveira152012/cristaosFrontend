@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import { useSocket } from "./SocketContext";
 import { useUser } from "./UserContext";
+import { useLocation } from "react-router-dom";
 
 import {
   EV,
@@ -36,6 +37,7 @@ export const useRoom = () => useContext(RoomContext);
 export const RoomProvider = ({ children }) => {
   const { socket } = useSocket();
   const { currentUser } = useUser();
+  const location = useLocation()
 
   const baseUrl =
     process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || "";
@@ -227,7 +229,10 @@ export const RoomProvider = ({ children }) => {
     [socket, currentRoomId, messages]
   );
 
-  console.log("iscreator?", isCreator)
+  if(location.pathname=="/liveRoom") {
+    console.log("iscreator?", isCreator)
+  }
+
 
   return (
     <RoomContext.Provider

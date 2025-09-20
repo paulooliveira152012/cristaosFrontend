@@ -1,0 +1,206 @@
+/* ===============================
+   Suggestions Page – Look & Feel
+   Escopo: .suggestions-page
+   =============================== */
+
+:root {
+  --sg-bg: #f8fafc;          /* slate-50 */
+  --sg-fg: #0f172a;          /* slate-900 */
+  --sg-muted: #64748b;       /* slate-500/600 */
+  --sg-ring: #94a3b8;        /* slate-400 */
+  --sg-card: #ffffff;
+  --sg-border: #e2e8f0;      /* slate-200 */
+  --sg-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --sg-shadow-hover: 0 12px 28px rgba(15, 23, 42, 0.10);
+}
+
+/* fundo com textura bem sutil */
+.suggestions-page {
+  background:
+    radial-gradient(12px 12px at 24px 24px, rgba(15, 23, 42, 0.04) 1px, transparent 1px) 0 0/32px 32px,
+    var(--sg-bg);
+  min-height: 100vh;
+  color: var(--sg-fg);
+  background-color: red;
+}
+
+/* cartões principais (combina com o markup atual) */
+.suggestions-page .rounded-2xl.border.bg-white.shadow-sm {
+  background: var(--sg-card);
+  border-color: var(--sg-border);
+  box-shadow: var(--sg-shadow);
+  transition: box-shadow .2s ease, transform .08s ease;
+}
+.suggestions-page .rounded-2xl.border.bg-white.shadow-sm:hover {
+  box-shadow: var(--sg-shadow-hover);
+  transform: translateY(-1px);
+}
+
+/* tipografia */
+.suggestions-page h1,
+.suggestions-page h2,
+.suggestions-page h3 {
+  letter-spacing: 0.2px;
+}
+.suggestions-page p,
+.suggestions-page .text-slate-600,
+.suggestions-page .text-slate-700,
+.suggestions-page .text-slate-500 {
+  color: var(--sg-muted);
+}
+
+/* inputs, selects, textarea – experiência consistente */
+.suggestions-page input[type="text"],
+.suggestions-page input[type="search"],
+.suggestions-page select,
+.suggestions-page textarea {
+  background: #fff;
+  border: 1px solid var(--sg-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+  outline: none;
+}
+.suggestions-page input::placeholder,
+.suggestions-page textarea::placeholder {
+  color: #94a3b8; /* slate-400 */
+}
+.suggestions-page input:focus,
+.suggestions-page select:focus,
+.suggestions-page textarea:focus {
+  border-color: var(--sg-ring);
+  box-shadow: 0 0 0 4px rgba(148, 163, 184, 0.25); /* focus ring */
+}
+
+/* botões – defaults + estados */
+.suggestions-page button {
+  border-radius: 12px;
+  border: 1px solid var(--sg-border);
+  background: #ffffff;
+  color: var(--sg-fg);
+  padding: 10px 14px;
+  line-height: 1;
+  transition: transform .08s ease, box-shadow .2s ease, background-color .15s ease, border-color .15s ease;
+  cursor: pointer;
+}
+.suggestions-page button:hover {
+  background: #f1f5f9; /* slate-100 */
+  box-shadow: var(--sg-shadow);
+}
+.suggestions-page button:active {
+  transform: translateY(1px);
+}
+.suggestions-page button:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+/* “botões” já com classes coloridas do markup recebem um glow sutil */
+.suggestions-page .bg-rose-600,
+.suggestions-page .bg-indigo-600,
+.suggestions-page .bg-fuchsia-600,
+.suggestions-page .bg-slate-900 {
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.15);
+}
+.suggestions-page .bg-rose-600:hover { filter: brightness(1.05); }
+.suggestions-page .bg-indigo-600:hover { filter: brightness(1.05); }
+.suggestions-page .bg-fuchsia-600:hover { filter: brightness(1.05); }
+.suggestions-page .bg-slate-900:hover { filter: brightness(1.05); }
+
+/* badges (os seus já usam classes utilitárias; aqui só polimos borda/textura) */
+.suggestions-page .rounded-full.border {
+  backdrop-filter: saturate(110%);
+}
+
+/* listas/cards de itens */
+.suggestions-page article {
+  border-color: var(--sg-border);
+}
+.suggestions-page article:hover {
+  box-shadow: var(--sg-shadow-hover);
+}
+
+/* “vote” button (o com ▲ ) – torna mais clicável */
+.suggestions-page article button {
+  border-color: var(--sg-border);
+}
+.suggestions-page article button:hover {
+  background: #f8fafc;
+}
+
+/* bloco de notas (pre) – mais legível */
+.suggestions-page pre {
+  border: 1px solid var(--sg-border);
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 12px;
+  line-height: 1.45;
+  max-height: 420px;
+  overflow: auto;
+}
+
+/* skeleton loader (usa sua classe existente .animate-pulse) */
+@keyframes sg-pulse {
+  0% { opacity: .6; }
+  50% { opacity: .35; }
+  100% { opacity: .6; }
+}
+.suggestions-page .animate-pulse {
+  animation: sg-pulse 1.2s ease-in-out infinite;
+  background: linear-gradient(
+    100deg,
+    #f1f5f9 20%,
+    #e2e8f0 40%,
+    #f1f5f9 60%
+  );
+  background-size: 200% 100%;
+  animation-name: sg-pulse, sg-shimmer;
+}
+@keyframes sg-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* utilitários de clamp (se não estiver usando o plugin do Tailwind) */
+.line-clamp-2,
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.line-clamp-2 { -webkit-line-clamp: 2; }
+.line-clamp-3 { -webkit-line-clamp: 3; }
+
+/* barra de filtros fixa no topo da lista em telas pequenas (melhora UX mobile) */
+@media (max-width: 768px) {
+  .suggestions-page section .rounded-2xl.border.bg-white.shadow-sm:first-child {
+    position: relative;
+    z-index: 1;
+  }
+  .suggestions-page .filters-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    backdrop-filter: blur(6px);
+  }
+}
+
+/* microinterações */
+.suggestions-page .hover\\:bg-rose-50:hover { background-color: #fff1f2; }
+.suggestions-page .hover\\:bg-indigo-50:hover { background-color: #eef2ff; }
+.suggestions-page .hover\\:bg-fuchsia-50:hover { background-color: #f5e1ff; }
+.suggestions-page .hover\\:bg-slate-50:hover { background-color: #f8fafc; }
+
+/* toasts simples */
+.suggestions-page .toast-success {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+/* inputs alinhados em grid: espaçamento consistente */
+.suggestions-page .grid > * {
+  min-width: 0; /* corrige overflow de inputs em grids */
+}

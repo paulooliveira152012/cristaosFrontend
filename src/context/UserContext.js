@@ -398,7 +398,7 @@ export const UserProvider = ({ children }) => {
     };
   }, [socket, logout]);
 
-  console.log("onlineUsers:", onlineUsers);
+  // console.log("onlineUsers:", onlineUsers);
 
   return (
     <UserContext.Provider

@@ -3,8 +3,12 @@ const apiUrl = process.env.REACT_APP_API_BASE_URL;
 
 export const authHeaders = () => {
   const token = localStorage.getItem("authToken");
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  return {
+    "Content-Type": "application/json",        // 👈 obrigatório p/ body JSON
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
 };
+
 
 // =============================================================
 // functions related to creating rooms MODAL
