@@ -113,6 +113,12 @@ export async function refreshRoomAction({
     fetchMessages({ currentUser, roomId, baseUrl }),
   ]);
 
+    // ⚠️ Calcule isCreator de forma robusta e CHAME o setter corretamente
+  const userId = currentUser?._id;
+  const ownerId = roomData?.owner?._id ?? roomData?.createdBy?._id;
+  const amCreator = !!userId && !!ownerId && String(ownerId) === String(userId);
+  setIsCreator?.(amCreator);
+
   if (roomData) {
     setRoom?.(roomData);
     setCurrentUsersSpeaking?.(extractSpeakers(roomData));
@@ -254,7 +260,11 @@ export const emitJoinAsSpeaker = ({ socket, roomId, user }) => {
   socket.emit("joinAsSpeaker", { roomId });
 };
 
-export const emitLeaveRoom = ({ socket, roomId, resetFns }) => {
+export const emitLeaveRoom = ({ 
+  socket, 
+  roomId, 
+  resetFns
+ }) => {
   if (!roomId || !socket) return;
   socket.emit("leaveLiveRoom", { roomId });
   resetFns?.(); // opcional para limpar estados

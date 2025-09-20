@@ -152,6 +152,7 @@ export const RoomProvider = ({ children }) => {
         setCurrentUsersSpeaking([]);
         setRoomReady(false);
         setRoom(null);
+        setIsCreator(false); // 👈 importante resetar aqui
       },
     });
     clearMinimizedRoom();
@@ -197,6 +198,7 @@ export const RoomProvider = ({ children }) => {
       setCurrentUsersSpeaking([]);
       setRoomReady(false);
       setRoom(null);
+      setIsCreator(false); // 👈 importante resetar aqui
     }});
 
   // ações de chat
@@ -224,6 +226,8 @@ export const RoomProvider = ({ children }) => {
       }),
     [socket, currentRoomId, messages]
   );
+
+  console.log("iscreator?", isCreator)
 
   return (
     <RoomContext.Provider
@@ -264,6 +268,7 @@ export const RoomProvider = ({ children }) => {
             setCurrentUsersSpeaking([]);
             setRoomReady(false);
             setRoom(null);
+            setIsCreator(false); // 👈 importante resetar aqui
           },
         }),
         emitJoinAsSpeaker: (roomId, user) => emitJoinAsSpeaker({ socket, roomId, user }),

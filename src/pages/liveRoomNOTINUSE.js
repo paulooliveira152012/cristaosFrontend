@@ -219,7 +219,7 @@ const LiveRoom = () => {
               leaveChannel,
               navigate,
               sala?.owner?._id,
-              isSpeaker
+              isSpeaker,
             )
           }
           showBackArrow={true}

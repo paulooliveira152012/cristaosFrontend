@@ -47,6 +47,8 @@ const LiveRoomNew = () => {
   const { joinChannel, leaveChannel } = useAudio();
   const { roomId } = useParams();
 
+  console.log("isCreator do contexto na pagina:", isCreator)
+
   // =============== funcionalidades react
   const navigate = useNavigate();
   const location = useLocation();
@@ -97,9 +99,9 @@ const LiveRoomNew = () => {
   }, [roomId, currentUser?._id]);
 
   // verifications
-  useEffect(() => {
-    verifyCanStartLive(currentUser, sala, setCanStartRoom);
-  }, [currentUser?._id, sala?.roomTitle]);
+  // useEffect(() => {
+  //   verifyCanStartLive(currentUser, sala, setCanStartRoom);
+  // }, [currentUser?._id, sala?.roomTitle]);
 
   // local function handlers
   // verificar se usuario atual ja e um falante
@@ -162,7 +164,7 @@ const LiveRoomNew = () => {
                 marginBottom: 12,
               }}
             >
-              {canStartRoom && !isLive && (
+              { isCreator && !isLive && (
                 <div className="startRoomButtonContainer"> <button 
                 className="startRoomButton"
                   onClick={() =>
