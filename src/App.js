@@ -50,7 +50,7 @@ import FindGathering from "./pages/menuPages/FindGathering.js";
 import PlatformGuidelines from "./pages/menuPages/PlatformGuidelines.js";
 import PrivateRooms from "./pages/menuPages/PrivateRooms.js";
 import Promotions from "./pages/menuPages/Promotions.js";
-import Suggestions from "./pages/menuPages/Suggestions.js";
+import Suggestions from "./pages/menuPages/suggestions/Suggestions.js";
 import SettingsMenu from "./pages/SettingsMenu.js";
 import ResendVerification from "./pages/resend-verification.js";
 import PrivateChat from "./pages/PrivateChat.js";

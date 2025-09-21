@@ -273,9 +273,4 @@
     40% { transform: scale(1); opacity: 1; }
   }
   
-  /* =========================
-     Wrappers (se usar)
-  ========================= */
-  .screenWrapper { background: var(--bg); min-height: 100dvh; }
-  .scrollable { overflow: auto; }
   
