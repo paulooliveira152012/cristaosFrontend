@@ -6,7 +6,7 @@ import {
   fetchSuggestions as apiFetchSuggestions,
   handleSubmit as apiHandleSubmit,
   formatDate,
-  onDelete as deleteSuggestion
+  onDelete as deleteSuggestion,
 } from "../../functions/suggestions";
 import { useUser } from "../../../context/UserContext";
 import { authHeaders } from "../../functions/liveRoomFunctions2";
@@ -74,15 +74,15 @@ const Suggestions = () => {
   };
 
   async function handleDelete(id) {
-  const prev = suggestions;
-  setSuggestions((s) => s.filter((it) => it._id !== id));
-  try {
-    await deleteSuggestion({ id, headers: authHeaders });
-  } catch (e) {
-    setSuggestions(prev); // rollback
-    alert("Não foi possível excluir.");
+    const prev = suggestions;
+    setSuggestions((s) => s.filter((it) => it._id !== id));
+    try {
+      await deleteSuggestion({ id, headers: authHeaders });
+    } catch (e) {
+      setSuggestions(prev); // rollback
+      alert("Não foi possível excluir.");
+    }
   }
-}
 
   console.log("suggestions:", suggestions);
 
@@ -105,22 +105,26 @@ const Suggestions = () => {
                 Sugestões
               </h1>
               <p style={{ margin: "6px 0 0", color: "#475569", fontSize: 14 }}>
-                Veja o que já foi enviado pela comunidade e contribua também.
+                Aqui você pode <strong>reportar bugs</strong> e{" "}
+                <strong>enviar sugestões</strong> para o Cristãos App. Veja o
+                que a comunidade já enviou e clique em <em>+ Nova sugestão</em>{" "}
+                para contribuir.
               </p>
+
+              <button
+                onClick={() => setOpen(true)}
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 12,
+                  border: "1px solid #0f172a",
+                  background: "#0f172a",
+                  color: "#fff",
+                  fontWeight: 600,
+                }}
+              >
+                + Nova sugestão
+              </button>
             </div>
-            <button
-              onClick={() => setOpen(true)}
-              style={{
-                padding: "10px 14px",
-                borderRadius: 12,
-                border: "1px solid #0f172a",
-                background: "#0f172a",
-                color: "#fff",
-                fontWeight: 600,
-              }}
-            >
-              + Nova sugestão
-            </button>
           </div>
         </section>
 
