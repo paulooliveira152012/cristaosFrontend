@@ -150,3 +150,27 @@ export async function saveRoadmapNotes({
   if (!res.ok) throw new Error(await res.text().catch(() => "Falha ao salvar notas"));
   return res.json(); // { notes }
 }
+
+// DELETE /api/suggestions/:id
+export async function onDelete({
+  baseUrl = SUG_BASE_URL,
+  headers,
+  id,
+} = {}) {
+  if (!id) throw new Error("id é obrigatório para deletar a sugestão");
+
+  console.log("deletando...")
+
+  const res = await fetch(`${baseUrl}/api/suggestions/${id}`, {
+    method: "DELETE",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(typeof headers === "function" ? headers() : headers || {}),
+    },
+  });
+
+  if (!res.ok) throw new Error(await res.text().catch(() => "Falha ao deletar sugestão"));
+  return res.json(); // ex.: { ok: true, deletedId: id } (depende do seu backend)
+}
+

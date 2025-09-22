@@ -6,9 +6,11 @@ import {
   fetchSuggestions as apiFetchSuggestions,
   handleSubmit as apiHandleSubmit,
   formatDate,
+  onDelete as deleteSuggestion
 } from "../../functions/suggestions";
 import { useUser } from "../../../context/UserContext";
 import { authHeaders } from "../../functions/liveRoomFunctions2";
+import TrashIcon from "../../../assets/icons/trashcan";
 
 const Suggestions = () => {
   const navigate = useNavigate();
@@ -36,7 +38,9 @@ const Suggestions = () => {
         if (alive) setLoading(false);
       }
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, []);
 
   async function submit() {
@@ -56,15 +60,50 @@ const Suggestions = () => {
     }
   }
 
+  const canDelete = (user, it) => {
+    if (!user) return false;
+
+    const uid = String(user._id || user.id || "");
+    // pode vir como author._id (objeto) ou author (string id):
+    const aid = String(it?.author?._id ?? it?.author ?? "");
+
+    const isOwner = uid && aid && uid === aid;
+    const isLeader = user?.isAdmin || user?.isLeader || user?.role === "leader";
+
+    return isOwner || isLeader; // líderes tb podem apagar, se quiser
+  };
+
+  async function handleDelete(id) {
+  const prev = suggestions;
+  setSuggestions((s) => s.filter((it) => it._id !== id));
+  try {
+    await deleteSuggestion({ id, headers: authHeaders });
+  } catch (e) {
+    setSuggestions(prev); // rollback
+    alert("Não foi possível excluir.");
+  }
+}
+
+  console.log("suggestions:", suggestions);
+
   return (
     <div className="pageWrapper">
       <div className="scrollable">
         <Header showProfileImage={false} navigate={navigate} />
 
         <section style={{ marginTop: 16 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 8,
+              alignItems: "center",
+            }}
+          >
             <div>
-              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600 }}>Sugestões</h1>
+              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600 }}>
+                Sugestões
+              </h1>
               <p style={{ margin: "6px 0 0", color: "#475569", fontSize: 14 }}>
                 Veja o que já foi enviado pela comunidade e contribua também.
               </p>
@@ -101,7 +140,15 @@ const Suggestions = () => {
               Nenhuma sugestão enviada ainda.
             </div>
           ) : (
-            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 12 }}>
+            <ul
+              style={{
+                listStyle: "none",
+                padding: 0,
+                margin: 0,
+                display: "grid",
+                gap: 12,
+              }}
+            >
               {suggestions.map((it) => (
                 <li
                   key={it._id}
@@ -110,18 +157,36 @@ const Suggestions = () => {
                     borderRadius: 12,
                     padding: 14,
                     background: "#fff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    width: "100%",
                   }}
                 >
-                  <div style={{ fontWeight: 600 }}>
-                    {it.title || it.suggestion || it.text || "(sem título)"}
+                  <div>
+                    <div style={{ fontWeight: 600 }}>
+                      {it.title || it.suggestion || it.text || "(sem título)"}
+                    </div>
+                    <div
+                      style={{ fontSize: 14, color: "#334155", marginTop: 6 }}
+                    >
+                      {it.description || it.suggestion || it.text || "—"}
+                    </div>
+                    <div
+                      style={{ fontSize: 12, color: "#64748b", marginTop: 8 }}
+                    >
+                      Enviado por {it?.author?.name || "Anônimo"} •{" "}
+                      {it.createdAt ? formatDate(it.createdAt) : "—"}
+                    </div>
                   </div>
-                  <div style={{ fontSize: 14, color: "#334155", marginTop: 6 }}>
-                    {it.description || it.suggestion || it.text || "—"}
-                  </div>
-                  <div style={{ fontSize: 12, color: "#64748b", marginTop: 8 }}>
-                    Enviado por {it?.author?.name || "Anônimo"} •{" "}
-                    {it.createdAt ? formatDate(it.createdAt) : "—"}
-                  </div>
+                  {canDelete(currentUser, it) && (
+                    <button
+                      className="icon-btn"
+                      onClick={() => handleDelete(it._id)}
+                    >
+                      <TrashIcon />
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>
@@ -131,20 +196,44 @@ const Suggestions = () => {
         {/* Modal */}
         {open && (
           <div className="modal" onMouseDown={() => !sending && setOpen(false)}>
-            <div className="modal-content" onMouseDown={(e) => e.stopPropagation()}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Nova sugestão</h3>
+            <div
+              className="modal-content"
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 8,
+                }}
+              >
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>
+                  Nova sugestão
+                </h3>
                 <button
                   onClick={() => !sending && setOpen(false)}
                   aria-label="Fechar"
-                  style={{ background: "transparent", border: 0, fontSize: 18, cursor: "pointer" }}
+                  style={{
+                    background: "transparent",
+                    border: 0,
+                    fontSize: 18,
+                    cursor: "pointer",
+                  }}
                 >
                   ✕
                 </button>
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: 12, color: "#334155", marginBottom: 6 }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: 12,
+                    color: "#334155",
+                    marginBottom: 6,
+                  }}
+                >
                   Escreva sua sugestão
                 </label>
                 <textarea
@@ -157,13 +246,20 @@ const Suggestions = () => {
                     borderRadius: 12,
                     padding: 10,
                     outline: "none",
-                    color: "black"
+                    color: "black",
                   }}
                   placeholder="Descreva sua ideia, melhoria ou problema encontrado…"
                 />
               </div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 12 }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: 8,
+                  marginTop: 12,
+                }}
+              >
                 <button
                   onClick={() => !sending && setOpen(false)}
                   className="subtle"
