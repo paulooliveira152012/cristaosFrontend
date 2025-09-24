@@ -61,11 +61,23 @@ const Salas = () => {
   useEffect(() => {
     if (!socket || typeof socket.on !== "function") return;
     const onLive = ({ roomId, isLive, speakersCount }) => {
-      setRooms((prev) =>
-        prev.map((r) =>
-          r._id === roomId ? { ...r, isLive, speakersCount } : r
-        )
-      );
+      setRooms((prev) => {
+        const rid = String(roomId);
+        const idx = prev.findIndex((r) => String(r._id) === rid);
+        if (idx === -1) return prev; // (opcional) ou insere, se quiser
+        const next = [...prev];
+        const before = next[idx];
+        const goingLive = !before.isLive && !!isLive;
+        next[idx] = {
+          ...before,
+          isLive: !!isLive,
+          speakersCount: speakersCount ?? before.speakersCount,
+          _animKey: goingLive
+            ? (before._animKey || 0) + 1
+            : before._animKey || 0,
+        };
+        return next;
+      });
     };
     socket.on("room:live", onLive);
     return () => socket.off("room:live", onLive);
@@ -180,14 +192,15 @@ const Salas = () => {
 
       {/* Mapping through fetched rooms (following the openLiveRooms pattern) */}
       {rooms.length > 0 ? (
-        rooms.map((sala, index) => (
+        rooms.map((sala) => (
           <div
-            key={index}
+            key={sala._id}
             className="landingLiveContainer"
             onClick={() => openLive(sala)}
           >
             {/* div for the image */}
             <div
+            key={`${sala._id}:${sala._animKey || 0}`}   // 👈 força “replay” da animação ao ligar
               className={`landingLiveImage ${sala.isLive ? "neon" : ""}`} // 👈 pinta neon
               style={{
                 backgroundImage: `url(${sala.roomImage})`,
