@@ -57,7 +57,7 @@ const LiveRoomNew = () => {
   const [sala, setSala] = useState(location.state?.sala || null);
   const [isSpeaker, setIsSpeaker] = useState(false); // 👈 controla se está no palco
   const [roomTheme, setRoomTheme] = useState(
-    sala?.roomTitle ? `bem vindo a sala ${sala.roomTitle}` : "Carregando sala…"
+    sala?.roomTitle ? `Bem vindo a sala ${sala.roomTitle}` : "Carregando sala…"
   );
   const [canStartRoom, setCanStartRoom] = useState(false); //can start the room?
   const isRejoiningRef = useRef(false); //user is rejoining?
