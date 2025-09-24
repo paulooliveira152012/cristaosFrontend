@@ -130,6 +130,24 @@ export const RoomProvider = ({ children }) => {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [socket, currentRoomId, currentUser?._id]);
 
+  // auto leave se o próprio usuário virar idle
+useEffect(() => {
+  if (!socket || !currentRoomId) return;
+  if (currentUser?.presenceStatus !== "idle") return;
+
+  // sai da sala no back
+  socket.emit("leaveLiveRoom", { roomId: currentRoomId });
+
+  // limpa UI local
+  setCurrentRoomId(null);
+  setCurrentUsers([]);
+  setCurrentUsersSpeaking([]);
+  setRoomReady(false);
+  setRoom(null);
+  setIsCreator(false);
+}, [socket, currentRoomId, currentUser?.presenceStatus]);
+
+
   // helpers de UI
   const minimizeRoom = (room, microphoneOn) => {
     if (!room) return;
@@ -233,6 +251,18 @@ export const RoomProvider = ({ children }) => {
     console.log("iscreator?", isCreator)
   }
 
+  // 👇 mantém só quem NÃO está idle
+const onlyActive = (u) => u && u.presenceStatus !== "idle";
+const currentUsersActive = useMemo(
+  () => (currentUsers || []).filter(onlyActive),
+  [currentUsers]
+);
+const currentUsersSpeakingActive = useMemo(
+  () => (currentUsersSpeaking || []).filter(onlyActive),
+  [currentUsersSpeaking]
+);
+
+
 
   return (
     <RoomContext.Provider
@@ -253,8 +283,8 @@ export const RoomProvider = ({ children }) => {
         micOpen,
         hasJoinedBefore,
         currentRoomId,
-        currentUsers,
-        currentUsersSpeaking,
+        currentUsers: currentUsersActive,
+        currentUsersSpeaking: currentUsersSpeakingActive,
         isUserSpeaker,
         isCurrentUserSpeaker,
         setCurrentUsersSpeaking,

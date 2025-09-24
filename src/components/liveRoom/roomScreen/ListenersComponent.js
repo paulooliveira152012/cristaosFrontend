@@ -6,21 +6,10 @@ import { Link } from "react-router-dom";
 const FALLBACK_AVATAR = "/images/avatar-placeholder.png";
 
 const Listeners = React.memo(function Listeners() {
-  const { currentUsers = [], currentUsersSpeaking = [], roomReady } = useRoom();
-
-  // ouvintes = todos os currentUsers que NÃO estão em currentUsersSpeaking
-  const listeners = useMemo(() => {
-    const speakingIds = new Set(
-      (currentUsersSpeaking || []).map((u) => String(u._id))
-    );
-    return (currentUsers || [])
-      .filter((u) => !speakingIds.has(String(u._id)))
-      .sort((a, b) =>
-        (a.username || "").localeCompare(b.username || "", undefined, {
-          sensitivity: "base",
-        })
-      );
-  }, [currentUsers, currentUsersSpeaking]);
+  const { 
+    currentUsers,
+    roomReady
+  } = useRoom();
 
   if (!roomReady) {
     return (
@@ -30,7 +19,7 @@ const Listeners = React.memo(function Listeners() {
     );
   }
 
-  if (listeners.length === 0) {
+  if (currentUsers.length === 0) {
     return (
       <div className="inRoomUsers">
         <p>Nenhum ouvinte no momento.</p>
@@ -40,7 +29,7 @@ const Listeners = React.memo(function Listeners() {
 
   return (
     <div className="inRoomUsers">
-      {listeners.map((member) => (
+      {currentUsers.map((member) => (
         <div key={member._id} className="inRoomMembersParentContainer">
           <div className="inRoomLiveMemberContainer">
             <div className="liveMemberContent">
