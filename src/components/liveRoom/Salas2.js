@@ -31,7 +31,7 @@ const Salas2 = () => {
        setRooms = {setRooms}
        currentUser={currentUser}
        />
-      {rooms.length > 0 ? (
+      {rooms?.length > 0 ? (
         rooms.map((sala, index) => (
           <div
             key={index}

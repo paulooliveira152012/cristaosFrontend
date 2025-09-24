@@ -5,12 +5,12 @@ html, body {
 }
 
 .liveRoom {
-  height: 100dvh;
+  /* height: 100dvh; */
   /* background-color: red !important; */
   /* padding: 20px; */
   /* overflow: hidden !important; */
-  display: flex;
-  flex-direction: column;
+  /* display: flex; */
+  /* flex-direction: column; */
 }
 
 .liveRoom .firstChild {
@@ -28,7 +28,7 @@ html, body {
 }
 
 .liveRoom .secondChild {
-  /* background-color: red; */
+  /* background-color: orange; */
   /* padding: 20px; */
   height: 70vh;
   /* flex: 1; */

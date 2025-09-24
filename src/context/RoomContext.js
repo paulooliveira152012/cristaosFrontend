@@ -37,7 +37,7 @@ export const useRoom = () => useContext(RoomContext);
 export const RoomProvider = ({ children }) => {
   const { socket } = useSocket();
   const { currentUser } = useUser();
-  const location = useLocation()
+  const location = useLocation();
 
   const baseUrl =
     process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || "";
@@ -82,14 +82,24 @@ export const RoomProvider = ({ children }) => {
   );
 
   const startLive = useCallback(
-    (args) =>
-      startLiveAction({
+    (args) => {
+      // 🔎 log antes de iniciar a live
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[startLive] before startLiveAction", {
+          ts: new Date().toISOString(),
+          roomId: args?.roomId,
+          userId: currentUser?._id,
+          hasJoinChannel: typeof args?.joinChannel === "function",
+        });
+      }
+      return startLiveAction({
         ...args,
         baseUrl,
         currentUser,
         setIsRoomLive,
         refreshRoom,
-      }),
+      });
+    },
     [baseUrl, currentUser, refreshRoom]
   );
 
@@ -131,22 +141,21 @@ export const RoomProvider = ({ children }) => {
   }, [socket, currentRoomId, currentUser?._id]);
 
   // auto leave se o próprio usuário virar idle
-useEffect(() => {
-  if (!socket || !currentRoomId) return;
-  if (currentUser?.presenceStatus !== "idle") return;
+  useEffect(() => {
+    if (!socket || !currentRoomId) return;
+    if (currentUser?.presenceStatus !== "idle") return;
 
-  // sai da sala no back
-  socket.emit("leaveLiveRoom", { roomId: currentRoomId });
+    // sai da sala no back
+    socket.emit("leaveLiveRoom", { roomId: currentRoomId });
 
-  // limpa UI local
-  setCurrentRoomId(null);
-  setCurrentUsers([]);
-  setCurrentUsersSpeaking([]);
-  setRoomReady(false);
-  setRoom(null);
-  setIsCreator(false);
-}, [socket, currentRoomId, currentUser?.presenceStatus]);
-
+    // limpa UI local
+    setCurrentRoomId(null);
+    setCurrentUsers([]);
+    setCurrentUsersSpeaking([]);
+    setRoomReady(false);
+    setRoom(null);
+    setIsCreator(false);
+  }, [socket, currentRoomId, currentUser?.presenceStatus]);
 
   // helpers de UI
   const minimizeRoom = (room, microphoneOn) => {
@@ -212,14 +221,18 @@ useEffect(() => {
     });
 
   const handleLeaveRoom = (args) =>
-    handleLeaveRoomAction({ ...args, socket, onResetUI: () => {
-      setCurrentRoomId(null);
-      setCurrentUsers([]);
-      setCurrentUsersSpeaking([]);
-      setRoomReady(false);
-      setRoom(null);
-      setIsCreator(false); // 👈 importante resetar aqui
-    }});
+    handleLeaveRoomAction({
+      ...args,
+      socket,
+      onResetUI: () => {
+        setCurrentRoomId(null);
+        setCurrentUsers([]);
+        setCurrentUsersSpeaking([]);
+        setRoomReady(false);
+        setRoom(null);
+        setIsCreator(false); // 👈 importante resetar aqui
+      },
+    });
 
   // ações de chat
   const onSendMessage = useCallback(
@@ -247,22 +260,20 @@ useEffect(() => {
     [socket, currentRoomId, messages]
   );
 
-  if(location.pathname=="/liveRoom") {
-    console.log("iscreator?", isCreator)
+  if (location.pathname == "/liveRoom") {
+    console.log("iscreator?", isCreator);
   }
 
   // 👇 mantém só quem NÃO está idle
-const onlyActive = (u) => u && u.presenceStatus !== "idle";
-const currentUsersActive = useMemo(
-  () => (currentUsers || []).filter(onlyActive),
-  [currentUsers]
-);
-const currentUsersSpeakingActive = useMemo(
-  () => (currentUsersSpeaking || []).filter(onlyActive),
-  [currentUsersSpeaking]
-);
-
-
+  const onlyActive = (u) => u && u.presenceStatus !== "idle";
+  const currentUsersActive = useMemo(
+    () => (currentUsers || []).filter(onlyActive),
+    [currentUsers]
+  );
+  const currentUsersSpeakingActive = useMemo(
+    () => (currentUsersSpeaking || []).filter(onlyActive),
+    [currentUsersSpeaking]
+  );
 
   return (
     <RoomContext.Provider
@@ -294,19 +305,21 @@ const currentUsersSpeakingActive = useMemo(
         leaveRoom,
         joinRoom,
         joinRoomListeners: joinRoomListenersWrapped,
-        emitLeaveRoom: (roomId) => emitLeaveRoom({
-          socket,
-          roomId,
-          resetFns: () => {
-            setCurrentRoomId(null);
-            setCurrentUsers([]);
-            setCurrentUsersSpeaking([]);
-            setRoomReady(false);
-            setRoom(null);
-            setIsCreator(false); // 👈 importante resetar aqui
-          },
-        }),
-        emitJoinAsSpeaker: (roomId, user) => emitJoinAsSpeaker({ socket, roomId, user }),
+        emitLeaveRoom: (roomId) =>
+          emitLeaveRoom({
+            socket,
+            roomId,
+            resetFns: () => {
+              setCurrentRoomId(null);
+              setCurrentUsers([]);
+              setCurrentUsersSpeaking([]);
+              setRoomReady(false);
+              setRoom(null);
+              setIsCreator(false); // 👈 importante resetar aqui
+            },
+          }),
+        emitJoinAsSpeaker: (roomId, user) =>
+          emitJoinAsSpeaker({ socket, roomId, user }),
         handleJoinRoom,
         handleLeaveRoom,
         isCreator,

@@ -48,13 +48,10 @@
 }
 
 .screenWrapper {
-  width: 100%;
+  width: 100% ;
   height: 100dvh; /* Garante que o container ocupe pelo menos a altura total da tela */
   background-color: white;
-  display: flex;
-  flex-direction: column;
-  /* background-color: green; */
-  flex: 2;
+  /* background-color: purple; */
 }
 
 body.dark-mode .screenWrapper {
