@@ -16,7 +16,7 @@ html, body {
 .liveRoom .firstChild {
   /* background-color: red; */
   /* padding: 20px; */
-  height: 30vh;
+  height: auto;
   /* flex: 1; */
 }
 
@@ -30,8 +30,10 @@ html, body {
 .liveRoom .secondChild {
   /* background-color: orange; */
   /* padding: 20px; */
-  height: 70vh;
+  /* height: 70vh; */
   /* flex: 1; */
+  height: 100%;
+  padding-bottom: 100px;
 }
 
 .liveRoom .secondChildLiveOn {

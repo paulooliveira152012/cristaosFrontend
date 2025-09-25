@@ -337,9 +337,11 @@ body.dark-mode .landingOnlineUserImage {
   display: flex;
   justify-content: center;
   /* margin: auto; */
-  width: 20%;
+  /* width: 100px; */
+
   max-width: 100px;
   /* background-color: red; */
+  padding: 5px;
 }
 
 .inRoomLiveMemberContainer {
@@ -437,12 +439,11 @@ body.dark-mode .onlineStatus {
 
 /* inRoomUsers */
 .inRoomUsers {
-  /* background-color: purple; */
   display: flex;
-  /* justify-content: left; */
-  /* justify-content: baseline; */
-  /* justify-content: space-between; */
   width: 100%;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08); /* linha bem leve */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);   /* sombra sutil */
+  background-color: #fff; /* garante contraste da sombra */
 }
 
 .liveInRoomMembersContainer {
@@ -467,7 +468,7 @@ body.dark-mode .onlineStatus {
 }
 
 .liveMemberProfileImage {
-  width: 100%;
+  width: 30px;
   aspect-ratio: 1;
   border-radius: 0%;
   /* background-color: purple; */

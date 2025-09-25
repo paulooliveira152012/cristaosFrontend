@@ -52,9 +52,9 @@ const Listeners = React.memo(function Listeners() {
                   aria-label={`Perfil de ${member.username || "usuário"}`}
                 />
               </Link>
-              <p className="liveRoomUsername">
+              {/* <p className="liveRoomUsername">
                 {member.username || "Anonymous"}
-              </p>
+              </p> */}
             </div>
           </div>
         </div>

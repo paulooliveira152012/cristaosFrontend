@@ -152,7 +152,7 @@ const LiveRoomNew = () => {
                 fontStyle: "italic",
               }}
             >
-              {roomTheme}
+              {/* {roomTheme} */}
             </p>
 
             {/* 🔘 Barra de controles de áudio para inicialização de sala */}
