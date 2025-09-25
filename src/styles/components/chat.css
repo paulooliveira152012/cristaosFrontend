@@ -201,7 +201,10 @@
   
   /* Responsivo */
   @media (max-width: 640px) {
-    .chatScroll { padding: 12px; }
+    .chatScroll { 
+      padding: 12px; 
+      padding-bottom: 50px;
+    }
     .messageBubble { max-width: 84vw; }
     .composer { grid-template-columns: 1fr auto auto; gap: 8px; }
   }

@@ -47,10 +47,14 @@ html, body {
 
 .liveRoomContent {
   flex: 1;
-  overflow-y: auto;
+  /* overflow-y: auto; */
   display: flex;
   flex-direction: column;
   /* background-color: purple; */
+  height: 100dvh;
+  /* height: 100vh; */
+  overflow-y: hidden;
+  /* padding: 20px; */
 }
 
 .topo {
