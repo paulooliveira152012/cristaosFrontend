@@ -16,7 +16,7 @@ const VoiceComponent = ({ isMinimized }) => {
   const [localError, setLocalError] = useState("");
   const [isSpeaker, setIsSpeaker] = useState(false);
 
-  console.log("isRoomLive no VoiceComponent:", isRoomLive)
+  // console.log("isRoomLive no VoiceComponent:", isRoomLive)
 
   // 1) Entrar no canal assim que a live ligar
   useEffect(() => {

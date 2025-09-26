@@ -47,7 +47,7 @@ const LiveRoomNew = () => {
   const { joinChannel, leaveChannel } = useAudio();
   const { roomId } = useParams();
 
-  console.log("isCreator do contexto na pagina:", isCreator)
+  // console.log("isCreator do contexto na pagina:", isCreator)
 
   // =============== funcionalidades react
   const navigate = useNavigate();
