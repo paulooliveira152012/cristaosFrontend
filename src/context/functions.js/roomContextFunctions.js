@@ -1,3 +1,4 @@
+import { authHeaders } from "../../utils/AuthHeaders";
 // --- Events centralizados ---
 export const EV = {
   CHAT_JOIN: "joinRoomChat",
@@ -11,65 +12,343 @@ export const EV = {
 };
 
 // ---------- REST helpers já existentes ----------
-export const fetchRoomData = async ({ roomId, baseUrl, currentUser, setIsCreator }) => {
+
+// ================================================================
+// 1 Fetch room data
+// ================================================================
+// roomContextFunctions.js
+// roomContextFunctions.js
+export async function fetchRoomData({ roomId, baseUrl, setIsRoomReady, setRoom, setCanStartRoom }) {
   if (!roomId || !baseUrl) return null;
+  console.log("2 - fetchRoomData")
 
   const res = await fetch(`${baseUrl}/api/rooms/fetchRoomData/${roomId}`, {
     method: "GET",
-    credentials: "include",
-    headers: { Accept: "application/json" },
+    credentials: "include",               // envia cookies
+    headers: { Accept: "application/json" }
   });
 
   if (!res.ok) {
     let msg = "Erro ao buscar sala";
-    try {
-      msg = (await res.json())?.error || msg;
-    } catch {}
+    try { msg = (await res.json())?.error || msg; } catch {}
     throw new Error(msg);
   }
 
   const data = await res.json();
-  const roomCreator = data?.createdBy?._id;
-  if (currentUser?._id && roomCreator && String(currentUser._id) === String(roomCreator)) {
-    setIsCreator?.(true);
+  setIsRoomReady(true)
+  setRoom(data)
+  // Monte a lista de IDs autorizados (criador + admins)
+  const creatorId = typeof data?.createdBy === "string" ? data.createdBy : data?.createdBy?._id;
+  const adminIds = Array.isArray(data?.admins)
+   ? data.admins.map(a => (typeof a === "string" ? a : a?._id)).filter(Boolean)
+   : [];
+   const uniqueIds = Array.from(new Set([creatorId, ...adminIds].filter(Boolean)));
+   setCanStartRoom?.(uniqueIds)
+  return { data };
+}
+
+// ================================================================
+// 2 Fetch room messages
+// ================================================================
+
+// roomChatApi.js
+// Se usar JWT em header, passe authHeaders (objeto ou função que retorna objeto)
+// Se usar cookie de sessão, basta credentials: "include" e pode omitir authHeaders
+export async function loadRoomMessages({ roomId, baseUrl, setMessages, authHeaders, setAreMessagesReady }) {
+  console.log("4 - loadRoomMessages")
+  if (!roomId || !baseUrl || !setMessages) {
+    console.log(`🚨 missing ${roomId} or ${baseUrl}, or ${setMessages}`)
+    return;
+  } 
+
+  try {
+    const ah = typeof authHeaders === "function" ? authHeaders() : authHeaders;
+
+    const res = await fetch(`${baseUrl}/api/rooms/fetchRoomMessages/${roomId}`, {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        ...(ah || {}),
+      },
+    });
+
+    if (!res.ok) {
+      // fallback simples
+      setMessages([]);
+      return;
+    }
+
+    const data = await res.json();
+    const list = Array.isArray(data) ? data : (data?.messages || []);
+    setMessages(list);
+    setAreMessagesReady(true)
+  } catch (err) {
+    console.error("🚨 Erro ao buscar mensagens:", err);
+    setMessages([]);
   }
-  return data;
-};
+}
 
-export const startLiveCore = async ({ baseUrl, currentUser, roomId, joinChannel }) => {
-  if (!baseUrl || !currentUser?._id || !roomId) return { ok: false, reason: "missing_params" };
+// ================================================================
+// 3 send messages util
+// ================================================================
+export async function sendMessage({
+  socket,
+  roomId,
+  currentUser,
+  newMessage,
+  setMessages,
+  setNewMessage,
+}) {
+  const text = newMessage?.trim();
+  if (!socket || !roomId || !currentUser?._id || !text) {
+    console.log("🚨 faltando parametros")
+    return;
+  } 
+  console.log("send message function")
 
-  const res = await fetch(`${baseUrl}/api/rooms/${roomId}/live/start`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId: currentUser._id }),
+  // Mensagem otimista (aparece imediatamente)
+  const optimisticId = crypto.randomUUID?.() ?? String(Date.now());
+  const optimisticMsg = {
+    _id: optimisticId,
+    roomId,
+    userId: currentUser._id,
+    username: currentUser.username ?? currentUser.name ?? "Você",
+    profileImage: currentUser.profileImage ?? "",
+    message: text,
+    timestamp: new Date().toISOString(),
+    _optimistic: true,
+  };
+
+  setMessages((prev) => [...prev, optimisticMsg]);
+  setNewMessage("");
+
+  // Emite para o servidor
+  socket.emit(
+    "newPrivateMessage",
+    {
+      roomId,
+      senderId: currentUser._id,
+      text,
+      clientMessageId: optimisticId, // útil para reconciliar ack
+    },
+    // (opcional) callback ack do servidor
+    (serverMsg) => {
+      if (!serverMsg) return;
+      setMessages((prev) => {
+        // substitui a otimista pela oficial (se houver clientMessageId)
+        const idx = prev.findIndex((m) => m._id === optimisticId);
+        if (idx === -1) return [...prev, serverMsg];
+        const copy = prev.slice();
+        copy[idx] = { ...serverMsg, _optimistic: false };
+        return copy;
+      });
+    }
+  );
+}
+
+// ================================================================
+// 4 Delete message util (com otimista + rollback)
+// ================================================================
+export async function deleteMessageAction({
+  socket,
+  roomId,
+  messageId,
+  setMessages,
+  eventName = "deleteMessage", // 🔁 ajuste se seu backend usar outro evento
+}) {
+  console.log("deleting message...")
+  if (!socket || !roomId || !messageId || typeof setMessages !== "function") {
+    console.warn("deleteMessageAction: parâmetros inválidos", {
+      hasSocket: !!socket,
+      roomId,
+      messageId,
+      hasSetter: typeof setMessages === "function",
+    });
+    return;
+  }
+
+  // backup do estado atual (clone para rollback)
+  let backup;
+  setMessages((prev) => {
+    backup = prev.slice();
+    return prev.filter((m) => String(m._id) !== String(messageId));
   });
 
-  if (!res.ok) {
-    const msg = await res.text().catch(() => "");
-    return { ok: false, status: res.status, message: msg || "falha ao iniciar" };
-  }
-
-  let data = null;
-  try { data = await res.json(); } catch {}
-
-  await joinChannel?.(roomId, currentUser._id);
-  return { ok: true, data };
-};
-
-export const fetchMessages = async ({ currentUser, roomId, baseUrl }) => {
-  if (!currentUser || !roomId || !baseUrl) return [];
   try {
-    const response = await fetch(`${baseUrl}/api/rooms/fetchRoomMessages/${roomId}`, { method: "GET" });
-    if (!response.ok) return [];
-    const data = await response.json();
-    return Array.isArray(data) ? data : data?.messages || [];
+    await new Promise((resolve, reject) => {
+      console.log("emmiting:", eventName)
+      socket.emit(eventName, { messageId, roomId }, (ack) => {
+        // Se o servidor não enviar { ok: false }, consideramos sucesso
+        if (!ack || ack.ok !== false) return resolve(ack);
+        reject(ack);
+      });
+    });
   } catch (err) {
-    console.log("🚨 Erro ao buscar mensagens:", err);
-    return [];
+    console.warn("Falha ao deletar no servidor, revertendo…", err);
+    // rollback
+    setMessages(backup);
+  }
+}
+
+// ================================================================
+// 5 start live
+// ================================================================
+
+// 5.a
+// src/context/functions.js/roomContextFunctions.js
+export const startLiveCore = async (args = {}) => {
+  try {
+    console.log("Function to start live...");
+    const { baseUrl, currentUser, roomId, joinChannel } = args;
+
+    const userId = currentUser?._id ?? null;
+    console.log("startLiveCore args:", {
+      baseUrl,
+      userId,
+      roomId,
+      hasJoin: typeof joinChannel === "function",
+    });
+
+    if (!baseUrl) return { ok: false, reason: "missing_baseUrl" };
+    if (!userId) return { ok: false, reason: "missing_userId" };
+    if (!roomId) return { ok: false, reason: "missing_roomId" };
+
+    const res = await fetch(`${baseUrl}/api/rooms/${roomId}/live/start`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+
+    if (!res.ok) {
+      const msg = await res.text().catch(() => "");
+      return { ok: false, status: res.status, message: msg || "falha ao iniciar" };
+    }
+
+    let data = null;
+    try { data = await res.json(); } catch {}
+
+    // entra no canal de áudio (se a função existir)
+    if (typeof joinChannel === "function") {
+      await joinChannel(roomId, userId);
+    }
+
+    return { ok: true, data };
+  } catch (err) {
+    console.error("startLiveCore error:", err);
+    return { ok: false, reason: "exception", message: String(err?.message || err) };
   }
 };
+
+
+
+
+// 5.b
+// export async function startLiveAction({
+//   baseUrl,
+//   currentUser,
+//   roomId,
+//   joinChannel,
+//   setIsSpeaker,
+//   setIsLive,
+//   setIsRoomLive,
+//   refreshRoom,
+// }) {
+//   if (!currentUser?._id || !roomId) return { ok: false, reason: "missing_params" };
+
+//   const result = await startLiveCore({ baseUrl, currentUser, roomId, joinChannel });
+//   if (!result.ok) return result;
+
+//   setIsSpeaker?.(true);
+//   setIsLive?.(true);
+//   setIsRoomLive?.(true);
+//   await refreshRoom?.(roomId);
+//   return result;
+// }
+
+
+
+// ================================================================
+// 2 add current user to currentUsersInRoom
+// ================================================================
+
+export const joinRoomListeners = ({ socket, roomId, currentUserId, setCurrentRoomId, setCurrentUsers, setCurrentUsersSpeaking, setRoomReady }) => {
+  console.log("adicinando usuario na sala...")
+  if (!roomId || !currentUserId) return;
+  setCurrentRoomId(roomId);
+  setCurrentUsers([]);
+  setCurrentUsersSpeaking([]);
+  setRoomReady(false);
+
+  const emitJoin = () => socket?.emit?.("joinLiveRoom", { roomId });
+  if (socket?.connected) emitJoin();
+  else socket?.once?.("connect", emitJoin);
+};
+
+// ================================================================
+// 3 Fetch chat
+// ================================================================
+
+// export const fetchMessages = async ({ currentUser, roomId, baseUrl }) => {
+//   console.log("fetching messages")
+//   if (!currentUser || !roomId || !baseUrl) return [];
+//   try {
+//     const response = await fetch(`${baseUrl}/api/rooms/fetchRoomMessages/${roomId}`, { method: "GET" });
+//     if (!response.ok) return [];
+//     const data = await response.json();
+//     return Array.isArray(data) ? data : data?.messages || [];
+//   } catch (err) {
+//     console.log("🚨 Erro ao buscar mensagens:", err);
+//     return [];
+//   }
+// };
+
+export function wireChat({
+  socket,
+  currentRoomId,
+  currentUser,
+  setMessages,
+}) {
+  if (!socket || !currentRoomId || !currentUser?._id) return () => {};
+  console.log("wireChat")
+
+  const doJoin = () => {
+    socket.emit(EV.CHAT_JOIN, { roomId: currentRoomId, user: currentUser }, () => {
+      socket.emit(EV.CHAT_HISTORY_REQ, { roomId: currentRoomId });
+    });
+  };
+
+  doJoin();
+  socket.on("connect", doJoin);
+
+  const onHistory = (payload) => {
+    const list = Array.isArray(payload) ? payload : payload?.messages;
+    setMessages(Array.isArray(list) ? list : []);
+  };
+
+  const onMsg = (msg) => {
+    if (String(msg?.roomId) !== String(currentRoomId)) return;
+    setMessages((prev) => [...prev, msg]);
+  };
+
+  const onDel = ({ messageId, roomId }) => {
+    if (String(roomId) !== String(currentRoomId)) return;
+    setMessages((prev) => prev.filter((m) => String(m._id) !== String(messageId)));
+  };
+
+  socket.on(EV.CHAT_HISTORY, onHistory);
+  socket.on(EV.CHAT_MSG, onMsg);
+  socket.on(EV.CHAT_DELETE, onDel);
+
+  return () => {
+    socket.emit(EV.CHAT_LEAVE, { roomId: currentRoomId });
+    socket.off("connect", doJoin);
+    socket.off(EV.CHAT_HISTORY, onHistory);
+    socket.off(EV.CHAT_MSG, onMsg);
+    socket.off(EV.CHAT_DELETE, onDel);
+  };
+}
 
 // ---------- Utils de socket ----------
 export const sendMessageUtil = ({ socket, event = EV.CHAT_SEND, payload }) =>
@@ -110,7 +389,7 @@ export async function refreshRoomAction({
 
   const [roomData, msgsRaw] = await Promise.all([
     fetchRoomData({ roomId, baseUrl, currentUser, setIsCreator }),
-    fetchMessages({ currentUser, roomId, baseUrl }),
+    // fetchMessages({ currentUser, roomId, baseUrl }),
   ]);
 
     // ⚠️ Calcule isCreator de forma robusta e CHAME o setter corretamente
@@ -130,72 +409,9 @@ export async function refreshRoomAction({
   return { room: roomData, messages: normalized };
 }
 
-export async function startLiveAction({
-  baseUrl,
-  currentUser,
-  roomId,
-  joinChannel,
-  setIsSpeaker,
-  setIsLive,
-  setIsRoomLive,
-  refreshRoom,
-}) {
-  if (!currentUser?._id || !roomId) return { ok: false, reason: "missing_params" };
 
-  const result = await startLiveCore({ baseUrl, currentUser, roomId, joinChannel });
-  if (!result.ok) return result;
 
-  setIsSpeaker?.(true);
-  setIsLive?.(true);
-  setIsRoomLive?.(true);
-  await refreshRoom?.(roomId);
-  return result;
-}
 
-export function wireChat({
-  socket,
-  currentRoomId,
-  currentUser,
-  setMessages,
-}) {
-  if (!socket || !currentRoomId || !currentUser?._id) return () => {};
-
-  const doJoin = () => {
-    socket.emit(EV.CHAT_JOIN, { roomId: currentRoomId, user: currentUser }, () => {
-      socket.emit(EV.CHAT_HISTORY_REQ, { roomId: currentRoomId });
-    });
-  };
-
-  doJoin();
-  socket.on("connect", doJoin);
-
-  const onHistory = (payload) => {
-    const list = Array.isArray(payload) ? payload : payload?.messages;
-    setMessages(Array.isArray(list) ? list : []);
-  };
-
-  const onMsg = (msg) => {
-    if (String(msg?.roomId) !== String(currentRoomId)) return;
-    setMessages((prev) => [...prev, msg]);
-  };
-
-  const onDel = ({ messageId, roomId }) => {
-    if (String(roomId) !== String(currentRoomId)) return;
-    setMessages((prev) => prev.filter((m) => String(m._id) !== String(messageId)));
-  };
-
-  socket.on(EV.CHAT_HISTORY, onHistory);
-  socket.on(EV.CHAT_MSG, onMsg);
-  socket.on(EV.CHAT_DELETE, onDel);
-
-  return () => {
-    socket.emit(EV.CHAT_LEAVE, { roomId: currentRoomId });
-    socket.off("connect", doJoin);
-    socket.off(EV.CHAT_HISTORY, onHistory);
-    socket.off(EV.CHAT_MSG, onMsg);
-    socket.off(EV.CHAT_DELETE, onDel);
-  };
-}
 
 export function wireLiveUsers({
   socket,
@@ -243,17 +459,7 @@ export function wireLiveUsers({
   };
 }
 
-export const joinRoomListeners = ({ socket, roomId, user, setCurrentRoomId, setCurrentUsers, setCurrentUsersSpeaking, setRoomReady }) => {
-  if (!roomId || !user) return;
-  setCurrentRoomId(roomId);
-  setCurrentUsers([]);
-  setCurrentUsersSpeaking([]);
-  setRoomReady(false);
 
-  const emitJoin = () => socket?.emit?.("joinLiveRoom", { roomId });
-  if (socket?.connected) emitJoin();
-  else socket?.once?.("connect", emitJoin);
-};
 
 export const emitJoinAsSpeaker = ({ socket, roomId, user }) => {
   if (!roomId || !user || !socket) return;
@@ -393,20 +599,4 @@ export async function sendMessageAction({
   }
 }
 
-export async function deleteMessageAction({ socket, roomId, messageId, messages, setMessages }) {
-  if (!socket || !roomId) return;
-  const backup = messages;
-  setMessages((prev) => prev.filter((m) => String(m._id) !== String(messageId)));
 
-  try {
-    await new Promise((resolve, reject) => {
-      socket.emit(EV.CHAT_DELETE_REQ, { messageId, roomId }, (ack) => {
-        if (!ack || ack.ok !== false) return resolve(ack);
-        reject(ack);
-      });
-    });
-  } catch (err) {
-    console.warn("Falha ao deletar, revertendo:", err);
-    setMessages(backup);
-  }
-}

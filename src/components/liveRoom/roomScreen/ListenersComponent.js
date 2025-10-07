@@ -1,17 +1,18 @@
 // src/components/liveRoom/ListenersComponent.js
-import React, { useMemo, useEffect } from "react";
+import React from "react";
 import { useRoom } from "../../../context/RoomContext";
 import { Link } from "react-router-dom";
 
 const FALLBACK_AVATAR = "/images/avatar-placeholder.png";
 
 const Listeners = React.memo(function Listeners() {
-  const { 
-    currentUsers,
-    roomReady
-  } = useRoom();
+  const { room, loadingRoom } = useRoom();
+  // console.log("room no ListenersComponent:", room)
 
-  if (!roomReady) {
+  const listeners = room?.currentUsersInRoom || [];
+  // console.log("listeners:", listeners)
+
+  if (loadingRoom) {
     return (
       <div className="inRoomUsers">
         <p>Carregando ouvintes…</p>
@@ -19,7 +20,15 @@ const Listeners = React.memo(function Listeners() {
     );
   }
 
-  if (currentUsers.length === 0) {
+  if (!room) {
+    return (
+      <div className="inRoomUsers">
+        <p>Nenhuma sala carregada.</p>
+      </div>
+    );
+  }
+
+  if (!listeners.length) {
     return (
       <div className="inRoomUsers">
         <p>Nenhum ouvinte no momento.</p>
@@ -27,38 +36,43 @@ const Listeners = React.memo(function Listeners() {
     );
   }
 
+  
+
   return (
     <div className="inRoomUsers">
-      {currentUsers.map((member) => (
-        <div key={member._id} className="inRoomMembersParentContainer">
-          <div className="inRoomLiveMemberContainer">
-            <div className="liveMemberContent">
-              <Link
-                to={`/profile/${member._id}`}
-                title={member.username || "Usuário"}
-              >
-                <div
-                  className="liveMemberProfileImage"
-                  style={{
-                    backgroundImage: `url(${
-                      member.profileImage || FALLBACK_AVATAR
-                    })`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                    backgroundColor: "#ddd",
-                    borderRadius: "50%",
-                    cursor: "pointer",
-                  }}
-                  aria-label={`Perfil de ${member.username || "usuário"}`}
-                />
-              </Link>
-              {/* <p className="liveRoomUsername">
-                {member.username || "Anonymous"}
-              </p> */}
+      {listeners.map((m, idx) => {
+        const id = m?._id;
+        const key = id || `idx-${idx}`;
+        const profileImg = m?.profileImage || FALLBACK_AVATAR;
+        const username = m?.username || "Usuário";
+
+        const avatar = (
+          <div
+            className="liveMemberProfileImage"
+            style={{
+              backgroundImage: `url(${profileImg})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundColor: "#ddd",
+              borderRadius: "50%",
+              cursor: id ? "pointer" : "default",
+            }}
+            aria-label={`Perfil de ${username}`}
+            title={username}
+          />
+        );
+
+        return (
+          <div key={key} className="inRoomMembersParentContainer">
+            <div className="inRoomLiveMemberContainer">
+              <div className="liveMemberContent">
+                {id ? <Link to={`/profile/${id}`}>{avatar}</Link> : avatar}
+                {/* <p className="liveRoomUsername">{username}</p> */}
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 });

@@ -8,10 +8,22 @@ const VoiceComponent = ({ isMinimized }) => {
   const { roomId } = useParams();
   const { currentUser } = useUser();
   // =============== contexto da sala
-  const { emitJoinAsSpeaker, isCurrentUserSpeaker, isRoomLive } = useRoom();
+  const { 
+    room,
+    emitJoinAsSpeaker,
+    isCurrentUserSpeaker, 
+    isRoomLive,
+    canStartRoom
+  } = useRoom();
 
-  const { joinChannel, leaveChannel, toggleMicrophone, isInCall, agoraClient, micState } =
-    useAudio();
+  const { 
+    joinChannel, 
+    leaveChannel, 
+    toggleMicrophone, 
+    isInCall, 
+    agoraClient, 
+    micState 
+  } = useAudio();
 
   const [localError, setLocalError] = useState("");
   const [isSpeaker, setIsSpeaker] = useState(false);
@@ -133,7 +145,8 @@ const VoiceComponent = ({ isMinimized }) => {
   };
 
   // console.log("isCurrentUserSpeaker no VoiceComponent:", isCurrentUserSpeaker )
-  // console.log("✅ isRoomLive:", isRoomLive)
+
+  console.log("room no VoiceComponent:", room)
 
   return (
     <div id="container">

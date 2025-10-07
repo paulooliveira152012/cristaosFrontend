@@ -7,7 +7,7 @@ import { ScrollToTop } from "./utils/ScrollToTop.js";
 // páginas
 import Landing from "./pages/landing";
 import OpenListing from "./pages/listing";
-import LiveRoom from "./pages/liveRoomNOTINUSE.js";
+// import LiveRoom from "./pages/liveRoomNOTINUSE.js";
 import LiveRoomNew from "./pages/LiveRoomNew.js";
 import MainChat from "./pages/mainChat.js";
 import Chat from "./pages/chat.js";
@@ -39,7 +39,7 @@ import StudyBook from "./pages/menuPages/study/StudyBook.js";
 import StudyChapter from "./pages/menuPages/study/StudyChapter.js";
 import StudyTheme from "./pages/menuPages/study/StudyTheme.js";
 // import NewStudy  from "./pages/menuPages/study/NewStudy.js";
-import  ManageStudies  from "./pages/menuPages/study/ManageStudies.js";
+import ManageStudies from "./pages/menuPages/study/ManageStudies.js";
 import NewStudy from "./pages/menuPages/study/NewStudy.js";
 
 import ChurchSupport from "./pages/menuPages/ChurchSupport.js";
@@ -127,14 +127,14 @@ function NotificationsSocketBridge() {
 const MinimizedStatus = () => {
   const location = useLocation();
   const { minimizedRoom } = useRoom();
-  if (!minimizedRoom || location.pathname.includes("/liveRoom")) return null;
+  if (!minimizedRoom || location.pathname.includes("/liveRoomNew")) return null;
 
   return (
     <div
       style={{ position: "fixed", bottom: "20px", right: "20px", zIndex: 1000 }}
     >
       <Link
-        to={`/liveRoom/${minimizedRoom._id}`}
+        to={`/liveRoomNew/${minimizedRoom._id}`}
         state={{ sala: minimizedRoom }}
         className="minimizedRoomLink"
       >
@@ -171,7 +171,7 @@ const AppWithLocation = () => {
 
   const shouldShowFooter =
     !location.pathname.startsWith("/mainChat") &&
-    !location.pathname.startsWith("/liveRoom") &&
+    !location.pathname.startsWith("/liveRoomNew") &&
     !location.pathname.startsWith("/privateChat");
 
   const hideSideMenu = ["/login"];
@@ -185,7 +185,7 @@ const AppWithLocation = () => {
 
     // rotas onde o gesto pode atrapalhar
     const disabled =
-      location.pathname.startsWith("/liveRoom") ||
+      location.pathname.startsWith("/liveRoomNew") ||
       location.pathname.startsWith("/mainChat") ||
       location.pathname.startsWith("/privateChat") ||
       location.pathname.startsWith("/globe"); // 👈 aqui
@@ -308,16 +308,20 @@ const AppWithLocation = () => {
                           path="/openListing/:id"
                           element={<OpenListing />}
                         />
-                        <Route
+                        {/* <Route
                           path="/liveRoom/:roomId"
                           element={<LiveRoom />}
+                        /> */}
+
+                        <Route
+                          path="liveRoomNew/:roomId"
+                          element={
+                            <RoomProvider>
+                              <LiveRoomNew />
+                            </RoomProvider>
+                          }
                         />
 
-                        <Route 
-                          path="liveRoomNew/:roomId"
-                          element={<LiveRoomNew />}
-                        />
-                        
                         <Route path="/chat" element={<Chat />} />
                         <Route path="/login" element={<Login />} />
                         <Route
@@ -365,7 +369,10 @@ const AppWithLocation = () => {
                           path="/study/:bookId/:chapter"
                           element={<StudyChapter />}
                         />
-                        <Route path="/themeStudy/:id" element={<StudyTheme />} />
+                        <Route
+                          path="/themeStudy/:id"
+                          element={<StudyTheme />}
+                        />
 
                         <Route
                           path="/privateRooms"
@@ -476,13 +483,7 @@ const AppWithLocation = () => {
                           element={<ManageStudies />}
                         />
 
-                        <Route
-                          path="/newStudy"
-                          element={<NewStudy />}
-                        />
-
-                        
-
+                        <Route path="/newStudy" element={<NewStudy />} />
                       </Routes>
 
                       <MinimizedStatus />

@@ -22,6 +22,10 @@ import {
   handleToggleMicrophoneUtil,
 } from "./functions/chatComponentFunctions";
 
+// abaixo dos imports de hooks, antes do componente:
+const getMessageId = (m) => m?._id || m?.id || m?.messageId || m?.clientMessageId || null;
+
+
 const ChatComponent = ({ roomId }) => {
   const { socket } = useSocket();
   const { currentUser } = useUser();
@@ -37,9 +41,12 @@ const ChatComponent = ({ roomId }) => {
     messages,
     newMessage,
     setNewMessage,
-    onSendMessage,
-    onDeleteMessage,
+    sendMessage,
+    deleteMessage,
+    setMessages,
   } = useRoom();
+
+  console.log("chat component... roomId:", roomId);
 
   // ✅ função estável para rolar ao fim — não muda entre renders
   const scrollToBottom = useCallback(
@@ -59,6 +66,35 @@ const ChatComponent = ({ roomId }) => {
       currentUser,
       socket,
     });
+
+  const handleSendMessage = () => {
+    const text = (newMessage || "").trim();
+    if (!socket || !socket.connected || !roomId || !currentUser?._id || !text) {
+      console.log("🚨 missing parameters:", {
+        hasSocket: !!socket,
+        connected: socket?.connected,
+        roomId,
+        userId: currentUser?._id,
+        textLen: text.length,
+      });
+      return;
+    }
+    sendMessage({ socket, roomId, currentUser, newMessage: text });
+  };
+
+  const handleDeleteMessage = (messageId) => {
+    if (!socket || !socket.connected || !roomId || !messageId) {
+      console.log("🚨 delete: parâmetros faltando", {
+        hasSocket: !!socket,
+        connected: socket?.connected,
+        roomId,
+        messageId,
+      });
+      return;
+    }
+    // Se seu backend usa outro evento, passe { eventName: "SEU_EVENTO" } aqui
+    deleteMessage({ socket, roomId, messageId });
+  };
 
   return (
     <div className="chatComponent">
@@ -115,7 +151,7 @@ const ChatComponent = ({ roomId }) => {
                 {isMine && (
                   <button
                     className="iconBtn ghost trashBtn"
-                    onClick={() => onDeleteMessage(msg._id)}
+                    onClick={() => handleDeleteMessage(getMessageId(msg))}
                     aria-label="Apagar mensagem"
                     title="Apagar"
                     style={{
@@ -147,7 +183,7 @@ const ChatComponent = ({ roomId }) => {
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
-              onSendMessage();
+              handleSendMessage(); // usa o mesmo caminho do botão
             }
           }}
           placeholder="Escreva uma mensagem..."
@@ -175,7 +211,7 @@ const ChatComponent = ({ roomId }) => {
 
         <button
           className="sendBtn"
-          onClick={onSendMessage}
+          onClick={handleSendMessage}
           aria-label="Enviar mensagem"
           title="Enviar"
         >

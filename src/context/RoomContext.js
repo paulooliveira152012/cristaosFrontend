@@ -1,331 +1,249 @@
-import React, {
-  createContext,
-  useState,
-  useContext,
-  useEffect,
-  useCallback,
-  useMemo,
-} from "react";
-import { useSocket } from "./SocketContext";
-import { useUser } from "./UserContext";
-import { useLocation } from "react-router-dom";
-
+// RoomContext.jsx
 import {
-  EV,
-  fetchRoomData,
-  startLiveCore,
-  fetchMessages,
-  sendMessageUtil,
-  extractSpeakers,
-  isUserSpeaker as isUserSpeakerUtil,
-  refreshRoomAction,
-  startLiveAction,
-  wireChat,
-  wireLiveUsers,
-  joinRoomListeners,
-  emitJoinAsSpeaker,
-  emitLeaveRoom,
-  handleJoinRoomAction,
-  handleLeaveRoomAction,
-  sendMessageAction,
-  deleteMessageAction,
+  createContext, useContext, useState, useEffect, useCallback,
+} from "react";
+import { 
+  fetchRoomData, 
+  loadRoomMessages,
+  sendMessage as sendMessageUtil,
+  deleteMessageAction as deleteMessageUtil,
+  startLiveCore
 } from "./functions.js/roomContextFunctions";
+import { useUser } from "./UserContext";
+import { useSocket } from "./SocketContext";
 
-const RoomContext = createContext();
+export const RoomContext = createContext(null);
 export const useRoom = () => useContext(RoomContext);
 
-export const RoomProvider = ({ children }) => {
-  const { socket } = useSocket();
+export function RoomProvider({ children }) {
   const { currentUser } = useUser();
-  const location = useLocation();
+  const { socket } = useSocket()
+  const currentUserId = currentUser?._id ?? null;
 
-  const baseUrl =
-    process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || "";
+  const [roomId, setRoomId] = useState(null);
 
+  // room
   const [room, setRoom] = useState(null);
+  const [isRoomReady, setIsRoomReady] = useState(false);
+  const [loadingRoom, setLoadingRoom] = useState(false);
+  const [roomError, setRoomError] = useState(null);
+  const [canStartRoom, setCanStartRoom] = useState([])
+
+  // messages
   const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
+  const [areMessagesReady, setAreMessagesReady] = useState(false);
 
-  const [minimizedRoom, setMinimizedRoom] = useState(null);
-  const [hasJoinedBefore, setHasJoinedBefore] = useState(false);
-  const [micOpen, setMicOpen] = useState(false);
-  const [currentRoomId, setCurrentRoomId] = useState(null);
-  const [currentUsers, setCurrentUsers] = useState([]);
-  const [currentUsersSpeaking, setCurrentUsersSpeaking] = useState([]);
-  const [roomReady, setRoomReady] = useState(false);
-  const [isRoomLive, setIsRoomLive] = useState(false);
-  const [isCreator, setIsCreator] = useState(false);
+  // newMessage
+  const [newMessage, setNewMessage] = useState("")
 
-  const isUserSpeaker = useCallback(
-    (userId) => isUserSpeakerUtil(currentUsersSpeaking, userId),
-    [currentUsersSpeaking]
-  );
-  const isCurrentUserSpeaker = useMemo(
-    () => isUserSpeaker(currentUser?._id),
-    [isUserSpeaker, currentUser?._id]
-  );
+  const baseUrl = process.env.REACT_APP_API_BASE_URL || null;
 
-  const refreshRoom = useCallback(
-    (rid) =>
-      refreshRoomAction({
-        rid,
-        currentRoomId,
-        baseUrl,
-        currentUser,
-        setIsCreator,
-        setRoom,
-        setCurrentUsersSpeaking,
-        setRoomReady,
-        setMessages,
-      }),
-    [currentRoomId, baseUrl, currentUser]
-  );
-
-  const startLive = useCallback(
-    (args) => {
-      // 🔎 log antes de iniciar a live
-      if (process.env.NODE_ENV !== "production") {
-        console.log("[startLive] before startLiveAction", {
-          ts: new Date().toISOString(),
-          roomId: args?.roomId,
-          userId: currentUser?._id,
-          hasJoinChannel: typeof args?.joinChannel === "function",
-        });
-      }
-      return startLiveAction({
-        ...args,
-        baseUrl,
-        currentUser,
-        setIsRoomLive,
-        refreshRoom,
-      });
-    },
-    [baseUrl, currentUser, refreshRoom]
-  );
-
-  // refresh quando a sala muda
+  // Reset quando trocar de roomId
   useEffect(() => {
-    if (currentRoomId) refreshRoom(currentRoomId);
-  }, [currentRoomId, refreshRoom]);
-
-  // listeners de chat (join/history/msg/delete via socket)
-  useEffect(() => {
-    if (!socket || !currentRoomId || !currentUser?._id) return;
-    const off = wireChat({ socket, currentRoomId, currentUser, setMessages });
-    return off;
-  }, [socket, currentRoomId, currentUser?._id]);
-
-  // listeners de live users + room:live
-  useEffect(() => {
-    const off = wireLiveUsers({
-      socket,
-      currentRoomId,
-      setCurrentUsers,
-      setCurrentUsersSpeaking,
-      setRoomReady,
-      refreshRoom,
-    });
-    return off;
-  }, [socket, currentRoomId, refreshRoom]);
-
-  // sair automaticamente ao fechar aba
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (!socket) return;
-      if (currentRoomId && currentUser?._id) {
-        socket.emit("leaveLiveRoom", { roomId: currentRoomId });
-      }
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [socket, currentRoomId, currentUser?._id]);
-
-  // auto leave se o próprio usuário virar idle
-  useEffect(() => {
-    if (!socket || !currentRoomId) return;
-    if (currentUser?.presenceStatus !== "idle") return;
-
-    // sai da sala no back
-    socket.emit("leaveLiveRoom", { roomId: currentRoomId });
-
-    // limpa UI local
-    setCurrentRoomId(null);
-    setCurrentUsers([]);
-    setCurrentUsersSpeaking([]);
-    setRoomReady(false);
     setRoom(null);
-    setIsCreator(false);
-  }, [socket, currentRoomId, currentUser?.presenceStatus]);
+    setIsRoomReady(false);
+    setLoadingRoom(false);
+    setRoomError(null);
+    setMessages([]);
+    setAreMessagesReady(false);
+    setNewMessage("");
+  }, [roomId]);
 
-  // helpers de UI
-  const minimizeRoom = (room, microphoneOn) => {
-    if (!room) return;
-    setMinimizedRoom({ ...room, microphoneOn });
-    setMicOpen(microphoneOn);
-    if (socket?.connected) socket.emit("minimizeUser", { roomId: room._id });
-  };
+  // 1) Buscar e setar room
+  useEffect(() => {
+    if (!roomId || !baseUrl || !currentUserId) return;
 
-  const clearMinimizedRoom = () => {
-    setMinimizedRoom(null);
-    setMicOpen(false);
-  };
+    let cancelled = false;
+    setLoadingRoom(true);
+    setRoomError(null);
 
-  const leaveRoom = () => {
-    if (!minimizedRoom || !currentUser) return;
-    emitLeaveRoom({
-      socket,
-      roomId: minimizedRoom._id,
-      resetFns: () => {
-        setCurrentRoomId(null);
-        setCurrentUsers([]);
-        setCurrentUsersSpeaking([]);
-        setRoomReady(false);
-        setRoom(null);
-        setIsCreator(false); // 👈 importante resetar aqui
-      },
-    });
-    clearMinimizedRoom();
-    setHasJoinedBefore(false);
-  };
+    (async () => {
+      try {
+        console.log("1 - chamando fetchRoomData", { roomId });
+        // sua função já aceita setters; se preferir, pode retornar { data } e setar aqui
+        const result = await fetchRoomData({
+          roomId,
+          baseUrl,
+          currentUserId,
+          // se sua função usar esses callbacks, ok; senão, remova e use o retorno:
+          setIsRoomReady,
+          setRoom,
+          setCanStartRoom,
+        });
 
-  const joinRoom = (room) => {
-    if (!room) return;
-    if (!hasJoinedBefore) setMicOpen(false);
-    setHasJoinedBefore(true);
-    setMinimizedRoom(room);
-  };
+        // Caso fetchRoomData retorne { data }, mantenha compatibilidade:
+        if (!cancelled && result?.data && typeof setRoom === "function") {
+          setRoom(result.data);
+          setIsRoomReady(true);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar sala:", err);
+        if (!cancelled) {
+          setRoom(null);
+          setIsRoomReady(false);
+          setRoomError(err);
+        }
+      } finally {
+        if (!cancelled) setLoadingRoom(false);
+      }
+    })();
 
-  // Orquestração REST + WS
-  const joinRoomListenersWrapped = (roomId, user) =>
-    joinRoomListeners({
-      socket,
-      roomId,
-      user,
-      setCurrentRoomId,
-      setCurrentUsers,
-      setCurrentUsersSpeaking,
-      setRoomReady,
-    });
+    return () => { cancelled = true; };
+  }, [roomId, baseUrl, currentUserId]);
 
-  const handleJoinRoom = (roomId, user) =>
-    handleJoinRoomAction({
-      roomId,
-      user,
+  // 2) Buscar mensagens quando a room estiver pronta
+  useEffect(() => {
+    const rid = room?._id;
+    if (!rid || !baseUrl) {
+      // null-safe log
+      console.log("Aguardando room/baseUrl para carregar mensagens:", { rid, baseUrl });
+      return;
+    }
+
+    let cancelled = false;
+    setAreMessagesReady(false);
+
+    (async () => {
+      try {
+        console.log("3 - chamando loadRoomMessages", { rid });
+        // Se sua função já chama os setters, passe-os; senão, capture retorno e set aqui.
+        const maybeMsgs = await loadRoomMessages({
+          roomId: rid,
+          baseUrl,
+          setMessages: (msgs) => { if (!cancelled) setMessages(msgs); },
+          setAreMessagesReady: (flag) => { if (!cancelled) setAreMessagesReady(flag); },
+        });
+
+        if (!cancelled && Array.isArray(maybeMsgs)) {
+          setMessages(maybeMsgs);
+          setAreMessagesReady(true);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar mensagens:", err);
+        if (!cancelled) setAreMessagesReady(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [room?._id, baseUrl]);
+
+  // 3) Enviar mensagem (wrapper que injeta setters do contexto)
+const sendMessage = useCallback(async ({ socket, roomId, currentUser, newMessage }) => {
+  return sendMessageUtil({
+    socket,
+    roomId,
+    currentUser,
+    newMessage,
+    setMessages,    // vem do estado do contexto
+    setNewMessage,  // vem do estado do contexto
+  });
+}, [setMessages, setNewMessage]);
+
+// 4) delete message util
+// Deletar mensagem (injeta setMessages; pode passar eventName se for diferente)
+const deleteMessage = useCallback(async ({ socket, roomId, messageId, eventName }) => {
+  return deleteMessageUtil({
+    socket,
+    roomId,
+    messageId,
+    setMessages,
+    eventName, // opcional: "deletePrivateMessage" por padrão
+  });
+}, [setMessages]);
+
+
+// Iniciar Live (wrapper de alto nível para o app)
+const startLive = useCallback(
+  async ({ joinChannel, setIsSpeaker, setIsLive } = {}) => {
+    // VALIDAÇÕES BÁSICAS
+    const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
+    if (!baseUrl) {
+      console.warn("REACT_APP_API_BASE_URL ausente.");
+      return { ok: false, reason: "missing_baseUrl" };
+    }
+    if (!currentUser?._id) {
+      console.warn("Usuário não logado.");
+      return { ok: false, reason: "missing_userId" };
+    }
+    if (!roomId) {
+      console.warn("roomId ausente no contexto.");
+      return { ok: false, reason: "missing_roomId" };
+    }
+
+    const res = await startLiveCore({
       baseUrl,
-      socket,
-      setCurrentRoomId,
-      setCurrentUsers,
-      setCurrentUsersSpeaking,
-      setRoomReady,
       currentUser,
+      roomId,
+      joinChannel,
     });
 
-  const handleLeaveRoom = (args) =>
-    handleLeaveRoomAction({
-      ...args,
-      socket,
-      onResetUI: () => {
-        setCurrentRoomId(null);
-        setCurrentUsers([]);
-        setCurrentUsersSpeaking([]);
-        setRoomReady(false);
-        setRoom(null);
-        setIsCreator(false); // 👈 importante resetar aqui
-      },
-    });
+    if (res.ok) {
+      setRoom((prev) => (prev ? { ...prev, isLive: true } : prev));
+      // Estados locais (opcionais)
+      setIsSpeaker?.(true);
+      setIsLive?.(true);
+    } else {
+      console.warn("Falha ao iniciar live (startLive):", res);
+    }
 
-  // ações de chat
-  const onSendMessage = useCallback(
-    () =>
-      sendMessageAction({
-        socket,
-        currentRoomId,
-        currentUser,
-        newMessage,
-        setMessages,
-        setNewMessage,
-      }),
-    [socket, currentRoomId, currentUser?._id, newMessage]
-  );
+    return res;
+  },
+  [currentUser, roomId, setRoom]
+);
 
-  const onDeleteMessage = useCallback(
-    (messageId) =>
-      deleteMessageAction({
-        socket,
-        roomId: currentRoomId,
-        messageId,
-        messages,
-        setMessages,
-      }),
-    [socket, currentRoomId, messages]
-  );
 
-  if (location.pathname == "/liveRoom") {
-    console.log("iscreator?", isCreator);
-  }
 
-  // 👇 mantém só quem NÃO está idle
-  const onlyActive = (u) => u && u.presenceStatus !== "idle";
-  const currentUsersActive = useMemo(
-    () => (currentUsers || []).filter(onlyActive),
-    [currentUsers]
-  );
-  const currentUsersSpeakingActive = useMemo(
-    () => (currentUsersSpeaking || []).filter(onlyActive),
-    [currentUsersSpeaking]
-  );
+
+
+
+
+  // Logs úteis sem causar stale:
+  useEffect(() => {
+    if (room?._id) console.log("Room pronta:", room._id);
+  }, [room?._id]);
+
+  useEffect(() => {
+    if (areMessagesReady) console.log("Mensagens carregadas:", messages.length);
+  }, [areMessagesReady, messages.length]);
+
+  useEffect(() => {
+  console.log("canStartRoom atualizado:", canStartRoom);
+}, [canStartRoom]);
+
+
 
   return (
     <RoomContext.Provider
       value={{
+        // ids
+        roomId,
+        setRoomId,
+
+        // room
         room,
+        setRoom,
+        isRoomReady,
+        loadingRoom,
+        roomError,
+
+        // messages
         messages,
         setMessages,
-        newMessage,
-        setNewMessage,
-        onSendMessage,
-        onDeleteMessage,
+        areMessagesReady,
 
-        isRoomLive,
+        // message
+        newMessage,
+        setNewMessage, 
+
+        // ações
+        sendMessage,
+        deleteMessage,
+
         startLive,
-        refreshRoom,
-        roomReady,
-        minimizedRoom,
-        micOpen,
-        hasJoinedBefore,
-        currentRoomId,
-        currentUsers: currentUsersActive,
-        currentUsersSpeaking: currentUsersSpeakingActive,
-        isUserSpeaker,
-        isCurrentUserSpeaker,
-        setCurrentUsersSpeaking,
-        setCurrentUsers,
-        minimizeRoom,
-        clearMinimizedRoom,
-        leaveRoom,
-        joinRoom,
-        joinRoomListeners: joinRoomListenersWrapped,
-        emitLeaveRoom: (roomId) =>
-          emitLeaveRoom({
-            socket,
-            roomId,
-            resetFns: () => {
-              setCurrentRoomId(null);
-              setCurrentUsers([]);
-              setCurrentUsersSpeaking([]);
-              setRoomReady(false);
-              setRoom(null);
-              setIsCreator(false); // 👈 importante resetar aqui
-            },
-          }),
-        emitJoinAsSpeaker: (roomId, user) =>
-          emitJoinAsSpeaker({ socket, roomId, user }),
-        handleJoinRoom,
-        handleLeaveRoom,
-        isCreator,
+        canStartRoom   
       }}
     >
       {children}
     </RoomContext.Provider>
   );
-};
+}

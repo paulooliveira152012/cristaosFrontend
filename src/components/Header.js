@@ -10,6 +10,14 @@ import BackArrow from "../assets/icons/Arrow_left";
 import CloseIcon from "../assets/icons/closeIcon";
 import PrivateMessageSettings from "./PrivateMessageSettings";
 import { handleLogout, handleBack } from "./functions/headerFunctions";
+import { useRoom } from "../context/RoomContext";
+
+import { startLiveCore } from "../context/functions.js/roomContextFunctions";
+
+import { useAudio } from "../context/AudioContext";
+
+import { RiVoiceAiLine } from "react-icons/ri";
+import { IoIosSettings } from "react-icons/io";
 
 const Header = ({
   showBackButton = false,
@@ -37,6 +45,12 @@ const Header = ({
   const [showPrivateMessagingSettings, setShowPrivateMessagingSettings] =
     useState(false);
 
+  const { room, startLive } = useRoom();
+  const { joinChannel, setIsSpeaker, setIsLive } = useAudio();
+  const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
+
+  const effectiveRoomId = roomId ?? room?._id ?? null;
+
   useEffect(() => {
     setNewRoomTitle(roomTitle || "");
   }, [roomTitle]);
@@ -53,6 +67,15 @@ const Header = ({
     // sinal global pro app: menu aberto/fechado
     document.body.dataset.menuOpen = showSideMenu ? "1" : "";
   }, [showSideMenu]);
+
+  // console.log("room no header:", room)
+  console.log(
+    "baseUrl, currentUser, roomId, joinChannel:",
+    baseUrl,
+    currentUser,
+    effectiveRoomId,
+    typeof joinChannel
+  );
 
   return (
     <div className="stickyHeader">
@@ -99,10 +122,29 @@ const Header = ({
             </Link>
           )}
 
-          {showLeaveButton && (
+          {/* {showLeaveButton && (
             <button onClick={handleLeaveRoom} className="leaveRoomButton">
               Sair
             </button>
+          )} */}
+
+          {showLeaveButton && room?.isLive && (
+            <button onClick={handleLeaveRoom} className="leaveRoomButton">
+              Sair
+            </button>
+          )}
+
+          {showLeaveButton && !room?.isLive && (
+            <RiVoiceAiLine
+              onClick={async () => {
+                const res = await startLive({
+                  joinChannel,
+                  setIsSpeaker,
+                  setIsLive,
+                });
+                if (!res.ok) console.warn("Falha ao iniciar live:", res);
+              }}
+            />
           )}
 
           {showCloseIcon && (
@@ -113,7 +155,10 @@ const Header = ({
           )}
 
           {showSettingsIcon && (
-            <SettingsIcon className="settingsIcon" onClick={openLiveSettings} />
+            <IoIosSettings
+              className="settingsIcon"
+              onClick={openLiveSettings}
+            />
           )}
 
           {showLeavePrivateRoomButton && (

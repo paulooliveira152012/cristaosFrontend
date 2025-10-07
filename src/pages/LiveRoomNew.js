@@ -15,10 +15,7 @@ import ChatComponent from "../components/ChatComponent";
 import RoomMenuModal from "../components/liveRoom/RoomMenuModal";
 // functions
 import {
-  fetchRoomData,
-  joinRoomEffect, //add user to room
   joinAsSpeaker, //add user as speaker
-  verifyCanStartLive, //verify if can start live
   leaveStage, //remove user from speakers
   onSaveSettings,
   handleDeleteRoom,
@@ -42,6 +39,8 @@ const LiveRoomNew = () => {
     isCurrentUserSpeaker,
     room,
     isCreator,
+    setRoomId,
+    canStartRoom,
   } = useRoom();
 
   const { joinChannel, leaveChannel } = useAudio();
@@ -55,11 +54,11 @@ const LiveRoomNew = () => {
 
   // =============== Variaveis locais
   const [sala, setSala] = useState(location.state?.sala || null);
+  const { id: routeRoomId } = useParams(); // rota: /liveRoomNew/:id
   const [isSpeaker, setIsSpeaker] = useState(false); // 👈 controla se está no palco
   const [roomTheme, setRoomTheme] = useState(
     sala?.roomTitle ? `Bem vindo a sala ${sala.roomTitle}` : "Carregando sala…"
   );
-  const [canStartRoom, setCanStartRoom] = useState(false); //can start the room?
   const isRejoiningRef = useRef(false); //user is rejoining?
   const [microphoneOn, setMicrophoneOn] = useState(false);
   const isLive = !!room?.isLive; // ⬅️ derive daqui
@@ -78,176 +77,77 @@ const LiveRoomNew = () => {
   // const showSpeakers = roomReady && hasSpeakers;
 
   // =============== useEffects
-  // fetchRoomData
-  useEffect(() => {
-    if (!roomId || !currentUser || !baseUrl) {
-      console.log(
-        "🚨 missing roomId",
-        roomId,
-        "or currentUser",
-        currentUser,
-        "or baseUrl:",
-        baseUrl
-      );
-      return;
-    }
-    const userId = currentUser._id;
-    // console.log("chamando fetchRoomData com", roomId, currentUser, baseUrl);
-    fetchRoomData({ roomId, userId, baseUrl, setSala }); //fetch room data
-    // console.log("sala:", sala);
-    joinRoomEffect({ roomId, currentUser, handleJoinRoom, baseUrl }); //join
-  }, [roomId, currentUser?._id]);
 
-  // verifications
-  // useEffect(() => {
-  //   verifyCanStartLive(currentUser, sala, setCanStartRoom);
-  // }, [currentUser?._id, sala?.roomTitle]);
+  //   useEffect(() => {
+  //     console.log("SETTING ROOM ID TO CONTEXT FROM MAIN PAGE", routeRoomId)
+  //   if (routeRoomId) setRoomId(routeRoomId);
+  // }, [routeRoomId, setRoomId]);
 
-  // local function handlers
-  // verificar se usuario atual ja e um falante
-  // console.log("showSpeakers", showSpeakers);
+  // console.log("room alimentado pelo RoomContext:", room)
+  // console.log("roomId no liveRoomNew:", roomId)
+
+  setRoomId(roomId);
 
   return (
     <div className="screenWrapper liveRoom">
-      <div className="liveRoomContent">
-        <div className={isLive ? "firstChildLiveOn" : "firstChild"}>
-          {" "}
-          {/* first shild open*/}
-          <Header
-            navigate={navigate}
-            showProfileImage={false}
-            showLeaveButton={true}
-            handleLeaveRoom={() =>
-              handleLeaveRoom({
-                roomId,
-                user: currentUser,
-                baseUrl,
-                leaveChannel,
-                navigate,
-                ownerId: sala?.owner?._id,
-                isSpeaker: isCurrentUserSpeaker,
-              })
-            }
-            showSettingsIcon={isCreator}
-            openLiveSettings={() => setShowSettingsModal(true)}
-            onBack={() =>
-              handleBack(
-                navigate,
-                null,
-                roomId,
-                currentUser?._id,
-                minimizeRoom,
-                sala,
-                isRejoiningRef,
-                microphoneOn
-              )
-            } // faz o BackArrow sair corretamente
-            roomId={roomId}
-          />
-          <div className="roomTitleSpeakersButtons">
-            <p
-              style={{
-                textAlign: "center",
-                marginBottom: "10px",
-                fontStyle: "italic",
-              }}
-            >
-              {/* {roomTheme} */}
-            </p>
-
-            {/* 🔘 Barra de controles de áudio para inicialização de sala */}
-            <div 
-              style={{
-                // display: "flex",
-                gap: 8,
-                justifyContent: "center",
-                marginBottom: 12,
-              }}
-            >
-              { isCreator && !isLive && (
-                <div className="startRoomButtonContainer"> <button 
-                className="startRoomButton"
-                  onClick={() =>
-                    startLive({
-                      roomId,
-                      joinChannel,
-                      setIsSpeaker,
-                    })
-                  }
-                >
-                  Iniciar sala de áudio
-                </button>
-                </div>
-              )}
-
-              {/* speakers */}
-              {/* speakers */}
-              {showSpeakers && <Speakers />}
-              {isCurrentUserSpeaker && (
-                <button 
-                  className="backToListenerBtn"
-                  onClick={() => leaveStage(roomId, currentUser)}>
-                  Descer do palco
-                </button >
-              )}
-            </div>
-
-            {/* listeners */}
-            <Listeners />
-            {/* voice */}
-            <VoiceComponent
-              microphoneOn={microphoneOn}
-              roomId={roomId}
-              keepAlive={true}
-              setCurrentUsersSpeaking={setCurrentUsersSpeaking}
-            />
-
-            {isLive && !isCurrentUserSpeaker && (
-              <button
-              className="joinSpeakers"
-                onClick={() =>
-                  joinAsSpeaker(joinChannel, roomId, currentUser, setIsSpeaker)
-                }
-              >
-                Subir para falar
-              </button>
-            )}
-
-          
-
-          </div>
-        </div>{" "}
-        {/* first shild close*/}
-        <div className={isLive ? "secondChildLiveOn" : "secondChild"}>
-          {" "}
-          {/* secondChild  open */}
-          <ChatComponent roomId={roomId} /> {/* secondChild  close */}
-        </div>
-        {showSettingsModal && (
-          <RoomMenuModal
-            setShowSettingsModal={(v) => !isLoading && setShowSettingsModal(v)} // não fecha se loading
-            newRoomTitle={newRoomTitle}
-            setNewRoomTitle={setNewRoomTitle}
-            handleUpdateRoomTitle={() =>
-              onSaveSettings({
-                setIsLoading,
-                baseUrl,
-                roomId,
-                newRoomTitle,
-                newCoverFile,
-                setSala,
-                setRoomTheme,
-                setShowSettingsModal,
-                setNewCoverFile,
-              })
-            }
-            handleDeleteRoom={() => handleDeleteRoom(roomId, navigate)}
-            onChooseCover={setNewCoverFile}
-            currentCoverUrl={sala?.coverUrl || ""} // URL atual p/ preview
-            isLoading={isLoading}
-          />
-        )}
-      </div>
+      <Header
+        navigate={navigate}
+        showProfileImage={false}
+        showLeaveButton={true}
+        handleLeaveRoom={() =>
+          handleLeaveRoom({
+            roomId,
+            user: currentUser,
+            baseUrl,
+            leaveChannel,
+            navigate,
+            ownerId: sala?.owner?._id,
+            isSpeaker: isCurrentUserSpeaker,
+          })
+        }
+        showSettingsIcon={canStartRoom}
+        openLiveSettings={() => setShowSettingsModal(true)}
+        onBack={() =>
+          handleBack(
+            navigate,
+            null,
+            roomId,
+            currentUser?._id,
+            minimizeRoom,
+            sala,
+            isRejoiningRef,
+            microphoneOn
+          )
+        } // faz o BackArrow sair corretamente
+        roomId={roomId}
+      />
+      <Listeners />
+      <ChatComponent roomId={roomId} />
+      <VoiceComponent roomId={roomId} />
+      {showSettingsModal && (
+        <RoomMenuModal
+          setShowSettingsModal={(v) => !isLoading && setShowSettingsModal(v)} // não fecha se loading
+          newRoomTitle={newRoomTitle}
+          setNewRoomTitle={setNewRoomTitle}
+          handleUpdateRoomTitle={() =>
+            onSaveSettings({
+              setIsLoading,
+              baseUrl,
+              roomId,
+              newRoomTitle,
+              newCoverFile,
+              setSala,
+              setRoomTheme,
+              setShowSettingsModal,
+              setNewCoverFile,
+            })
+          }
+          handleDeleteRoom={() => handleDeleteRoom(roomId, navigate)}
+          onChooseCover={setNewCoverFile}
+          currentCoverUrl={sala?.coverUrl || ""} // URL atual p/ preview
+          isLoading={isLoading}
+        />
+      )}
     </div>
   );
 };
