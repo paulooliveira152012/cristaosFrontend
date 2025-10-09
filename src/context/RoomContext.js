@@ -52,6 +52,7 @@ export function RoomProvider({ children }) {
   // 1) Buscar e setar room
   useEffect(() => {
     if (!roomId || !baseUrl || !currentUserId) return;
+    console.log("adicionando usuario na sala e buscando sala")
 
     let cancelled = false;
     setLoadingRoom(true);
@@ -209,6 +210,8 @@ const startLive = useCallback(
   useEffect(() => {
   // console.log("canStartRoom atualizado:", canStartRoom);
 }, [canStartRoom]);
+
+// console.log("currentUser no roomContext:", currentUser)
 
 
 
