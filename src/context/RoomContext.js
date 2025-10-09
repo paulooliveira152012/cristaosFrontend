@@ -96,7 +96,7 @@ export function RoomProvider({ children }) {
     const rid = room?._id;
     if (!rid || !baseUrl) {
       // null-safe log
-      console.log("Aguardando room/baseUrl para carregar mensagens:", { rid, baseUrl });
+      // console.log("Aguardando room/baseUrl para carregar mensagens:", { rid, baseUrl });
       return;
     }
 
@@ -207,7 +207,7 @@ const startLive = useCallback(
   }, [areMessagesReady, messages.length]);
 
   useEffect(() => {
-  console.log("canStartRoom atualizado:", canStartRoom);
+  // console.log("canStartRoom atualizado:", canStartRoom);
 }, [canStartRoom]);
 
 

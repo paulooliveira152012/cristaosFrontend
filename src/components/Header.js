@@ -69,13 +69,13 @@ const Header = ({
   }, [showSideMenu]);
 
   // console.log("room no header:", room)
-  console.log(
-    "baseUrl, currentUser, roomId, joinChannel:",
-    baseUrl,
-    currentUser,
-    effectiveRoomId,
-    typeof joinChannel
-  );
+  // console.log(
+  //   "baseUrl, currentUser, roomId, joinChannel:",
+  //   baseUrl,
+  //   currentUser,
+  //   effectiveRoomId,
+  //   typeof joinChannel
+  // );
 
   return (
     <div className="stickyHeader">

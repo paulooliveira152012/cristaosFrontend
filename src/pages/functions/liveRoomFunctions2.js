@@ -37,7 +37,7 @@ export const fetchRooms = async () => {
 
 export const openLive = ({ currentUser, sala, navigate }) => {
   if (currentUser) {
-    console.log("Opening live room:", sala);
+    // console.log("Opening live room:", sala);
     navigate(`/liveRoomNew/${sala._id}`, { state: { sala } });
   } else {
     window.alert("Por favor fazer login para acessar a sala");

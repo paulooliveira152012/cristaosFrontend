@@ -46,7 +46,7 @@ const ChatComponent = ({ roomId }) => {
     setMessages,
   } = useRoom();
 
-  console.log("chat component... roomId:", roomId);
+  // console.log("chat component... roomId:", roomId);
 
   // ✅ função estável para rolar ao fim — não muda entre renders
   const scrollToBottom = useCallback(

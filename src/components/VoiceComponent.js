@@ -146,7 +146,7 @@ const VoiceComponent = ({ isMinimized }) => {
 
   // console.log("isCurrentUserSpeaker no VoiceComponent:", isCurrentUserSpeaker )
 
-  console.log("room no VoiceComponent:", room)
+  // console.log("room no VoiceComponent:", room)
 
   return (
     <div id="container">
