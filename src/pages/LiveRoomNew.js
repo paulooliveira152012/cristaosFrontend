@@ -41,6 +41,7 @@ const LiveRoomNew = () => {
     isCreator,
     setRoomId,
     canStartRoom,
+    setUserEnteringRoom
   } = useRoom();
 
   const { joinChannel, leaveChannel } = useAudio();
