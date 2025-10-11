@@ -42,51 +42,77 @@ export function RoomProvider({ children }) {
   const [newMessage, setNewMessage] = useState("");
 
   const baseUrl = process.env.REACT_APP_API_BASE_URL || null;
-
-  // Inserir usuario na sala e buscar informação da sala
+  //==============================================
+  // Apenas um useEffect para tudo inicial
+  //==============================================
   useEffect(() => {
-    console.log(
-      "1 useEffect no RoomContext para inserir usuario na sala e buscar sala atualizada"
-    );
-    if (!roomId || !currentUserId) {
-      console.log("Missing roomId or currentUserId");
-      return;
+  if (!socket || !roomId || !currentUserId) return;
+
+  let alive = true;
+
+  // estados de carregamento / reset
+  setLoadingRoom(true);
+  setRoomError(null);
+  setIsRoomReady(false);
+  setAreMessagesReady(false);
+  // opcional: limpar mensagens ao trocar de sala
+  setMessages([]);
+
+  // 1) listener de presença (liveRoomUsers)
+  const onLiveRoomUsers = (payload) => {
+    if (!alive) return;
+    if (!payload || String(payload.roomId) !== String(roomId)) return;
+
+    setRoom((prev) => ({
+      ...(prev || {}),
+      _id: roomId,
+      currentUsersInRoom: payload.users || [],
+      speakers: payload.speakers || [],
+      isLive: !!payload.isLive,
+    }));
+    setIsRoomReady(true);
+  };
+
+  socket.on("liveRoomUsers", onLiveRoomUsers);
+
+  //==============================================
+  // 2) entrar na sala (ACK opcional)
+  //==============================================
+  socket.emit("joinRoomChat", { roomId, currentUserId }, (ack) => {
+    if (ack && ack.ok === false) {
+      console.warn("joinRoomChat falhou:", ack);
     }
-    socket.emit("joinRoomChat", { roomId, currentUserId });
-    console.log(
-      `socket emitido com roomId: ${roomId} e currentUserId: ${currentUserId}`
-    );
-  }, [roomId]);
+  });
 
-  // escutar emissão "liveRoomUsers" e atualizar a sala
-  useEffect(() => {
-    if (!socket || !roomId) return;
+  //==============================================
+  // 3) buscar mensagens da sala
+  //==============================================
+  (async () => {
+    try {
+      const msgs = await loadRoomMessages({ roomId, baseUrl, setMessages, setAreMessagesReady });
+      if (!alive) return;
+      const arr = Array.isArray(msgs) ? msgs : (msgs?.messages || []);
+      setMessages(arr);
+      setAreMessagesReady(true);
+    } catch (err) {
+      if (!alive) return;
+      console.error("Erro ao carregar mensagens:", err);
+      setRoomError(err);
+      setAreMessagesReady(false);
+    } finally {
+      if (alive) setLoadingRoom(false);
+    }
+  })();
 
-    const onLiveRoomUsers = (payload) => {
-      // garanta que é da sala atual
-      if (!payload || String(payload.roomId) !== String(roomId)) return;
-
-      // log opcional
-      console.log("📡 liveRoomUsers recebido:", payload);
-
-      // atualiza somente os campos de presença
-      setRoom((prev) => ({
-        ...(prev || {}),
-        _id: roomId,
-        currentUsersInRoom: payload.users || [],
-        speakers: payload.speakers || [],
-        isLive: !!payload.isLive,
-      }));
-    };
-
-    socket.on("liveRoomUsers", onLiveRoomUsers);
-
-    // cleanup ao trocar de sala/desmontar
-    return () => {
-      socket.off("liveRoomUsers", onLiveRoomUsers);
-    };
-  }, [socket, roomId, setRoom]);
-
+  //==============================================
+  // 4) cleanup ao trocar de sala / desmontar
+  //==============================================
+  return () => {
+    alive = false;
+    socket.off("liveRoomUsers", onLiveRoomUsers);
+    socket.emit("leaveRoomChat", { roomId });
+  };
+}, [socket, roomId, currentUserId, baseUrl, setRoom]);
 
 
   // RoomContext.jsx (substitua os dois useEffects por este único)

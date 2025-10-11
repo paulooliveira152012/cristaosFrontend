@@ -57,7 +57,7 @@ export async function fetchRoomData({ roomId, baseUrl, setIsRoomReady, setRoom, 
 export async function loadRoomMessages({ roomId, baseUrl, setMessages, authHeaders, setAreMessagesReady }) {
   console.log("4 - loadRoomMessages")
   if (!roomId || !baseUrl || !setMessages) {
-    console.log(`🚨 missing ${roomId} or ${baseUrl}, or ${setMessages}`)
+    console.log(`🚨 missing roomId: ${roomId} or baseUrl: ${baseUrl}, or setMessages: ${setMessages}`)
     return;
   } 
 
