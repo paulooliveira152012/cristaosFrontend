@@ -19,6 +19,8 @@ import { useAudio } from "../context/AudioContext";
 import { RiVoiceAiLine } from "react-icons/ri";
 import { IoIosSettings } from "react-icons/io";
 
+import { useSocket } from "../context/SocketContext";
+
 const Header = ({
   showBackButton = false,
   showLoginButton = true,
@@ -36,9 +38,9 @@ const Header = ({
   onBack,
   showLeaveButton = false,
   handleLeaveRoom,
-  socket,
   navigate,
 }) => {
+  const { socket } = useSocket();
   const { currentUser } = useUser();
   const [newRoomTitle, setNewRoomTitle] = useState(roomTitle);
   const [showSideMenu, setShowSideMenu] = useState(false);
@@ -48,8 +50,6 @@ const Header = ({
   const { room, startLive } = useRoom();
   const { joinChannel, setIsSpeaker, setIsLive } = useAudio();
   const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
-
-  const effectiveRoomId = roomId ?? room?._id ?? null;
 
   useEffect(() => {
     setNewRoomTitle(roomTitle || "");
@@ -84,9 +84,7 @@ const Header = ({
         <div className="left-section">
           {showBackButton && (
             <button
-              onClick={() =>
-                handleBack(onBack, navigate, socket, roomId, currentUser?._id)
-              }
+              onClick={() => handleBack(navigate, socket, roomId)}
               className="back-button"
             >
               Voltar
@@ -94,12 +92,7 @@ const Header = ({
           )}
 
           {showBackArrow && (
-            <BackArrow
-              onClick={() => {
-                if (onBack) onBack();
-                else if (navigate) navigate(-1);
-              }}
-            />
+            <BackArrow onClick={() => handleBack(navigate, socket, roomId)} />
           )}
 
           {showProfileImage && (

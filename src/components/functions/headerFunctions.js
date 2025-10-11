@@ -100,65 +100,29 @@ export const handleLogout = async (logout, navigate, socket) => {
 };
 
 export const handleBack = (
-  navigate,
-  socket,         // pode ser null
-  roomId,
-  userId,
-  minimizeRoom,
-  sala,
-  isRejoiningRef,
-  microphoneOn,
-) => {
-  console.log("back on room:", sala);
-  const liveOn = !!sala?.isLive;
-
-  const baseUrl = process.env.REACT_APP_API_BASE_URL
-
-  if (!liveOn) {
-    // 🔻 Sala OFF: remover dos presentes
-    if (roomId) {
-      if (socket && socket.connected && typeof socket.emit === "function") {
-        socket.emit("leaveLiveRoom", { roomId });
-      } else {
-        // 🌐 Fallback HTTP (auth via cookie OU via Authorization)
-        try {
-          const url = `${baseUrl}/api/rooms/${roomId}/leave`;
-          const body = JSON.stringify({});
-          const headers = { "Content-Type": "application/json", ...authHeaders() };
-          const needsBearer = Boolean(headers.Authorization);
-
-          // sendBeacon só serve se NÃO precisar Authorization (cookie same-origin)
-          if (!needsBearer && navigator.sendBeacon) {
-            const blob = new Blob([body], { type: "application/json" });
-            navigator.sendBeacon(url, blob);
-          } else {
-            fetch(url, {
-              method: "POST",
-              headers,
-              credentials: "include", // mantém cookies quando houver
-              keepalive: true,        // permite durante unload
-              body,
-            }).catch(() => {});
-          }
-        } catch {}
-      }
+  navigate, 
+  socket, 
+  roomId, 
+  _userId, 
+  _minimizeRoom, 
+  _sala, 
+  isRejoiningRef, 
+  microphoneOn) => {
+  if (!roomId) return navigate("/");
+  if (!socket || !socket.connected || typeof socket.emit !== "function") {
+    console.warn("handleBack: socket indisponível, navegando sem emitir");
+    return navigate("/");
+  }
+  socket.emit("backFromRoom", { roomId, microphoneOn: !!microphoneOn }, (ack) => {
+    if (ack?.action === "minimized" && isRejoiningRef && "current" in isRejoiningRef) {
+      isRejoiningRef.current = true;
     }
     navigate("/");
-    return;
-  }
-
-  // 🔹 Sala ON: apenas minimizar
-  if (socket && socket.connected && typeof socket.emit === "function") {
-    socket.emit("minimizeRoom", { roomId, userId, microphoneOn });
-  }
-  if (typeof minimizeRoom === "function" && sala) {
-    minimizeRoom(sala, microphoneOn);
-  }
-  if (isRejoiningRef && "current" in isRejoiningRef) {
-    isRejoiningRef.current = true;
-  }
-  navigate("/");
+  });
 };
+
+
+
 
 
 export const handleLeaveDirectMessagingChat = async ({
