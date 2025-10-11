@@ -75,12 +75,14 @@ export async function loadRoomMessages({ roomId, baseUrl, setMessages, authHeade
 
     if (!res.ok) {
       // fallback simples
+      console.log("🚨 erro ao buscar mensagens")
       setMessages([]);
       return;
     }
 
     const data = await res.json();
     const list = Array.isArray(data) ? data : (data?.messages || []);
+    console.log("mensagens da sala:", list)
     setMessages(list);
     setAreMessagesReady(true)
   } catch (err) {
@@ -97,55 +99,28 @@ export async function sendMessage({
   roomId,
   currentUser,
   newMessage,
-  setMessages,
   setNewMessage,
 }) {
-  const text = newMessage?.trim();
-  if (!socket || !roomId || !currentUser?._id || !text) {
-    console.log("🚨 faltando parametros")
-    return;
-  } 
-  console.log("send message function")
+  const text = (newMessage || "").trim();
+  if (!socket?.connected || !roomId || !currentUser?._id || !text) return;
 
-  // Mensagem otimista (aparece imediatamente)
-  const optimisticId = crypto.randomUUID?.() ?? String(Date.now());
-  const optimisticMsg = {
-    _id: optimisticId,
-    roomId,
-    userId: currentUser._id,
-    username: currentUser.username ?? currentUser.name ?? "Você",
-    profileImage: currentUser.profileImage ?? "",
-    message: text,
-    timestamp: new Date().toISOString(),
-    _optimistic: true,
-  };
-
-  setMessages((prev) => [...prev, optimisticMsg]);
-  setNewMessage("");
-
-  // Emite para o servidor
+  // Use o evento correto do seu backend:
+  // - chat de sala: "sendMessage"
+  // - DM: "sendPrivateMessage" (ou "newPrivateMessage" se você padronizou assim)
   socket.emit(
-    "newPrivateMessage",
-    {
-      roomId,
-      senderId: currentUser._id,
-      text,
-      clientMessageId: optimisticId, // útil para reconciliar ack
-    },
-    // (opcional) callback ack do servidor
-    (serverMsg) => {
-      if (!serverMsg) return;
-      setMessages((prev) => {
-        // substitui a otimista pela oficial (se houver clientMessageId)
-        const idx = prev.findIndex((m) => m._id === optimisticId);
-        if (idx === -1) return [...prev, serverMsg];
-        const copy = prev.slice();
-        copy[idx] = { ...serverMsg, _optimistic: false };
-        return copy;
-      });
+    "sendMessage",
+    { roomId, text, senderId: currentUser._id },
+    (ack) => {
+      if (ack?.ok === false) {
+        console.warn("Falha ao enviar mensagem:", ack?.error);
+        // aqui você pode exibir um toast/erro
+      }
     }
   );
+
+  setNewMessage("");
 }
+
 
 // ================================================================
 // 4 Delete message util (com otimista + rollback)

@@ -5,6 +5,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useRef,
 } from "react";
 import {
   fetchRoomData,
@@ -46,74 +47,108 @@ export function RoomProvider({ children }) {
   // Apenas um useEffect para tudo inicial
   //==============================================
   useEffect(() => {
-  if (!socket || !roomId || !currentUserId) return;
+    if (!socket || !roomId || !currentUserId) return;
 
-  let alive = true;
+    let alive = true;
 
-  // estados de carregamento / reset
-  setLoadingRoom(true);
-  setRoomError(null);
-  setIsRoomReady(false);
-  setAreMessagesReady(false);
-  // opcional: limpar mensagens ao trocar de sala
-  setMessages([]);
+    // estados de carregamento / reset
+    setLoadingRoom(true);
+    setRoomError(null);
+    setIsRoomReady(false);
+    setAreMessagesReady(false);
+    // opcional: limpar mensagens ao trocar de sala
+    setMessages([]);
 
-  // 1) listener de presença (liveRoomUsers)
-  const onLiveRoomUsers = (payload) => {
-    if (!alive) return;
-    if (!payload || String(payload.roomId) !== String(roomId)) return;
-
-    setRoom((prev) => ({
-      ...(prev || {}),
-      _id: roomId,
-      currentUsersInRoom: payload.users || [],
-      speakers: payload.speakers || [],
-      isLive: !!payload.isLive,
-    }));
-    setIsRoomReady(true);
-  };
-
-  socket.on("liveRoomUsers", onLiveRoomUsers);
-
-  //==============================================
-  // 2) entrar na sala (ACK opcional)
-  //==============================================
-  socket.emit("joinRoomChat", { roomId, currentUserId }, (ack) => {
-    if (ack && ack.ok === false) {
-      console.warn("joinRoomChat falhou:", ack);
-    }
-  });
-
-  //==============================================
-  // 3) buscar mensagens da sala
-  //==============================================
-  (async () => {
-    try {
-      const msgs = await loadRoomMessages({ roomId, baseUrl, setMessages, setAreMessagesReady });
+    //==============================================
+    // 1) listener de presença (liveRoomUsers)
+    //==============================================
+    const onLiveRoomUsers = (payload) => {
       if (!alive) return;
-      const arr = Array.isArray(msgs) ? msgs : (msgs?.messages || []);
-      setMessages(arr);
-      setAreMessagesReady(true);
-    } catch (err) {
-      if (!alive) return;
-      console.error("Erro ao carregar mensagens:", err);
-      setRoomError(err);
-      setAreMessagesReady(false);
-    } finally {
-      if (alive) setLoadingRoom(false);
-    }
-  })();
+      if (!payload || String(payload.roomId) !== String(roomId)) return;
 
-  //==============================================
-  // 4) cleanup ao trocar de sala / desmontar
-  //==============================================
-  return () => {
-    alive = false;
-    socket.off("liveRoomUsers", onLiveRoomUsers);
-    socket.emit("leaveRoomChat", { roomId });
-  };
-}, [socket, roomId, currentUserId, baseUrl, setRoom]);
+      setRoom((prev) => ({
+        ...(prev || {}),
+        _id: roomId,
+        currentUsersInRoom: payload.users || [],
+        speakers: payload.speakers || [],
+        isLive: !!payload.isLive,
+      }));
+      setIsRoomReady(true);
+    };
 
+    socket.on("liveRoomUsers", onLiveRoomUsers);
+
+    //==============================================
+    // 2) entrar na sala (ACK opcional)
+    //==============================================
+    socket.emit("joinRoomChat", { roomId, currentUserId }, (ack) => {
+      if (ack && ack.ok === false) {
+        console.warn("joinRoomChat falhou:", ack);
+      }
+    });
+
+    //==============================================
+    // 3) buscar mensagens da sala
+    //==============================================
+    (async () => {
+      try {
+        await loadRoomMessages({
+          roomId,
+          baseUrl,
+          setMessages,
+          setAreMessagesReady,
+        });
+      } catch (err) {
+        if (!alive) return;
+        console.error("Erro ao carregar mensagens:", err);
+        setRoomError(err);
+        setAreMessagesReady(false);
+      } finally {
+        if (alive) setLoadingRoom(false);
+      }
+    })();
+
+    //==============================================
+    // 4) novas mensagens em tempo real
+    //==============================================
+    const onNewRoomMessage = (msg) => {
+      if (!alive || !msg) return;
+      // se seu servidor emite roomId junto, filtre aqui:
+      // if (String(msg.roomId) !== String(roomId)) return;
+
+      setMessages((prev) => {
+        // dedupe por _id (Mongo)
+        const id = msg?._id && String(msg._id);
+        if (id && prev.some((m) => String(m._id) === id)) return prev;
+
+        // append no fim; se quiser ordenar por timestamp, pode ordenar aqui
+        return [...prev, msg];
+      });
+    };
+
+    socket.on("newMessage", onNewRoomMessage); // ou "newPrivateMessage" para DMs
+
+    //==============================================
+    // 5) mensagens deletadas
+    //==============================================
+    const onMessageDeleted = ({ messageId }) => {
+      setMessages((prev) =>
+        prev.filter((m) => String(m._id) !== String(messageId))
+      );
+    };
+    socket.on("messageDeleted", onMessageDeleted);
+
+    //==============================================
+    // 6) cleanup ao trocar de sala / desmontar
+    //==============================================
+    return () => {
+      alive = false;
+      socket.off("liveRoomUsers", onLiveRoomUsers);
+      socket.off("newMessage", onNewRoomMessage);
+      socket.off("messageDeleted", onMessageDeleted);
+      socket.emit("leaveRoomChat", { roomId });
+    };
+  }, [socket, roomId, currentUserId, baseUrl, setRoom]);
 
   // RoomContext.jsx (substitua os dois useEffects por este único)
   // useEffect(() => {
@@ -255,6 +290,8 @@ export function RoomProvider({ children }) {
     },
     [currentUser, roomId, setRoom]
   );
+
+  console.log("newMessage:", newMessage);
 
   return (
     <RoomContext.Provider

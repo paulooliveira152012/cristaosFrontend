@@ -68,6 +68,7 @@ const ChatComponent = ({ roomId }) => {
     });
 
   const handleSendMessage = () => {
+    console.log("1 sending message...")
     const text = (newMessage || "").trim();
     if (!socket || !socket.connected || !roomId || !currentUser?._id || !text) {
       console.log("🚨 missing parameters:", {
