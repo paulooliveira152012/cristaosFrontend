@@ -16,6 +16,7 @@ import {
 } from "./functions.js/roomContextFunctions";
 import { useUser } from "./UserContext";
 import { useSocket } from "./SocketContext";
+import { useNavigate } from "react-router-dom";
 
 export const RoomContext = createContext(null);
 export const useRoom = () => useContext(RoomContext);
@@ -24,7 +25,7 @@ export function RoomProvider({ children }) {
   const { currentUser } = useUser(); // para colocar na sala
   const { socket } = useSocket();
   const currentUserId = currentUser?._id ?? null;
-
+  const navigate = useNavigate();
   const [roomId, setRoomId] = useState(null);
 
   // room
@@ -43,6 +44,9 @@ export function RoomProvider({ children }) {
   const [newMessage, setNewMessage] = useState("");
 
   const baseUrl = process.env.REACT_APP_API_BASE_URL || null;
+
+  // -------------------------- START Useeffect --------------------------
+
   //==============================================
   // Apenas um useEffect para tudo inicial
   //==============================================
@@ -150,6 +154,8 @@ export function RoomProvider({ children }) {
     };
   }, [socket, roomId, currentUserId, baseUrl, setRoom]);
 
+  // -------------------------- END Useeffect --------------------------
+
   // RoomContext.jsx (substitua os dois useEffects por este único)
   // useEffect(() => {
   //   console.log("1 useEffect inserindo usuario na sala e buscando dados.");
@@ -222,7 +228,9 @@ export function RoomProvider({ children }) {
   //   };
   // }, [roomId, baseUrl, currentUserId, socket]);
 
-  // 3) Enviar mensagem (wrapper que injeta setters do contexto)
+  // -------------------------- START functions --------------------------
+
+  // 1) Enviar mensagem (wrapper que injeta setters do contexto)
   const sendMessage = useCallback(
     async ({ socket, roomId, currentUser, newMessage }) => {
       return sendMessageUtil({
@@ -237,7 +245,7 @@ export function RoomProvider({ children }) {
     [setMessages, setNewMessage]
   );
 
-  // 4) delete message util
+  // 2) delete message util
   // Deletar mensagem (injeta setMessages; pode passar eventName se for diferente)
   const deleteMessage = useCallback(
     async ({ socket, roomId, messageId, eventName }) => {
@@ -252,7 +260,7 @@ export function RoomProvider({ children }) {
     [setMessages]
   );
 
-  // Iniciar Live (wrapper de alto nível para o app)
+  // 3) Iniciar Live (wrapper de alto nível para o app)
   const startLive = useCallback(
     async ({ joinChannel, setIsSpeaker, setIsLive } = {}) => {
       // VALIDAÇÕES BÁSICAS
@@ -291,6 +299,40 @@ export function RoomProvider({ children }) {
     [currentUser, roomId, setRoom]
   );
 
+  // 4 - End/Leave room
+
+  const leaveRoom = useCallback(async () => {
+  if (!socket || !roomId) {
+    navigate("/");
+    return;
+  }
+  const rid = String(roomId);
+
+  // 1) sair da sala para remover presença
+  await new Promise((resolve) => {
+    socket.emit("leaveRoomChat", { roomId: rid }, () => resolve());
+  });
+
+  // 2) sempre pedir para encerrar; o servidor recusa se não puder
+  socket.emit("stopLiveRoom", { roomId: rid }, (ack) => {
+    if (ack?.ok) {
+      // feedback otimista
+      setRoom(prev => prev ? { ...prev, isLive: false, speakers: [] } : prev);
+    } else {
+      console.warn("stopLiveRoom negado/erro:", ack);
+    }
+    // 3) navega de qualquer forma
+    navigate("/");
+  });
+
+  // limpeza local opcional (não obrigatório)
+  setMessages([]);
+}, [socket, roomId, navigate, setRoom, setMessages]);
+
+
+
+  // -------------------------- END functions --------------------------
+
   console.log("newMessage:", newMessage);
 
   return (
@@ -320,8 +362,9 @@ export function RoomProvider({ children }) {
         // ações
         sendMessage,
         deleteMessage,
-
         startLive,
+        leaveRoom,
+
         canStartRoom,
       }}
     >

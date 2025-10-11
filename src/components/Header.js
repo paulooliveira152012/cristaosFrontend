@@ -47,7 +47,11 @@ const Header = ({
   const [showPrivateMessagingSettings, setShowPrivateMessagingSettings] =
     useState(false);
 
-  const { room, startLive } = useRoom();
+  const { 
+    room, 
+    startLive,
+    leaveRoom
+  } = useRoom();
   const { joinChannel, setIsSpeaker, setIsLive } = useAudio();
   const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
 
@@ -122,7 +126,7 @@ const Header = ({
           )} */}
 
           {showLeaveButton && room?.isLive && (
-            <button onClick={handleLeaveRoom} className="leaveRoomButton">
+            <button onClick={leaveRoom} className="leaveRoomButton">
               Sair
             </button>
           )}
