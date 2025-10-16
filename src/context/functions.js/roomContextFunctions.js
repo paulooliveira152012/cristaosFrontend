@@ -18,9 +18,9 @@ export const EV = {
 // ================================================================
 // roomContextFunctions.js
 // roomContextFunctions.js
-export async function fetchRoomData({ roomId, baseUrl, setIsRoomReady, setRoom, setCanStartRoom }) {
+export async function fetchRoomData({ roomId, baseUrl, setIsRoomReady, setRoom, setCanStartRoom, setSpeakers }) {
   if (!roomId || !baseUrl) return null;
-  console.log("2 - fetchRoomData")
+  console.log("0 - fetchRoomData")
 
   const res = await fetch(`${baseUrl}/api/rooms/fetchRoomData/${roomId}`, {
     method: "GET",
@@ -29,14 +29,18 @@ export async function fetchRoomData({ roomId, baseUrl, setIsRoomReady, setRoom, 
   });
 
   if (!res.ok) {
+    console.log("🚨 ERRO!")
     let msg = "Erro ao buscar sala";
     try { msg = (await res.json())?.error || msg; } catch {}
     throw new Error(msg);
   }
 
   const data = await res.json();
+  console.log("1 - fetchRoomData data:", data)
+  console.log("speakers no data:", data?.speakers)
   setIsRoomReady(true)
   setRoom(data)
+  setSpeakers(data.speakers)
   // Monte a lista de IDs autorizados (criador + admins)
   const creatorId = typeof data?.createdBy === "string" ? data.createdBy : data?.createdBy?._id;
   const adminIds = Array.isArray(data?.admins)

@@ -122,6 +122,7 @@ const LiveRoomNew = () => {
         } // faz o BackArrow sair corretamente
         roomId={roomId}
       />
+      <Speakers />
       <Listeners />
       <ChatComponent roomId={roomId} />
       <VoiceComponent roomId={roomId} />

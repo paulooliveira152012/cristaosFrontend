@@ -3,53 +3,28 @@ import { useRoom } from "../../../context/RoomContext";
 import { Link } from "react-router-dom";
 
 const Speakers = ( setDisplaySpeakers ) => {
-  const { currentUsersSpeaking, currentUsers } = useRoom();
-
-  console.log("speakers component")
-  console.log("currentUsersSpeaking:", currentUsersSpeaking)
+  const { 
+    room, 
+    currentUsersSpeaking, 
+    currentUsers 
+  } = useRoom();
 
   // Mapa por id para resolver objetos parciais / ids
-  const speakersResolved = useMemo(() => {
-    const byId = new Map(
-      (currentUsers || [])
-        .filter(u => u && u._id)
-        .map(u => [String(u._id), u])
-    );
+  const speakers = room?.speakers
 
-    const pickId = (s) => {
-      if (!s) return null;
-      if (typeof s === "string") return s;
-      if (s._id) return s._id;
-      if (s.user && typeof s.user === "object") return s.user._id ?? s.user;
-      if (s.user) return s.user;
-      return null;
-    };
+  console.log("✅ room no SpeakersCOmponent:", room)
+  console.log("✅ currentUsersSpeaking:", currentUsersSpeaking)
 
-    const list = (currentUsersSpeaking || []).map((entry) => {
-      // se já for user completo, retorna
-      if (entry && entry._id && entry.username) return entry;
-      // senão resolve via id
-      const id = pickId(entry);
-      return id ? byId.get(String(id)) || null : null;
-    }).filter(Boolean);
 
-    // dedup por _id
-    const seen = new Set();
-    return list.filter(u => {
-      const k = String(u._id);
-      if (seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    });
-  }, [currentUsersSpeaking, currentUsers]);
+  console.log("speakers no SpeakersCOmponent:", speakers)
 
-  if (!speakersResolved?.length) {
+  if (!speakers?.length) {
     return <div className="liveInRoomMembersContainer"><p>Nenhum membro no palco.</p></div>;
   }
 
   return (
     <div className="liveInRoomMembersContainer">
-      {speakersResolved.map((member) => {
+      {speakers.map((member) => {
         const id = member._id;
         const username = member.username || "Anonymous";
         const profileImage = member.profileImage || "";

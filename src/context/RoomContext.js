@@ -36,6 +36,9 @@ export function RoomProvider({ children }) {
   const [roomError, setRoomError] = useState(null);
   const [canStartRoom, setCanStartRoom] = useState([]);
 
+  const [listeners, setListeners] = useState([]);
+  const [speakers, setSpeakers] = useState([]);
+
   // messages
   const [messages, setMessages] = useState([]);
   const [areMessagesReady, setAreMessagesReady] = useState(false);
@@ -64,19 +67,36 @@ export function RoomProvider({ children }) {
     setMessages([]);
 
     //==============================================
+    // 0) fetch room data
+    //==============================================
+    fetchRoomData({
+      roomId,
+      baseUrl,
+      setIsRoomReady,
+      setRoom,
+      setCanStartRoom,
+      setSpeakers,
+    });
+
+    //==============================================
     // 1) listener de presença (liveRoomUsers)
     //==============================================
     const onLiveRoomUsers = (payload) => {
-      if (!alive) return;
       if (!payload || String(payload.roomId) !== String(roomId)) return;
+
+      const speakers = payload?.speakers ?? [];
+      const currentUsers = payload?.users ?? payload?.currentUsersInRoom ?? [];
 
       setRoom((prev) => ({
         ...(prev || {}),
         _id: roomId,
-        currentUsersInRoom: payload.users || [],
-        speakers: payload.speakers || [],
-        isLive: !!payload.isLive,
+        currentUsersInRoom: currentUsers,
+        speakers,
+        isLive: !!payload?.isLive,
       }));
+
+      setListeners(currentUsers);
+      setSpeakers(speakers);
       setIsRoomReady(true);
     };
 
@@ -286,8 +306,20 @@ export function RoomProvider({ children }) {
       });
 
       if (res.ok) {
-        setRoom((prev) => (prev ? { ...prev, isLive: true } : prev));
-        // Estados locais (opcionais)
+        setRoom((prev) =>
+          prev
+            ? {
+                ...prev,
+                isLive: true,
+                speakers: Array.from(
+                  new Set([...(prev.speakers || []), currentUser._id])
+                ),
+              }
+            : prev
+        );
+        setSpeakers((prev) =>
+          Array.from(new Set([...(prev || []), currentUser._id]))
+        );
         setIsSpeaker?.(true);
         setIsLive?.(true);
       } else {
@@ -302,38 +334,41 @@ export function RoomProvider({ children }) {
   // 4 - End/Leave room
 
   const leaveRoom = useCallback(async () => {
-  if (!socket || !roomId) {
-    navigate("/");
-    return;
-  }
-  const rid = String(roomId);
-
-  // 1) sair da sala para remover presença
-  await new Promise((resolve) => {
-    socket.emit("leaveRoomChat", { roomId: rid }, () => resolve());
-  });
-
-  // 2) sempre pedir para encerrar; o servidor recusa se não puder
-  socket.emit("stopLiveRoom", { roomId: rid }, (ack) => {
-    if (ack?.ok) {
-      // feedback otimista
-      setRoom(prev => prev ? { ...prev, isLive: false, speakers: [] } : prev);
-    } else {
-      console.warn("stopLiveRoom negado/erro:", ack);
+    if (!socket || !roomId) {
+      navigate("/");
+      return;
     }
-    // 3) navega de qualquer forma
-    navigate("/");
-  });
+    const rid = String(roomId);
 
-  // limpeza local opcional (não obrigatório)
-  setMessages([]);
-}, [socket, roomId, navigate, setRoom, setMessages]);
+    // 1) sair da sala para remover presença
+    await new Promise((resolve) => {
+      socket.emit("leaveRoomChat", { roomId: rid }, () => resolve());
+    });
 
+    // 2) sempre pedir para encerrar; o servidor recusa se não puder
+    socket.emit("stopLiveRoom", { roomId: rid }, (ack) => {
+      if (ack?.ok) {
+        // feedback otimista
+        setRoom((prev) =>
+          prev ? { ...prev, isLive: false, speakers: [] } : prev
+        );
+      } else {
+        console.warn("stopLiveRoom negado/erro:", ack);
+      }
+      // 3) navega de qualquer forma
+      navigate("/");
+    });
 
+    // limpeza local opcional (não obrigatório)
+    setMessages([]);
+  }, [socket, roomId, navigate, setRoom, setMessages]);
 
   // -------------------------- END functions --------------------------
 
-  console.log("newMessage:", newMessage);
+  console.log("room:", room);
+  // console.log("newMessage:", newMessage);
+  // console.log("listeners:", listeners);
+  // console.log("speakers:", speakers);
 
   return (
     <RoomContext.Provider

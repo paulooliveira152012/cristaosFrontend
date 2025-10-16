@@ -36,7 +36,7 @@ const Listeners = React.memo(function Listeners() {
     );
   }
 
-  
+  console.log("listeners:", listeners)
 
   return (
     <div className="inRoomUsers">
