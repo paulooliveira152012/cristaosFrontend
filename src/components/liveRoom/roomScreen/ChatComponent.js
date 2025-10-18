@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useUser } from "../context/UserContext";
-import { useRoom } from "../context/RoomContext.js";
-import { useSocket } from "../context/SocketContext";
+import { useUser } from "../../../context/UserContext.js";
+import { useRoom } from "../../../context/RoomContext.js";
+import { useSocket } from "../../../context/SocketContext.js";
 
-import TrashIcon from "../assets/icons/trashcan";
+import TrashIcon from "../../../assets/icons/trashcan.js";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
-import "../styles/components/chat.css"; // ⬅️ novo caminho
-import MicOn from "../assets/icons/microphone/micOn.js";
-import MicOff2 from "../assets/icons/microphone/micOff2.js";
-import { useAudio } from "../context/AudioContext.js";
-import SendIcon from "../assets/icons/send.js";
-import profilePlaceholder from "../assets/images/profileplaceholder.png";
+import "../../../styles/components/chat.css"
+import MicOn from "../../../assets/icons/microphone/micOn.js";
+import MicOff2 from "../../../assets/icons/microphone/micOff2.js";
+import { useAudio } from "../../../context/AudioContext.js";
+import SendIcon from "../../../assets/icons/send.js";
+import profilePlaceholder from "../../../assets/images/profileplaceholder.png";
 import { useLocation } from "react-router-dom";
 
 import {
@@ -20,11 +20,11 @@ import {
   handleScrollUtil,
   scrollToBottomUtil,
   handleToggleMicrophoneUtil,
-} from "./functions/chatComponentFunctions";
+} from "../../functions/chatComponentFunctions.js";
 
 // abaixo dos imports de hooks, antes do componente:
-const getMessageId = (m) => m?._id || m?.id || m?.messageId || m?.clientMessageId || null;
-
+const getMessageId = (m) =>
+  m?._id || m?.id || m?.messageId || m?.clientMessageId || null;
 
 const ChatComponent = ({ roomId }) => {
   const { socket } = useSocket();
@@ -68,7 +68,7 @@ const ChatComponent = ({ roomId }) => {
     });
 
   const handleSendMessage = () => {
-    console.log("1 sending message...")
+    console.log("1 sending message...");
     const text = (newMessage || "").trim();
     if (!socket || !socket.connected || !roomId || !currentUser?._id || !text) {
       console.log("🚨 missing parameters:", {

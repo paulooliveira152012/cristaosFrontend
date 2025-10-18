@@ -11,7 +11,7 @@ import Header from "../components/Header";
 import Speakers from "../components/liveRoom/roomScreen/SpeakersComponent";
 import Listeners from "../components/liveRoom/roomScreen/ListenersComponent";
 import VoiceComponent from "../components/VoiceComponent";
-import ChatComponent from "../components/ChatComponent";
+import ChatComponent from "../components/liveRoom/roomScreen/ChatComponent";
 import RoomMenuModal from "../components/liveRoom/RoomMenuModal";
 // functions
 import {
@@ -41,7 +41,7 @@ const LiveRoomNew = () => {
     isCreator,
     setRoomId,
     canStartRoom,
-    setUserEnteringRoom
+    setUserEnteringRoom,
   } = useRoom();
 
   const { joinChannel, leaveChannel } = useAudio();
@@ -121,9 +121,7 @@ const LiveRoomNew = () => {
         roomId={roomId}
       />
 
-      {room?.isLive && (
-        <Speakers />
-      )}
+      {room?.isLive && <Speakers />}
       <Listeners />
       <ChatComponent roomId={roomId} />
       <VoiceComponent roomId={roomId} />

@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import Header from "../components/Header";
-import ChatComponent from "../components/ChatComponent";
+import ChatComponent from "../components/liveRoom/roomScreen/ChatComponent";
 import { handleBack } from "../components/functions/headerFunctions";
 import { useSocket } from "../context/SocketContext";
 import { useUnread } from "../context/UnreadContext";
