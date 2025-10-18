@@ -1,175 +1,102 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback } from "react";
+// src/context/AudioContext.js
+import React, { createContext, useContext, useMemo, useState, useCallback } from "react";
 import AgoraRTC from "agora-rtc-sdk-ng";
-import io from "socket.io-client";
-
-// 0=NONE, 1=ERROR, 2=WARN, 3=INFO, 4=DEBUG
-AgoraRTC.setLogLevel(1);
-AgoraRTC.enableLogUpload?.(false);
+import {
+  AgoraRTCProvider,
+  useJoin,
+  useLocalMicrophoneTrack,
+  usePublish,
+  useRemoteUsers,
+} from "agora-rtc-react";
+import { useSocket } from "./SocketContext";
 
 const AudioContext = createContext(null);
+export const useAudio = () => useContext(AudioContext);
 
-export const useAudio = () => {
-  const ctx = useContext(AudioContext);
-  if (!ctx) throw new Error("useAudio deve ser usado dentro de <AudioProvider>");
-  return ctx;
-};
-
-// ── Socket seguro (usa mesma origem se não houver BASE_URL) ──
-const API_URL = process.env.REACT_APP_API_BASE_URL || undefined;
-const socket = io(API_URL, { withCredentials: true });
-
-export const AudioProvider = ({ children }) => {
-  const [agoraClient, setAgoraClient] = useState(null);
-  const [localAudioTrack, setLocalAudioTrack] = useState(null);
-  const [remoteUsers, setRemoteUsers] = useState([]);
-  const [isInCall, setIsInCall] = useState(false);
-  const [micState, setMicState] = useState(false);
+// ----- Inner provider que usa os hooks do agora-rtc-react -----
+function AudioInner({ client, children }) {
+  const { socket } = useSocket();
 
   const APP_ID = process.env.REACT_APP_AGORA_APP_ID || "";
-  const TOKEN = process.env.REACT_APP_AGORA_TOKEN || null;
+  const TOKEN  = process.env.REACT_APP_AGORA_TOKEN || null;
 
-  // ── Inicializa client e listeners uma única vez ──
-  useEffect(() => {
-    const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
-    setAgoraClient(client);
+  const [channel, setChannel] = useState(null);
+  const [uid, setUid]         = useState(null);
+  const [micOn, setMicOn]     = useState(false);
 
-    const onUserPublished = async (user, mediaType) => {
-      try {
-        await client.subscribe(user, mediaType);
-        if (mediaType === "audio") {
-          user.audioTrack?.play();
-          setRemoteUsers((prev) => {
-            // evita duplicados
-            const exists = prev.some((u) => u.uid === user.uid);
-            return exists ? prev : [...prev, user];
-          });
-        }
-      } catch (err) {
-        console.warn("Erro ao subscrever usuário:", err);
-      }
-    };
+  // entra/sai baseado em channel != null
+  useJoin({ appid: APP_ID, channel, token: TOKEN, uid }, Boolean(channel));
 
-    const onUserUnpublished = (user) => {
-      setRemoteUsers((prev) => prev.filter((u) => u.uid !== user.uid));
-    };
+  // cria track quando micOn=true e publica
+  const { localMicrophoneTrack } = useLocalMicrophoneTrack(micOn);
+  usePublish(micOn ? [localMicrophoneTrack] : []);
 
-    client.on("user-published", onUserPublished);
-    client.on("user-unpublished", onUserUnpublished);
+  const remoteUsers = useRemoteUsers();
 
-    return () => {
-      client.removeAllListeners();
-      // encerra e limpa possíveis tracks
-      (async () => {
-        try {
-          const local = client.localTracks || [];
-          for (const t of local) {
-            try { t.stop(); } catch {}
-            try { t.close(); } catch {}
-          }
-          await client.leave();
-        } catch {}
-      })();
-    };
-  }, []);
-
-  // ── Entra no canal (ouvindo). Não publica microfone aqui ──
   const joinChannel = useCallback(
-    async (channel, userId) => {
-      if (!agoraClient) return { ok: false, reason: "no_client" };
-      if (!APP_ID) return { ok: false, reason: "missing_app_id" };
-      if (!channel) return { ok: false, reason: "missing_channel" };
-      if (!userId) return { ok: false, reason: "missing_user" };
-
-      // evita re-join
-      if (agoraClient.connectionState && agoraClient.connectionState !== "DISCONNECTED") {
-        return { ok: true, reason: "already_connected" };
-      }
-
-      await agoraClient.join(APP_ID, channel, TOKEN, userId);
-      setIsInCall(true);
-      setMicState(false);
+    ({ roomId, userId }) => {
+      if (!roomId || !userId) return { ok: false, reason: "missing_params" };
+      setUid(userId);
+      setChannel(roomId);
+      // emite join (idempotente; backend lê userId do JWT também)
+      socket?.emit?.("joinRoomChat", { roomId, currentUserId: userId }, () => {});
       return { ok: true };
     },
-    [agoraClient, APP_ID, TOKEN]
+    [socket]
   );
 
-  // ── Sobe como palestrante (stage) e informa via socket.io ──
   const joinAsSpeaker = useCallback(
-    async (channel, userId, roomId) => {
-      if (!agoraClient) return;
-      if (!APP_ID || !channel || !userId) return;
+  ({ roomId }) => {
+    if (!roomId) return { ok: false, reason: "missing_roomId" };
+    // 🔇 mantém o mic desligado; só marca o papel de speaker no back
+    setMicOn(false);
+    socket?.emit?.("joinAsSpeaker", { roomId });
+    return { ok: true };
+  },
+  [socket]
+);
 
-      if (agoraClient.connectionState === "DISCONNECTED") {
-        await agoraClient.join(APP_ID, channel, TOKEN, userId);
-        setIsInCall(true);
-        setMicState(false);
-      }
-      socket.emit("joinAsSpeaker", { userId, roomId });
-    },
-    [agoraClient, APP_ID, TOKEN]
-  );
 
-  // ── Sair do canal e limpar tudo ──
-  const leaveChannel = useCallback(async () => {
-    if (!agoraClient || !isInCall) return;
-    try {
-      if (localAudioTrack) {
-        try { localAudioTrack.stop(); } catch {}
-        try { localAudioTrack.close(); } catch {}
-        setLocalAudioTrack(null);
-      }
-      const local = agoraClient.localTracks || [];
-      for (const t of local) {
-        try { t.stop(); } catch {}
-        try { t.close(); } catch {}
-      }
-      await agoraClient.leave();
-    } finally {
-      setIsInCall(false);
-      setMicState(false);
-      setRemoteUsers([]);
-    }
-  }, [agoraClient, isInCall, localAudioTrack]);
-
-  // ── Liga/Desliga microfone; cria track só quando liga pela 1ª vez ──
   const toggleMicrophone = useCallback(
-    async (micOn, userId, roomId) => {
-      if (!agoraClient || agoraClient.connectionState !== "CONNECTED") return;
+  ({ roomId, on }) => {
+    setMicOn(!!on);
+    if (roomId) socket?.emit?.("toggleMicrophone", { roomId, on: !!on });
+  },
+  [socket]
+);
 
-      if (micOn) {
-        if (!localAudioTrack) {
-          const track = await AgoraRTC.createMicrophoneAudioTrack();
-          setLocalAudioTrack(track);
-          await agoraClient.publish([track]);
-        } else {
-          await localAudioTrack.setEnabled(true);
-        }
-      } else if (localAudioTrack) {
-        await localAudioTrack.setEnabled(false);
-      }
 
-      setMicState(micOn);
-      if (userId && roomId) {
-        socket.emit("micStatusChanged", { userId, micOpen: micOn, roomId });
-      }
+  const leaveChannel = useCallback(
+    ({ roomId }) => {
+      setMicOn(false);
+      setChannel(null); // useJoin fará o leave
+      if (roomId) socket?.emit?.("leaveRoomChat", { roomId }, () => {});
     },
-    [agoraClient, localAudioTrack]
+    [socket]
   );
 
   const value = useMemo(
     () => ({
-      joinChannel,       // para o startLiveCore chamar (entra como ouvinte)
-      joinAsSpeaker,     // botão "Subir ao palco"
-      leaveChannel,
+      joinChannel,
+      joinAsSpeaker,
       toggleMicrophone,
+      leaveChannel,
       remoteUsers,
-      isInCall,
-      micState,
-      setMicState,
-      agoraClient,
+      micOn,
+      client, // expõe se precisar
     }),
-    [joinChannel, joinAsSpeaker, leaveChannel, toggleMicrophone, remoteUsers, isInCall, micState, agoraClient]
+    [joinChannel, joinAsSpeaker, toggleMicrophone, leaveChannel, remoteUsers, micOn, client]
   );
 
   return <AudioContext.Provider value={value}>{children}</AudioContext.Provider>;
-};
+}
+
+// ----- Provider externo que cria o client e injeta no AgoraRTCProvider -----
+export default function AudioProvider({ children }) {
+  const client = useMemo(() => AgoraRTC.createClient({ mode: "rtc", codec: "vp8" }), []);
+  return (
+    <AgoraRTCProvider client={client}>
+      <AudioInner client={client}>{children}</AudioInner>
+    </AgoraRTCProvider>
+  );
+}

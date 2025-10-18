@@ -177,27 +177,23 @@ export const handleDeleteMessageUtil = ({ socket, messageId }) => {
 
 
 
+// utils/chatComponentFunctions.js (ou onde estiver)
 export const handleToggleMicrophoneUtil = async ({
-  socket, // obrigatório
   micState,
-  toggleMicrophone,
+  toggleMicrophone,  // função do AudioContext
   roomId,
   currentUser,
 }) => {
-  if (!socket || typeof socket.emit !== "function") return;
-  if (!currentUser || !currentUser._id) return;
+  if (!currentUser?._id || !roomId || typeof toggleMicrophone !== "function") return;
+  const newMicState = !micState;
+  console.log(`🎙️ Toggling mic: ${micState} -> ${newMicState}`);
   try {
-    const newMicState = !micState;
-    await toggleMicrophone(newMicState);
-    socket.emit("toggleMicrophone", {
-      roomId,
-      userId: currentUser._id,
-      micOpen: newMicState,
-    });
-  } catch (error) {
-    console.error("Error toggling microphone:", error);
+    await toggleMicrophone({ roomId, on: newMicState });
+  } catch (err) {
+    console.error("Error toggling microphone:", err);
   }
 };
+
 
 /* =========================
    Helpers visuais

@@ -5,6 +5,7 @@ import "../styles/liveRoom.css";
 import { useUser } from "../context/UserContext";
 import { useRoom } from "../context/RoomContext";
 import { useAudio } from "../context/AudioContext";
+import { useSocket } from "../context/SocketContext";
 
 // components
 import Header from "../components/Header";
@@ -13,10 +14,11 @@ import Listeners from "../components/liveRoom/roomScreen/ListenersComponent";
 import VoiceComponent from "../components/VoiceComponent";
 import ChatComponent from "../components/liveRoom/roomScreen/ChatComponent";
 import RoomMenuModal from "../components/liveRoom/RoomMenuModal";
+
 // functions
 import {
-  joinAsSpeaker, //add user as speaker
-  leaveStage, //remove user from speakers
+  joinAsSpeaker, // add user as speaker (se for usar)
+  leaveStage,    // remove speaker (se for usar)
   onSaveSettings,
   handleDeleteRoom,
 } from "./functions/liveRoomFunctions2";
@@ -27,65 +29,66 @@ import { useNavigate } from "react-router-dom";
 const LiveRoomNew = () => {
   const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
 
-  // =============== variaveis contextuais
   const { currentUser } = useUser();
   const {
-    startLive,
     minimizeRoom,
-    currentUsersSpeaking,
-    setCurrentUsersSpeaking,
-    handleJoinRoom,
     handleLeaveRoom,
     isCurrentUserSpeaker,
     room,
-    isCreator,
     setRoomId,
     canStartRoom,
-    setUserEnteringRoom,
   } = useRoom();
 
   const { joinChannel, leaveChannel } = useAudio();
+  const { socket } = useSocket();
   const { roomId } = useParams();
 
-  // console.log("isCreator do contexto na pagina:", isCreator)
-
-  // =============== funcionalidades react
   const navigate = useNavigate();
   const location = useLocation();
 
-  // =============== Variaveis locais
   const [sala, setSala] = useState(location.state?.sala || null);
-  const { id: routeRoomId } = useParams(); // rota: /liveRoomNew/:id
-  const [isSpeaker, setIsSpeaker] = useState(false); // 👈 controla se está no palco
   const [roomTheme, setRoomTheme] = useState(
     sala?.roomTitle ? `Bem vindo a sala ${sala.roomTitle}` : "Carregando sala…"
   );
-  const isRejoiningRef = useRef(false); //user is rejoining?
+  const isRejoiningRef = useRef(false);
   const [microphoneOn, setMicrophoneOn] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [newRoomTitle, setNewRoomTitle] = useState("");
-  const [newCoverFile, setNewCoverFile] = useState(null); // File ou null
+  const [newCoverFile, setNewCoverFile] = useState(null);
 
-  const hasSpeakers =
-    Array.isArray(currentUsersSpeaking) && currentUsersSpeaking.length > 0;
-
-  // versão otimista: mostra se eu já sou speaker mesmo que a lista ainda não tenha sincronizado
+  // ✅ speakers agora vêm de room.speakers
+  const hasSpeakers = Array.isArray(room?.speakers) && room.speakers.length > 0;
   const showSpeakers = hasSpeakers || isCurrentUserSpeaker;
-  // se quiser só quando o backend confirmar, use:
-  // const showSpeakers = roomReady && hasSpeakers;
 
-  // =============== useEffects
+  // ✅ setRoomId apenas quando roomId mudar
+  useEffect(() => {
+    if (roomId) setRoomId(roomId);
+  }, [roomId, setRoomId]);
 
-  //   useEffect(() => {
-  //     console.log("SETTING ROOM ID TO CONTEXT FROM MAIN PAGE", routeRoomId)
-  //   if (routeRoomId) setRoomId(routeRoomId);
-  // }, [routeRoomId, setRoomId]);
+  // ✅ auto-join (Agora + socket) ao montar / mudar sala
+  useEffect(() => {
+    if (!roomId || !currentUser?._id) return;
+    // agora channel (idempotente)
+    joinChannel({ roomId, userId: currentUser._id });
+  }, [roomId, currentUser?._id, joinChannel, socket]);
 
-  // console.log("room alimentado pelo RoomContext:", room)
-  // console.log("roomId no liveRoomNew:", roomId)
-
-  setRoomId(roomId);
+  // ✅ re-join no foco/visibilidade (cobre refresh rápido)
+  useEffect(() => {
+    const rejoin = () => {
+      if (!roomId || !currentUser?._id) return;
+      joinChannel({ roomId, userId: currentUser._id });
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") rejoin();
+    };
+    window.addEventListener("focus", rejoin);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("focus", rejoin);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [roomId, currentUser?._id, joinChannel, socket]);
 
   return (
     <div className="screenWrapper liveRoom">
@@ -117,17 +120,18 @@ const LiveRoomNew = () => {
             isRejoiningRef,
             microphoneOn
           )
-        } // faz o BackArrow sair corretamente
+        }
         roomId={roomId}
       />
 
-      {room?.isLive && <Speakers />}
+      {room?.isLive && showSpeakers && <Speakers />}
       <Listeners />
       <ChatComponent roomId={roomId} />
       <VoiceComponent roomId={roomId} />
+
       {showSettingsModal && (
         <RoomMenuModal
-          setShowSettingsModal={(v) => !isLoading && setShowSettingsModal(v)} // não fecha se loading
+          setShowSettingsModal={(v) => !isLoading && setShowSettingsModal(v)}
           newRoomTitle={newRoomTitle}
           setNewRoomTitle={setNewRoomTitle}
           handleUpdateRoomTitle={() =>
@@ -145,7 +149,7 @@ const LiveRoomNew = () => {
           }
           handleDeleteRoom={() => handleDeleteRoom(roomId, navigate)}
           onChooseCover={setNewCoverFile}
-          currentCoverUrl={sala?.coverUrl || ""} // URL atual p/ preview
+          currentCoverUrl={sala?.coverUrl || ""}
           isLoading={isLoading}
         />
       )}

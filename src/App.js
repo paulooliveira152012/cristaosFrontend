@@ -63,7 +63,8 @@ import Admin from "./pages/Admin.js";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { UserProvider, useUser } from "./context/UserContext";
 import { RoomProvider, useRoom } from "./context/RoomContext";
-import { AudioProvider } from "./context/AudioContext";
+// import { AudioProvider } from "./context/AudioContext";
+import  AudioProvider  from "./context/AudioContext.js"
 import { SocketProvider, useSocket } from "./context/SocketContext.js";
 import { DarkModeProvider } from "./context/DarkModeContext.js";
 import { NotificationProvider } from "./context/NotificationContext.js";
@@ -313,14 +314,8 @@ const AppWithLocation = () => {
                           element={<LiveRoom />}
                         /> */}
 
-                        <Route
-                          path="liveRoomNew/:roomId"
-                          element={
-                            <RoomProvider>
-                              <LiveRoomNew />
-                            </RoomProvider>
-                          }
-                        />
+                        <Route path="liveRoomNew/:roomId" element={<LiveRoomNew />} />
+
 
                         <Route path="/chat" element={<Chat />} />
                         <Route path="/login" element={<Login />} />

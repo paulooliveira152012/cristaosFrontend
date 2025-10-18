@@ -1,18 +1,17 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { useUser } from "../../../context/UserContext.js";
 import { useRoom } from "../../../context/RoomContext.js";
 import { useSocket } from "../../../context/SocketContext.js";
+import { useAudio } from "../../../context/AudioContext.js";
 
 import TrashIcon from "../../../assets/icons/trashcan.js";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
-import "../../../styles/components/chat.css"
+import "../../../styles/components/chat.css";
 import MicOn from "../../../assets/icons/microphone/micOn.js";
 import MicOff2 from "../../../assets/icons/microphone/micOff2.js";
-import { useAudio } from "../../../context/AudioContext.js";
 import SendIcon from "../../../assets/icons/send.js";
 import profilePlaceholder from "../../../assets/images/profileplaceholder.png";
-import { useLocation } from "react-router-dom";
 
 import {
   useAutoScrollToBottom,
@@ -29,7 +28,8 @@ const getMessageId = (m) =>
 const ChatComponent = ({ roomId }) => {
   const { socket } = useSocket();
   const { currentUser } = useUser();
-  const { toggleMicrophone, micState } = useAudio();
+  // ✅ só o que você usa do AudioContext
+  const { toggleMicrophone, micOn } = useAudio();
 
   const messagesContainerRef = useRef(null);
   const inputRef = useRef(null);
@@ -43,57 +43,34 @@ const ChatComponent = ({ roomId }) => {
     setNewMessage,
     sendMessage,
     deleteMessage,
-    setMessages,
   } = useRoom();
 
-  // console.log("chat component... roomId:", roomId);
-
-  // ✅ função estável para rolar ao fim — não muda entre renders
+  // função estável para rolar ao fim
   const scrollToBottom = useCallback(
     () => scrollToBottomUtil(messagesContainerRef),
     []
   );
-
   useAutoScrollToBottom(messages, isAtBottom, scrollToBottom);
-
   const onScroll = () => handleScrollUtil(messagesContainerRef, setIsAtBottom);
 
   const onToggleMic = () =>
-    handleToggleMicrophoneUtil({
-      toggleMicrophone,
-      micState,
-      roomId,
-      currentUser,
-      socket,
-    });
+  handleToggleMicrophoneUtil({
+    toggleMicrophone,
+    micState: micOn,
+    roomId,
+    currentUser,
+  });
+
 
   const handleSendMessage = () => {
-    console.log("1 sending message...");
     const text = (newMessage || "").trim();
-    if (!socket || !socket.connected || !roomId || !currentUser?._id || !text) {
-      console.log("🚨 missing parameters:", {
-        hasSocket: !!socket,
-        connected: socket?.connected,
-        roomId,
-        userId: currentUser?._id,
-        textLen: text.length,
-      });
-      return;
-    }
+    if (!socket?.connected || !roomId || !currentUser?._id || !text) return;
     sendMessage({ socket, roomId, currentUser, newMessage: text });
+    setNewMessage(""); // limpa input
   };
 
   const handleDeleteMessage = (messageId) => {
-    if (!socket || !socket.connected || !roomId || !messageId) {
-      console.log("🚨 delete: parâmetros faltando", {
-        hasSocket: !!socket,
-        connected: socket?.connected,
-        roomId,
-        messageId,
-      });
-      return;
-    }
-    // Se seu backend usa outro evento, passe { eventName: "SEU_EVENTO" } aqui
+    if (!socket?.connected || !roomId || !messageId) return;
     deleteMessage({ socket, roomId, messageId });
   };
 
@@ -106,8 +83,9 @@ const ChatComponent = ({ roomId }) => {
       >
         <div className="messages">
           {messages.map((msg, index) => {
-            if (!usernameColors.current[msg.username]) {
-              usernameColors.current[msg.username] = getRandomDarkColor();
+            const uname = msg.username || "Usuário"; // ✅ fallback
+            if (!usernameColors.current[uname]) {
+              usernameColors.current[uname] = getRandomDarkColor();
             }
             const formattedTime = msg.timestamp
               ? format(new Date(msg.timestamp), "dd-MM-yy h:mm a")
@@ -117,10 +95,13 @@ const ChatComponent = ({ roomId }) => {
 
             return (
               <div
-                key={index}
+                key={getMessageId(msg) ?? index}
                 className={`messageRow ${isMine ? "mine" : "theirs"}`}
               >
-                <Link to={`/profile/${msg.userId}`} className="avatarLink">
+                <Link
+                  to={msg.userId ? `/profile/${msg.userId}` : "#"} // ✅ evita link quebrado
+                  className="avatarLink"
+                >
                   <div
                     className="chatAvatar"
                     style={{
@@ -128,7 +109,7 @@ const ChatComponent = ({ roomId }) => {
                         msg.profileImage || profilePlaceholder
                       })`,
                     }}
-                    title={msg.username}
+                    title={uname}
                   />
                 </Link>
 
@@ -136,10 +117,10 @@ const ChatComponent = ({ roomId }) => {
                   <div className="messageHeader">
                     <strong
                       className="author"
-                      style={{ color: usernameColors.current[msg.username] }}
-                      title={msg.username}
+                      style={{ color: usernameColors.current[uname] }}
+                      title={uname}
                     >
-                      {msg.username}
+                      {uname}
                     </strong>
                     <small className="time" aria-label="enviado em">
                       {formattedTime}
@@ -184,7 +165,7 @@ const ChatComponent = ({ roomId }) => {
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
-              handleSendMessage(); // usa o mesmo caminho do botão
+              handleSendMessage();
             }
           }}
           placeholder="Escreva uma mensagem..."
@@ -195,8 +176,8 @@ const ChatComponent = ({ roomId }) => {
           <button
             className="iconBtn"
             onClick={onToggleMic}
-            aria-label={micState ? "Desativar microfone" : "Ativar microfone"}
-            title={micState ? "Microfone ligado" : "Microfone desligado"}
+            aria-label={micOn ? "Desativar microfone" : "Ativar microfone"}
+            title={micOn ? "Microfone ligado" : "Microfone desligado"}
             style={{
               width: 40,
               height: 40,
@@ -206,7 +187,7 @@ const ChatComponent = ({ roomId }) => {
               padding: 0,
             }}
           >
-            {micState ? <MicOn /> : <MicOff2 />}
+            {micOn ? <MicOn /> : <MicOff2 />}
           </button>
         )}
 
