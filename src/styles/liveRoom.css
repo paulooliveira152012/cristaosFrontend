@@ -5,8 +5,8 @@ html, body {
 }
 
 .liveRoom {
-  /* height: 100dvh; */
-  /* background-color: red !important; */
+  height: 100dvh;
+  /* background-color: red; */
   /* padding: 20px; */
   /* overflow: hidden !important; */
   /* display: flex; */
