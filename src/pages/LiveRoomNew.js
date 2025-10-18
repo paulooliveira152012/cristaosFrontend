@@ -62,8 +62,6 @@ const LiveRoomNew = () => {
   );
   const isRejoiningRef = useRef(false); //user is rejoining?
   const [microphoneOn, setMicrophoneOn] = useState(false);
-  const isLive = !!room?.isLive; // ⬅️ derive daqui
-  // edit modal
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [newRoomTitle, setNewRoomTitle] = useState("");
@@ -122,7 +120,10 @@ const LiveRoomNew = () => {
         } // faz o BackArrow sair corretamente
         roomId={roomId}
       />
-      <Speakers />
+
+      {room?.isLive && (
+        <Speakers />
+      )}
       <Listeners />
       <ChatComponent roomId={roomId} />
       <VoiceComponent roomId={roomId} />
