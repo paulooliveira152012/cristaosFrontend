@@ -29,7 +29,7 @@ const ChatComponent = ({ roomId }) => {
   const { socket } = useSocket();
   const { currentUser } = useUser();
   // ✅ só o que você usa do AudioContext
-  const { toggleMicrophone, micOn } = useAudio();
+  const { toggleMicrophone, micOn, joinAsSpeaker} = useAudio();
 
   const messagesContainerRef = useRef(null);
   const inputRef = useRef(null);
@@ -43,6 +43,7 @@ const ChatComponent = ({ roomId }) => {
     setNewMessage,
     sendMessage,
     deleteMessage,
+    isCurrentUserSpeaker,
   } = useRoom();
 
   // função estável para rolar ao fim
@@ -53,13 +54,19 @@ const ChatComponent = ({ roomId }) => {
   useAutoScrollToBottom(messages, isAtBottom, scrollToBottom);
   const onScroll = () => handleScrollUtil(messagesContainerRef, setIsAtBottom);
 
-  const onToggleMic = () =>
-  handleToggleMicrophoneUtil({
+   const onToggleMic = async () => {
+  if (!roomId || !currentUser?._id) return;
+  // 1) Se não for speaker ainda, vira speaker (mic continua OFF por padrão)
+  if (!isCurrentUserSpeaker) {
+    await joinAsSpeaker({ roomId }); // só seta papel no servidor
+  }
+  // 2) Agora sim, alterna o mic (liga/desliga local + emite socket no AudioContext)
+  await handleToggleMicrophoneUtil({
     toggleMicrophone,
     micState: micOn,
     roomId,
-    currentUser,
   });
+};
 
 
   const handleSendMessage = () => {
