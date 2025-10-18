@@ -90,8 +90,14 @@ const LiveRoomNew = () => {
     };
   }, [roomId, currentUser?._id, joinChannel, socket]);
 
+  console.log("room:", room)
+  console.log("room.isLive:", room?.isLive)
+
+  const isLive = !!room?.isLive;
+
   return (
     <div className="screenWrapper liveRoom">
+      <div className={isLive ? "topLiveOn" : "topLiveOff"}>
       <Header
         navigate={navigate}
         showProfileImage={false}
@@ -124,11 +130,14 @@ const LiveRoomNew = () => {
         roomId={roomId}
       />
 
-      {room?.isLive && showSpeakers && <Speakers />}
+      {isLive && showSpeakers && <Speakers />}
       <Listeners />
-      <ChatComponent roomId={roomId} />
       <VoiceComponent roomId={roomId} />
+      </div>
 
+      <div className={isLive ? "bottomLiveOn" : "bottomLiveOff"}>
+      <ChatComponent roomId={roomId} />
+      </div>
       {showSettingsModal && (
         <RoomMenuModal
           setShowSettingsModal={(v) => !isLoading && setShowSettingsModal(v)}
