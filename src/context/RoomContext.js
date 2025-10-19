@@ -15,6 +15,7 @@ import {
   startLiveCore,
 } from "./functions.js/roomContextFunctions";
 import { useUser } from "./UserContext";
+import { useAudio } from "./AudioContext";
 import { useSocket } from "./SocketContext";
 import { useNavigate } from "react-router-dom";
 
@@ -23,6 +24,7 @@ export const useRoom = () => useContext(RoomContext);
 
 export function RoomProvider({ children }) {
   const { currentUser } = useUser(); // para colocar na sala
+  const { joinChannel, joinAsSpeaker, toggleMicrophone } = useAudio();
   const { socket } = useSocket();
   const currentUserId = currentUser?._id ?? null;
   const navigate = useNavigate();
@@ -282,42 +284,59 @@ export function RoomProvider({ children }) {
 
   // 3) Iniciar Live (wrapper de alto nível para o app)
   // 3) Iniciar Live (APENAS metadados/estado)
-const startLive = useCallback(
+  const startLive = useCallback(
   async () => {
     const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
     if (!baseUrl) return { ok: false, reason: "missing_baseUrl" };
     if (!currentUser?._id) return { ok: false, reason: "missing_userId" };
     if (!roomId) return { ok: false, reason: "missing_roomId" };
 
-    const res = await startLiveCore({
-      baseUrl,
-      currentUser,
-      roomId,
-      // ⛔️ NÃO passe joinChannel aqui
-    });
-
+    const res = await startLiveCore({ baseUrl, currentUser, roomId });
     if (res?.ok) {
-      setRoom((prev) =>
-        prev
-          ? {
-              ...prev,
-              isLive: true,
-              speakers: [
-                ...(prev.speakers || []),
-                { _id: currentUser._id, username: currentUser.username, profileImage: currentUser.profileImage },
-              ],
-            }
-          : prev
+      setRoom(prev =>
+        prev ? {
+          ...prev,
+          isLive: true,
+          speakers: [
+            ...(prev.speakers || []),
+            { _id: currentUser._id, username: currentUser.username, profileImage: currentUser.profileImage }
+          ],
+        } : prev
       );
     } else {
       console.warn("Falha ao iniciar live (startLive):", res);
     }
-
     return res;
   },
   [currentUser, roomId, setRoom]
 );
 
+
+// orquestrador: junta RTC + metadados
+const startLiveFlow = useCallback(
+  async (rid) => {
+    const userId = String(currentUser?._id || "");
+    if (!rid || !userId) throw new Error("missing roomId/userId");
+
+    console.log("[FLOW] startLiveFlow rid:", rid, "uid:", userId);
+
+    // 1) entrar no canal como audience
+    const j1 = await joinChannel({ roomId: rid, userId });
+    if (j1?.ok === false) throw new Error("joinChannel failed");
+
+    // 2) virar host (speaker) — mic continua OFF
+    const j2 = await joinAsSpeaker({ roomId: rid });
+    if (j2?.ok === false) throw new Error("joinAsSpeaker failed");
+
+    // 3) LIGAR MIC (publicar)
+    await toggleMicrophone({ roomId: rid, on: true });
+
+    // 4) Marcar live no back (metadados)
+    const meta = await startLive();
+    if (!meta?.ok) console.warn("Falha ao marcar live:", meta);
+  },
+  [currentUser?._id, joinChannel, joinAsSpeaker, toggleMicrophone, startLive]
+);
 
   // 4 - End/Leave room
 
@@ -357,7 +376,7 @@ const startLive = useCallback(
   // console.log("newMessage:", newMessage);
   // console.log("listeners:", listeners);
   // console.log("speakers:", speakers);
-  console.log("canStartRoom:", canStartRoom)
+  console.log("canStartRoom:", canStartRoom);
 
   return (
     <RoomContext.Provider
@@ -387,6 +406,7 @@ const startLive = useCallback(
         sendMessage,
         deleteMessage,
         startLive,
+        startLiveFlow,
         leaveRoom,
 
         canStartRoom,

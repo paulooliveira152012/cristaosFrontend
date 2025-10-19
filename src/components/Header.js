@@ -46,8 +46,14 @@ const Header = ({
   const [showPrivateMessagingSettings, setShowPrivateMessagingSettings] =
     useState(false);
 
-  const { room, startLive, leaveRoom, canStartRoom } = useRoom();
-  const { joinChannel, joinAsSpeaker, toggleMicrophone, setIsSpeaker, setIsLive } = useAudio();
+  const { room, startLive, leaveRoom, canStartRoom, startLiveFlow } = useRoom();
+  const {
+    joinChannel,
+    joinAsSpeaker,
+    toggleMicrophone,
+    setIsSpeaker,
+    setIsLive,
+  } = useAudio();
   const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
 
   useEffect(() => {
@@ -132,65 +138,43 @@ const Header = ({
               <button className="login-button">Login</button>
             </Link>
           )}
-
           {/* {showLeaveButton && (
             <button onClick={handleLeaveRoom} className="leaveRoomButton">
               Sair
             </button>
           )} */}
-
           {showLeaveButton && room?.isLive && (
             <button onClick={leaveRoom} className="leaveRoomButton">
               Sair
             </button>
           )}
-
+          
           {showLeaveButton && canStart && !room?.isLive && (
             <RiVoiceAiLine
               onClick={async () => {
                 try {
-                  const userId = String(currentUser?._id);
-                  if (!roomId || !userId) return;
-
-                  // 1) entra no canal (audience)
-                  const j1 = await joinChannel({ roomId, userId });
-                  if (j1?.ok === false) throw new Error("joinChannel failed");
-
-                  // 2) sobe papel para speaker/host (mic continua OFF)
-                  const j2 = await joinAsSpeaker({ roomId });
-                  if (j2?.ok === false) throw new Error("joinAsSpeaker failed");
-
-                  // 3) liga microfone (publica track local)
-                  await toggleMicrophone({ roomId, on: true });
-
-                  // 4) marca sala como live no backend (apenas metadados da UI)
-                  const res = await startLive(); // <- ver item 2
-                  if (!res?.ok) console.warn("Falha ao iniciar live:", res);
-                } catch (err) {
-                  console.error("Start Live sequence error:", err);
+                  await startLiveFlow(roomId); // 👈 só isso
+                } catch (e) {
+                  console.error("startLiveFlow error:", e);
                 }
               }}
             />
           )}
-
           {showCloseIcon && (
             <CloseIcon
               onClick={handleLeaveRoom}
               style={{ alignSelf: "center", cursor: "pointer" }}
             />
           )}
-
           {showSettingsIcon && (
             <IoIosSettings
               className="settingsIcon"
               onClick={openLiveSettings}
             />
           )}
-
           {showLeavePrivateRoomButton && (
             <p onClick={() => setShowPrivateMessagingSettings(true)}>Menu</p>
           )}
-
           {showPrivateMessagingSettings && (
             <PrivateMessageSettings
               onClose={() => setShowPrivateMessagingSettings(false)}

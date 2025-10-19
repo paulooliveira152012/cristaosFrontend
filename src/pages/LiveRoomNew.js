@@ -68,8 +68,12 @@ const LiveRoomNew = () => {
 
   // ✅ auto-join (Agora + socket) ao montar / mudar sala
   useEffect(() => {
-    if (!roomId || !currentUser?._id) return;
+    if (!roomId || !currentUser?._id) {
+      console.log("🚨 ERRO! faltando parametros")
+      return;
+    } 
     // agora channel (idempotente)
+    console.log("✅ chamando joinChannel com", roomId, "e", currentUser._id)
     joinChannel({ roomId, userId: currentUser._id });
   }, [roomId, currentUser?._id, joinChannel, socket]);
 
