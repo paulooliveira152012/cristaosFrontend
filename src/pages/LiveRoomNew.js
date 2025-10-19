@@ -18,7 +18,7 @@ import RoomMenuModal from "../components/liveRoom/RoomMenuModal";
 // functions
 import {
   joinAsSpeaker, // add user as speaker (se for usar)
-  leaveStage,    // remove speaker (se for usar)
+  leaveStage, // remove speaker (se for usar)
   onSaveSettings,
   handleDeleteRoom,
 } from "./functions/liveRoomFunctions2";
@@ -90,53 +90,62 @@ const LiveRoomNew = () => {
     };
   }, [roomId, currentUser?._id, joinChannel, socket]);
 
-  console.log("room:", room)
-  console.log("room.isLive:", room?.isLive)
+  console.log("room:", room);
+  console.log("room.isLive:", room?.isLive);
 
   const isLive = !!room?.isLive;
 
   return (
     <div className="screenWrapper liveRoom">
       <div className={isLive ? "topLiveOn" : "topLiveOff"}>
-      <Header
-        navigate={navigate}
-        showProfileImage={false}
-        showLeaveButton={true}
-        handleLeaveRoom={() =>
-          handleLeaveRoom({
-            roomId,
-            user: currentUser,
-            baseUrl,
-            leaveChannel,
-            navigate,
-            ownerId: sala?.owner?._id,
-            isSpeaker: isCurrentUserSpeaker,
-          })
-        }
-        showSettingsIcon={canStartRoom}
-        openLiveSettings={() => setShowSettingsModal(true)}
-        onBack={() =>
-          handleBack(
-            navigate,
-            null,
-            roomId,
-            currentUser?._id,
-            minimizeRoom,
-            sala,
-            isRejoiningRef,
-            microphoneOn
-          )
-        }
-        roomId={roomId}
-      />
+        <Header
+          navigate={navigate}
+          showProfileImage={false}
+          showLeaveButton={true}
+          handleLeaveRoom={() =>
+            handleLeaveRoom({
+              roomId,
+              user: currentUser,
+              baseUrl,
+              leaveChannel,
+              navigate,
+              ownerId: sala?.owner?._id,
+              isSpeaker: isCurrentUserSpeaker,
+            })
+          }
+          showSettingsIcon={canStartRoom}
+          openLiveSettings={() => setShowSettingsModal(true)}
+          onBack={() =>
+            handleBack(
+              navigate,
+              null,
+              roomId,
+              currentUser?._id,
+              minimizeRoom,
+              sala,
+              isRejoiningRef,
+              microphoneOn
+            )
+          }
+          roomId={roomId}
+        />
 
-      {isLive && showSpeakers && <Speakers />}
-      <Listeners />
-      <VoiceComponent roomId={roomId} />
+        {isLive && showSpeakers && <Speakers />}
+        <Listeners />
+
+        {isLive && !isCurrentUserSpeaker && (
+          <button
+            className="joinSpeakers"
+            onClick={() => joinAsSpeaker(joinChannel, roomId, currentUser)}
+          >
+            Subir para falar
+          </button>
+        )}
+        <VoiceComponent roomId={roomId} />
       </div>
 
       <div className={isLive ? "bottomLiveOn" : "bottomLiveOff"}>
-      <ChatComponent roomId={roomId} />
+        <ChatComponent roomId={roomId} />
       </div>
       {showSettingsModal && (
         <RoomMenuModal

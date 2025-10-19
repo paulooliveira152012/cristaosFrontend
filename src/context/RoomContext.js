@@ -281,55 +281,43 @@ export function RoomProvider({ children }) {
   );
 
   // 3) Iniciar Live (wrapper de alto nível para o app)
-  const startLive = useCallback(
-    async ({ joinChannel, setIsSpeaker, setIsLive } = {}) => {
-      // VALIDAÇÕES BÁSICAS
-      const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
-      if (!baseUrl) {
-        console.warn("REACT_APP_API_BASE_URL ausente.");
-        return { ok: false, reason: "missing_baseUrl" };
-      }
-      if (!currentUser?._id) {
-        console.warn("Usuário não logado.");
-        return { ok: false, reason: "missing_userId" };
-      }
-      if (!roomId) {
-        console.warn("roomId ausente no contexto.");
-        return { ok: false, reason: "missing_roomId" };
-      }
+  // 3) Iniciar Live (APENAS metadados/estado)
+const startLive = useCallback(
+  async () => {
+    const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
+    if (!baseUrl) return { ok: false, reason: "missing_baseUrl" };
+    if (!currentUser?._id) return { ok: false, reason: "missing_userId" };
+    if (!roomId) return { ok: false, reason: "missing_roomId" };
 
-      const res = await startLiveCore({
-        baseUrl,
-        currentUser,
-        roomId,
-        joinChannel,
-      });
+    const res = await startLiveCore({
+      baseUrl,
+      currentUser,
+      roomId,
+      // ⛔️ NÃO passe joinChannel aqui
+    });
 
-      if (res.ok) {
-        setRoom((prev) =>
-          prev
-            ? {
-                ...prev,
-                isLive: true,
-                speakers: Array.from(
-                  new Set([...(prev.speakers || []), currentUser._id])
-                ),
-              }
-            : prev
-        );
-        setSpeakers((prev) =>
-          Array.from(new Set([...(prev || []), currentUser._id]))
-        );
-        setIsSpeaker?.(true);
-        setIsLive?.(true);
-      } else {
-        console.warn("Falha ao iniciar live (startLive):", res);
-      }
+    if (res?.ok) {
+      setRoom((prev) =>
+        prev
+          ? {
+              ...prev,
+              isLive: true,
+              speakers: [
+                ...(prev.speakers || []),
+                { _id: currentUser._id, username: currentUser.username, profileImage: currentUser.profileImage },
+              ],
+            }
+          : prev
+      );
+    } else {
+      console.warn("Falha ao iniciar live (startLive):", res);
+    }
 
-      return res;
-    },
-    [currentUser, roomId, setRoom]
-  );
+    return res;
+  },
+  [currentUser, roomId, setRoom]
+);
+
 
   // 4 - End/Leave room
 

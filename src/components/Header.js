@@ -46,13 +46,8 @@ const Header = ({
   const [showPrivateMessagingSettings, setShowPrivateMessagingSettings] =
     useState(false);
 
-  const { 
-    room, 
-    startLive,
-    leaveRoom,
-    canStartRoom
-  } = useRoom();
-  const { joinChannel, setIsSpeaker, setIsLive } = useAudio();
+  const { room, startLive, leaveRoom, canStartRoom } = useRoom();
+  const { joinChannel, joinAsSpeaker, toggleMicrophone, setIsSpeaker, setIsLive } = useAudio();
   const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
 
   useEffect(() => {
@@ -82,25 +77,23 @@ const Header = ({
   // );
 
   // currentUser: --> object with _id: '689c03d3cd1329d79c
-  console.log("currentUser:", currentUser)
+  console.log("currentUser:", currentUser);
   // canStartRoom --> array with ids of users that can start room ['68cdf058e473a683a630efa8']
-  console.log("canStartRoom:", canStartRoom)
+  console.log("canStartRoom:", canStartRoom);
   // check if currentUser._id matches any of the ids in canStartRoom
 
   const userId = String(currentUser?._id || "");
 
-
-const canStart =
-  !!userId &&
-  Array.isArray(canStartRoom) &&
-  canStartRoom.some((entry) => {
-    const id = (entry && typeof entry === "object" && "_id" in entry)
-      ? entry._id
-      : entry;
-    return String(id) === userId;
-  });
-  
-  
+  const canStart =
+    !!userId &&
+    Array.isArray(canStartRoom) &&
+    canStartRoom.some((entry) => {
+      const id =
+        entry && typeof entry === "object" && "_id" in entry
+          ? entry._id
+          : entry;
+      return String(id) === userId;
+    });
 
   return (
     <div className="stickyHeader">
@@ -155,12 +148,27 @@ const canStart =
           {showLeaveButton && canStart && !room?.isLive && (
             <RiVoiceAiLine
               onClick={async () => {
-                const res = await startLive({
-                  joinChannel,
-                  setIsSpeaker,
-                  setIsLive,
-                });
-                if (!res.ok) console.warn("Falha ao iniciar live:", res);
+                try {
+                  const userId = String(currentUser?._id);
+                  if (!roomId || !userId) return;
+
+                  // 1) entra no canal (audience)
+                  const j1 = await joinChannel({ roomId, userId });
+                  if (j1?.ok === false) throw new Error("joinChannel failed");
+
+                  // 2) sobe papel para speaker/host (mic continua OFF)
+                  const j2 = await joinAsSpeaker({ roomId });
+                  if (j2?.ok === false) throw new Error("joinAsSpeaker failed");
+
+                  // 3) liga microfone (publica track local)
+                  await toggleMicrophone({ roomId, on: true });
+
+                  // 4) marca sala como live no backend (apenas metadados da UI)
+                  const res = await startLive(); // <- ver item 2
+                  if (!res?.ok) console.warn("Falha ao iniciar live:", res);
+                } catch (err) {
+                  console.error("Start Live sequence error:", err);
+                }
               }}
             />
           )}
