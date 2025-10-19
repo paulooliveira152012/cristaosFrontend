@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 import "../styles/components/header.css";
 import { Link } from "react-router-dom";
 import { useUser } from "../context/UserContext";
+import { useRoom } from "../context/RoomContext";
+import { useAudio } from "../context/AudioContext";
 import imagePlaceholder from "../assets/images/profileplaceholder.png";
 import SettingsIcon from "../assets/icons/settingIcon";
 import SideMenu from "./SideMenu";
@@ -10,11 +12,8 @@ import BackArrow from "../assets/icons/Arrow_left";
 import CloseIcon from "../assets/icons/closeIcon";
 import PrivateMessageSettings from "./PrivateMessageSettings";
 import { handleLogout, handleBack } from "./functions/headerFunctions";
-import { useRoom } from "../context/RoomContext";
 
 import { startLiveCore } from "../context/functions.js/roomContextFunctions";
-
-import { useAudio } from "../context/AudioContext";
 
 import { RiVoiceAiLine } from "react-icons/ri";
 import { IoIosSettings } from "react-icons/io";
@@ -50,7 +49,8 @@ const Header = ({
   const { 
     room, 
     startLive,
-    leaveRoom
+    leaveRoom,
+    canStartRoom
   } = useRoom();
   const { joinChannel, setIsSpeaker, setIsLive } = useAudio();
   const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
@@ -80,6 +80,27 @@ const Header = ({
   //   effectiveRoomId,
   //   typeof joinChannel
   // );
+
+  // currentUser: --> object with _id: '689c03d3cd1329d79c
+  console.log("currentUser:", currentUser)
+  // canStartRoom --> array with ids of users that can start room ['68cdf058e473a683a630efa8']
+  console.log("canStartRoom:", canStartRoom)
+  // check if currentUser._id matches any of the ids in canStartRoom
+
+  const userId = String(currentUser?._id || "");
+
+
+const canStart =
+  !!userId &&
+  Array.isArray(canStartRoom) &&
+  canStartRoom.some((entry) => {
+    const id = (entry && typeof entry === "object" && "_id" in entry)
+      ? entry._id
+      : entry;
+    return String(id) === userId;
+  });
+  
+  
 
   return (
     <div className="stickyHeader">
@@ -131,7 +152,7 @@ const Header = ({
             </button>
           )}
 
-          {showLeaveButton && !room?.isLive && (
+          {showLeaveButton && canStart && !room?.isLive && (
             <RiVoiceAiLine
               onClick={async () => {
                 const res = await startLive({

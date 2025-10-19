@@ -365,10 +365,11 @@ export function RoomProvider({ children }) {
 
   // -------------------------- END functions --------------------------
 
-  console.log("room:", room);
+  console.log("room no roomContext:", room);
   // console.log("newMessage:", newMessage);
   // console.log("listeners:", listeners);
   // console.log("speakers:", speakers);
+  console.log("canStartRoom:", canStartRoom)
 
   return (
     <RoomContext.Provider
