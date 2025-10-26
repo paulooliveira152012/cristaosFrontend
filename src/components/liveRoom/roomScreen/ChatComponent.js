@@ -1,4 +1,11 @@
-import React, { useState, useRef, useCallback } from "react";
+// ChatComponent.jsx — atualizado para novo AudioContext (ensureJoined/startMic/stopMic)
+// Alterações principais:
+// 1) Remove uso de joinAsSpeaker e toggleMicrophone do AudioContext.
+// 2) Passo de 'virar speaker' agora emite diretamente via socket (server define papel).
+// 3) Controle local de estado do mic (micOnLocal) usando startMic/stopMic do AudioContext.
+// 4) Garante join no canal via ensureJoined antes de ligar o mic.
+
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useUser } from "../../../context/UserContext.js";
 import { useRoom } from "../../../context/RoomContext.js";
 import { useSocket } from "../../../context/SocketContext.js";
@@ -18,7 +25,8 @@ import {
   getRandomDarkColor,
   handleScrollUtil,
   scrollToBottomUtil,
-  handleToggleMicrophoneUtil,
+  // ⚠️ Se você mantiver esse util, veja versão atualizada no final deste arquivo
+  // handleToggleMicrophoneUtil,
 } from "../../functions/chatComponentFunctions.js";
 
 // abaixo dos imports de hooks, antes do componente:
@@ -28,13 +36,21 @@ const getMessageId = (m) =>
 const ChatComponent = ({ roomId }) => {
   const { socket } = useSocket();
   const { currentUser } = useUser();
-  // ✅ só o que você usa do AudioContext
-  const { toggleMicrophone, micOn, joinAsSpeaker} = useAudio();
+
+  // Novo: usamos apenas o necessário do AudioContext
+  const {
+    ensureJoined,
+    startMic,
+    stopMic,
+    state: rtcState,
+    micOnState,
+  } = useAudio();
 
   const messagesContainerRef = useRef(null);
   const inputRef = useRef(null);
   const usernameColors = useRef({});
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [micPermission, setMicPermission] = useState(null); // "granted" | "denied" | "prompt" | null
 
   const {
     room,
@@ -46,6 +62,36 @@ const ChatComponent = ({ roomId }) => {
     isCurrentUserSpeaker,
   } = useRoom();
 
+  // acompanha o estado da permissão (Chrome/Edge/Brave; Safari pode retornar null)
+  useEffect(() => {
+    let watcher;
+    (async () => {
+      if (!navigator.permissions?.query) return;
+      try {
+        const status = await navigator.permissions.query({
+          name: "microphone",
+        });
+        setMicPermission(status.state);
+        watcher = status;
+        status.onchange = () => setMicPermission(status.state);
+      } catch {}
+    })();
+    return () => {
+      if (watcher) watcher.onchange = null;
+    };
+  }, []);
+
+  const askMicPermission = useCallback(async () => {
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      // se o usuário permitir, o permission API mudará para "granted" e o startMic funcionará
+      return true;
+    } catch (e) {
+      console.warn("getUserMedia negado no askMicPermission:", e);
+      return false;
+    }
+  }, []);
+
   // função estável para rolar ao fim
   const scrollToBottom = useCallback(
     () => scrollToBottomUtil(messagesContainerRef),
@@ -54,20 +100,73 @@ const ChatComponent = ({ roomId }) => {
   useAutoScrollToBottom(messages, isAtBottom, scrollToBottom);
   const onScroll = () => handleScrollUtil(messagesContainerRef, setIsAtBottom);
 
-   const onToggleMic = async () => {
-  if (!roomId || !currentUser?._id) return;
-  // 1) Se não for speaker ainda, vira speaker (mic continua OFF por padrão)
-  if (!isCurrentUserSpeaker) {
-    await joinAsSpeaker({ roomId }); // só seta papel no servidor
-  }
-  // 2) Agora sim, alterna o mic (liga/desliga local + emite socket no AudioContext)
-  await handleToggleMicrophoneUtil({
-    toggleMicrophone,
-    micState: micOn,
-    roomId,
-  });
-};
+  const ensureRtcReady = useCallback(async () => {
+    // Garante que estamos conectados ao canal de voz antes de mexer no mic
+    const channel = roomId || room?._id || null;
+    const uid = currentUser?._id || null;
+    if (!channel || !uid) return false;
+    const ok = await ensureJoined(channel, uid);
+    return ok;
+  }, [ensureJoined, roomId, room?._id, currentUser?._id]);
 
+  const requestJoinAsSpeaker = useCallback(async () => {
+    if (!socket?.connected) return;
+    // Emite para o servidor que este usuário quer "subir ao palco".
+    // Seu backend já deve promover o papel e broadcastar para todos.
+    socket.emit("joinAsSpeaker", { roomId, userId: currentUser?._id });
+  }, [socket, roomId, currentUser?._id]);
+
+  const onToggleMic = async () => {
+    if (!roomId || !currentUser?._id) return;
+
+    // Se ainda não é speaker, solicita promoção primeiro (mic continua OFF por padrão)
+    if (!isCurrentUserSpeaker) {
+      await requestJoinAsSpeaker();
+      // Observação: assumimos que o RoomContext será atualizado via socket do servidor
+      // e refletirá isCurrentUserSpeaker = true em seguida.
+    }
+
+    // Se o browser indicar "denied", avisa e não tenta ligar
+    if (micPermission === "denied") {
+      console.warn(
+        "⚠️ Permissão de microfone NEGADA. Habilite no cadeado da URL e recarregue."
+      );
+      // aqui você pode abrir um toast/modal amigável
+      return;
+    }
+    // Se estiver em "prompt", chamamos uma vez para abrir o pop-up
+    if (micPermission === "prompt") {
+      const ok = await askMicPermission();
+      if (!ok) return; // usuário recusou no prompt
+      // se permitiu, o status deve mudar para "granted" e seguir abaixo
+    }
+
+    // Garante join no canal de voz
+    const joined = await ensureRtcReady();
+    if (!joined) return;
+
+    // Agora alterna o microfone local
+    try {
+      if (!micOnState) {
+        const ok = await startMic();
+        if (!ok) return; // permissão negada, não segue
+        socket?.emit?.("micToggled", {
+          roomId,
+          userId: currentUser._id,
+          micOn: true,
+        });
+      } else {
+        await stopMic();
+        socket?.emit?.("micToggled", {
+          roomId,
+          userId: currentUser._id,
+          micOn: false,
+        });
+      }
+    } catch (e) {
+      console.error("Falha ao alternar microfone:", e);
+    }
+  };
 
   const handleSendMessage = () => {
     const text = (newMessage || "").trim();
@@ -106,7 +205,7 @@ const ChatComponent = ({ roomId }) => {
                 className={`messageRow ${isMine ? "mine" : "theirs"}`}
               >
                 <Link
-                  to={msg.userId ? `/profile/${msg.userId}` : "#"} // ✅ evita link quebrado
+                  to={msg.userId ? `/profile/${msg.userId}` : "#"}
                   className="avatarLink"
                 >
                   <div
@@ -183,8 +282,8 @@ const ChatComponent = ({ roomId }) => {
           <button
             className="iconBtn"
             onClick={onToggleMic}
-            aria-label={micOn ? "Desativar microfone" : "Ativar microfone"}
-            title={micOn ? "Microfone ligado" : "Microfone desligado"}
+            aria-label={micOnState ? "Desativar microfone" : "Ativar microfone"}
+            title={micOnState ? "Microfone ligado" : "Microfone desligado"}
             style={{
               width: 40,
               height: 40,
@@ -194,7 +293,18 @@ const ChatComponent = ({ roomId }) => {
               padding: 0,
             }}
           >
-            {micOn ? <MicOn /> : <MicOff2 />}
+            {micOnState ? <MicOn /> : <MicOff2 />}
+          </button>
+        )}
+
+        {room?.isLive && micPermission === "prompt" && (
+          <button
+            className="iconBtn"
+            onClick={askMicPermission}
+            title="Conceder acesso ao microfone"
+            style={{ marginLeft: 8 }}
+          >
+            Permitir mic
           </button>
         )}
 
@@ -212,3 +322,109 @@ const ChatComponent = ({ roomId }) => {
 };
 
 export default ChatComponent;
+
+/*
+=====================================================================
+RoomContext patches — currentUsersSpeaking + isCurrentUserSpeaker
+---------------------------------------------------------------------
+// RoomContext.jsx — adições e alterações pontuais
+
+// 1) ESTADOS NOVOS (perto dos outros useState):
+// -------------------------------------------------
+const [currentUsersSpeaking, setCurrentUsersSpeaking] = useState([]);
+
+// 2) AJUSTE NO LISTENER PRINCIPAL (liveRoomUsers):
+// -------------------------------------------------
+const onLiveRoomUsers = (payload) => {
+  if (!payload || String(payload.roomId) !== String(roomId)) return;
+
+  const speakers = payload?.speakers ?? [];
+  const currentUsers = payload?.users ?? payload?.currentUsersInRoom ?? [];
+
+  setRoom((prev) => ({
+    ...(prev || {}),
+    _id: roomId,
+    currentUsersInRoom: currentUsers,
+    speakers, // se você ainda usa prev.speakers noutros lugares
+    currentUsersSpeaking: speakers, // mantém no room também (opcional)
+    isLive: !!payload?.isLive,
+  }));
+
+  setListeners(currentUsers);
+  setSpeakers(speakers); // legado
+  setCurrentUsersSpeaking(Array.isArray(speakers) ? speakers : []); // ✅ nunca undefined
+  setIsRoomReady(true);
+};
+
+// 3) NOVOS LISTENERS DE STAGE/SPEAKERS (logo após registrar liveRoomUsers):
+// -------------------------------------------------
+const onUpdateSpeakers = (payload) => {
+  const list = payload?.list;
+  setCurrentUsersSpeaking(Array.isArray(list) ? list : []);
+};
+
+const onUserJoinsStage = (user) => {
+  setCurrentUsersSpeaking((prev) => {
+    const id = user?._id || user?.id;
+    if (!id) return prev || [];
+    const exists = (prev || []).some((u) => (u._id || u.id) === id);
+    return exists ? prev : [ ...(prev || []), user ];
+  });
+};
+
+const onUserLeavesStage = ({ userId }) => {
+  setCurrentUsersSpeaking((prev) => (prev || []).filter((u) => (u._id || u.id) !== userId));
+};
+
+socket.on("updateSpeakers", onUpdateSpeakers);
+socket.on("userJoinsStage", onUserJoinsStage);
+socket.on("userLeavesStage", onUserLeavesStage);
+
+// 4) CLEANUP (no return do useEffect):
+// -------------------------------------------------
+return () => {
+  alive = false;
+  socket.off("liveRoomUsers", onLiveRoomUsers);
+  socket.off("newMessage", onNewRoomMessage);
+  socket.off("messageDeleted", onMessageDeleted);
+  socket.off("updateSpeakers", onUpdateSpeakers);
+  socket.off("userJoinsStage", onUserJoinsStage);
+  socket.off("userLeavesStage", onUserLeavesStage);
+  socket.emit("leaveRoomChat", { roomId });
+};
+
+// 5) EXPOSE NO PROVIDER (dentro de value):
+// -------------------------------------------------
+// - isCurrentUserSpeaker: true/false para o usuário atual
+// - currentUsersSpeaking: lista completa
+
+// compute simples (sem useMemo):
+const isCurrentUserSpeaker = !!currentUsersSpeaking?.some(
+  (u) => (u?._id || u?.id) === currentUserId
+);
+
+// e então, no value do Provider, adicione:
+//   currentUsersSpeaking,
+//   isCurrentUserSpeaker,
+
+// 6) OPCIONAL: HELPERS PARA SUBIR/DESCE DO PALCO
+// -------------------------------------------------
+const addSpeaker = useCallback((user) => {
+  socket?.emit("joinAsSpeaker", { roomId, userId: user?._id || currentUserId });
+}, [socket, roomId, currentUserId]);
+
+const removeSpeaker = useCallback((userIdParam) => {
+  socket?.emit("leaveAsSpeaker", { roomId, userId: userIdParam || currentUserId });
+}, [socket, roomId, currentUserId]);
+
+// e exponha no Provider se quiser usar na UI:
+//   addSpeaker,
+//   removeSpeaker,
+
+// 7) AO ENCERRAR A LIVE, LIMPAR SPEAKERS (ex.: no stopLiveRoom ack):
+// -------------------------------------------------
+// setRoom((prev) => prev ? { ...prev, isLive: false, speakers: [], currentUsersSpeaking: [] } : prev);
+// setCurrentUsersSpeaking([]);
+
+=====================================================================
+*/

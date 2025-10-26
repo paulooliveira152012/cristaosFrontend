@@ -1,315 +1,263 @@
-// src/context/AudioContext.js
 import React, {
   createContext,
   useContext,
-  useMemo,
-  useState,
-  useCallback,
   useEffect,
+  useMemo,
   useRef,
+  useCallback,
 } from "react";
 import AgoraRTC from "agora-rtc-sdk-ng";
-import {
-  AgoraRTCProvider,
-  useJoin,
-  useLocalMicrophoneTrack,
-  usePublish,
-  useRemoteUsers,
-  useClientEvent,
-} from "agora-rtc-react";
-import { useSocket } from "./SocketContext";
+import { useUser } from "../context/UserContext";
+import { useRoom } from "../context/RoomContext";
 
 const AudioContext = createContext(null);
 export const useAudio = () => useContext(AudioContext);
 
-function AudioInner({ client, children }) {
-  const { socket } = useSocket();
+export default function AudioProvider({ children }) {
+  const client = React.useMemo(
+    () => AgoraRTC.createClient({ mode: "live", codec: "vp8" }),
+    []
+  );
+
+  const { currentUser } = useUser();
+  const { room, roomId } = useRoom();
+
+  const channel = roomId ?? room?._id ?? null;
+  const userId = currentUser?._id ?? null;
+
+  // abaixo de micTrackRef
+  const micOnRef = useRef(false);
+  const [micOnState, setMicOnState] = React.useState(false);
 
   const APP_ID = process.env.REACT_APP_AGORA_APP_ID || "";
-  const TOKEN = process.env.REACT_APP_AGORA_TOKEN || null;
+  // Deixe SEM token fixo no front:
+  // const TOKEN_ENV = process.env.REACT_APP_AGORA_TOKEN || null;
 
-  const [channel, setChannel] = useState(null);
-  const [uid, setUid] = useState(null);
-  const [micOn, setMicOn] = useState(false);
+  // Guarda a track local para start/stop
+  const micTrackRef = useRef(null);
 
-  const [desiredRole, setDesiredRole] = useState("audience");
-  const currentRoleRef = useRef(null);
-
-  // join/leave controlado por channel != null
-  // useJoin({ appid: APP_ID, channel, token: TOKEN, uid }, Boolean(channel));
-  useEffect(() => {
-    console.log("✅ 1")
-  let cancelled = false;
-
-  const doJoin = async () => {
-    if (!channel) return;
-    if (!APP_ID) { console.error("🚨 APP_ID ausente"); return; }
-
-    console.log("🟢 Agora join params:", {
-      appIdLen: (APP_ID || "").length,
-      channel,
-      uidProvided: !!uid,
-      tokenProvided: !!TOKEN,
-    });
-
-    try {
-      // limpa sessão anterior
-      if (client.connectionState !== "DISCONNECTED") {
-        try { await client.leave(); } catch {}
-      }
-
-      // ⚠️ NÃO bloqueie por uid; deixe null se ainda não setou
-      const joinedUid = await client.join(APP_ID, channel, TOKEN ?? null, uid ?? null);
-      if (cancelled) return;
-
-      // se não tínhamos uid, salve o alocado pelo Agora
-      if (!uid && joinedUid != null) {
-        setUid(String(joinedUid));
-      }
-
-      console.log("✅ JOIN OK • joinedUid:", joinedUid, "• state:", client.connectionState);
-    } catch (e) {
-      if (cancelled) return;
-      console.error("❌ JOIN FAILED:", e?.code || e?.name, e?.message, e);
-    }
-  };
-
-  doJoin();
-  return () => { cancelled = true; };
-}, [APP_ID, TOKEN, channel, uid, client]);
-
-
-  // cria track quando micOn=true e publica
-  const { localMicrophoneTrack } = useLocalMicrophoneTrack(micOn);
-  usePublish(micOn && localMicrophoneTrack ? [localMicrophoneTrack] : []);
-
-  const remoteUsers = useRemoteUsers();
-
-  // LOGS de conexão
-  useClientEvent(client, "connection-state-change", (cur, prev, reason) => {
-    console.log("[Agora] connection:", prev, "→", cur, "reason:", reason);
-  });
-  useClientEvent(client, "user-joined", (u) => {
-    console.log("[Agora] user-joined:", u.uid);
-  });
-  useClientEvent(client, "user-left", (u) => {
-    console.log("[Agora] user-left:", u.uid);
-  });
-
-  // toca áudio quando alguém publica
-  useClientEvent(client, "user-published", async (user, mediaType) => {
-    console.log("[Agora] user-published:", user.uid, mediaType);
-    if (mediaType === "audio") {
-      try {
-        await client.subscribe(user, "audio");
-        console.log("[Agora] subscribed ->", user.uid);
-        user.audioTrack?.play();
-        console.log("[Agora] playing remote audio of", user.uid);
-      } catch (err) {
-        console.warn("[Agora] subscribe error:", err);
-      }
-    }
-  });
-
-  // para de tocar se despublicar
-  useClientEvent(client, "user-unpublished", (user, mediaType) => {
-    if (mediaType === "audio") {
-      try {
-        user.audioTrack?.stop();
-      } catch {}
-      console.log("[Agora] user-unpublished:", user.uid);
-    }
-  });
-
-  // ✅ assina quem JÁ estava publicado quando eu entrei
-  useEffect(() => {
-    (async () => {
-      try {
-        for (const u of remoteUsers) {
-          if (u.hasAudio) {
-            console.log("[Agora] late-subscribe to", u.uid);
-            await client.subscribe(u, "audio");
-            u.audioTrack?.play();
-            console.log("[Agora] playing (late) audio of", u.uid);
-          }
+  // ===== Helpers de token dinâmico =====
+  // Adapte a rota ao seu backend. Deve retornar { token, uid? }.
+  const fetchRtcToken = useCallback(
+    async (channelName, role = "publisher", uidHint) => {
+      // Exemplo GET; se seu back for POST, ajuste:
+      const qs = new URLSearchParams({
+        channel: channelName,
+        role, // "publisher" ou "audience"
+        // opcional: se quiser forçar uid numérico gerado no servidor:
+        // uid: uidHint ? String(uidHint) : ""
+      });
+      const res = await fetch(
+        `${process.env.REACT_APP_API_BASE_URL}/agora/rtcToken?${qs.toString()}`,
+        {
+          credentials: "include",
         }
-      } catch (e) {
-        console.warn("[Agora] late-subscribe error:", e);
-      }
-    })();
-  }, [remoteUsers, client]);
+      );
+      if (!res.ok) throw new Error(`rtcToken http ${res.status}`);
+      const data = await res.json();
+      // data: { token: "xxxxx", uid?: number|string }
+      return data;
+    },
+    []
+  );
 
-  // aplica papel quando conectar / trocar desiredRole
-  useEffect(() => {
-    const applyRole = async () => {
-      if (!channel) return;
-      if (currentRoleRef.current === desiredRole) return;
+  // join robusto: busca token, tenta join e trata token expirado
+  // AudioContext.js
+  const ensureJoined = useCallback(
+    async (channelName, userId, tokenFromServer = null) => {
+      console.log("[Audio.ensureJoined] state:", client.connectionState, {
+        channelName,
+        userId,
+      });
+      if (!APP_ID) {
+        console.error("APP_ID ausente");
+        return false;
+      }
+      if (!channelName) {
+        console.warn("channel ausente");
+        return false;
+      }
+
+      // Se já conectado, mas em canal diferente, sai e entra de novo
+      const sameChannel =
+        client.connectionState === "CONNECTED" &&
+        (client.channelName === channelName ||
+          client.channelName === String(channelName));
+      if (sameChannel) return true;
+      if (client.connectionState !== "DISCONNECTED") {
+        try {
+          await client.leave();
+        } catch {}
+      }
+
       try {
-        await client.setClientRole(desiredRole);
-        currentRoleRef.current = desiredRole;
-        console.log("[Agora] role set:", desiredRole);
+        const joinedUid = await client.join(
+          APP_ID,
+          channelName,
+          tokenFromServer ?? null, // << usa token se tiver; senão null (somente se seu projeto Agora estiver sem certificate)
+          userId ?? null
+        );
+        console.log("JOIN OK, my uid:", joinedUid);
+        return true;
       } catch (e) {
-        console.warn("[Agora] setClientRole error:", e);
+        console.error("JOIN FAILED:", e?.code || e?.name, e?.message, e);
+        return false;
+      }
+    },
+    [client, APP_ID]
+  );
+
+  async function requestMicPreflight() {
+    const stream = await navigator.mediaDevices
+      .getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      })
+      .catch((e) => {
+        throw e;
+      });
+    if (stream) stream.getTracks().forEach((t) => t.stop());
+  }
+
+  // Listeners principais (uma vez)
+  useEffect(() => {
+    const onUserPublished = async (user, mediaType) => {
+      try {
+        await client.subscribe(user, mediaType);
+        if (mediaType === "audio") user.audioTrack?.play();
+      } catch (e) {
+        console.warn("[Agora] subscribe error:", e);
       }
     };
-    applyRole();
-  }, [client, channel, desiredRole]);
+    const onUserUnpublished = (user, mediaType) => {
+      if (mediaType === "audio") {
+        try {
+          user.audioTrack?.stop();
+        } catch {}
+      }
+    };
+    client.on("user-published", onUserPublished);
+    client.on("user-unpublished", onUserUnpublished);
+    return () => {
+      client.off("user-published", onUserPublished);
+      client.off("user-unpublished", onUserUnpublished);
+    };
+  }, [client]);
 
-  // logs úteis
-  useEffect(() => {
-    const id = setInterval(() => {
-      console.log(
-        "[Agora] state:",
-        client.connectionState,
-        "| my uid:",
-        client.uid,
-        "| desiredRole:",
-        desiredRole,
-        "| micOn:",
-        micOn
-      );
-    }, 1500);
-    return () => clearInterval(id);
-  }, [client, desiredRole, micOn]);
+  // Start/stop mic
+  const startMic = useCallback(async () => {
+    if (client.connectionState !== "CONNECTED") {
+      console.warn("Mic: client ainda não CONNECTED");
+      return false;
+    }
+    if (micTrackRef.current) return true;
 
-  // aguarda o CONNECTED antes de promover/publish
-  const waitForJoin = useCallback(
-    async (maxMs = 2000) => {
-      const start = Date.now();
-      while (Date.now() - start < maxMs) {
-        if (client.connectionState === "CONNECTED") return true;
-        await new Promise((r) => setTimeout(r, 50));
+    try {
+      try {
+        await client.setClientRole("host");
+      } catch {}
+      // dispara prompt do navegador (se nunca concedeu)
+      try {
+        await requestMicPreflight();
+      } catch (e) {
+        console.error("Permissão de microfone negada no preflight:", e);
+        return false;
+      }
+
+      const track = await AgoraRTC.createMicrophoneAudioTrack({
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      });
+
+      micTrackRef.current = track;
+      await client.publish([track]);
+      micOnRef.current = true;
+      setMicOnState(true);
+      console.log("🎙️ Microfone publicado");
+      return true;
+    } catch (e) {
+      // diagnóstico amigável
+      const msg = String(e?.message || e?.name || "");
+      if (msg.includes("NotAllowedError")) {
+        console.error(">> Navegador bloqueou o microfone para este site.");
+      } else if (msg.includes("NotFoundError")) {
+        console.error(">> Nenhum dispositivo de áudio encontrado.");
+      } else if (msg.includes("AbortError")) {
+        console.error(
+          ">> getUserMedia abortado (talvez outra aba esteja usando o mic)."
+        );
+      } else {
+        console.error("Erro ao iniciar microfone:", e);
       }
       return false;
+    }
+  }, [client]);
+
+  const stopMic = useCallback(async () => {
+    const track = micTrackRef.current;
+    if (!track) return true;
+    try {
+      await client.unpublish([track]);
+    } catch {}
+    try {
+      track.stop();
+      track.close();
+    } catch {}
+    micTrackRef.current = null;
+    micOnRef.current = false;
+    setMicOnState(false);
+    console.log("🔇 Microfone parado");
+    return true;
+  }, [client]);
+
+  const leave = useCallback(async () => {
+    await stopMic();
+    try {
+      await client.leave();
+    } catch (e) {
+      console.warn("leave error:", e);
+    }
+  }, [client, stopMic]);
+
+  // (Opcional) Auto-join quando mudar roomId — pode deixar desligado se controla no botão
+  // useEffect(() => {
+  //   if (!channel || !userId) return;
+  //   ensureJoined(channel, userId);
+  // }, [channel, userId, ensureJoined]);
+
+  // Cleanup ao desmontar
+  useEffect(
+    () => () => {
+      client?.leave?.().catch(() => {});
     },
     [client]
   );
 
-  // ========= ações expostas =========
-  const joinChannel = useCallback(
-    async ({ roomId, userId }) => {
-      if (!roomId || !userId) return { ok: false, reason: "missing_params" };
-      console.log(
-        "[Agora] join channel",
-        roomId,
-        "uid",
-        userId,
-        "APP_ID",
-        !!APP_ID,
-        "TOKEN",
-        TOKEN ? "yes" : "no"
-      );
-      setUid(userId);
-      setDesiredRole("audience");
-      setChannel(roomId);
-      socket?.emit?.(
-        "joinRoomChat",
-        { roomId, currentUserId: userId },
-        () => {}
-      );
-      return { ok: true };
-    },
-    [socket, APP_ID, TOKEN]
-  );
-
-  const joinAsSpeaker = useCallback(
-    async ({ roomId }) => {
-      if (!roomId) return { ok: false, reason: "missing_roomId" };
-      if (!channel) setChannel(roomId);
-
-      const ok = await waitForJoin(2000);
-      if (!ok) {
-        console.warn("[Agora] join not CONNECTED yet; scheduling host role.");
-        setDesiredRole("host");
-      } else {
-        try {
-          await client.setClientRole("host");
-          currentRoleRef.current = "host";
-          console.log("[Agora] role set -> host (joinAsSpeaker)");
-        } catch (e) {
-          console.warn("[Agora] setClientRole(host) failed:", e);
-          setDesiredRole("host");
-        }
-      }
-      setMicOn(false);
-      socket?.emit?.("joinAsSpeaker", { roomId });
-      return { ok: true };
-    },
-    [socket, channel, client, waitForJoin]
-  );
-
-  const toggleMicrophone = useCallback(
-    async ({ roomId, on }) => {
-      if (on && client.connectionState !== "CONNECTED") {
-        console.warn("[Agora] toggleMicrophone ignorado: ainda não CONNECTED");
-        return;
-      }
-      if (on && currentRoleRef.current !== "host") {
-        const ok = await waitForJoin(2000);
-        if (ok) {
-          try {
-            await client.setClientRole("host");
-            currentRoleRef.current = "host";
-            console.log("[Agora] escalado para host (toggle)");
-          } catch (e) {
-            console.warn("[Agora] setClientRole(host) no toggle:", e);
-            setDesiredRole("host");
-          }
-        } else {
-          setDesiredRole("host");
-        }
-      }
-      setMicOn(!!on);
-      if (roomId) socket?.emit?.("toggleMicrophone", { roomId, on: !!on });
-    },
-    [socket, client, waitForJoin]
-  );
-
-  const leaveChannel = useCallback(
-    async ({ roomId }) => {
-      setMicOn(false);
-      setDesiredRole("audience");
-      setChannel(null);
-      currentRoleRef.current = null;
-      if (roomId) socket?.emit?.("leaveRoomChat", { roomId }, () => {});
-    },
-    [socket]
-  );
-
   const value = useMemo(
     () => ({
-      joinChannel,
-      joinAsSpeaker,
-      toggleMicrophone,
-      leaveChannel,
-      remoteUsers,
-      micOn,
-      client,
+      ensureJoined,
+      startMic,
+      stopMic,
+      leave,
+      get state() {
+        return client.connectionState;
+      },
+      get myUid() {
+        return client.uid;
+      },
+      get micOn() {
+        return micOnRef.current;
+      },
+      micOnState, // opcional, reativo
     }),
-    [
-      joinChannel,
-      joinAsSpeaker,
-      toggleMicrophone,
-      leaveChannel,
-      remoteUsers,
-      micOn,
-      client,
-    ]
+    [client, ensureJoined, startMic, stopMic, leave, micOnState]
   );
 
   return (
     <AudioContext.Provider value={value}>{children}</AudioContext.Provider>
-  );
-}
-
-export default function AudioProvider({ children }) {
-  const client = useMemo(
-    () => AgoraRTC.createClient({ mode: "live", codec: "vp8" }),
-    []
-  );
-  return (
-    <AgoraRTCProvider client={client}>
-      <AudioInner client={client}>{children}</AudioInner>
-    </AgoraRTCProvider>
   );
 }

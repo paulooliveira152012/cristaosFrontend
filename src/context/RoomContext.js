@@ -5,7 +5,6 @@ import {
   useState,
   useEffect,
   useCallback,
-  useRef,
 } from "react";
 import {
   fetchRoomData,
@@ -15,7 +14,6 @@ import {
   startLiveCore,
 } from "./functions.js/roomContextFunctions";
 import { useUser } from "./UserContext";
-import { useAudio } from "./AudioContext";
 import { useSocket } from "./SocketContext";
 import { useNavigate } from "react-router-dom";
 
@@ -24,7 +22,6 @@ export const useRoom = () => useContext(RoomContext);
 
 export function RoomProvider({ children }) {
   const { currentUser } = useUser(); // para colocar na sala
-  const { joinChannel, joinAsSpeaker, toggleMicrophone } = useAudio();
   const { socket } = useSocket();
   const currentUserId = currentUser?._id ?? null;
   const navigate = useNavigate();
@@ -40,6 +37,7 @@ export function RoomProvider({ children }) {
 
   const [listeners, setListeners] = useState([]);
   const [speakers, setSpeakers] = useState([]);
+  const [currentUsersSpeaking, setCurrentUsersSpeaking] = useState([]);
 
   // messages
   const [messages, setMessages] = useState([]);
@@ -71,14 +69,18 @@ export function RoomProvider({ children }) {
     //==============================================
     // 0) fetch room data
     //==============================================
-    fetchRoomData({
-      roomId,
-      baseUrl,
-      setIsRoomReady,
-      setRoom,
-      setCanStartRoom,
-      setSpeakers,
-    });
+    if (baseUrl) {
+      fetchRoomData({
+        roomId,
+        baseUrl,
+        setIsRoomReady,
+        setRoom,
+        setCanStartRoom,
+        setSpeakers,
+      });
+    } else {
+      console.warn("Base URL ausente; pulando fetchRoomData");
+    }
 
     //==============================================
     // 1) listener de presença (liveRoomUsers)
@@ -93,16 +95,51 @@ export function RoomProvider({ children }) {
         ...(prev || {}),
         _id: roomId,
         currentUsersInRoom: currentUsers,
-        speakers,
+        speakers, // legado
+        currentUsersSpeaking: speakers, // opcional: replica no objeto room
         isLive: !!payload?.isLive,
       }));
 
       setListeners(currentUsers);
-      setSpeakers(speakers);
+      setSpeakers(speakers); // legado
+      setCurrentUsersSpeaking(Array.isArray(speakers) ? speakers : []); // ✅ nunca undefined
       setIsRoomReady(true);
     };
 
     socket.on("liveRoomUsers", onLiveRoomUsers);
+
+    const onUpdateSpeakers = (payload) => {
+      const list = payload?.list;
+      if (!Array.isArray(list)) return setCurrentUsersSpeaking([]);
+      const uniq = [];
+      const seen = new Set();
+      for (const u of list) {
+        const id = u?._id || u?.id;
+        if (!id || seen.has(id)) continue;
+        seen.add(id);
+        uniq.push(u);
+      }
+      setCurrentUsersSpeaking(uniq);
+    };
+
+    const onUserJoinsStage = (user) => {
+      setCurrentUsersSpeaking((prev) => {
+        const id = user?._id || user?.id;
+        if (!id) return prev || [];
+        const exists = (prev || []).some((u) => (u._id || u.id) === id);
+        return exists ? prev : [...(prev || []), user];
+      });
+    };
+
+    const onUserLeavesStage = ({ userId }) => {
+      setCurrentUsersSpeaking((prev) =>
+        (prev || []).filter((u) => (u._id || u.id) !== userId)
+      );
+    };
+
+    socket.on("updateSpeakers", onUpdateSpeakers);
+    socket.on("userJoinsStage", onUserJoinsStage);
+    socket.on("userLeavesStage", onUserLeavesStage);
 
     //==============================================
     // 2) entrar na sala (ACK opcional)
@@ -118,12 +155,17 @@ export function RoomProvider({ children }) {
     //==============================================
     (async () => {
       try {
-        await loadRoomMessages({
-          roomId,
-          baseUrl,
-          setMessages,
-          setAreMessagesReady,
-        });
+        if (baseUrl) {
+          await loadRoomMessages({
+            roomId,
+            baseUrl,
+            setMessages,
+            setAreMessagesReady,
+          });
+        } else {
+          console.warn("Base URL ausente; pulando loadRoomMessages");
+          setAreMessagesReady(true);
+        }
       } catch (err) {
         if (!alive) return;
         console.error("Erro ao carregar mensagens:", err);
@@ -140,13 +182,12 @@ export function RoomProvider({ children }) {
     const onNewRoomMessage = (msg) => {
       if (!alive || !msg) return;
       // se seu servidor emite roomId junto, filtre aqui:
-      // if (String(msg.roomId) !== String(roomId)) return;
+      if (msg.roomId && String(msg.roomId) !== String(roomId)) return;
 
       setMessages((prev) => {
         // dedupe por _id (Mongo)
         const id = msg?._id && String(msg._id);
         if (id && prev.some((m) => String(m._id) === id)) return prev;
-
         // append no fim; se quiser ordenar por timestamp, pode ordenar aqui
         return [...prev, msg];
       });
@@ -172,83 +213,14 @@ export function RoomProvider({ children }) {
       socket.off("liveRoomUsers", onLiveRoomUsers);
       socket.off("newMessage", onNewRoomMessage);
       socket.off("messageDeleted", onMessageDeleted);
+      socket.off("updateSpeakers", onUpdateSpeakers);
+      socket.off("userJoinsStage", onUserJoinsStage);
+      socket.off("userLeavesStage", onUserLeavesStage);
       socket.emit("leaveRoomChat", { roomId });
     };
   }, [socket, roomId, currentUserId, baseUrl, setRoom]);
 
   // -------------------------- END Useeffect --------------------------
-
-  // RoomContext.jsx (substitua os dois useEffects por este único)
-  // useEffect(() => {
-  //   console.log("1 useEffect inserindo usuario na sala e buscando dados.");
-  //   if (!roomId || !baseUrl || !currentUserId) return;
-
-  //   let alive = true;
-  //   setLoadingRoom(true);
-  //   setRoomError(null);
-  //   setIsRoomReady(false);
-  //   setAreMessagesReady(false);
-  //   setMessages([]);
-
-  //   (async () => {
-  //     try {
-  //       // 1) entra na sala via socket antes de qualquer coisa (para não perder eventos)
-  //       try {
-  //         await new Promise((resolve) => {
-  //           if (!socket?.connected) return resolve();
-  //           socket.emit("joinRoomChat", { roomId, userId: currentUserId }, () =>
-  //             resolve()
-  //           );
-  //         });
-  //       } catch {}
-
-  //       // 2) busca a sala (ideal: endpoint idempotente que já adiciona o usuário)
-  //       //    seu fetchRoomData pode continuar como está; se ele já seta estado, ok.
-  //       const result = await fetchRoomData({
-  //         roomId,
-  //         baseUrl,
-  //         currentUserId,
-  //       });
-
-  //       if (!alive) return;
-
-  //       // compat: se fetchRoomData não seta, usamos o retorno
-  //       const roomData = result?.data ?? result ?? null;
-  //       if (roomData) {
-  //         setRoom(roomData);
-  //         setIsRoomReady(true);
-  //       }
-
-  //       // 3) carrega mensagens após a sala estar pronta
-  //       const msgs = await loadRoomMessages({
-  //         roomId,
-  //         baseUrl,
-  //       });
-
-  //       if (!alive) return;
-  //       setMessages(Array.isArray(msgs) ? msgs : []);
-  //       setAreMessagesReady(true);
-  //     } catch (err) {
-  //       if (!alive) return;
-  //       console.error("Erro ao preparar sala:", err);
-  //       setRoom(null);
-  //       setIsRoomReady(false);
-  //       setRoomError(err);
-  //     } finally {
-  //       if (alive) setLoadingRoom(false);
-  //     }
-  //   })();
-
-  //   // 4) cleanup: sair da sala no socket e impedir setState após unmount
-  //   return () => {
-  //     alive = false;
-  //     try {
-  //       if (socket?.connected) {
-  //         socket.emit("leaveRoom", { roomId, userId: currentUserId });
-  //       }
-  //     } catch {}
-  //   };
-  // }, [roomId, baseUrl, currentUserId, socket]);
 
   // -------------------------- START functions --------------------------
 
@@ -282,10 +254,8 @@ export function RoomProvider({ children }) {
     [setMessages]
   );
 
-  // 3) Iniciar Live (wrapper de alto nível para o app)
-  // 3) Iniciar Live (APENAS metadados/estado)
-  const startLive = useCallback(
-  async () => {
+  // 3) Iniciar Live (APENAS metadados/estado - sem tocar no Agora aqui)
+  const startLive = useCallback(async () => {
     const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
     if (!baseUrl) return { ok: false, reason: "missing_baseUrl" };
     if (!currentUser?._id) return { ok: false, reason: "missing_userId" };
@@ -293,50 +263,57 @@ export function RoomProvider({ children }) {
 
     const res = await startLiveCore({ baseUrl, currentUser, roomId });
     if (res?.ok) {
-      setRoom(prev =>
-        prev ? {
-          ...prev,
-          isLive: true,
-          speakers: [
-            ...(prev.speakers || []),
-            { _id: currentUser._id, username: currentUser.username, profileImage: currentUser.profileImage }
-          ],
-        } : prev
+      setRoom((prev) =>
+        prev
+          ? {
+              ...prev,
+              isLive: true,
+              speakers: [
+                ...(prev.speakers || []),
+                {
+                  _id: currentUser._id,
+                  username: currentUser.username,
+                  profileImage: currentUser.profileImage,
+                },
+              ],
+
+              currentUsersSpeaking: [
+                ...((prev.currentUsersSpeaking ?? prev.speakers) || []),
+                {
+                  _id: currentUser._id,
+                  username: currentUser.username,
+                  profileImage: currentUser.profileImage,
+                },
+              ],
+            }
+          : prev
       );
+
+      setCurrentUsersSpeaking((prev) => [
+        ...(prev || []),
+        {
+          _id: currentUser._id,
+          username: currentUser.username,
+          profileImage: currentUser.profileImage,
+        },
+      ]);
     } else {
       console.warn("Falha ao iniciar live (startLive):", res);
     }
     return res;
-  },
-  [currentUser, roomId, setRoom]
-);
+  }, [currentUser, roomId, setRoom]);
 
-
-// orquestrador: junta RTC + metadados
-const startLiveFlow = useCallback(
-  async (rid) => {
-    const userId = String(currentUser?._id || "");
-    if (!rid || !userId) throw new Error("missing roomId/userId");
-
-    console.log("[FLOW] startLiveFlow rid:", rid, "uid:", userId);
-
-    // 1) entrar no canal como audience
-    const j1 = await joinChannel({ roomId: rid, userId });
-    if (j1?.ok === false) throw new Error("joinChannel failed");
-
-    // 2) virar host (speaker) — mic continua OFF
-    const j2 = await joinAsSpeaker({ roomId: rid });
-    if (j2?.ok === false) throw new Error("joinAsSpeaker failed");
-
-    // 3) LIGAR MIC (publicar)
-    await toggleMicrophone({ roomId: rid, on: true });
-
-    // 4) Marcar live no back (metadados)
-    const meta = await startLive();
-    if (!meta?.ok) console.warn("Falha ao marcar live:", meta);
-  },
-  [currentUser?._id, joinChannel, joinAsSpeaker, toggleMicrophone, startLive]
-);
+  // Deixe o “flow” de áudio para a UI (AudioContext).
+  // Se quiser manter um “atalho”, faça só a parte de metadados aqui:
+  const startLiveFlow = useCallback(
+    async (rid) => {
+      const useRid = rid || roomId;
+      if (!useRid) throw new Error("missing roomId");
+      // Aqui não chamamos Agora; a tela deve ligar o mic via AudioContext.startMic()
+      return startLive();
+    },
+    [roomId, startLive]
+  );
 
   // 4 - End/Leave room
 
@@ -347,36 +324,55 @@ const startLiveFlow = useCallback(
     }
     const rid = String(roomId);
 
-    // 1) sair da sala para remover presença
     await new Promise((resolve) => {
       socket.emit("leaveRoomChat", { roomId: rid }, () => resolve());
     });
 
-    // 2) sempre pedir para encerrar; o servidor recusa se não puder
     socket.emit("stopLiveRoom", { roomId: rid }, (ack) => {
       if (ack?.ok) {
-        // feedback otimista
         setRoom((prev) =>
-          prev ? { ...prev, isLive: false, speakers: [] } : prev
+          prev
+            ? { ...prev, isLive: false, speakers: [], currentUsersSpeaking: [] }
+            : prev
         );
+        setCurrentUsersSpeaking([]);
       } else {
         console.warn("stopLiveRoom negado/erro:", ack);
       }
-      // 3) navega de qualquer forma
       navigate("/");
     });
 
-    // limpeza local opcional (não obrigatório)
     setMessages([]);
   }, [socket, roomId, navigate, setRoom, setMessages]);
 
   // -------------------------- END functions --------------------------
 
-  console.log("room no roomContext:", room);
+  // console.log("room no roomContext:", room);
   // console.log("newMessage:", newMessage);
   // console.log("listeners:", listeners);
   // console.log("speakers:", speakers);
-  console.log("canStartRoom:", canStartRoom);
+  // console.log("canStartRoom:", canStartRoom);
+
+  const isCurrentUserSpeaker = !!currentUsersSpeaking?.some(
+    (u) => (u?._id || u?.id) === currentUserId
+  );
+
+  const addSpeaker = useCallback(
+    (user) =>
+      socket?.emit("joinAsSpeaker", {
+        roomId,
+        userId: user?._id || currentUserId,
+      }),
+    [socket, roomId, currentUserId]
+  );
+  const removeSpeaker = useCallback(
+    (userIdParam) =>
+      socket?.emit("leaveAsSpeaker", {
+        roomId,
+        userId: userIdParam || currentUserId,
+      }),
+    [socket, roomId, currentUserId]
+  );
 
   return (
     <RoomContext.Provider
@@ -407,9 +403,14 @@ const startLiveFlow = useCallback(
         deleteMessage,
         startLive,
         startLiveFlow,
+
         leaveRoom,
 
         canStartRoom,
+        currentUsersSpeaking,
+        isCurrentUserSpeaker,
+        addSpeaker,
+        removeSpeaker,
       }}
     >
       {children}

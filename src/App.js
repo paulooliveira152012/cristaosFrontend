@@ -65,6 +65,9 @@ import { UserProvider, useUser } from "./context/UserContext";
 import { RoomProvider, useRoom } from "./context/RoomContext";
 // import { AudioProvider } from "./context/AudioContext";
 import AudioProvider from "./context/AudioContext.js";
+// import MainAudioProvider from "./context/AudioContext2.js";
+
+
 import { SocketProvider, useSocket } from "./context/SocketContext.js";
 import { DarkModeProvider } from "./context/DarkModeContext.js";
 import { NotificationProvider } from "./context/NotificationContext.js";
@@ -274,8 +277,8 @@ const AppWithLocation = () => {
 
   return (
     <UserProvider>
-      <AudioProvider>
-        <RoomProvider>
+      <RoomProvider>
+        <AudioProvider>
           <UnreadProvider>
             <NotificationProvider>
               {/* ponte que liga socket ⇄ usuário logado para notificações */}
@@ -315,7 +318,7 @@ const AppWithLocation = () => {
                         /> */}
 
                         <Route
-                          path="liveRoomNew/:roomId"
+                          path="/liveRoomNew/:roomId"
                           element={<LiveRoomNew />}
                         />
 
@@ -503,8 +506,8 @@ const AppWithLocation = () => {
               </div>
             </NotificationProvider>
           </UnreadProvider>
-        </RoomProvider>
-      </AudioProvider>
+        </AudioProvider>
+      </RoomProvider>
     </UserProvider>
   );
 };
